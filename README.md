@@ -1,0 +1,1 @@
+# PYO3_plataforma_NailStudio
