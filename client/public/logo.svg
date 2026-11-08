@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 56" role="img" aria-label="Nailé">
+  <path d="M16 50V26c0-9 5-17 10-21 5 4 10 12 10 21v24c0 4-20 4-20 0z" fill="#8C1D4B"/>
+  <path d="M21 25c0-5 2-9 4-12" stroke="#F8EEF0" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <text x="48" y="40" font-family="'Bodoni Moda', Didot, 'Times New Roman', serif" font-size="34" font-weight="500" fill="#22161C">Nailé</text>
+</svg>
