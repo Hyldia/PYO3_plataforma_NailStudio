@@ -1,0 +1,9 @@
+{
+  "name": "naile",
+  "private": true,
+  "scripts": {
+    "build": "cd server && npm install && cd ../client && npm install && npm run build",
+    "start": "cd server && npm start"
+  },
+  "engines": { "node": ">=20" }
+}
