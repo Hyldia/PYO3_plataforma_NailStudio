@@ -8,5 +8,14 @@ export const catalogoController = {
   listarServicios: (req, res) => res.json(ServicioModel.listarActivos()),
   listarEspecialistas: (req, res) => res.json(EspecialistaModel.listar()),
   listarProductos: (req, res) => res.json(ProductoModel.buscar(req.query)),
-  listarCategoriasProductos: (req, res) => res.json(ProductoModel.categorias())
+  listarCategoriasProductos: (req, res) => res.json(ProductoModel.categorias()),
+  obtenerProducto: (req, res) => {
+    const producto = ProductoModel.buscarPorId(req.params.id);
+    if (!producto){
+      return res.status(404).json({
+        error: 'Producto no encontrado'
+      });
+    }
+    res.json(producto);
+  }
 };

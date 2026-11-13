@@ -22,5 +22,33 @@ export const ProductoModel = {
   },
   categorias: () => getDb().prepare('SELECT categoria AS valor, COUNT(*) AS cantidad FROM productos GROUP BY categoria ORDER BY categoria').all(),
   buscarPorId: (id) => getDb().prepare('SELECT * FROM productos WHERE id = ?').get(id),
+  crear(datos) {
+    const resultado = getDb().prepare(`INSERT INTO productos (nombre, descripcion, categoria, marca, precio, stock)
+                                VALUES (@nombre, @descripcion, @categoria, @marca, @precio, @stock)`).run(datos);
+
+    return getDb().prepare('SELECT * FROM productos WHERE id = ?').get(resultado.lastInsertRowid);
+  },
+  actualizar(id, datos){
+    return getDb().prepare(`
+                    UPDATE productos
+                    SET nombre = @nombre,
+                        descripcion = @descripcion,
+                        categoria = @categoria,
+                        marca = @marca,
+                        precio = @precio,
+                        stock = @stock
+                    WHERE id = @id
+                  `).run({ ...datos, id });
+  },
+  tienePedidos(id) {
+    return Boolean(
+      getDb()
+        .prepare('SELECT 1 FROM pedido_items WHERE producto_id = ? LIMIT 1')
+        .get(id)
+    );
+  },
+  eliminar(id) {
+    return getDb().prepare('DELETE FROM productos WHERE id = ?').run(id);
+  },
   cambiarImagen: (id, imagen) => getDb().prepare('UPDATE productos SET imagen = ? WHERE id = ?').run(imagen, id)
 };

@@ -12,6 +12,7 @@ import Tienda from './pages/Tienda.jsx';
 import Contacto from './pages/Contacto.jsx';
 import Admin from './pages/Admin.jsx';
 import NoEncontrada from './pages/NoEncontrada.jsx';
+import ProductoDetalle from './pages/ProductoDetalle.jsx';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NoEncontrada />} />
+          <Route path="/tienda/:id" element={<ProductoDetalle/>}/>
         </Routes>
       </main>
       <Pie />

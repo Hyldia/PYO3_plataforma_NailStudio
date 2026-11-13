@@ -5,6 +5,7 @@ import { dinero } from '../config.js';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { useDebounce, useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
+import { Link } from 'react-router-dom';
 
 export default function Tienda() {
   useTitulo('Tienda');
@@ -110,9 +111,13 @@ export default function Tienda() {
           <ul className="productos">
             {productos.map((p) => (
               <li key={p.id} className="producto">
-                <Foto archivo={p.imagen} alt={p.nombre} className="producto__foto" />
+                <Link to={`/tienda/${p.id}`} aria-label={`Ver detalles de ${p.nombre}`}>
+                  <Foto archivo={p.imagen} alt={p.nombre} className="producto__foto" />
+                </Link>
                 <p className="producto__marca">{p.marca}</p>
-                <h2 className="producto__nombre">{p.nombre}</h2>
+                <Link to={`/tienda/${p.id}`}>
+                  <h2 className="producto__nombre">{p.nombre}</h2>
+                </Link>
                 <p className="tenue">{p.descripcion}</p>
                 <div className="producto__pie">
                   <span className="producto__precio">{dinero(p.precio)}</span>
