@@ -313,6 +313,23 @@ main { outline: none; min-height: 60vh; }
 .producto__pie { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; gap: 8px; }
 .producto__precio { font-weight: 700; font-size: 1.1rem; }
 .agotado { color: var(--gris); font-weight: 600; }
+.producto-detalle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.producto-detalle__foto {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+@media (max-width: 700px) {
+  .producto-detalle {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Panel del carrito */
 .panel { margin: 0 0 0 auto; height: 100vh; max-height: 100vh; width: min(440px, 100%); border: none; padding: 0; background: #fff; }
@@ -377,3 +394,5 @@ main { outline: none; min-height: 60vh; }
 .subir { position: relative; overflow: hidden; align-self: flex-start; }
 .subir input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .subir:focus-within { outline: 3px solid var(--vino); outline-offset: 2px; }
+
+

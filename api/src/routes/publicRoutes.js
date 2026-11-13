@@ -11,6 +11,7 @@ const r = Router();
 r.get('/servicios', catalogoController.listarServicios);
 r.get('/especialistas', catalogoController.listarEspecialistas);
 r.get('/productos', catalogoController.listarProductos);
+r.get('/productos/:id', catalogoController.obtenerProducto);
 r.get('/productos/categorias', catalogoController.listarCategoriasProductos);
 
 r.get('/fotos', fotoController.buscar);

@@ -32,6 +32,7 @@ export const api = {
   filtrosFotos: () => pedir('/fotos/filtros'),
   vistaFoto: (id) => pedir(`/fotos/${id}/vista`, { method: 'POST' }).catch(() => {}),
   productos: (params = {}) => pedir(`/productos${qs(params)}`),
+  producto: (id) => pedir(`/productos/${id}`),
   categoriasProductos: () => pedir('/productos/categorias'),
   guardarDiseno: (d) => pedir('/disenos', { method: 'POST', body: d }),
   disponibilidad: (especialistaId, fecha) => pedir(`/citas/disponibilidad${qs({ especialistaId, fecha })}`),
