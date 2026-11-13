@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, sesionAdmin } from '../lib/api.js';
 import { dinero, enlaceWhatsApp } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
+
 
 const CATEGORIAS = ['Manicure', 'Acrílicas', 'Polygel', 'Gel', 'Pedicure', 'Nail art'];
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
@@ -10,6 +11,7 @@ const COLORES = ['Nude', 'Rosa', 'Rojo', 'Vino', 'Morado', 'Azul', 'Verde', 'Neg
 const ACABADOS = ['Brillante', 'Mate', 'Chrome', 'Glitter'];
 const ACCIONES = { pendiente: ['confirmar', 'cancelar'], confirmada: ['completar', 'cancelar'], completada: [], cancelada: [] };
 const TEXTO_ACCION = { confirmar: 'Confirmar', completar: 'Marcar atendida', cancelar: 'Cancelar' };
+const VACIO_PRODUCTO = {nombre: '', descripcion: '', categoria: '', marca: '', precio: '', stock: '0'};
 const hoy = () => new Date().toISOString().slice(0, 10);
 
 function Entrar({ onEntrar }) {
@@ -187,31 +189,266 @@ function Galeria() {
   );
 }
 
+function  CamposProducto({datos, onChange, prefijo}){
+  const cambiar = (campo) => (e) => onChange({ ...datos, [campo]: e.target.value });
+  return (
+    <>
+      <div className="campo">
+        <label htmlFor={`${prefijo}-nombre`}>Nombre</label>
+        <input id={`${prefijo}-nombre`} value={datos.nombre}
+          onChange={cambiar('nombre')} required />
+      </div>
+      <div className="campo">
+        <label htmlFor={`${prefijo}-descripcion`}>Descripción</label>
+        <textarea id={`${prefijo}-descripcion`} value={datos.descripcion}
+          onChange={cambiar('descripcion')} />
+      </div>
+      <div className="campo">
+        <label htmlFor={`${prefijo}-categoria`}>Categoría</label>
+        <input id={`${prefijo}-categoria`} value={datos.categoria}
+          onChange={cambiar('categoria')} required />
+      </div>
+      <div className="campo">
+        <label htmlFor={`${prefijo}-marca`}>Marca</label>
+        <input id={`${prefijo}-marca`} value={datos.marca}
+          onChange={cambiar('marca')} />
+      </div>
+      <div className="campo">
+        <label htmlFor={`${prefijo}-precio`}>Precio</label>
+        <input id={`${prefijo}-precio`} type="number" min="0" step="1"
+          value={datos.precio} onChange={cambiar('precio')} required />
+      </div>
+      <div className="campo">
+        <label htmlFor={`${prefijo}-stock`}>Unidades en stock</label>
+        <input id={`${prefijo}-stock`} type="number" min="0" step="1"
+          value={datos.stock} onChange={cambiar('stock')} required />
+      </div>
+    </>
+  );
+}
+
+function datosProducto(formulario){
+  return {
+    nombre: formulario.nombre.trim(),
+    descripcion: formulario.descripcion.trim(),
+    categoria: formulario.categoria.trim(),
+    marca: formulario.marca.trim(),
+    precio: Number(formulario.precio),
+    stock: Number(formulario.stock)
+  };
+}
+
 function Productos() {
   const [productos, setProductos] = useState([]);
+  const [nuevo, setNuevo] = useState(VACIO_PRODUCTO);
+  const [editando, setEditando] = useState(null);
   const [error, setError] = useState('');
-  const cargar = () => api.productos().then(setProductos);
-  useEffect(() => { cargar(); }, []);
-  const subir = async (id, archivo) => {
-    const fd = new FormData(); fd.append('imagen', archivo);
-    try { await api.admin.imagenProducto(id, fd); cargar(); } catch (e) { setError(e.message); }
-  };
+  const [mensaje, setMensaje] = useState('');
+  const [crearAbierto, setCrearAbierto] = useState(false);
+  const creando = useRef(false);
+  const [guardando, setGuardando] = useState(false);
+
+  async function cargar() {
+    const lista = await api.productos();
+    setProductos(lista);
+    setError('');
+  }
+
+  useEffect(() => {
+    cargar().catch((e) => setError(e.message));
+  }, []);
+
+  async function crear(e) {
+    e.preventDefault();
+    if (creando.current) return;
+    creando.current = true;
+    setGuardando(true);
+    setError('');
+    setMensaje('');
+
+    try {
+      await api.admin.crearProducto(datosProducto(nuevo));
+      setNuevo(VACIO_PRODUCTO);
+      setCrearAbierto(false);
+      setMensaje('Producto creado.');
+      await cargar();
+    } catch (e) {
+      setError(e.message);
+    } finally{
+      creando.current = false;
+      setGuardando(false);
+    }
+  }
+
+  async function guardarEdicion(e) {
+    e.preventDefault();
+    setError('');
+    setMensaje('');
+
+    try {
+      await api.admin.actualizarProducto(
+        editando.id,
+        datosProducto(editando)
+      );
+      setEditando(null);
+      setMensaje('Producto actualizado.');
+      await cargar();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function eliminar(p) {
+    if (!window.confirm(`¿Eliminar «${p.nombre}»? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setError('');
+    setMensaje('');
+
+    try {
+      await api.admin.borrarProducto(p.id);
+      setMensaje('Producto eliminado.');
+      await cargar();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function subir(id, archivo) {
+    const fd = new FormData();
+    fd.append('imagen', archivo);
+
+    try {
+      await api.admin.imagenProducto(id, fd);
+      await cargar();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   return (
     <section aria-labelledby="t-prod">
-      <h2 id="t-prod">Fotos de productos</h2>
+      <h2 id="t-prod">Productos</h2>
+
       {error && <p role="alert" className="error">{error}</p>}
+      {mensaje && <p role="status" className="exito">{mensaje}</p>}
+
+      <div className="caja">
+        {!crearAbierto ? (
+          <button
+            type="button"
+            className="boton admin__agregar-producto"
+            onClick={() => {
+              setCrearAbierto(true);
+              setError('');
+              setMensaje('');
+            }}
+          >
+            Agregar producto
+          </button>
+        ) : (
+          <form className="caja" onSubmit={crear}>
+            <h3>Nuevo producto</h3>
+
+            <CamposProducto
+              datos={nuevo}
+              onChange={setNuevo}
+              prefijo="nuevo-producto"
+            />
+
+            <div className="admin-producto__acciones">
+              <button type="submit" className="boton" disabled={guardando}>
+                {guardando ? 'Guardando…' : 'Guardar producto'}
+              </button>
+              <button
+                type="button"
+                className="boton boton--contorno"
+                onClick={() => {
+                  setCrearAbierto(false);
+                  setNuevo(VACIO_PRODUCTO);
+                  setError('');
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
       <ul className="admin-fotos">
         {productos.map((p) => (
           <li key={p.id} className="admin-foto">
             <Foto archivo={p.imagen} alt={p.nombre} />
-            <div className="admin-foto__info">
-              <p><strong>{p.nombre}</strong></p>
-              <p className="tenue">{dinero(p.precio)}, {p.stock} en stock</p>
-              <label className="boton boton--contorno boton--chico subir">
-                {p.imagen ? 'Cambiar foto' : 'Subir foto'}<span className="solo-lector"> de {p.nombre}</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => e.target.files[0] && subir(p.id, e.target.files[0])} />
-              </label>
-            </div>
+
+            {editando?.id === p.id ? (
+              <form className="admin-foto__form" onSubmit={guardarEdicion}>
+                <CamposProducto
+                  datos={editando}
+                  onChange={setEditando}
+                  prefijo={`editar-${p.id}`}
+                />
+                <div className="admin-producto__acciones">
+                  <button type="submit" className="boton boton--chico">
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    className="boton boton--contorno boton--chico"
+                    onClick={() => setEditando(null)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="admin-foto__info">
+                <p><strong>{p.nombre}</strong></p>
+                <p>{p.descripcion}</p>
+                <p className="tenue">
+                  {p.categoria} · {p.marca || 'Sin marca'} · {dinero(p.precio)} · {p.stock} en stock
+                </p>
+
+                <div className="admin-producto__acciones">
+                  <button
+                    type="button"
+                    className="boton boton--contorno boton--chico admin-producto__editar"
+                    onClick={() => setEditando({
+                      ...p,
+                      descripcion: p.descripcion || '',
+                      marca: p.marca || '',
+                      precio: String(p.precio),
+                      stock: String(p.stock)
+                    })}
+                  >
+                    Editar
+                  </button>
+
+                  <label className="boton boton--contorno boton--chico subir admin-producto__foto">
+                    {p.imagen ? 'Cambiar foto' : 'Subir foto'}
+                    <span className="solo-lector"> de {p.nombre}</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => {
+                        const archivo = e.target.files[0];
+                        if (archivo) subir(p.id, archivo);
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    className="boton boton--peligro boton--chico admin-producto__eliminar"
+                    onClick={() => eliminar(p)}
+                  >
+                    Eliminar
+                    <span className="solo-lector"> {p.nombre}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>

@@ -319,10 +319,32 @@ main { outline: none; min-height: 60vh; }
   gap: 32px;
   align-items: start;
 }
-
 .producto-detalle__foto {
   width: 100%;
   aspect-ratio: 1;
+}
+.admin__agregar-producto {
+  align-self: flex-start;
+}
+.admin-producto__acciones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "editar eliminar"
+    "foto foto";
+  gap: 8px;
+}
+
+.admin-producto__editar { grid-area: editar; }
+.admin-producto__eliminar { grid-area: eliminar; }
+.admin-producto__foto { grid-area: foto; }
+
+.admin-producto__acciones > .boton,
+.admin-producto__acciones > .subir {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 10px;
+  white-space: nowrap;
 }
 
 @media (max-width: 700px) {

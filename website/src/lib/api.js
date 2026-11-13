@@ -47,6 +47,9 @@ export const api = {
     editarFoto: (id, datos) => pedir(`/admin/fotos/${id}`, { method: 'PUT', body: datos, admin: true }),
     borrarFoto: (id) => pedir(`/admin/fotos/${id}`, { method: 'DELETE', admin: true }),
     imagenProducto: (id, formData) => pedir(`/admin/productos/${id}/imagen`, { method: 'POST', body: formData, admin: true }),
-    pedidos: () => pedir('/admin/pedidos', { admin: true })
+    pedidos: () => pedir('/admin/pedidos', { admin: true }),
+    crearProducto: (datos) => pedir('/admin/productos', { method: 'POST', body: datos, admin: true }),
+    actualizarProducto: (id, datos) => pedir(`/admin/productos/${id}`, { method: 'PUT', body: datos, admin: true }),
+    borrarProducto: (id) => pedir(`/admin/productos/${id}`, { method: 'DELETE', admin: true }),
   }
 };
