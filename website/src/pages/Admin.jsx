@@ -102,6 +102,7 @@ function Galeria() {
   const [fotos, setFotos] = useState([]);
   const [estado, setEstado] = useState({ subiendo: false, mensaje: '', error: '' });
   const [editando, setEditando] = useState(null);
+  const [subirAbierto, setSubirAbierto] = useState(false);
 
   const cargar = () => api.fotos({ limite: 100 }).then((r) => setFotos(r.fotos));
   useEffect(() => { cargar(); }, []);
@@ -118,7 +119,7 @@ function Galeria() {
         await api.admin.subirFoto(fd);
       }
       setEstado({ subiendo: false, mensaje: `${archivos.length} ${archivos.length === 1 ? 'foto subida' : 'fotos subidas'}.`, error: '' });
-      setArchivos([]); setDatos(VACIO); e.target.reset(); cargar();
+      setArchivos([]); setDatos(VACIO); e.target.reset(); setSubirAbierto(false); cargar();
     } catch (err) { setEstado({ subiendo: false, mensaje: '', error: err.message }); }
   }
 
@@ -150,18 +151,61 @@ function Galeria() {
   return (
     <section aria-labelledby="t-galeria-admin">
       <h2 id="t-galeria-admin">Galería</h2>
-      <form className="caja" onSubmit={subir}>
-        <h3>Subir fotos</h3>
-        <div className="campo">
-          <label htmlFor="g-archivos">Imágenes (JPG, PNG o WebP, máximo 8 MB cada una)</label>
-          <input id="g-archivos" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => setArchivos([...e.target.files])} />
-          {archivos.length > 1 && <p className="tenue">Las {archivos.length} fotos se guardan con los mismos datos y títulos numerados.</p>}
-        </div>
-        {camposFoto(datos, setDatos, 'g')}
-        {estado.error && <p role="alert" className="error">{estado.error}</p>}
-        {estado.mensaje && <p role="status" className="exito">{estado.mensaje}</p>}
-        <button type="submit" className="boton" disabled={estado.subiendo}>{estado.subiendo ? 'Subiendo…' : 'Subir a la galería'}</button>
-      </form>
+      
+            {estado.error && <p role="alert" className="error">{estado.error}</p>}
+      {estado.mensaje && <p role="status" className="exito">{estado.mensaje}</p>}
+
+      {!subirAbierto ? (
+        <button
+          type="button"
+          className="boton"
+          onClick={() => {
+            setSubirAbierto(true);
+            setEstado({ subiendo: false, mensaje: '', error: '' });
+          }}
+        >
+          Agregar diseño
+        </button>
+      ) : (
+        <form className="caja" onSubmit={subir}>
+          <h3>Subir fotos</h3>
+          <div className="campo">
+            <label htmlFor="g-archivos">Imágenes (JPG, PNG o WebP, máximo 8 MB cada una)</label>
+            <input
+              id="g-archivos"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={(e) => setArchivos([...e.target.files])}
+            />
+            {archivos.length > 1 && (
+              <p className="tenue">
+                Las {archivos.length} fotos se guardan con los mismos datos y títulos numerados.
+              </p>
+            )}
+          </div>
+
+          {camposFoto(datos, setDatos, 'g')}
+
+          <div className="botones">
+            <button type="submit" className="boton" disabled={estado.subiendo}>
+              {estado.subiendo ? 'Subiendo…' : 'Subir a la galería'}
+            </button>
+            <button
+              type="button"
+              className="boton boton--contorno"
+              onClick={() => {
+                setSubirAbierto(false);
+                setArchivos([]);
+                setDatos(VACIO);
+                setEstado({ subiendo: false, mensaje: '', error: '' });
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      )}
 
       <ul className="admin-fotos">
         {fotos.map((f) => (

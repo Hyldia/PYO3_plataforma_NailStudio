@@ -27,7 +27,7 @@ export default function Inicio() {
         <div className="contenedor portada__rejilla">
           <div className="portada__texto">
             <h1>{SALON.lema}</h1>
-            <p className="portada__bajada">Manicure, uñas acrílicas, polygel y pedicure. Mira nuestros trabajos, elige tu diseño y reserva en línea.</p>
+            <p className="portada__bajada">{SALON.descripcionPortada}</p>
             <div className="botones">
               <Link to="/reservar" className="boton">Reservar cita</Link>
               <Link to="/galeria" className="boton boton--contorno">Ver galería</Link>

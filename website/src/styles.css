@@ -14,7 +14,7 @@
   --apagado: #A8949D;
   --error: #A3122A;
   --exito: #1F6B45;
-  --serif: 'Bodoni Moda', Didot, 'Times New Roman', serif;
+  --serif: 'Lora', Georgia, serif;
   --sans: 'Manrope', system-ui, sans-serif;
   --logo-brillo: var(--blanco);
   --fondo: #FBF5F6;
@@ -28,7 +28,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; }
-h1, h2, h3 { font-family: var(--serif); font-weight: 500; line-height: 1.12; margin: 0; letter-spacing: -0.01em; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 500; line-height: 1.12; margin: 0; letter-spacing: 0; }
 h1 { font-size: clamp(2.2rem, 4vw, 3.4rem); }
 h2 { font-size: clamp(1.6rem, 2.6vw, 2.2rem); }
 h3 { font-size: 1.25rem; }
@@ -115,7 +115,7 @@ main { outline: none; min-height: 60vh;  background: var(--fondo);}
 .portada__texto { display: flex; flex-direction: column; gap: 22px; }
 .portada__texto h1 { font-size: clamp(2.6rem, 5.2vw, 4.4rem); }
 .portada__bajada { font-size: 1.15rem; color: var(--gris); max-width: 46ch; }
-.portada__foto { aspect-ratio: 4 / 5; border-radius: 2px 160px 2px 2px; overflow: hidden; }
+.portada__foto { width: min(100%, 400px); justify-self: end; aspect-ratio: 1 / 1; border-radius: 2px 160px 2px 2px; overflow: hidden;}
 @media (max-width: 860px) {
   .portada__rejilla { grid-template-columns: 1fr; gap: 32px; padding-block: 40px; }
   .portada__foto { aspect-ratio: 4 / 3; border-radius: 2px 96px 2px 2px; }
@@ -125,7 +125,8 @@ main { outline: none; min-height: 60vh;  background: var(--fondo);}
 .seccion { padding-block: 80px; }
 .seccion .contenedor { display: flex; flex-direction: column; gap: 32px; align-items: flex-start; }
 .seccion--rubor { background: var(--rubor); }
-.seccion--oscura { background: var(--tinta); color: #fff; }
+.seccion--oscura { background: var(--rubor-2); color: var(--tinta); }
+.seccion--oscura .horario--claro div { border-color: var(--linea);}
 .seccion__cabeza { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
 
 .servicios-lista { list-style: none; margin: 0; padding: 0; width: 100%; }
@@ -330,6 +331,7 @@ main { outline: none; min-height: 60vh;  background: var(--fondo);}
   width: 100%;
   aspect-ratio: 1;
 }
+
 .admin__agregar-producto {
   align-self: flex-start;
 }
@@ -384,7 +386,7 @@ main { outline: none; min-height: 60vh;  background: var(--fondo);}
 @media (max-width: 760px) { .contacto { grid-template-columns: 1fr; } }
 
 /* Pie */
-.pie { background: var(--rubor-2); color: var(--tinta); padding-top: 56px; border-top: 4px solid var(--vino);}
+.pie { background: var(--fondo); color: var(--tinta); padding-top: 56px; border-top: 4px solid var(--vino);}
 .pie__rejilla { display: grid; grid-template-columns: 1.1fr 1.45fr 1.3fr 0.7fr; gap: clamp(24px, 3vw, 40px); align-items: start;}
 .pie__marca .logo__imagen {width: 190px; max-width: 100%; height: auto;}
 .pie__marca p{max-width: 34ch; line-height: 1.6;}
@@ -406,6 +408,10 @@ main { outline: none; min-height: 60vh;  background: var(--fondo);}
 .admin__nav button { padding: 12px 18px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--gris); }
 .admin__nav button[aria-current="page"] { color: var(--vino); border-bottom-color: var(--vino); }
 .admin section { display: flex; flex-direction: column; gap: 20px; }
+.admin section[aria-labelledby="t-galeria-admin"] > .boton {
+  align-self: flex-start;
+  width: fit-content;
+}
 .admin-entrar { max-width: 420px; margin: 40px auto; }
 .tabla-envoltura { overflow-x: auto; border: 1px solid var(--linea); border-radius: 6px; }
 .tabla { width: 100%; border-collapse: collapse; min-width: 760px; }
@@ -427,4 +433,38 @@ main { outline: none; min-height: 60vh;  background: var(--fondo);}
 .subir input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .subir:focus-within { outline: 3px solid var(--vino); outline-offset: 2px; }
 
+@media (max-width: 520px) {
+  .portada__rejilla {
+    gap: 24px;
+    padding-block: 32px;
+  }
 
+  .portada__texto {
+    gap: 16px;
+  }
+
+  .portada__texto h1 {
+    font-size: clamp(2.2rem, 10vw, 2.8rem);
+    line-height: 1.08;
+  }
+
+  .portada__bajada {
+    font-size: 1rem;
+  }
+
+  .portada__texto .botones {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .portada__texto .boton {
+    width: 100%;
+  }
+
+  .portada__foto {
+    width: 90%;
+    justify-self: center;
+    border-radius: 2px 64px 2px 2px;
+  }
+}
