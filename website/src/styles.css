@@ -17,6 +17,7 @@
   --serif: 'Bodoni Moda', Didot, 'Times New Roman', serif;
   --sans: 'Manrope', system-ui, sans-serif;
   --logo-brillo: var(--blanco);
+  --fondo: #FBF5F6;
   font-family: var(--sans);
   font-size: 16px;
   line-height: 1.55;
@@ -35,7 +36,7 @@ p { margin: 0; }
 a { color: inherit; }
 img { display: block; max-width: 100%; }
 button, input, select, textarea { font: inherit; color: inherit; }
-main { outline: none; min-height: 60vh; }
+main { outline: none; min-height: 60vh;  background: var(--fondo);}
 
 :focus-visible { outline: 3px solid var(--vino); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
@@ -79,6 +80,12 @@ main { outline: none; min-height: 60vh; }
 .logo__texto { font-family: var(--serif); font-size: 1.85rem; font-weight: 500; color: var(--tinta); letter-spacing: 0.01em; line-height: 1; }
 .logo--claro { color: #fff; --logo-brillo: var(--tinta); }
 .logo--claro .logo__texto { color: #fff; }
+.logo__imagen {
+  display: block;
+  width: 160px;
+  max-width: 100%;
+  height: auto;
+}
 
 /* Encabezado */
 .encabezado { position: sticky; top: 0; z-index: 20; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--linea); }
@@ -377,16 +384,19 @@ main { outline: none; min-height: 60vh; }
 @media (max-width: 760px) { .contacto { grid-template-columns: 1fr; } }
 
 /* Pie */
-.pie { background: var(--tinta); color: #E9DDE1; padding-top: 64px; }
-.seccion--oscura + .pie { border-top: 1px solid rgba(255, 255, 255, 0.12); }
-.pie__rejilla { display: grid; grid-template-columns: 1.4fr 1.2fr 1.2fr 0.8fr; gap: 40px; }
-.pie__marca { display: flex; flex-direction: column; gap: 14px; }
-.pie__titulo { font-family: var(--sans); font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 12px; }
+.pie { background: var(--rubor-2); color: var(--tinta); padding-top: 56px; border-top: 4px solid var(--vino);}
+.pie__rejilla { display: grid; grid-template-columns: 1.1fr 1.45fr 1.3fr 0.7fr; gap: clamp(24px, 3vw, 40px); align-items: start;}
+.pie__marca .logo__imagen {width: 190px; max-width: 100%; height: auto;}
+.pie__marca p{max-width: 34ch; line-height: 1.6;}
+.pie__titulo { font-family: var(--sans); font-size: 0.95rem; font-weight: 700; color: var(--vino-hondo); margin-bottom: 16px; letter-spacing: 0.02em;}
 .pie address { font-style: normal; line-height: 1.8; }
-.pie a { color: #fff; text-underline-offset: 3px; }
-.pie .horario div { border-color: rgba(255, 255, 255, 0.2); }
+.pie a { color: var(--tinta); text-underline-offset: 3px; }
+.pie .horario div { border-color: var(--linea); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; padding-block: 8px;}
+.pie .horario dd {text-align: right; white-space: nowrap;}
 .pie__enlaces { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.pie__legal { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-block: 24px; margin-top: 48px; border-top: 1px solid rgba(255, 255, 255, 0.15); font-size: 0.88rem; }
+.pie__enlaces a { text-decoration: none;}
+.pie__enlaces a:hover { text-decoration: underline;}
+.pie__legal { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-block: 20px; margin-top: 48px;  border-top: 1px solid var(--linea); font-size: 0.88rem; }
 @media (max-width: 860px) { .pie__rejilla { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .pie__rejilla { grid-template-columns: 1fr; } }
 
