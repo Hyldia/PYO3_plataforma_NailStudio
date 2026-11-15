@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { dinero } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
@@ -13,6 +13,7 @@ import { enlaceArticulo } from '../components/CarritoLateral.jsx';
 export default function Carrito() {
   useTitulo('Carrito');
   const carrito = useCarrito();
+  const irA = useNavigate();
   const [vista, setVista] = useState('todos');
   const [sugeridos, setSugeridos] = useState([]);
 
@@ -147,7 +148,7 @@ export default function Carrito() {
                 <b>{dinero(ahorro)} de dto.</b> caduca en <CuentaRegresiva compacta />. ¡Pide ahora!
               </p>
             )}
-            <button type="button" className="resumen-pedido__boton" onClick={carrito.abrir} disabled={!carrito.cantidadElegida}>
+            <button type="button" className="resumen-pedido__boton" onClick={() => irA('/finalizar-compra')} disabled={!carrito.cantidadElegida}>
               {pocos > 0 && <strong>{pocos} casi {pocos === 1 ? 'agotado' : 'agotados'}</strong>}
               <span>Hacer pedido ({carrito.cantidadElegida})</span>
             </button>

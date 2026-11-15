@@ -10,13 +10,15 @@ export const PedidoModel = {
   },
 
   // Transacción: si un producto no tiene stock, no se guarda nada.
-  crear(cliente, lineas, metodoPago) {
+  crear(cliente, lineas, metodoPago, extra = {}) {
     const db = getDb();
     const tx = db.transaction(() => {
-      const total = lineas.reduce((s, l) => s + l.precio * l.cantidad, 0);
+      const total = extra.total ?? lineas.reduce((s, l) => s + l.precio * l.cantidad, 0);
       const { lastInsertRowid: pedidoId } = db.prepare(`
-        INSERT INTO pedidos (cliente_nombre, cliente_telefono, cliente_email, total, metodo_pago) VALUES (?, ?, ?, ?, ?)
-      `).run(cliente.nombre, cliente.telefono, cliente.email || null, total, metodoPago);
+        INSERT INTO pedidos (cliente_nombre, cliente_telefono, cliente_email, total, metodo_pago, cupon_codigo, descuento, notas, referencia_pago)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(cliente.nombre, cliente.telefono, cliente.email || null, total, metodoPago,
+        extra.cupon || null, extra.descuento || 0, extra.notas || null, extra.referencia || null);
 
       const item = db.prepare('INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario, detalle) VALUES (?, ?, ?, ?, ?)');
       const descontar = db.prepare('UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?');

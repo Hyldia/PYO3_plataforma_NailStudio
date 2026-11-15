@@ -46,3 +46,18 @@ export function calcularPrecio(servicio, recargoDiseno = 0, cupon = null) {
   if (cupon) precio = cupon.tipo === 'porcentaje' ? new CuponPorcentaje(precio, cupon) : new CuponMonto(precio, cupon);
   return { total: precio.total(), descuento: cupon ? antesDeCupon - precio.total() : 0, detalle: precio.detalle() };
 }
+
+// Precio base de un pedido de la tienda: la suma de sus líneas.
+// Usa los mismos decoradores de cupón que las citas.
+export class PrecioPedido {
+  constructor(lineas) { this.lineas = lineas; }
+  total() { return this.lineas.reduce((s, l) => s + l.precio * l.cantidad, 0); }
+  detalle() { return [{ concepto: `Productos (${this.lineas.reduce((s, l) => s + l.cantidad, 0)})`, monto: this.total() }]; }
+}
+
+export function calcularPrecioPedido(lineas, cupon = null) {
+  let precio = new PrecioPedido(lineas);
+  const subtotal = precio.total();
+  if (cupon) precio = cupon.tipo === 'porcentaje' ? new CuponPorcentaje(precio, cupon) : new CuponMonto(precio, cupon);
+  return { subtotal, total: precio.total(), descuento: subtotal - precio.total(), detalle: precio.detalle() };
+}

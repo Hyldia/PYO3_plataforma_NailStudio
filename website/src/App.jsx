@@ -2,7 +2,6 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import Encabezado from './components/Encabezado.jsx';
 import Pie from './components/Pie.jsx';
-import CarritoPanel from './components/CarritoPanel.jsx';
 import Inicio from './pages/Inicio.jsx';
 import Servicios from './pages/Servicios.jsx';
 import Galeria from './pages/Galeria.jsx';
@@ -18,6 +17,7 @@ import Aviso from './components/Aviso.jsx';
 import CarritoLateral from './components/CarritoLateral.jsx';
 import DisenoDetalle from './pages/DisenoDetalle.jsx';
 import Carrito from './pages/Carrito.jsx';
+import FinalizarCompra from './pages/FinalizarCompra.jsx';
 import ProductoDetalle from './pages/ProductoDetalle.jsx';
 
 export default function App() {
@@ -50,11 +50,11 @@ export default function App() {
           <Route path="/galeria/:id" element={<DisenoDetalle />} />
           <Route path="/tienda/:id" element={<ProductoDetalle />} />
           <Route path="/carrito" element={<Carrito />} />
+          <Route path="/finalizar-compra" element={<FinalizarCompra />} />
           <Route path="*" element={<NoEncontrada />} />
         </Routes>
       </main>
       <Pie />
-      <CarritoPanel />
       <Aviso />
       <CarritoLateral />
       <Animaciones />

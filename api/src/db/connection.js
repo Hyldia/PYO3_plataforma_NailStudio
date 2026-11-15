@@ -41,6 +41,7 @@ function migrar(db) {
    ['es_combo', 'INTEGER NOT NULL DEFAULT 0'], ['destacado', 'INTEGER NOT NULL DEFAULT 0']].forEach(([c, t]) => agregar('servicios', c, t));
   agregar('citas', 'cupon_codigo', 'TEXT');
   agregar('pedido_items', 'detalle', 'TEXT');
+  [['cupon_codigo', 'TEXT'], ['descuento', 'REAL NOT NULL DEFAULT 0'], ['notas', 'TEXT'], ['referencia_pago', 'TEXT']].forEach(([c, t]) => agregar('pedidos', c, t));
   [['precio_anterior', 'REAL'], ['calificacion', 'REAL'], ['resenas', 'INTEGER NOT NULL DEFAULT 0'],
    ['vendidos', 'INTEGER NOT NULL DEFAULT 0']].forEach(([c, t]) => agregar('productos', c, t));
   agregar('citas', 'descuento', 'REAL NOT NULL DEFAULT 0');

@@ -13,7 +13,7 @@ export default function CarritoLateral() {
   const { pathname } = useLocation();
   const irA = useNavigate();
   // En la página del carrito no hace falta repetirlo al lado
-  const visible = carrito.items.length > 0 && pathname !== '/carrito';
+  const visible = carrito.items.length > 0 && !['/carrito', '/finalizar-compra'].includes(pathname);
 
   useEffect(() => {
     document.body.classList.toggle('con-carrito-lateral', visible);
@@ -33,7 +33,7 @@ export default function CarritoLateral() {
       </Link>
       <p className="carrito-lateral__total">{dinero(carrito.totalElegido)}</p>
       <p className="carrito-lateral__envio">✓ Retiro gratis en el salón</p>
-      <button type="button" className="carrito-lateral__pedido" onClick={carrito.abrir} disabled={!carrito.cantidadElegida}>
+      <button type="button" className="carrito-lateral__pedido" onClick={() => irA('/finalizar-compra')} disabled={!carrito.cantidadElegida}>
         {pocos > 0 && <strong>{pocos} casi {pocos === 1 ? 'agotado' : 'agotados'}</strong>}
         <span>Hacer pedido ({carrito.cantidadElegida})</span>
       </button>

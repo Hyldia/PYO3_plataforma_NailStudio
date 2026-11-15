@@ -45,6 +45,7 @@ export const api = {
   guardarDiseno: (d) => pedir('/disenos', { method: 'POST', body: d }),
   disponibilidad: (especialistaId, fecha) => pedir(`/citas/disponibilidad${qs({ especialistaId, fecha })}`),
   crearCita: (datos) => pedir('/citas', { method: 'POST', body: datos }),
+  cotizarPedido: (datos) => pedir('/pedidos/cotizar', { method: 'POST', body: datos }),
   crearPedido: (datos) => pedir('/pedidos', { method: 'POST', body: datos }),
 
   admin: {

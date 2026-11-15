@@ -32,6 +32,7 @@ r.post('/disenos', disenoController.crear);
 r.get('/citas/disponibilidad', citaController.disponibilidad);
 r.post('/citas', citaController.crear);
 
+r.post('/pedidos/cotizar', pedidoController.cotizar);
 r.post('/pedidos', pedidoController.crear);
 
 r.get('/cupones', cuponController.listar);
