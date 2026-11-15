@@ -1,6 +1,7 @@
 // MODELO: citas. Incluye las reglas de negocio de una reserva
 // (horarios del salón, validación de datos y cálculo del total y el adelanto).
 import { getDb } from '../db/connection.js';
+import { calcularPrecio } from '../patterns/precio.js';
 
 export const HORARIOS = ['09:00', '10:00', '11:00', '12:00', '13:30', '14:30', '15:30', '16:30', '17:30'];
 export const PORCENTAJE_ADELANTO = 0.3;
@@ -27,10 +28,11 @@ export const CitaModel = {
     return null;
   },
 
-  calcularMontos(precioServicio, recargoDiseno, metodoPago) {
-    const total = precioServicio + (recargoDiseno || 0);
+  // Usa el patrón Decorator (patterns/precio.js): servicio → recargo de diseño → cupón
+  calcularMontos(servicio, recargoDiseno, metodoPago, cupon = null) {
+    const { total, descuento, detalle } = calcularPrecio(servicio, recargoDiseno, cupon);
     const anticipo = metodoPago === 'salon' ? 0 : Math.round(total * PORCENTAJE_ADELANTO);
-    return { total, anticipo };
+    return { total, descuento, anticipo, detalle };
   },
 
   horasOcupadas: (especialistaId, fecha) => getDb().prepare(`
@@ -48,9 +50,9 @@ export const CitaModel = {
   crear(c) {
     const r = getDb().prepare(`
       INSERT INTO citas (servicio_id, especialista_id, diseno_id, foto_ref_id, cliente_nombre, cliente_telefono, cliente_email,
-                         notas, fecha, hora, estado, total, anticipo, metodo_pago)
+                         notas, fecha, hora, estado, total, anticipo, cupon_codigo, descuento, metodo_pago)
       VALUES (@servicioId, @especialistaId, @disenoId, @fotoRefId, @nombre, @telefono, @email,
-              @notas, @fecha, @hora, @estado, @total, @anticipo, @metodoPago)
+              @notas, @fecha, @hora, @estado, @total, @anticipo, @cuponCodigo, @descuento, @metodoPago)
     `).run(c);
     return this.buscarPorId(r.lastInsertRowid);
   },

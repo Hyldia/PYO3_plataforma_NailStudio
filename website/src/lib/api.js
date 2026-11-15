@@ -27,9 +27,15 @@ const qs = (params) => {
 
 export const api = {
   servicios: () => pedir('/servicios'),
+  cupones: () => pedir('/cupones'),
+  validarCupon: (codigo, servicioId, recargo = 0) => pedir(`/cupones/validar${qs({ codigo, servicioId, recargo })}`),
   especialistas: () => pedir('/especialistas'),
   fotos: (params = {}) => pedir(`/fotos${qs(params)}`),
   filtrosFotos: () => pedir('/fotos/filtros'),
+  foto: (id) => pedir(`/fotos/${id}`),
+  fotosRelacionadas: (id, limite = 15) => pedir(`/fotos/${id}/relacionados${qs({ limite })}`),
+  producto: (id) => pedir(`/productos/${id}`),
+  productosRelacionados: (id, limite = 15) => pedir(`/productos/${id}/relacionados${qs({ limite })}`),
   vistaFoto: (id) => pedir(`/fotos/${id}/vista`, { method: 'POST' }).catch(() => {}),
   productos: (params = {}) => pedir(`/productos${qs(params)}`),
   categoriasProductos: () => pedir('/productos/categorias'),
@@ -46,6 +52,15 @@ export const api = {
     editarFoto: (id, datos) => pedir(`/admin/fotos/${id}`, { method: 'PUT', body: datos, admin: true }),
     borrarFoto: (id) => pedir(`/admin/fotos/${id}`, { method: 'DELETE', admin: true }),
     imagenProducto: (id, formData) => pedir(`/admin/productos/${id}/imagen`, { method: 'POST', body: formData, admin: true }),
-    pedidos: () => pedir('/admin/pedidos', { admin: true })
+    pedidos: () => pedir('/admin/pedidos', { admin: true }),
+    tablas: () => pedir('/admin/tablas', { admin: true }),
+    tabla: (nombre, params) => pedir(`/admin/tablas/${encodeURIComponent(nombre)}${qs(params)}`, { admin: true }),
+    async descargarCsv(nombre) {
+      const res = await fetch(`/api/admin/tablas/${encodeURIComponent(nombre)}/csv`, { headers: { 'x-admin-token': sesionAdmin.obtener() } });
+      if (!res.ok) throw new Error('No se pudo descargar la tabla.');
+      const url = URL.createObjectURL(await res.blob());
+      const a = Object.assign(document.createElement('a'), { href: url, download: `${nombre}.csv` });
+      a.click(); URL.revokeObjectURL(url);
+    }
   }
 };

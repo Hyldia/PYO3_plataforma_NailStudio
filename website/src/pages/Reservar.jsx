@@ -37,6 +37,9 @@ export default function Reservar() {
   const [pago, setPago] = useState({ comprobante: '', numero: '' });
   const [rec, setRec] = useState({ whatsapp: true, correo: false });
   const [estado, setEstado] = useState({ enviando: false, error: '', cita: null });
+  const [codigoCupon, setCodigoCupon] = useState((params.get('cupon') || '').toUpperCase());
+  const [cupon, setCupon] = useState(null);
+  const [errorCupon, setErrorCupon] = useState('');
 
   useEffect(() => {
     Promise.all([api.servicios(), api.especialistas()])
@@ -52,8 +55,22 @@ export default function Reservar() {
   const servicio = servicios.find((s) => s.id === sel.servicioId);
   const especialista = especialistas.find((e) => e.id === sel.especialistaId);
   const recargo = reserva.diseno?.precio || 0;
-  const total = (servicio?.precio || 0) + recargo;
+  const precioServicio = servicio ? (servicio.precio_oferta ?? servicio.precio) : 0;
+  const total = cupon ? cupon.total : precioServicio + recargo;
   const anticipo = metodo === 'salon' ? 0 : Math.round(total * 0.3);
+
+  // Cupón: se valida en el servidor (patrón Decorator) y se vuelve a validar si cambia el servicio o el diseño
+  async function aplicarCupon(codigo = codigoCupon, silencioso = false) {
+    if (!codigo.trim() || !servicio) return;
+    try {
+      setCupon(await api.validarCupon(codigo.trim(), servicio.id, recargo));
+      setErrorCupon('');
+    } catch (e) {
+      setCupon(null);
+      if (!silencioso || cupon) setErrorCupon(e.message);
+    }
+  }
+  useEffect(() => { if (codigoCupon && servicio) aplicarCupon(codigoCupon, !cupon); }, [servicio?.id, recargo]);
   const puedeSeguir = [servicio && especialista, sel.hora, true][paso];
 
   async function confirmar(e) {
@@ -64,7 +81,7 @@ export default function Reservar() {
       if (reserva.diseno) disenoId = (await api.guardarDiseno({ ...reserva.diseno, notas, fotoRefId: reserva.fotoRef?.id })).id;
       const cita = await api.crearCita({
         servicioId: sel.servicioId, especialistaId: sel.especialistaId, fecha: sel.fecha, hora: sel.hora,
-        disenoId, fotoRefId: reserva.fotoRef?.id, notas, cliente, metodoPago: metodo, pago, recordatorios: rec
+        disenoId, fotoRefId: reserva.fotoRef?.id, notas, cliente, metodoPago: metodo, pago, recordatorios: rec, cupon: cupon?.codigo
       });
       setEstado({ enviando: false, error: '', cita });
       reiniciar();
@@ -114,7 +131,9 @@ export default function Reservar() {
                     <label key={s.id} className="opcion">
                       <input type="radio" name="servicio" checked={sel.servicioId === s.id} onChange={() => setSel({ ...sel, servicioId: s.id })} />
                       <span className="opcion__texto"><strong>{s.nombre}</strong><span className="tenue">{s.duracion_min} min, {s.categoria.toLowerCase()}</span></span>
-                      <span className="opcion__precio">{dinero(s.precio)}</span>
+                      <span className="opcion__precio">
+                        {s.precio_oferta != null && <s className="tenue">{dinero(s.precio)}</s>} {dinero(s.precio_oferta ?? s.precio)}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -197,6 +216,28 @@ export default function Reservar() {
               </fieldset>
 
               <fieldset className="grupo">
+                <legend className="grupo__titulo">Cupón de descuento</legend>
+                {cupon ? (
+                  <div className="cupon-aplicado" role="status">
+                    <span>{cupon.codigo}: ahorras {dinero(cupon.descuento)}</span>
+                    <button type="button" className="enlace enlace--boton" onClick={() => { setCupon(null); setCodigoCupon(''); }}>Quitar</button>
+                  </div>
+                ) : (
+                  <div className="cupon-reserva">
+                    <div className="campo">
+                      <label htmlFor="r-cupon">Código <span className="tenue">(opcional)</span></label>
+                      <input id="r-cupon" value={codigoCupon} onChange={(e) => setCodigoCupon(e.target.value.toUpperCase())}
+                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); aplicarCupon(); } }}
+                             aria-describedby={errorCupon ? 'r-cupon-error' : undefined} placeholder="Por ejemplo, BIENVENIDA15" />
+                    </div>
+                    <button type="button" className="boton boton--contorno" onClick={() => aplicarCupon()} disabled={!codigoCupon.trim()}>Aplicar</button>
+                  </div>
+                )}
+                {errorCupon && <p id="r-cupon-error" role="alert" className="error">{errorCupon}</p>}
+                <Link to="/servicios" className="enlace">Ver cupones disponibles</Link>
+              </fieldset>
+
+              <fieldset className="grupo">
                 <legend className="grupo__titulo">Adelanto</legend>
                 <p className="tenue">Para apartar tu espacio pedimos el 30 % del total. El resto se paga en el salón.</p>
                 <div className="opciones-lista">
@@ -257,6 +298,9 @@ export default function Reservar() {
             <dt>Especialista</dt><dd>{especialista ? especialista.nombre : '—'}</dd>
             <dt>Fecha</dt><dd>{sel.hora ? `${LARGA.format(deISO(sel.fecha))}, ${sel.hora}` : '—'}</dd>
             {recargo > 0 && <><dt>Recargo por diseño</dt><dd>{dinero(recargo)}</dd></>}
+            {servicio && (servicio.precio_oferta != null || cupon) && <><dt>Precio regular</dt><dd>{dinero(servicio.precio)}</dd></>}
+            {servicio?.precio_oferta != null && <><dt>Oferta</dt><dd className="resumen__descuento">-{dinero(servicio.precio - servicio.precio_oferta)}</dd></>}
+            {cupon && <><dt>Cupón {cupon.codigo}</dt><dd className="resumen__descuento">-{dinero(cupon.descuento)}</dd></>}
             <dt className="resumen__total">Total</dt><dd className="resumen__total">{servicio ? dinero(total) : '—'}</dd>
             {paso === 2 && <><dt>Pagas hoy</dt><dd>{dinero(anticipo)}</dd></>}
           </dl>

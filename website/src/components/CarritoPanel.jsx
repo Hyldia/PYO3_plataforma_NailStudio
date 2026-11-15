@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { api } from '../lib/api.js';
 import { SALON, dinero } from '../config.js';
-import Foto from './Foto.jsx';
+import ProductoImagen from './ProductoImagen.jsx';
 
 export default function CarritoPanel() {
   const carrito = useCarrito();
@@ -23,10 +23,10 @@ export default function CarritoPanel() {
     setEstado({ enviando: true, error: '', pedido: null });
     try {
       const pedido = await api.crearPedido({
-        items: carrito.items.map((i) => ({ productoId: i.id, cantidad: i.cantidad })),
+        items: carrito.elegidos.map((i) => ({ productoId: i.productoId ?? i.id, cantidad: i.cantidad, detalle: i.detalle })),
         cliente, metodoPago: metodo, pago: { comprobante }
       });
-      carrito.vaciar();
+      carrito.quitarSeleccionados();
       setEstado({ enviando: false, error: '', pedido });
     } catch (err) {
       setEstado({ enviando: false, error: err.message, pedido: null });
@@ -38,7 +38,7 @@ export default function CarritoPanel() {
             onClick={(e) => { if (e.target === dialogo.current) dialogo.current.close(); }}>
       <div className="panel__cuerpo">
         <div className="panel__cabeza">
-          <h2 id="carrito-titulo">Tu carrito</h2>
+          <h2 id="carrito-titulo">Hacer pedido</h2>
           <button type="button" className="boton-icono" onClick={() => dialogo.current.close()} aria-label="Cerrar carrito">
             <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>
@@ -50,28 +50,29 @@ export default function CarritoPanel() {
             <p>Total {dinero(estado.pedido.total)}. Te escribiremos por WhatsApp cuando esté listo para retirar en el salón.</p>
             <button type="button" className="boton" onClick={() => dialogo.current.close()}>Seguir viendo</button>
           </div>
-        ) : carrito.items.length === 0 ? (
-          <p className="tenue">Tu carrito está vacío. Agrega productos desde la tienda.</p>
+        ) : carrito.elegidos.length === 0 ? (
+          <p className="tenue">No hay artículos seleccionados. Marca en el carrito los que quieres pedir.</p>
         ) : (
           <form onSubmit={comprar} className="panel__form" noValidate>
             <ul className="carrito">
-              {carrito.items.map((i) => (
-                <li key={i.id} className="carrito__linea">
-                  <Foto archivo={i.imagen} alt="" className="carrito__foto" />
+              {carrito.elegidos.map((i) => (
+                <li key={i.clave} className="carrito__linea">
+                  <ProductoImagen producto={i} className="carrito__foto" />
                   <div>
                     <p className="carrito__nombre">{i.nombre}</p>
+                    {i.detalle && <p className="tenue carrito__detalle">{i.detalle}</p>}
                     <p className="tenue">{dinero(i.precio)}</p>
                     <div className="cantidad">
-                      <button type="button" onClick={() => carrito.cambiar(i.id, -1)} aria-label={`Quitar uno de ${i.nombre}`}>−</button>
+                      <button type="button" onClick={() => carrito.cambiar(i.clave, -1)} aria-label={`Quitar uno de ${i.nombre}`}>−</button>
                       <span aria-live="polite">{i.cantidad}</span>
-                      <button type="button" onClick={() => carrito.cambiar(i.id, 1)} aria-label={`Agregar uno de ${i.nombre}`}>+</button>
+                      <button type="button" onClick={() => carrito.cambiar(i.clave, 1)} aria-label={`Agregar uno de ${i.nombre}`}>+</button>
                     </div>
                   </div>
                   <span className="carrito__subtotal">{dinero(i.cantidad * i.precio)}</span>
                 </li>
               ))}
             </ul>
-            <p className="panel__total"><span>Total</span><strong>{dinero(carrito.total)}</strong></p>
+            <p className="panel__total"><span>Total</span><strong>{dinero(carrito.totalElegido)}</strong></p>
             <p className="tenue">Los pedidos se retiran en el salón.</p>
 
             <div className="campo">
@@ -90,7 +91,7 @@ export default function CarritoPanel() {
             {metodo === 'sinpe' && (
               <div className="campo">
                 <label htmlFor="pc-comp">Número de comprobante</label>
-                <p className="tenue" id="pc-comp-ayuda">Envía {dinero(carrito.total)} al {SALON.sinpe.numero} ({SALON.sinpe.nombre}).</p>
+                <p className="tenue" id="pc-comp-ayuda">Envía {dinero(carrito.totalElegido)} al {SALON.sinpe.numero} ({SALON.sinpe.nombre}).</p>
                 <input id="pc-comp" inputMode="numeric" aria-describedby="pc-comp-ayuda" value={comprobante} onChange={(e) => setComprobante(e.target.value)} />
               </div>
             )}

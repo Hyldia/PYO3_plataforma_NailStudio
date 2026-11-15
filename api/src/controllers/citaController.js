@@ -8,6 +8,7 @@ import { RecordatorioModel } from '../models/RecordatorioModel.js';
 import { crearMetodoPago } from '../patterns/pagos.js';
 import { aplicarAccion } from '../patterns/estadoCita.js';
 import { eventos } from '../patterns/eventos.js';
+import { CuponModel } from '../models/CuponModel.js';
 
 export const citaController = {
   disponibilidad(req, res) {
@@ -17,7 +18,7 @@ export const citaController = {
   },
 
   crear(req, res) {
-    const { servicioId, especialistaId, disenoId, fotoRefId, fecha, hora, cliente = {}, notas, metodoPago, pago, recordatorios = {} } = req.body;
+    const { servicioId, especialistaId, disenoId, fotoRefId, fecha, hora, cliente = {}, notas, metodoPago, pago, recordatorios = {}, cupon: codigoCupon } = req.body;
 
     const servicio = ServicioModel.buscarPorId(servicioId);
     if (!servicio) return res.status(400).json({ error: 'Elige un servicio.' });
@@ -30,7 +31,15 @@ export const citaController = {
     }
 
     const diseno = disenoId ? DisenoModel.buscarPorId(disenoId) : null;
-    const { total, anticipo } = CitaModel.calcularMontos(servicio.precio, diseno?.precio, metodoPago);
+    // Cupón opcional: se valida contra el subtotal (servicio + diseño)
+    let cupon = null;
+    if (codigoCupon) {
+      const subtotal = CitaModel.calcularMontos(servicio, diseno?.precio, metodoPago).total;
+      const v = CuponModel.validar(codigoCupon, { subtotal, esCombo: Boolean(servicio.es_combo) });
+      if (v.error) return res.status(400).json({ error: v.error });
+      cupon = v.cupon;
+    }
+    const { total, descuento, anticipo } = CitaModel.calcularMontos(servicio, diseno?.precio, metodoPago, cupon);
 
     // Strategy + Factory: el controlador no sabe cómo cobra cada método
     const metodo = crearMetodoPago(metodoPago);
@@ -42,10 +51,11 @@ export const citaController = {
       nombre: cliente.nombre.trim(), telefono: cliente.telefono.trim(), email: cliente.email?.trim() || null,
       notas: notas?.slice(0, 500) || null, fecha, hora,
       estado: cobro.requiereVerificacion ? 'pendiente' : 'confirmada',
-      total, anticipo, metodoPago: metodo.nombre
+      total, anticipo, cuponCodigo: cupon?.codigo ?? null, descuento, metodoPago: metodo.nombre
     });
 
     // Observer: quien esté suscrito (recordatorios) reacciona sin que el controlador lo conozca
+    if (cupon) CuponModel.registrarUso(cupon.codigo);
     eventos.emit('cita:creada', { cita, recordatorios });
     res.status(201).json({ ...cita, recordatorios: RecordatorioModel.listarDeCita(cita.id), referenciaPago: cobro.referencia });
   },

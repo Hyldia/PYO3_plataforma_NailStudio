@@ -1,6 +1,6 @@
 // Datos del salón: cámbialos por los reales. Todo el sitio los lee de aquí.
 export const SALON = {
-  nombre: 'Nailé',
+  nombre: 'AH Nails',
   descripcion: 'Salón de uñas',
   lema: 'Uñas cuidadas, diseños hechos a tu medida.',
   telefono: '+506 0000 0000',
@@ -25,5 +25,6 @@ export const SALON = {
 const formato = new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', maximumFractionDigits: 0 });
 export const dinero = (monto) => formato.format(monto ?? 0);
 
-export const urlFoto = (archivo) => (archivo ? `/uploads/${archivo}` : null);
+// Las fotos subidas desde el panel viven en /uploads; las de bancos gratuitos son URL completas
+export const urlFoto = (archivo) => (!archivo ? null : archivo.startsWith('http') ? archivo : `/uploads/${archivo}`);
 export const enlaceWhatsApp = (texto = '') => `https://wa.me/${SALON.whatsapp}${texto ? `?text=${encodeURIComponent(texto)}` : ''}`;

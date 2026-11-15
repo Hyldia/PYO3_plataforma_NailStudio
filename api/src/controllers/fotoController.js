@@ -3,11 +3,15 @@ import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { UPLOADS_DIR } from '../db/connection.js';
 import { FotoModel } from '../models/FotoModel.js';
+import { conPrecios } from './detalleController.js';
 
-const borrarArchivo = (nombre) => nombre && unlink(join(UPLOADS_DIR, nombre)).catch(() => {});
+const borrarArchivo = (nombre) => nombre && !nombre.startsWith('http') && unlink(join(UPLOADS_DIR, nombre)).catch(() => {});
 
 export const fotoController = {
-  buscar: (req, res) => res.json(FotoModel.buscar(req.query)),
+  buscar(req, res) {
+    const r = FotoModel.buscar(req.query);
+    res.json({ ...r, fotos: conPrecios(r.fotos) });
+  },
   opcionesDeFiltro: (req, res) => res.json(FotoModel.opcionesDeFiltro()),
 
   registrarVista(req, res) {

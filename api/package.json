@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "seed": "node src/db/seed.js"
+    "seed": "node src/db/seed.js",
+    "limpiar": "node src/db/limpiar.js",
+    "fotos": "node src/db/fotosUnsplash.js",
+    "fotos-productos": "node src/db/fotosProductos.js",
+    "importar": "node src/db/importarCarpeta.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",

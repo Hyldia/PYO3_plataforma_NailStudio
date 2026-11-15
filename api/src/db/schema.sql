@@ -7,7 +7,26 @@ CREATE TABLE IF NOT EXISTS servicios (
   categoria     TEXT NOT NULL,             -- Manos, Pies, Extensiones
   duracion_min  INTEGER NOT NULL,
   precio        REAL NOT NULL,
+  precio_oferta REAL,                     -- precio rebajado (NULL si no hay oferta)
+  incluye       TEXT,                     -- lista separada por |
+  etiqueta      TEXT,                     -- Más pedido, Nuevo, Oferta, Especial
+  imagen        TEXT,
+  es_combo      INTEGER NOT NULL DEFAULT 0,
+  destacado     INTEGER NOT NULL DEFAULT 0,
   activo        INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS cupones (
+  codigo       TEXT PRIMARY KEY,
+  descripcion  TEXT NOT NULL,
+  tipo         TEXT NOT NULL CHECK (tipo IN ('porcentaje', 'monto')),
+  valor        REAL NOT NULL,
+  minimo       REAL NOT NULL DEFAULT 0,      -- compra mínima
+  vence        TEXT,                         -- AAAA-MM-DD
+  solo_combos  INTEGER NOT NULL DEFAULT 0,
+  publico      INTEGER NOT NULL DEFAULT 1,   -- se muestra en la página de servicios
+  activo       INTEGER NOT NULL DEFAULT 1,
+  usos         INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS especialistas (
@@ -29,6 +48,8 @@ CREATE TABLE IF NOT EXISTS fotos (
   acabado     TEXT,                        -- Brillante, Mate, Chrome, Glitter
   etiquetas   TEXT,                        -- texto libre separado por comas
   destacada   INTEGER NOT NULL DEFAULT 0,
+  autor       TEXT,                        -- crédito de la foto (bancos gratuitos)
+  autor_url   TEXT,
   vistas      INTEGER NOT NULL DEFAULT 0,
   creado_en   TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -64,6 +85,8 @@ CREATE TABLE IF NOT EXISTS citas (
   estado           TEXT NOT NULL DEFAULT 'pendiente',
   total            REAL NOT NULL,
   anticipo         REAL NOT NULL,
+  cupon_codigo     TEXT,
+  descuento        REAL NOT NULL DEFAULT 0,
   metodo_pago      TEXT NOT NULL,
   creado_en        TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -86,8 +109,16 @@ CREATE TABLE IF NOT EXISTS productos (
   categoria    TEXT NOT NULL,
   marca        TEXT,
   precio       REAL NOT NULL,
+  precio_anterior REAL,                 -- precio antes del descuento (NULL si no hay oferta)
+  calificacion REAL,                    -- promedio de estrellas (1 a 5)
+  resenas      INTEGER NOT NULL DEFAULT 0,
+  vendidos     INTEGER NOT NULL DEFAULT 0,
   stock        INTEGER NOT NULL DEFAULT 0,
   imagen       TEXT,
+  imagen_autor     TEXT,                -- crédito si la foto es de Unsplash
+  imagen_autor_url TEXT,
+  color        TEXT,                    -- color de la ilustración cuando no hay foto
+  tipo         TEXT,                    -- frasco, lampara, alicate, lima, crema... (ilustración)
   creado_en    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -108,5 +139,12 @@ CREATE TABLE IF NOT EXISTS pedido_items (
   pedido_id        INTEGER NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
   producto_id      INTEGER NOT NULL REFERENCES productos(id),
   cantidad         INTEGER NOT NULL CHECK (cantidad > 0),
-  precio_unitario  REAL NOT NULL
+  precio_unitario  REAL NOT NULL,
+  detalle          TEXT                 -- variante elegida, por ejemplo el diseño del press-on
+);
+
+-- Ajustes internos (por ejemplo, qué versión de las fotos de muestra ya se cargó)
+CREATE TABLE IF NOT EXISTS ajustes (
+  clave  TEXT PRIMARY KEY,
+  valor  TEXT
 );

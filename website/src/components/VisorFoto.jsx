@@ -45,6 +45,11 @@ export default function VisorFoto({ fotos, indice, onCambiar, onCerrar, onReserv
           <h2 id="visor-titulo">{foto.titulo}</h2>
           {foto.descripcion && <p>{foto.descripcion}</p>}
           <ul className="etiquetas">{detalles.map((d) => <li key={d}>{d}</li>)}</ul>
+          {foto.autor && (
+            <p className="tenue">
+              Foto de <a className="enlace" href={foto.autor_url} target="_blank" rel="noreferrer">{foto.autor}</a> en Unsplash
+            </p>
+          )}
           <button type="button" className="boton" onClick={() => onReservar(foto)}>Quiero este diseño</button>
           <button type="button" className="enlace enlace--boton" onClick={() => onReservar(foto, '/disena')}>Personalizarlo antes de reservar</button>
         </div>

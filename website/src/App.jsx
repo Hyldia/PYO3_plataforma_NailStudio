@@ -12,6 +12,13 @@ import Tienda from './pages/Tienda.jsx';
 import Contacto from './pages/Contacto.jsx';
 import Admin from './pages/Admin.jsx';
 import NoEncontrada from './pages/NoEncontrada.jsx';
+import Buscar from './pages/Buscar.jsx';
+import Animaciones from './components/Animaciones.jsx';
+import Aviso from './components/Aviso.jsx';
+import CarritoLateral from './components/CarritoLateral.jsx';
+import DisenoDetalle from './pages/DisenoDetalle.jsx';
+import Carrito from './pages/Carrito.jsx';
+import ProductoDetalle from './pages/ProductoDetalle.jsx';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -39,11 +46,18 @@ export default function App() {
           <Route path="/tienda" element={<Tienda />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/buscar" element={<Buscar />} />
+          <Route path="/galeria/:id" element={<DisenoDetalle />} />
+          <Route path="/tienda/:id" element={<ProductoDetalle />} />
+          <Route path="/carrito" element={<Carrito />} />
           <Route path="*" element={<NoEncontrada />} />
         </Routes>
       </main>
       <Pie />
       <CarritoPanel />
+      <Aviso />
+      <CarritoLateral />
+      <Animaciones />
     </>
   );
 }

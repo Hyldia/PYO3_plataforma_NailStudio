@@ -1,3 +1,4 @@
+import { SALON } from '../config.js';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReserva } from '../context/ReservaContext.jsx';
@@ -17,5 +18,5 @@ export function useUsarFoto() {
 }
 
 export function useTitulo(titulo) {
-  useEffect(() => { document.title = titulo ? `${titulo} · Nailé` : 'Nailé · Salón de uñas'; }, [titulo]);
+  useEffect(() => { document.title = titulo ? `${titulo} · ${SALON.nombre}` : `${SALON.nombre} · Salón de uñas`; }, [titulo]);
 }

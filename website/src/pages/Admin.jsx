@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api, sesionAdmin } from '../lib/api.js';
-import { dinero, enlaceWhatsApp } from '../config.js';
+import { SALON, dinero, enlaceWhatsApp } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
+import ProductoImagen from '../components/ProductoImagen.jsx';
 
 const CATEGORIAS = ['Manicure', 'Acrílicas', 'Polygel', 'Gel', 'Pedicure', 'Nail art'];
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
-const COLORES = ['Nude', 'Rosa', 'Rojo', 'Vino', 'Morado', 'Azul', 'Verde', 'Negro', 'Blanco', 'Multicolor'];
+const COLORES = ['Nude', 'Rosa', 'Rojo', 'Vino', 'Morado', 'Azul', 'Verde', 'Negro', 'Blanco', 'Dorado', 'Multicolor'];
 const ACABADOS = ['Brillante', 'Mate', 'Chrome', 'Glitter'];
 const ACCIONES = { pendiente: ['confirmar', 'cancelar'], confirmada: ['completar', 'cancelar'], completada: [], cancelada: [] };
 const TEXTO_ACCION = { confirmar: 'Confirmar', completar: 'Marcar atendida', cancelar: 'Cancelar' };
@@ -59,7 +60,7 @@ function Agenda() {
               {citas.map((c) => (
                 <tr key={c.id}>
                   <td>{c.hora}</td>
-                  <td>{c.cliente_nombre}<br /><a className="enlace" href={enlaceWhatsApp(`Hola ${c.cliente_nombre}, te escribimos de Nailé sobre tu cita del ${c.fecha} a las ${c.hora}.`)} target="_blank" rel="noreferrer">{c.cliente_telefono}</a></td>
+                  <td>{c.cliente_nombre}<br /><a className="enlace" href={enlaceWhatsApp(`Hola ${c.cliente_nombre}, te escribimos de ${SALON.nombre} sobre tu cita del ${c.fecha} a las ${c.hora}.`)} target="_blank" rel="noreferrer">{c.cliente_telefono}</a></td>
                   <td>{c.servicio}<br /><span className="tenue">con {c.especialista}</span></td>
                   <td>
                     {c.forma ? `${c.forma}, ${c.largo}, ${c.color}, ${c.acabado}${c.decoracion !== 'Ninguna' ? `, ${c.decoracion}` : ''}` : <span className="tenue">En el salón</span>}
@@ -203,7 +204,7 @@ function Productos() {
       <ul className="admin-fotos">
         {productos.map((p) => (
           <li key={p.id} className="admin-foto">
-            <Foto archivo={p.imagen} alt={p.nombre} />
+            <ProductoImagen producto={p} />
             <div className="admin-foto__info">
               <p><strong>{p.nombre}</strong></p>
               <p className="tenue">{dinero(p.precio)}, {p.stock} en stock</p>
@@ -239,7 +240,92 @@ function Pedidos() {
   );
 }
 
-const SECCIONES = { agenda: ['Agenda', Agenda], galeria: ['Galería', Galeria], productos: ['Productos', Productos], pedidos: ['Pedidos', Pedidos] };
+
+// Nombres legibles de las tablas para el panel
+const NOMBRE_TABLA = {
+  citas: 'Citas', disenos: 'Diseños', recordatorios: 'Recordatorios', pedidos: 'Pedidos', pedido_items: 'Productos de cada pedido',
+  productos: 'Productos', servicios: 'Servicios', especialistas: 'Especialistas', fotos: 'Fotos de la galería', ajustes: 'Ajustes internos'
+};
+
+function BaseDeDatos() {
+  const [tablas, setTablas] = useState([]);
+  const [tabla, setTabla] = useState('citas');
+  const [datos, setDatos] = useState(null);
+  const [pagina, setPagina] = useState(1);
+  const [texto, setTexto] = useState('');
+  const [q, setQ] = useState('');
+  const [verSql, setVerSql] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => { api.admin.tablas().then(setTablas).catch((e) => setError(e.message)); }, []);
+  useEffect(() => { const t = setTimeout(() => { setQ(texto); setPagina(1); }, 300); return () => clearTimeout(t); }, [texto]);
+  useEffect(() => {
+    api.admin.tabla(tabla, { pagina, porPagina: 25, q }).then((d) => { setDatos(d); setError(''); }).catch((e) => setError(e.message));
+  }, [tabla, pagina, q]);
+
+  const elegir = (t) => { setTabla(t); setPagina(1); setTexto(''); setQ(''); };
+  const info = tablas.find((t) => t.nombre === tabla);
+  const paginas = datos ? Math.max(1, Math.ceil(datos.total / datos.porPagina)) : 1;
+  const celda = (v) => (v === null || v === undefined ? <span className="tenue">vacío</span>
+    : typeof v === 'string' && v.startsWith('http') ? <a className="enlace" href={v} target="_blank" rel="noreferrer">ver</a>
+    : String(v));
+
+  return (
+    <section aria-labelledby="t-bd">
+      <div className="admin__cabeza">
+        <h2 id="t-bd">Base de datos</h2>
+        <p className="tenue">Solo lectura. Así se ve lo que el sitio guarda en SQLite.</p>
+      </div>
+      {error && <p role="alert" className="error">{error}</p>}
+      <div className="bd">
+        <nav className="bd__tablas" aria-label="Tablas">
+          {tablas.map((t) => (
+            <button key={t.nombre} type="button" aria-current={tabla === t.nombre ? 'true' : undefined} onClick={() => elegir(t.nombre)}>
+              <span>{NOMBRE_TABLA[t.nombre] || t.nombre}<span className="bd__tecnico">{t.nombre}</span></span>
+              <span className="bd__cuenta">{t.filas}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="bd__contenido">
+          <div className="barra-busqueda">
+            <label className="buscador">
+              <span className="solo-lector">Buscar en la tabla</span>
+              <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={`Buscar en ${NOMBRE_TABLA[tabla] || tabla}`} />
+            </label>
+            <button type="button" className="boton boton--contorno boton--chico" onClick={() => setVerSql(!verSql)} aria-expanded={verSql}>
+              {verSql ? 'Ocultar estructura' : 'Ver estructura (SQL)'}
+            </button>
+            <button type="button" className="boton boton--chico" onClick={() => api.admin.descargarCsv(tabla).catch((e) => setError(e.message))}>Descargar CSV</button>
+          </div>
+          {verSql && info && <pre className="bd__sql">{info.sql}</pre>}
+          {datos && (
+            <>
+              <p aria-live="polite"><strong>{datos.total}</strong> {datos.total === 1 ? 'fila' : 'filas'}{q && ` que contienen «${q}»`}</p>
+              <div className="tabla-envoltura">
+                <table className="tabla tabla--datos">
+                  <caption className="solo-lector">Tabla {tabla}, página {pagina} de {paginas}</caption>
+                  <thead><tr>{datos.columnas.map((c) => <th key={c} scope="col">{c}</th>)}</tr></thead>
+                  <tbody>
+                    {datos.filas.map((f, i) => (
+                      <tr key={f.id ?? i}>{datos.columnas.map((c) => <td key={c}>{celda(f[c])}</td>)}</tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="paginacion">
+                <button type="button" className="boton boton--contorno boton--chico" disabled={pagina <= 1} onClick={() => setPagina(pagina - 1)}>Anterior</button>
+                <span>Página {pagina} de {paginas}</span>
+                <button type="button" className="boton boton--contorno boton--chico" disabled={pagina >= paginas} onClick={() => setPagina(pagina + 1)}>Siguiente</button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const SECCIONES = { agenda: ['Agenda', Agenda], galeria: ['Galería', Galeria], productos: ['Productos', Productos], pedidos: ['Pedidos', Pedidos], bd: ['Base de datos', BaseDeDatos] };
 
 export default function Admin() {
   useTitulo('Panel del salón');

@@ -31,9 +31,10 @@ export const FotoModel = {
     const db = getDb();
     const { sql, params } = construirFiltro(filtros);
     const total = db.prepare(`SELECT COUNT(*) AS n FROM fotos ${sql}`).get(params).n;
+    // "puesto": lugar de la foto entre las más vistas de su categoría (para la insignia "#1 más popular")
     const lim = Math.min(Number(limite) || 60, 100);
     const offset = (Math.max(Number(pagina) || 1, 1) - 1) * lim;
-    const fotos = db.prepare(`SELECT * FROM fotos ${sql} ORDER BY ${ORDEN[orden] || ORDEN.recientes} LIMIT ${lim} OFFSET ${offset}`).all(params);
+    const fotos = db.prepare(`SELECT * FROM (SELECT f.*, RANK() OVER (PARTITION BY categoria ORDER BY vistas DESC) AS puesto FROM fotos f) ${sql} ORDER BY ${ORDEN[orden] || ORDEN.recientes} LIMIT ${lim} OFFSET ${offset}`).all(params);
     return { total, fotos };
   },
 
@@ -47,6 +48,19 @@ export const FotoModel = {
   },
 
   buscarPorId: (id) => getDb().prepare('SELECT * FROM fotos WHERE id = ?').get(id),
+
+  conPuesto: (id) => getDb().prepare('SELECT * FROM (SELECT f.*, RANK() OVER (PARTITION BY categoria ORDER BY vistas DESC) AS puesto FROM fotos f) WHERE id = ?').get(id),
+
+  // Diseños parecidos: misma categoría, color, forma o acabado (los que más coinciden primero)
+  relacionados(id, limite = 10) {
+    const f = this.buscarPorId(id);
+    if (!f) return [];
+    return getDb().prepare(`
+      SELECT * FROM (SELECT f.*, RANK() OVER (PARTITION BY categoria ORDER BY vistas DESC) AS puesto FROM fotos f)
+      WHERE id != @id
+      ORDER BY (categoria = @categoria) * 3 + (color IS @color) * 2 + (forma IS @forma) * 2 + (acabado IS @acabado) DESC, vistas DESC
+      LIMIT @limite`).all({ id: f.id, categoria: f.categoria, color: f.color, forma: f.forma, acabado: f.acabado, limite: Math.min(Number(limite) || 10, 40) });
+  },
   sumarVista: (id) => getDb().prepare('UPDATE fotos SET vistas = vistas + 1 WHERE id = ?').run(id),
 
   crear(f) {

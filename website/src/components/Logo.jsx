@@ -1,15 +1,17 @@
 import { SALON } from '../config.js';
 
-// Logo provisional: si el salón tiene su logo, reemplaza este componente por
-// <img src="/logo.svg" alt={SALON.nombre} /> con el archivo real en website/public.
+// Logo: monograma «AH» en letra cursiva y la palabra NAILS en mayúsculas espaciadas,
+// separados por una línea fina. Si el salón tiene un logo en imagen, reemplacen este componente
+// por <img src="/logo.svg" alt={SALON.nombre} />.
 export default function Logo({ claro = false }) {
   return (
-    <span className={`logo ${claro ? 'logo--claro' : ''}`}>
-      <svg aria-hidden="true" viewBox="0 0 40 52" className="logo__marca">
-        <path d="M10 48V24c0-9 5-17 10-21 5 4 10 12 10 21v24c0 4-20 4-20 0z" fill="currentColor" />
-        <path d="M15 23c0-5 2-9 4-12" stroke="var(--logo-brillo)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-      </svg>
-      <span className="logo__texto">{SALON.nombre}</span>
+    <span className={`logo ${claro ? 'logo--claro' : ''}`} aria-label={SALON.nombre} role="img">
+      <span className="logo__monograma" aria-hidden="true">AH</span>
+      <span className="logo__separador" aria-hidden="true" />
+      <span className="logo__palabra" aria-hidden="true">
+        <span className="logo__nails">Nails</span>
+        <span className="logo__studio">studio</span>
+      </span>
     </span>
   );
 }

@@ -11,10 +11,10 @@ export const pedidoController = {
     if (errorCliente) return res.status(400).json({ error: errorCliente });
 
     // Los precios se leen de la base de datos, no del navegador
-    const lineas = items.map(({ productoId, cantidad }) => {
+    const lineas = items.map(({ productoId, cantidad, detalle }) => {
       const p = ProductoModel.buscarPorId(productoId);
       if (!p) throw new Error('Uno de los productos ya no está disponible.');
-      return { productoId: p.id, nombre: p.nombre, precio: p.precio, cantidad: Math.max(1, Number(cantidad) || 1) };
+      return { productoId: p.id, nombre: p.nombre, precio: p.precio, cantidad: Math.max(1, Number(cantidad) || 1), detalle: detalle ? String(detalle).slice(0, 300) : null };
     });
     const total = lineas.reduce((s, l) => s + l.precio * l.cantidad, 0);
 

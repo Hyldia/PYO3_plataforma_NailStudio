@@ -35,7 +35,7 @@ export default function Pie() {
         </div>
       </div>
       <div className="contenedor pie__legal">
-        <span>© {new Date().getFullYear()} {SALON.nombre}. Todos los derechos reservados.</span>
+        <span>© {new Date().getFullYear()} {SALON.nombre}. Fotos de muestra: <a href="https://unsplash.com" target="_blank" rel="noreferrer">Unsplash</a>.</span>
         <Link to="/admin">Acceso del salón</Link>
       </div>
     </footer>

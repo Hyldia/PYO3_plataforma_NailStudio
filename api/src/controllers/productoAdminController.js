@@ -9,7 +9,7 @@ export const productoAdminController = {
   cambiarImagen(req, res) {
     const producto = ProductoModel.buscarPorId(req.params.id);
     if (!producto || !req.file) return res.status(400).json({ error: 'Producto o imagen no válidos.' });
-    if (producto.imagen) unlink(join(UPLOADS_DIR, producto.imagen)).catch(() => {});
+    if (producto.imagen && !producto.imagen.startsWith('http')) unlink(join(UPLOADS_DIR, producto.imagen)).catch(() => {});
     ProductoModel.cambiarImagen(producto.id, req.file.filename);
     res.json(ProductoModel.buscarPorId(producto.id));
   },

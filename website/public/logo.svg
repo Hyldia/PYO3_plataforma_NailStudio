@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 56" role="img" aria-label="Nailé">
-  <path d="M16 50V26c0-9 5-17 10-21 5 4 10 12 10 21v24c0 4-20 4-20 0z" fill="#8C1D4B"/>
-  <path d="M21 25c0-5 2-9 4-12" stroke="#F8EEF0" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-  <text x="48" y="40" font-family="'Bodoni Moda', Didot, 'Times New Roman', serif" font-size="34" font-weight="500" fill="#22161C">Nailé</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" role="img" aria-label="AH Nails">
+  <text x="4" y="48" font-family="'Great Vibes','Brush Script MT','Segoe Script',cursive" font-size="50" fill="#8C1D4B">AH</text>
+  <line x1="92" y1="14" x2="92" y2="50" stroke="#8C1D4B" stroke-opacity=".35"/>
+  <text x="106" y="32" font-family="Poppins, Arial, sans-serif" font-size="20" font-weight="500" letter-spacing="6" fill="#22161C">NAILS</text>
+  <text x="106" y="50" font-family="Arial, sans-serif" font-size="11" letter-spacing="5" fill="#5E4852">STUDIO</text>
 </svg>

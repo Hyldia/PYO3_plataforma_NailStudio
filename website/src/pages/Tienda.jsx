@@ -1,28 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { dinero } from '../config.js';
-import { useCarrito } from '../context/CarritoContext.jsx';
 import { useDebounce, useTitulo } from '../lib/hooks.js';
-import Foto from '../components/Foto.jsx';
+import TarjetaProducto from '../components/TarjetaProducto.jsx';
+import Desplegable from '../components/Desplegable.jsx';
+
+const POR_PAGINA = 30;
+const ORDENES = { relevancia: 'Relevancia', vendidos: 'Más vendidos', descuento: 'Mayor descuento', calificacion: 'Mejor calificados', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', nuevos: 'Más nuevos' };
+const RANGOS = [['', '', 'Cualquier precio'], ['', '3000', 'Hasta ₡3 000'], ['3000', '8000', '₡3 000 a ₡8 000'], ['8000', '20000', '₡8 000 a ₡20 000'], ['20000', '', 'Más de ₡20 000']];
 
 export default function Tienda() {
   useTitulo('Tienda');
   const [params, setParams] = useSearchParams();
   const [texto, setTexto] = useState(params.get('q') || '');
   const q = useDebounce(texto);
-  const [precio, setPrecio] = useState({ min: params.get('min') || '', max: params.get('max') || '' });
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [aviso, setAviso] = useState('');
   const [error, setError] = useState('');
-  const [panel, setPanel] = useState(false);
-  const carrito = useCarrito();
+  const [visibles, setVisibles] = useState(POR_PAGINA);
 
-  const categoria = params.get('categoria') || 'Todas';
+  const categoria = params.get('categoria') || '';
   const orden = params.get('orden') || 'relevancia';
+  const ofertas = params.get('ofertas') === '1';
   const disponibles = params.get('disponibles') === '1';
+  const rango = RANGOS.find(([mn, mx]) => mn === (params.get('min') || '') && mx === (params.get('max') || '')) || RANGOS[0];
 
   const fijar = (cambios) => {
     const p = new URLSearchParams(params);
@@ -31,100 +33,89 @@ export default function Tienda() {
   };
 
   useEffect(() => { api.categoriasProductos().then(setCategorias).catch(() => {}); }, []);
-  useEffect(() => { fijar({ q: q.trim() }); }, [q]);
+  useEffect(() => { if ((params.get('q') || '') !== q.trim()) fijar({ q: q.trim() }); }, [q]);
   useEffect(() => {
     setCargando(true);
     api.productos(Object.fromEntries(params))
-      .then((p) => { setProductos(p); setError(''); })
+      .then((p) => { setProductos(p); setError(''); setVisibles(POR_PAGINA); })
       .catch((e) => setError(e.message))
       .finally(() => setCargando(false));
   }, [params]);
 
-  const aplicarPrecio = (e) => { e.preventDefault(); fijar({ min: precio.min, max: precio.max }); };
-  const agregar = (p) => { carrito.agregar(p); setAviso(`${p.nombre} se agregó al carrito.`); };
-  const limpiar = () => { setTexto(''); setPrecio({ min: '', max: '' }); setParams({}, { replace: true }); };
+  const limpiar = () => { setTexto(''); setParams({}, { replace: true }); };
+  const hayFiltros = categoria || ofertas || disponibles || rango !== RANGOS[0];
 
   return (
-    <div className="contenedor pagina">
-      <header className="pagina__cabeza">
-        <h1>Tienda</h1>
-        <p className="tenue">Productos que usamos en el salón, para mantener tus uñas en casa. Se retiran en el local.</p>
+    <div className="contenedor pagina pagina--resultados">
+      <header className="resultados-cabeza">
+        <div>
+          <h1>{categoria || (ofertas ? 'Ofertas' : 'Tienda')}</h1>
+          <p className="tenue">Productos profesionales para tus uñas y tus manos. Se retiran gratis en el salón.</p>
+        </div>
+        <label className="buscador buscador--chico">
+          <span className="solo-lector">Buscar productos</span>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Busca: rubber base, lámpara, lima…" />
+        </label>
       </header>
 
-      <div className="barra-busqueda">
-        <label className="buscador">
-          <span className="solo-lector">Buscar productos</span>
-          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Busca un producto o una marca" />
-        </label>
-        <button type="button" className="boton boton--contorno boton-filtros" aria-expanded={panel} aria-controls="filtros-tienda" onClick={() => setPanel(!panel)}>Filtros</button>
-        <label className="ordenar">
-          <span>Ordenar por</span>
-          <select value={orden} onChange={(e) => fijar({ orden: e.target.value === 'relevancia' ? '' : e.target.value })}>
-            <option value="relevancia">Destacados</option>
-            <option value="precio-asc">Precio: menor a mayor</option>
-            <option value="precio-desc">Precio: mayor a menor</option>
-            <option value="nuevos">Más nuevos</option>
-          </select>
-        </label>
-      </div>
-
-      <div className="catalogo">
-        <aside id="filtros-tienda" className={`catalogo__filtros ${panel ? 'catalogo__filtros--abierto' : ''}`} aria-label="Filtros">
-          <fieldset className="filtro">
-            <legend className="filtro__titulo">Categoría</legend>
-            {[{ valor: 'Todas', cantidad: categorias.reduce((s, c) => s + c.cantidad, 0) }, ...categorias].map((c) => (
-              <label key={c.valor} className="casilla">
-                <input type="radio" name="categoria" checked={categoria === c.valor} onChange={() => fijar({ categoria: c.valor === 'Todas' ? '' : c.valor })} />
-                <span>{c.valor}</span><span className="casilla__cantidad">{c.cantidad}</span>
-              </label>
-            ))}
-          </fieldset>
-          <form className="filtro" onSubmit={aplicarPrecio}>
-            <fieldset className="filtro">
-              <legend className="filtro__titulo">Precio (₡)</legend>
-              <div className="rango">
-                <label><span className="solo-lector">Precio mínimo</span><input type="number" min="0" step="500" placeholder="Mín." value={precio.min} onChange={(e) => setPrecio({ ...precio, min: e.target.value })} /></label>
-                <span aria-hidden="true">–</span>
-                <label><span className="solo-lector">Precio máximo</span><input type="number" min="0" step="500" placeholder="Máx." value={precio.max} onChange={(e) => setPrecio({ ...precio, max: e.target.value })} /></label>
-              </div>
-              <button type="submit" className="boton boton--contorno boton--chico">Aplicar</button>
-            </fieldset>
-          </form>
-          <label className="casilla">
-            <input type="checkbox" checked={disponibles} onChange={(e) => fijar({ disponibles: e.target.checked ? '1' : '' })} />
-            <span>Solo disponibles</span>
-          </label>
-          <button type="button" className="enlace enlace--boton" onClick={limpiar}>Quitar filtros</button>
-        </aside>
-
-        <section className="catalogo__resultados" aria-labelledby="conteo-productos">
-          <div className="resultados__cabeza">
-            <p id="conteo-productos" aria-live="polite">{cargando ? 'Buscando…' : `${productos.length} ${productos.length === 1 ? 'producto' : 'productos'}`}</p>
-            <p role="status" className="aviso">{aviso}</p>
-          </div>
-          {error && <p role="alert" className="error">{error}</p>}
-          {!cargando && productos.length === 0 && (
-            <div className="vacio"><p>No hay productos con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>
+      <div className="barra-chips" role="group" aria-label="Filtros y orden">
+        <button type="button" className={`chip-filtro ${ofertas ? 'chip-filtro--activo' : ''}`} aria-pressed={ofertas}
+                onClick={() => fijar({ ofertas: ofertas ? '' : '1', orden: ofertas ? '' : 'descuento' })}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
+          Ofertas que terminan hoy
+        </button>
+        <Desplegable etiqueta={<span>Ordenar por: <b>{ORDENES[orden]}</b></span>}>
+          {(cerrar) => (
+            <div className="desplegable__opciones" role="radiogroup" aria-label="Ordenar por">
+              {Object.entries(ORDENES).map(([k, t]) => (
+                <label key={k} className="casilla"><input type="radio" name="orden-tienda" checked={orden === k} onChange={() => { fijar({ orden: k === 'relevancia' ? '' : k }); cerrar(); }} /><span>{t}</span></label>
+              ))}
+            </div>
           )}
-          <ul className="productos">
-            {productos.map((p) => (
-              <li key={p.id} className="producto">
-                <Foto archivo={p.imagen} alt={p.nombre} className="producto__foto" />
-                <p className="producto__marca">{p.marca}</p>
-                <h2 className="producto__nombre">{p.nombre}</h2>
-                <p className="tenue">{p.descripcion}</p>
-                <div className="producto__pie">
-                  <span className="producto__precio">{dinero(p.precio)}</span>
-                  {p.stock > 0 ? (
-                    <button type="button" className="boton boton--chico" onClick={() => agregar(p)}>Agregar<span className="solo-lector"> {p.nombre} al carrito</span></button>
-                  ) : <span className="agotado">Agotado</span>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+        </Desplegable>
+        <Desplegable etiqueta={categoria ? `Categoría: ${categoria}` : 'Categoría'} activo={Boolean(categoria)}>
+          {(cerrar) => (
+            <div className="desplegable__opciones" role="radiogroup" aria-label="Categoría">
+              <label className="casilla"><input type="radio" name="cat-tienda" checked={!categoria} onChange={() => { fijar({ categoria: '' }); cerrar(); }} /><span>Todas</span></label>
+              {categorias.map((c) => (
+                <label key={c.valor} className="casilla">
+                  <input type="radio" name="cat-tienda" checked={categoria === c.valor} onChange={() => { fijar({ categoria: c.valor }); cerrar(); }} />
+                  <span>{c.valor}</span><span className="casilla__cantidad">{c.cantidad}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </Desplegable>
+        <Desplegable etiqueta={rango === RANGOS[0] ? 'Precio' : rango[2]} activo={rango !== RANGOS[0]}>
+          {(cerrar) => (
+            <div className="desplegable__opciones" role="radiogroup" aria-label="Precio">
+              {RANGOS.map((r) => (
+                <label key={r[2]} className="casilla"><input type="radio" name="precio-tienda" checked={rango === r} onChange={() => { fijar({ min: r[0], max: r[1] }); cerrar(); }} /><span>{r[2]}</span></label>
+              ))}
+            </div>
+          )}
+        </Desplegable>
+        <button type="button" className={`chip-filtro ${disponibles ? 'chip-filtro--activo' : ''}`} aria-pressed={disponibles} onClick={() => fijar({ disponibles: disponibles ? '' : '1' })}>
+          Solo disponibles
+        </button>
+        {hayFiltros && <button type="button" className="chip-filtro chip-filtro--limpiar" onClick={limpiar}>Quitar filtros</button>}
       </div>
+
+      <p className="tenue" aria-live="polite">{cargando ? 'Buscando…' : `${productos.length} ${productos.length === 1 ? 'producto' : 'productos'}`}</p>
+      {error && <p role="alert" className="error">{error}</p>}
+      {!cargando && productos.length === 0 && (
+        <div className="vacio"><p>No hay productos con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>
+      )}
+      <ul className="productos-rejilla productos-rejilla--grande">
+        {productos.slice(0, visibles).map((p) => <TarjetaProducto key={p.id} p={p} />)}
+      </ul>
+      {visibles < productos.length && (
+        <div className="mas">
+          <p className="tenue">Viendo {visibles} de {productos.length}</p>
+          <button type="button" className="boton boton--contorno" onClick={() => setVisibles(visibles + POR_PAGINA)}>Ver más productos</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-if (seed()) console.log('Base de datos vacía: se cargaron los datos iniciales.');
+if (seed()) console.log('Se cargaron datos o fotos de muestra.');
 
 app.use(cors());
 app.use(express.json());
@@ -35,4 +35,4 @@ if (existsSync(dist)) {
   app.get(/^(?!\/(api|uploads)).*/, (req, res) => res.sendFile(join(dist, 'index.html')));
 }
 
-app.listen(PORT, () => console.log(`Nailé escuchando en http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`AH Nails escuchando en http://localhost:${PORT}`));
