@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useReserva } from '../context/ReservaContext.jsx';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { dinero } from '../config.js';
 import Foto from './Foto.jsx';
@@ -11,52 +12,51 @@ export const positivo = (id) => 90 + ((id * 7) % 10);
 // Agrega el diseño como press-on al carrito (forma de la foto y largo medio)
 export function useAgregarPresson() {
   const carrito = useCarrito();
-  return (foto, { forma, largo = 'Medio', cantidad = 1, presson } = {}) => {
+  return (foto, { forma, largo = 'Medio', presson } = {}) => {
     const p = presson || { id: foto.presson_id, precio: foto.precio_presson, precio_anterior: foto.presson_anterior };
     if (!p?.id) return false;
     const f = forma || foto.forma || 'Almendra';
     carrito.agregar(
       { id: p.id, nombre: `Press-on «${foto.titulo}»`, precio: p.precio, precio_anterior: p.precio_anterior, stock: p.stock ?? 20, tipo: 'tips', color: '#E9A3BC' },
-      { detalle: `Diseño #${foto.id}, ${f}, largo ${largo.toLowerCase()}`, imagen: foto.archivo, cantidad, fotoId: foto.id }
+      { detalle: `Diseño #${foto.id}, ${f}, largo ${largo.toLowerCase()}`, imagen: foto.archivo, cantidad: 1, fotoId: foto.id, unico: true }
     );
     return true;
   };
 }
 
-// Tarjeta de diseño al estilo de resultados de una tienda en línea
-export default function TarjetaDiseno({ foto, indice = 0, presson }) {
-  const agregarPresson = useAgregarPresson();
+// Tarjeta de diseño al estilo de resultados de una tienda en línea.
+// "Reservar" lleva a la reserva con este diseño (un diseño por persona).
+export default function TarjetaDiseno({ foto, indice = 0 }) {
+  const { actualizar } = useReserva();
+  const irA = useNavigate();
   const popular = foto.puesto && foto.puesto <= 3 && foto.vistas > 0;
+  const reservar = () => { actualizar({ fotoRef: foto, diseno: null }); irA(foto.servicio_id ? `/reservar?servicio=${foto.servicio_id}` : '/reservar'); };
+  const datos = [foto.forma, foto.color, foto.acabado].filter(Boolean);
   return (
     <li className="tarjeta-diseno">
       <Link to={`/galeria/${foto.id}`} className="tarjeta-diseno__foto">
         <Foto archivo={foto.archivo} alt={foto.descripcion || foto.titulo} />
         {foto.destacada ? <span className="tarjeta-diseno__marca">Destacado</span> : null}
+        <span className="tarjeta-diseno__cat">{foto.categoria}</span>
       </Link>
       <div className="tarjeta-diseno__cuerpo">
         <Link to={`/galeria/${foto.id}`} className="tarjeta-diseno__titulo">{foto.titulo}</Link>
-        <div className="tarjeta-diseno__fila">
-          <p className="tarjeta-diseno__precio">
-            <small>Desde</small> {dinero(foto.precio_salon ?? foto.precio_presson)}
-            <span className="tarjeta-diseno__vistas">{miles(foto.vistas)} vistas</span>
-          </p>
-          {presson && (
-            <button type="button" className="tarjeta-producto__agregar" onClick={() => agregarPresson({ ...foto, presson_id: presson.id, precio_presson: presson.precio, presson_anterior: presson.precio_anterior })}
-                    aria-label={`Agregar «${foto.titulo}» en press-on al carrito`} title="Agregar en press-on">
-              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6" /><path d="M14 2v6M11 5h6" /></svg>
-            </button>
-          )}
-        </div>
+        {datos.length > 0 && <p className="tarjeta-diseno__datos">{datos.map((d) => <span key={d}>{d}</span>)}</p>}
+        <p className="tarjeta-diseno__precio">
+          <small>Desde</small> {dinero(foto.precio_salon ?? foto.precio_presson)}
+          <span className="tarjeta-diseno__vistas">{miles(foto.vistas)} vistas</span>
+        </p>
         {popular ? (
           <p className="tarjeta-diseno__ranking"><b>#{foto.puesto} MÁS POPULAR</b> en {foto.categoria}</p>
         ) : indice % 3 === 1 ? (
-          <p className="tarjeta-diseno__cupon"><span>⚡ 15 % con BIENVENIDA15</span><CuentaRegresiva compacta /></p>
+          <p className="tarjeta-diseno__cupon"><span>15 % con BIENVENIDA15</span><CuentaRegresiva compacta /></p>
         ) : (
-          <p className="tarjeta-diseno__ranking tarjeta-diseno__ranking--gris">{[foto.forma, foto.acabado].filter(Boolean).join(' · ') || foto.categoria}</p>
+          <p className="tarjeta-diseno__ranking tarjeta-diseno__ranking--gris">En el salón o en press-on</p>
         )}
         <p className="estrellas" aria-label={`${positivo(foto.id)} % de opiniones positivas`}>
           <span aria-hidden="true">★★★★★</span><span className="estrellas__cuenta" aria-hidden="true">{positivo(foto.id)} % positivo</span>
         </p>
+        <button type="button" className="tarjeta-diseno__reservar" onClick={reservar}>Reservar este diseño</button>
       </div>
     </li>
   );

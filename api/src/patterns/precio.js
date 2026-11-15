@@ -52,7 +52,7 @@ export function calcularPrecio(servicio, recargoDiseno = 0, cupon = null) {
 export class PrecioPedido {
   constructor(lineas) { this.lineas = lineas; }
   total() { return this.lineas.reduce((s, l) => s + l.precio * l.cantidad, 0); }
-  detalle() { return [{ concepto: `Productos (${this.lineas.reduce((s, l) => s + l.cantidad, 0)})`, monto: this.total() }]; }
+  detalle() { return [{ concepto: `Artículos (${this.lineas.reduce((s, l) => s + l.cantidad, 0)})`, monto: this.total() }]; }
 }
 
 export function calcularPrecioPedido(lineas, cupon = null) {

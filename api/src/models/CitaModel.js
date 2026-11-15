@@ -2,6 +2,7 @@
 // (horarios del salón, validación de datos y cálculo del total y el adelanto).
 import { getDb } from '../db/connection.js';
 import { calcularPrecio } from '../patterns/precio.js';
+import { EspecialistaModel } from './EspecialistaModel.js';
 
 export const HORARIOS = ['09:00', '10:00', '11:00', '12:00', '13:30', '14:30', '15:30', '16:30', '17:30'];
 export const PORCENTAJE_ADELANTO = 0.3;
@@ -39,9 +40,38 @@ export const CitaModel = {
     SELECT hora FROM citas WHERE especialista_id = ? AND fecha = ? AND estado != 'cancelada'
   `).all(especialistaId, fecha).map((f) => f.hora),
 
+  // Horas del salón dentro del horario de la especialista; vacío si ese día no trabaja
+  horasDe(especialista, fecha) {
+    if (!especialista || !EspecialistaModel.trabajaEl(especialista, fecha)) return [];
+    return HORARIOS.filter((h) => h >= especialista.hora_inicio && h <= especialista.hora_fin);
+  },
+
   disponibilidad(especialistaId, fecha) {
+    const especialista = EspecialistaModel.buscarPorId(especialistaId);
     const ocupadas = this.horasOcupadas(especialistaId, fecha);
-    return HORARIOS.map((hora) => ({ hora, disponible: !ocupadas.includes(hora) }));
+    const hoy = new Date();
+    const esHoy = fecha === `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    const ahora = `${String(hoy.getHours()).padStart(2, '0')}:${String(hoy.getMinutes()).padStart(2, '0')}`;
+    return this.horasDe(especialista, fecha).map((hora) => ({ hora, disponible: !ocupadas.includes(hora) && (!esHoy || hora > ahora) }));
+  },
+
+  // Próximos días con sus horas libres (para la ficha de la especialista)
+  agenda(especialistaId, dias = 10) {
+    const lista = [];
+    const d = new Date();
+    while (lista.length < dias) {
+      d.setDate(d.getDate() + 1);
+      if (d.getDay() === 0) continue;
+      const fecha = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const horas = this.disponibilidad(especialistaId, fecha);
+      lista.push({ fecha, trabaja: horas.length > 0, libres: horas.filter((h) => h.disponible).map((h) => h.hora) });
+    }
+    return lista;
+  },
+
+  // ¿Se puede reservar esa hora con esa especialista?
+  horaDisponible(especialistaId, fecha, hora) {
+    return this.disponibilidad(especialistaId, fecha).some((h) => h.hora === hora && h.disponible);
   },
 
   buscarPorId: (id) => getDb().prepare(`${SELECT} WHERE c.id = ?`).get(id),
@@ -50,10 +80,10 @@ export const CitaModel = {
   crear(c) {
     const r = getDb().prepare(`
       INSERT INTO citas (servicio_id, especialista_id, diseno_id, foto_ref_id, cliente_nombre, cliente_telefono, cliente_email,
-                         notas, fecha, hora, estado, total, anticipo, cupon_codigo, descuento, metodo_pago)
+                         notas, fecha, hora, estado, total, anticipo, cupon_codigo, descuento, metodo_pago, pedido_id)
       VALUES (@servicioId, @especialistaId, @disenoId, @fotoRefId, @nombre, @telefono, @email,
-              @notas, @fecha, @hora, @estado, @total, @anticipo, @cuponCodigo, @descuento, @metodoPago)
-    `).run(c);
+              @notas, @fecha, @hora, @estado, @total, @anticipo, @cuponCodigo, @descuento, @metodoPago, @pedidoId)
+    `).run({ pedidoId: null, ...c });
     return this.buscarPorId(r.lastInsertRowid);
   },
 

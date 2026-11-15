@@ -17,6 +17,19 @@ export const citaController = {
     res.json(CitaModel.disponibilidad(Number(especialistaId), fecha));
   },
 
+  // GET /api/citas/libres?fecha=2026-11-20&hora=10:00 → especialistas libres a esa hora
+  libres(req, res) {
+    const { fecha, hora } = req.query;
+    if (!CitaModel.esFechaValida(fecha) || !CitaModel.esHoraValida(hora)) return res.status(400).json({ error: 'Indica fecha y hora.' });
+    res.json(EspecialistaModel.listar().filter((e) => CitaModel.horaDisponible(e.id, fecha, hora)).map((e) => e.id));
+  },
+
+  // GET /api/especialistas/:id/agenda: próximos días con horas libres
+  agenda(req, res) {
+    if (!EspecialistaModel.buscarPorId(req.params.id)) return res.status(404).json({ error: 'No encontramos a esa especialista.' });
+    res.json(CitaModel.agenda(Number(req.params.id), Math.min(Number(req.query.dias) || 10, 30)));
+  },
+
   crear(req, res) {
     const { servicioId, especialistaId, disenoId, fotoRefId, fecha, hora, cliente = {}, notas, metodoPago, pago, recordatorios = {}, cupon: codigoCupon } = req.body;
 
@@ -26,8 +39,8 @@ export const citaController = {
     if (!CitaModel.esFechaValida(fecha) || !CitaModel.esHoraValida(hora)) return res.status(400).json({ error: 'Elige una fecha y una hora.' });
     const errorCliente = CitaModel.validarCliente(cliente);
     if (errorCliente) return res.status(400).json({ error: errorCliente });
-    if (CitaModel.horasOcupadas(especialistaId, fecha).includes(hora)) {
-      return res.status(409).json({ error: 'Esa hora se acaba de ocupar. Elige otra, por favor.' });
+    if (!CitaModel.horaDisponible(especialistaId, fecha, hora)) {
+      return res.status(409).json({ error: 'Esa hora ya no está disponible. Elige otra, por favor.' });
     }
 
     const diseno = disenoId ? DisenoModel.buscarPorId(disenoId) : null;

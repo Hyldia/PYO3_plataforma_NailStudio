@@ -188,6 +188,39 @@ function Galeria() {
   );
 }
 
+function Equipo() {
+  const [lista, setLista] = useState([]);
+  const [error, setError] = useState('');
+  const cargar = () => api.especialistas().then(setLista);
+  useEffect(() => { cargar(); }, []);
+  const subir = async (id, archivo) => {
+    const fd = new FormData(); fd.append('imagen', archivo);
+    try { await api.admin.fotoEspecialista(id, fd); cargar(); } catch (e) { setError(e.message); }
+  };
+  return (
+    <section aria-labelledby="t-equipo">
+      <h2 id="t-equipo">Fotos del equipo</h2>
+      <p className="tenue">Suban una foto real de cada especialista: es la que ven las clientas al reservar.</p>
+      {error && <p role="alert" className="error">{error}</p>}
+      <ul className="admin-fotos">
+        {lista.map((e) => (
+          <li key={e.id} className="admin-foto">
+            {e.foto ? <Foto archivo={e.foto} alt={e.nombre} /> : <div className="admin-foto__inicial" aria-hidden="true">{e.nombre[0]}</div>}
+            <div className="admin-foto__info">
+              <p><strong>{e.nombre}</strong></p>
+              <p className="tenue">{e.especialidad}</p>
+              <label className="boton boton--contorno boton--chico subir">
+                {e.foto ? 'Cambiar foto' : 'Subir foto'}<span className="solo-lector"> de {e.nombre}</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(ev) => ev.target.files[0] && subir(e.id, ev.target.files[0])} />
+              </label>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function Productos() {
   const [productos, setProductos] = useState([]);
   const [error, setError] = useState('');
@@ -325,7 +358,7 @@ function BaseDeDatos() {
   );
 }
 
-const SECCIONES = { agenda: ['Agenda', Agenda], galeria: ['Galería', Galeria], productos: ['Productos', Productos], pedidos: ['Pedidos', Pedidos], bd: ['Base de datos', BaseDeDatos] };
+const SECCIONES = { agenda: ['Agenda', Agenda], galeria: ['Galería', Galeria], productos: ['Productos', Productos], equipo: ['Equipo', Equipo], pedidos: ['Pedidos', Pedidos], bd: ['Base de datos', BaseDeDatos] };
 
 export default function Admin() {
   useTitulo('Panel del salón');

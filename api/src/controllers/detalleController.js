@@ -17,13 +17,14 @@ function servicioSugerido(foto) {
   const s = getDb().prepare('SELECT * FROM servicios WHERE nombre = ? AND activo = 1').get(nombre);
   if (!s) return null;
   const recargo = (RECARGO_ACABADO[foto.acabado] || 0) + (foto.categoria === 'Nail art' ? 4500 : 0);
-  return { id: s.id, nombre: s.nombre, duracion_min: s.duracion_min, precio: (s.precio_oferta ?? s.precio) + recargo, recargo };
+  // El precio es el del servicio: es lo que se cobra al reservar con esta foto de referencia
+  return { id: s.id, nombre: s.nombre, duracion_min: s.duracion_min, precio: s.precio_oferta ?? s.precio, recargo };
 }
 
 // Precios de cada diseño para mostrarlos en las tarjetas de la galería
 export function conPrecios(fotos) {
   const presson = ProductoModel.buscarPorNombre(PRESSON);
-  return fotos.map((f) => ({ ...f, precio_salon: servicioSugerido(f)?.precio ?? null, precio_presson: presson?.precio ?? null, presson_anterior: presson?.precio_anterior ?? null }));
+  return fotos.map((f) => { const sv = servicioSugerido(f); return { ...f, servicio_id: sv?.id ?? null, precio_salon: sv?.precio ?? null, precio_presson: presson?.precio ?? null, presson_anterior: presson?.precio_anterior ?? null }; });
 }
 
 export const detalleController = {
@@ -40,6 +41,16 @@ export const detalleController = {
     if (!p) return res.status(404).json({ error: 'Ese producto ya no está disponible.' });
     const puesto = getDb().prepare('SELECT COUNT(*) + 1 AS n FROM productos WHERE categoria = ? AND vendidos > ?').get(p.categoria, p.vendidos).n;
     res.json({ ...p, puesto, variantes: ProductoModel.variantes(p.id) });
+  },
+  // GET /api/productos/portadas: una foto real por categoría (la del más vendido con foto)
+  portadas(req, res) {
+    const db = getDb();
+    const foto = (where, ...p) => db.prepare(`SELECT imagen FROM productos WHERE imagen LIKE 'http%' AND ${where} ORDER BY stock > 0 DESC, vendidos DESC LIMIT 1`).get(...p)?.imagen ?? null;
+    const mapa = {};
+    db.prepare('SELECT DISTINCT categoria FROM productos').all().forEach(({ categoria }) => { mapa[categoria] = foto('categoria = ?', categoria); });
+    mapa.rubber = foto("nombre LIKE '%rubber%'");
+    mapa.aceite = foto("nombre LIKE 'Aceite%'");
+    res.json(mapa);
   },
   productosRelacionados: (req, res) => res.json(ProductoModel.relacionados(req.params.id, req.query.limite))
 };

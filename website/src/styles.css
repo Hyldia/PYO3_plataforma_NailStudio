@@ -1292,3 +1292,265 @@ main { outline: none; min-height: 60vh; }
   .compra .aviso-flotante, body:has(.compra__barra-movil) .aviso-flotante { bottom: 90px; }
 }
 @media (max-width: 980px) { body:has(.compra__barra-movil) .boton-arriba { bottom: 96px; } }
+
+/* =====================================================================
+   Reservar cita
+   ===================================================================== */
+.reserva-portada { position: relative; isolation: isolate; overflow: hidden; color: #fff;
+  background: linear-gradient(120deg, #4A0E26, var(--vino-hondo), var(--vino), #C2507C, var(--vino-hondo)); background-size: 220% 220%; animation: degradado 14s ease infinite; }
+.reserva-portada__rejilla { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; padding-block: clamp(24px, 4vw, 48px); }
+@media (max-width: 760px) { .reserva-portada__rejilla { grid-template-columns: 1fr; } }
+.reserva-portada__ante { display: inline-block; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.15); font-weight: 700; letter-spacing: 0.04em; }
+.reserva-portada h1 { color: #fff; font-size: clamp(2.4rem, 5.5vw, 4.4rem); margin: 10px 0; text-shadow: 0 4px 18px rgba(0,0,0,0.25); }
+.reserva-portada__beneficios { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; font-weight: 600; color: #FFE3EC; }
+.reserva-portada__cupon { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; padding: 18px 24px; border-radius: 16px; background: #fff; color: var(--tinta);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.3); animation: mecer 4s ease-in-out infinite; border: 2px dashed var(--oferta); }
+.reserva-portada__pct { grid-row: span 2; font-family: var(--serif); font-weight: 800; font-size: clamp(2.2rem, 4vw, 3.2rem); color: var(--oferta); line-height: 1; }
+.reserva-portada__cupon strong { color: var(--oferta); letter-spacing: 0.04em; }
+.reserva-portada__reloj { font-size: 0.85rem; color: var(--gris); }
+.reserva-portada__reloj .cuenta-compacta { background: var(--tinta); color: #fff; border-radius: 4px; }
+
+.reservar-pagina { padding-top: 24px; }
+.pasos-reserva { --avance: 0%; position: relative; list-style: none; margin: 0 0 8px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); }
+.pasos-reserva::before, .pasos-reserva::after { content: ''; position: absolute; top: 26px; left: 16.6%; height: 4px; border-radius: 2px; }
+.pasos-reserva::before { right: 16.6%; background: var(--linea); }
+.pasos-reserva::after { width: calc((100% - 33.2%) * var(--avance) / 100%); background: linear-gradient(90deg, var(--vino), var(--oferta)); transition: width 0.5s ease; }
+.pasos-reserva li { position: relative; z-index: 1; display: flex; justify-content: center; }
+.pasos-reserva button { display: flex; flex-direction: column; align-items: center; gap: 8px; border: none; background: none; font: inherit; font-weight: 600; color: var(--gris); cursor: pointer; }
+.pasos-reserva button:disabled { cursor: default; }
+.pasos-reserva__icono { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; background: var(--superficie); border: 3px solid var(--linea); transition: transform 0.3s, background 0.3s, border-color 0.3s; }
+.pasos-reserva .actual button { color: var(--tinta); }
+.pasos-reserva .actual .pasos-reserva__icono { border-color: var(--oferta); transform: scale(1.12); box-shadow: 0 0 0 6px rgba(224,36,94,0.15); animation: latido 2s ease-in-out infinite; }
+.pasos-reserva .hecho .pasos-reserva__icono { background: var(--vino); border-color: var(--vino); color: #fff; font-weight: 800; }
+@keyframes latido { 0%, 100% { box-shadow: 0 0 0 6px rgba(224,36,94,0.15); } 50% { box-shadow: 0 0 0 12px rgba(224,36,94,0.05); } }
+
+.paso-anim { display: flex; flex-direction: column; gap: 32px; animation: entrar-paso 0.4s ease both; }
+@keyframes entrar-paso { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+.barra-chips--quieta { position: static; padding-top: 0; }
+.chip-filtro__n { font-size: 0.75rem; opacity: 0.7; }
+
+.servicios-elegir { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(230px, 44vw), 1fr)); gap: clamp(10px, 1.4vw, 18px); }
+@media (max-width: 520px) { .servicios-elegir { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.servicio-elegir { position: relative; display: flex; flex-direction: column; border: 2px solid var(--linea); border-radius: 14px; overflow: hidden; background: var(--superficie); cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; animation: subir 0.4s ease both; animation-delay: var(--retraso, 0ms); }
+.servicio-elegir:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(34,22,28,0.12); }
+.servicio-elegir:has(input:checked) { border-color: var(--oferta); box-shadow: 0 0 0 3px rgba(224,36,94,0.2), 0 14px 28px rgba(224,36,94,0.18); }
+.servicio-elegir:has(input:focus-visible), .especialista-elegir:has(input:focus-visible) { outline: 3px solid var(--vino); outline-offset: 3px; }
+.servicio-elegir__foto { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: var(--rubor); }
+.servicio-elegir__foto .foto { width: 100%; height: 100%; }
+.servicio-elegir__foto img { transition: transform 0.5s ease; }
+.servicio-elegir:hover .servicio-elegir__foto img { transform: scale(1.08); }
+.servicio-elegir__etiqueta { position: absolute; left: 8px; top: 8px; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; color: #fff; background: var(--vino); }
+.servicio-elegir__etiqueta--top { background: linear-gradient(90deg, #FF7A1F, var(--oferta)); }
+.servicio-elegir__pct { position: absolute; right: 8px; top: 8px; padding: 3px 8px; border-radius: 6px; background: var(--oferta); color: #fff; font-weight: 800; font-size: 0.8rem; }
+.servicio-elegir__check { position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--oferta); color: #fff; font-weight: 800;
+  transform: scale(0); transition: transform 0.25s cubic-bezier(.34,1.56,.64,1); box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+.servicio-elegir:has(input:checked) .servicio-elegir__check, .especialista-elegir:has(input:checked) .servicio-elegir__check { transform: scale(1); }
+.servicio-elegir__cuerpo { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 14px; flex: 1; }
+.servicio-elegir__cuerpo strong { font-size: 1.05rem; line-height: 1.3; }
+.servicio-elegir__datos { font-size: 0.85rem; color: var(--gris); }
+.servicio-elegir__incluye { font-size: 0.82rem; color: var(--gris); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.servicio-elegir__precio { margin-top: auto; padding-top: 6px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.servicio-elegir__precio b { font-size: 1.3rem; }
+.servicio-elegir__precio s { color: var(--gris); font-size: 0.9rem; }
+
+.especialistas-elegir { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 44vw), 1fr)); gap: 14px; }
+.especialista-elegir { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 20px 14px; border: 2px solid var(--linea); border-radius: 14px; background: var(--superficie); cursor: pointer; transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+.especialista-elegir:hover { transform: translateY(-3px); }
+.especialista-elegir:has(input:checked) { border-color: var(--oferta); box-shadow: 0 0 0 3px rgba(224,36,94,0.2); }
+.especialista-elegir__avatar { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; font-family: var(--serif); font-size: 2.2rem; color: #fff;
+  background: radial-gradient(circle at 30% 30%, #fff3 0, transparent 40%), var(--color); box-shadow: 0 0 0 4px var(--superficie), 0 0 0 6px var(--color); }
+.especialista-elegir__avatar .foto { width: 100%; height: 100%; }
+.especialista-elegir__reco { padding: 3px 10px; border-radius: 999px; background: #FFF1D6; color: #8A5300; font-size: 0.78rem; font-weight: 700; animation: subir 0.3s ease both; }
+.especialista-elegir .servicio-elegir__check { top: 10px; bottom: auto; }
+
+.dias-carrusel { display: grid; grid-auto-flow: column; grid-auto-columns: 84px; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x mandatory; }
+.dia-chip { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 0; border: 2px solid var(--linea); border-radius: 14px; background: var(--superficie); cursor: pointer; scroll-snap-align: start; transition: transform 0.15s; }
+.dia-chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.dia-chip:hover { transform: translateY(-2px); }
+.dia-chip__semana { font-size: 0.8rem; text-transform: capitalize; color: var(--gris); font-weight: 600; }
+.dia-chip__numero { font-family: var(--serif); font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+.dia-chip__mes { font-size: 0.75rem; text-transform: uppercase; color: var(--gris); }
+.dia-chip:has(input:checked) { background: linear-gradient(160deg, var(--oferta), var(--vino)); border-color: transparent; color: #fff; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(224,36,94,0.3); }
+.dia-chip:has(input:checked) span { color: #fff; }
+.dia-chip:has(input:focus-visible) { outline: 3px solid var(--vino); outline-offset: 2px; }
+.horas-grupo { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.horas-grupo__titulo { font-weight: 700; }
+.hora { transition: transform 0.15s; }
+.hora:hover:not(:has(input:disabled)) { transform: translateY(-2px); border-color: var(--oferta); }
+.hora:has(input:checked) { background: linear-gradient(160deg, var(--oferta), var(--vino)); border-color: transparent; animation: pop 0.25s ease; }
+@keyframes pop { 0% { transform: scale(0.9); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+.resumen-cita { position: sticky; top: calc(var(--alto-encabezado) + 16px); padding: 0 !important; overflow: hidden; border-radius: 16px; }
+@media (max-width: 960px) { .resumen-cita { position: static; } }
+.resumen-cita__foto { aspect-ratio: 16 / 9; background: linear-gradient(135deg, var(--rubor), var(--rubor-2)); display: grid; place-items: center; overflow: hidden; }
+.resumen-cita__foto .foto { width: 100%; height: 100%; animation: aparecer 0.4s ease both; }
+@keyframes aparecer { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: none; } }
+.resumen-cita__vacio { font-size: 3rem; animation: mecer 3s ease-in-out infinite; }
+.resumen-cita__cuerpo { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 14px; }
+.resumen-cita__cuerpo h2 { font-size: 1.6rem; }
+.resumen-cita__lineas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.resumen-cita__lineas li { display: flex; gap: 10px; align-items: center; color: var(--gris); }
+.resumen-cita__lineas li.listo { color: var(--tinta); font-weight: 600; }
+.resumen-cita__monto { display: inline-block; animation: pop 0.35s ease; }
+.resumen-cita__boton { min-height: 60px; }
+.resumen-cita__boton strong { font-size: 1.1rem; }
+@media (max-width: 980px) {
+  .reservar-pagina { padding-bottom: 96px; }
+  .resumen-cita__boton { display: none !important; }
+}
+.reservar__botones:empty { display: none; }
+.cita-lista__tarjeta { width: 100%; padding: 18px; border-radius: 12px; background: linear-gradient(160deg, #FDE8EE, var(--superficie)); border: 1px solid var(--linea); }
+.cita-lista__fecha { text-transform: capitalize; font-weight: 700; color: var(--vino); }
+.cita-lista__hora { font-family: var(--serif); font-size: 2.6rem; font-weight: 700; line-height: 1.1; }
+.reservar { grid-template-columns: minmax(0, 1fr) 380px; }
+@media (max-width: 960px) { .reservar { grid-template-columns: minmax(0, 1fr); } }
+.reservar__form, .paso-anim, .grupo { min-width: 0; }
+.cita-lista__fecha { text-transform: none; }
+.cita-lista__fecha::first-letter { text-transform: uppercase; }
+@media (max-width: 960px) { .reservar__resumen.resumen-cita { order: 2; } .resumen-cita__foto { aspect-ratio: 21 / 9; } }
+.resumen-pedido__boton:disabled::after { display: none; }
+
+/* =====================================================================
+   Especialistas con foto, ficha con horario, acompañante y citas en el carrito
+   ===================================================================== */
+.retrato { --color: var(--vino); display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; color: #fff; font-family: var(--serif); font-weight: 700; font-size: 1.4rem;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), transparent 45%), var(--color); }
+.retrato .foto { width: 100%; height: 100%; }
+.retrato--grande { width: 180px; height: 220px; border-radius: 14px; font-size: 4rem; flex: 0 0 auto; }
+.retrato--doble { width: 56px; height: 56px; border-radius: 50%; background: var(--rubor-2); color: var(--vino); font-size: 1.8rem; flex: 0 0 auto; }
+
+.reserva-portada__equipo { display: flex; flex-direction: column; gap: 6px; padding: 18px 22px; border-radius: 16px; background: rgba(255,255,255,0.12); backdrop-filter: blur(6px); }
+.reserva-portada__caras { display: flex; }
+.reserva-portada__caras .retrato { width: 52px; height: 52px; border-radius: 50%; border: 3px solid #fff; margin-left: -12px; font-size: 1.2rem; animation: subir 0.4s ease both; }
+.reserva-portada__caras .retrato:first-child { margin-left: 0; }
+.reserva-portada__caras .retrato:nth-child(2) { animation-delay: 80ms; } .reserva-portada__caras .retrato:nth-child(3) { animation-delay: 160ms; }
+.reserva-portada__caras .retrato:nth-child(4) { animation-delay: 240ms; } .reserva-portada__caras .retrato:nth-child(5) { animation-delay: 320ms; } .reserva-portada__caras .retrato:nth-child(6) { animation-delay: 400ms; }
+.reserva-portada__equipo .reserva-portada__reloj { color: #FFE3EC; }
+
+.pasos-reserva__icono { overflow: hidden; }
+.pasos-reserva__icono .foto, .pasos-reserva__icono .retrato { width: 100%; height: 100%; border-radius: 50%; font-size: 1.2rem; }
+.pasos-reserva__icono b { font-size: 1.2rem; }
+.pasos-reserva__dia { display: flex; flex-direction: column; align-items: center; line-height: 1; font-family: var(--serif); font-weight: 800; font-size: 1.2rem; color: var(--vino); }
+.pasos-reserva__dia small { font-family: var(--sans); font-size: 0.6rem; font-weight: 700; }
+.pasos-reserva .hecho .pasos-reserva__icono { background: var(--superficie); border-color: var(--vino); }
+
+.diseno-elegido { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px; border-radius: 14px; border: 2px solid var(--oferta); background: linear-gradient(90deg, #FDE8EE, var(--superficie)); animation: subir 0.4s ease both; }
+.diseno-elegido > .foto { width: 96px; height: 96px; border-radius: 10px; }
+.diseno-elegido__ante { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--oferta); }
+.diseno-elegido__titulo { font-weight: 700; font-size: 1.15rem; }
+@media (max-width: 520px) { .diseno-elegido { grid-template-columns: 72px minmax(0, 1fr); } .diseno-elegido > .foto { width: 72px; height: 72px; } .diseno-elegido .chip-filtro { grid-column: 1 / -1; justify-self: start; } }
+
+.especialistas-elegir { grid-template-columns: repeat(auto-fill, minmax(min(170px, 44vw), 1fr)); }
+@media (max-width: 520px) { .especialistas-elegir { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.especialista-elegir { padding: 0; overflow: hidden; align-items: stretch; text-align: left; gap: 0; }
+.especialista-elegir__foto { position: relative; display: block; aspect-ratio: 4 / 5; }
+.especialista-elegir__foto .retrato { border-radius: 0; font-size: 3.4rem; }
+.especialista-elegir__foto img { transition: transform 0.5s ease; }
+.especialista-elegir:hover .especialista-elegir__foto img { transform: scale(1.06); }
+.especialista-elegir__reco { position: absolute; left: 8px; top: 8px; padding: 3px 10px; border-radius: 999px; background: linear-gradient(90deg, #FF7A1F, var(--oferta)); color: #fff; font-size: 0.75rem; font-weight: 800; }
+.especialista-elegir .servicio-elegir__check { top: auto; bottom: 10px; }
+.especialista-elegir__cuerpo { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px 12px; }
+.especialista-elegir__cuerpo strong { font-size: 1.05rem; }
+.especialista-elegir__cuerpo .tenue { font-size: 0.85rem; }
+.especialista-elegir__datos { font-size: 0.8rem; color: var(--vino); font-weight: 600; }
+.especialista-elegir__horario { font-size: 0.78rem; color: var(--gris); }
+
+.ficha-especialista { display: grid; grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr); gap: 22px; margin-top: 18px; padding: 20px; border-radius: 16px; border: 2px solid var(--oferta);
+  background: var(--superficie); box-shadow: 0 16px 34px rgba(224,36,94,0.12); animation: subir 0.35s ease both; }
+@media (max-width: 1100px) { .ficha-especialista { grid-template-columns: auto minmax(0, 1fr); } .ficha-especialista__agenda { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .ficha-especialista { grid-template-columns: 1fr; } .ficha-especialista .retrato--grande { width: 100%; height: 240px; } }
+.ficha-especialista h3 { font-size: 1.6rem; }
+.ficha-especialista h4 { font-family: var(--sans); font-size: 1rem; margin: 12px 0 6px; }
+.ficha-especialista__esp { color: var(--vino); font-weight: 700; margin-bottom: 6px; }
+.ficha-especialista__horario { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 0.9rem; }
+.ficha-especialista__horario li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px dashed var(--linea); }
+.ficha-especialista__horario li.libre-no { color: var(--gris); }
+.ficha-especialista__agenda ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ficha-especialista__agenda li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; align-items: center; }
+.ficha-especialista__fecha { font-weight: 700; text-transform: capitalize; font-size: 0.9rem; }
+.ficha-especialista__horas { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.hora-mini { min-height: 34px; padding: 0 10px; border: 1.5px solid var(--linea); border-radius: 8px; background: #fff; font: inherit; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
+.hora-mini:hover { border-color: var(--oferta); color: var(--oferta); transform: translateY(-1px); }
+
+.dia-chip--no { opacity: 0.45; cursor: not-allowed; background: repeating-linear-gradient(135deg, var(--superficie) 0 6px, var(--rubor) 6px 12px); }
+.dia-chip--no:hover { transform: none; }
+.dia-chip--no input { cursor: not-allowed; }
+
+.cita-tarjeta { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px; border-radius: 14px; background: var(--superficie); border: 1px solid var(--linea); }
+.cita-tarjeta > .foto { width: 110px; height: 110px; border-radius: 10px; }
+.cita-tarjeta strong { font-size: 1.3rem; }
+@media (max-width: 560px) { .cita-tarjeta { grid-template-columns: 80px minmax(0, 1fr); } .cita-tarjeta > .foto { width: 80px; height: 80px; } .cita-tarjeta > strong { grid-column: 2; } }
+.cita-tarjeta__persona { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--tinta); color: #fff; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; }
+.cita-tarjeta__nombre { font-weight: 700; font-size: 1.15rem; }
+.acompanante__agregar { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 72px; border: 2px dashed var(--oferta); border-radius: 14px; background: #FFF4F7; color: var(--oferta); font: inherit; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: transform 0.15s, background 0.15s; }
+.acompanante__agregar span { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--oferta); color: #fff; font-size: 1.4rem; }
+.acompanante__agregar:hover { transform: translateY(-2px); background: #FDE8EE; }
+.acompanante__caja { display: flex; flex-direction: column; gap: 16px; padding: 18px; border-radius: 14px; border: 2px solid var(--oferta); background: var(--superficie); animation: subir 0.3s ease both; }
+.acompanante__cabeza { display: flex; justify-content: space-between; align-items: center; }
+.acompanante__caja fieldset { border: none; padding: 0; margin: 0; }
+.acompanante__caja legend { font-weight: 700; margin-bottom: 8px; }
+.servicios-mini { display: grid; grid-auto-flow: column; grid-auto-columns: 132px; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+.servicio-mini { position: relative; display: flex; flex-direction: column; gap: 4px; border: 2px solid var(--linea); border-radius: 10px; overflow: hidden; cursor: pointer; background: #fff; font-size: 0.82rem; }
+.servicio-mini .foto { aspect-ratio: 1; }
+.servicio-mini span, .servicio-mini b { padding: 0 8px; }
+.servicio-mini b { padding-bottom: 8px; }
+.servicio-mini:has(input:checked) { border-color: var(--oferta); box-shadow: 0 0 0 3px rgba(224,36,94,0.2); }
+.servicio-mini:has(input:focus-visible), .especialista-mini:has(input:focus-visible) { outline: 3px solid var(--vino); outline-offset: 2px; }
+.opciones-acomp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 640px) { .opciones-acomp { grid-template-columns: 1fr; } }
+.opcion-acomp { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px; border: 2px solid var(--linea); border-radius: 12px; cursor: pointer; background: #fff; }
+.opcion-acomp > .retrato { width: 56px; height: 56px; border-radius: 50%; }
+.opcion-acomp span:last-child { display: flex; flex-direction: column; }
+.opcion-acomp:has(input:checked) { border-color: var(--oferta); background: #FFF4F7; }
+.opcion-acomp--no { opacity: 0.5; cursor: not-allowed; }
+.especialistas-mini { display: grid; grid-auto-flow: column; grid-auto-columns: 120px; gap: 10px; overflow-x: auto; margin-top: 10px; padding-bottom: 6px; }
+.especialista-mini { display: flex; flex-direction: column; gap: 2px; border: 2px solid var(--linea); border-radius: 10px; overflow: hidden; cursor: pointer; background: #fff; font-size: 0.8rem; }
+.especialista-mini > .retrato { aspect-ratio: 4 / 5; height: auto; border-radius: 0; font-size: 2rem; }
+.especialista-mini strong, .especialista-mini span:last-child { padding: 0 8px; }
+.especialista-mini span:last-child { padding-bottom: 8px; }
+.especialista-mini:has(input:checked) { border-color: var(--oferta); box-shadow: 0 0 0 3px rgba(224,36,94,0.2); }
+
+.resumen-cita__mini { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--rubor); font-weight: 800; color: var(--gris); flex: 0 0 auto; }
+.resumen-cita__mini .foto, .resumen-cita__mini .retrato { width: 100%; height: 100%; font-size: 1rem; }
+.resumen-cita__mini--dia { font-family: var(--serif); color: var(--vino); }
+.resumen-cita__lineas li:not(.listo) .resumen-cita__mini { opacity: 0.6; }
+.resumen-cita__vacio { font-family: var(--serif); font-size: 1.4rem; color: var(--vino); }
+.resumen-cita__nota { text-align: center; font-size: 0.85rem; }
+
+/* Tarjeta de la galería: con fondo y borde, como en la tienda */
+.tarjeta-diseno { background: var(--superficie); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; gap: 0; transition: transform 0.2s, box-shadow 0.2s; }
+.tarjeta-diseno:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(34,22,28,0.12); }
+.tarjeta-diseno__foto { border-radius: 0; aspect-ratio: 4 / 5; }
+.tarjeta-diseno__cat { position: absolute; left: 8px; bottom: 8px; padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,0.92); color: var(--tinta); font-size: 0.75rem; font-weight: 700; }
+.tarjeta-diseno__cuerpo { padding: 12px 12px 14px; gap: 6px; flex: 1; }
+.tarjeta-diseno__titulo { color: var(--tinta); font-weight: 600; font-size: 1rem; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.tarjeta-diseno__datos { display: flex; flex-wrap: wrap; gap: 4px; }
+.tarjeta-diseno__datos span { padding: 2px 8px; border-radius: 6px; background: var(--rubor); font-size: 0.75rem; font-weight: 600; color: var(--vino-hondo); }
+.tarjeta-diseno__precio { font-size: 1.25rem; color: var(--oferta); }
+.tarjeta-diseno__reservar { margin-top: auto; min-height: 42px; border: none; border-radius: 999px; background: linear-gradient(90deg, var(--oferta), #F25D8A); color: #fff; font: inherit; font-weight: 800; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+.tarjeta-diseno__reservar:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(224,36,94,0.3); }
+.disenos-rejilla { align-items: stretch; }
+
+/* Citas en el carrito */
+.linea-carrito__cita { display: flex; flex-direction: column; gap: 2px; }
+.linea-carrito__chip { align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: var(--vino); color: #fff; font-size: 0.75rem; font-weight: 700; }
+.linea-carrito__unico { padding: 8px 14px; border-radius: 6px; background: var(--rubor); font-weight: 700; }
+.carrito-lateral__cita { font-size: 0.75rem; color: var(--gris); text-align: center; }
+.carrito-lateral__quitar { border: 1px solid var(--linea); border-radius: 6px; background: var(--superficie); font: inherit; font-size: 0.85rem; padding: 4px 12px; cursor: pointer; }
+.compra__citas { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.compra__citas li { padding: 8px 12px; border-radius: 8px; background: #FDE8EE; }
+.compra__citas-titulo { margin-top: 6px; }
+.cita-lista__citas { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 10px; }
+.acompanante__caja fieldset, .acompanante, .acompanante__caja { min-width: 0; }
+.servicios-mini, .especialistas-mini { max-width: 100%; }
+
+/* Miniaturas del resumen de la cita: siempre círculos de 44 px */
+.resumen-cita__lineas li > .resumen-cita__mini { width: 44px; height: 44px; min-width: 44px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--rubor); border: 2px solid var(--superficie); box-shadow: 0 0 0 1.5px var(--linea); }
+.resumen-cita__lineas li.listo > .resumen-cita__mini { box-shadow: 0 0 0 2px var(--oferta); }
+.resumen-cita__mini > .foto, .resumen-cita__mini > .retrato { width: 100%; height: 100%; border-radius: 50%; }
+.resumen-cita__mini .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.resumen-cita__mini .foto__vacia, .pasos-reserva__icono .foto__vacia, .servicio-mini .foto__vacia, .cita-tarjeta .foto__vacia, .diseno-elegido .foto__vacia { min-height: 0; }
+.resumen-cita__mini .foto__vacia svg { width: 14px; height: 18px; }
+.resumen-cita__lineas li { align-items: center; }
+.admin-foto__inicial { aspect-ratio: 1; display: grid; place-items: center; background: var(--vino); color: #fff; font-family: var(--serif); font-size: 3rem; border-radius: 10px; }

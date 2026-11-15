@@ -4,7 +4,14 @@ import { useLocation } from 'react-router-dom';
 // Hace aparecer suavemente tarjetas y secciones cuando entran en la pantalla.
 // Usa IntersectionObserver (para saber cuándo se ven) y MutationObserver (para el contenido
 // que llega después desde la API). Si la persona pidió "reducir movimiento", no anima nada.
-const SELECTOR = '.tarjeta-producto, .servicio, .cupon, .mosaico > li, .bloque-ofertas__cabeza, .confianza, .categoria-circulo, .pasos li, .servicios-ayuda, .caja';
+//
+// Importante: nada se queda escondido. Antes, al cambiar de página, React reutilizaba
+// tarjetas que ya estaban marcadas para animarse pero nadie las observaba, y se quedaban
+// invisibles hasta recargar. Ahora: se vuelven a observar, al salir de la página se muestran
+// todas, y por si acaso a los 2 segundos se muestra cualquier cosa que siga escondida.
+const SELECTOR = '.tarjeta-producto, .servicio, .cupon, .mosaico > li, .bloque-ofertas__cabeza, .confianza, .categoria-circulo, .pasos li, .servicios-ayuda, .caja, .tarjeta-diseno';
+const mostrar = (el) => el.classList.add('aparece--visible');
+const mostrarTodo = () => document.querySelectorAll('.aparece:not(.aparece--visible)').forEach(mostrar);
 
 export default function Animaciones() {
   const { pathname } = useLocation();
@@ -14,17 +21,19 @@ export default function Animaciones() {
 
     const visto = new IntersectionObserver((entradas) => {
       entradas.forEach((e) => {
-        if (e.isIntersecting) { e.target.classList.add('aparece--visible'); visto.unobserve(e.target); }
+        if (e.isIntersecting) { mostrar(e.target); visto.unobserve(e.target); }
       });
-    }, { rootMargin: '0px 0px -40px 0px', threshold: 0.08 });
+    }, { rootMargin: '0px 0px -40px 0px', threshold: 0.01 });
 
     const preparar = (raiz) => {
       raiz.querySelectorAll?.(SELECTOR).forEach((el) => {
-        if (el.classList.contains('aparece')) return;
-        // Retraso escalonado según la posición dentro de su lista
-        const i = el.parentElement ? [...el.parentElement.children].indexOf(el) % 6 : 0;
-        el.style.setProperty('--retraso', `${i * 70}ms`);
-        el.classList.add('aparece');
+        if (el.classList.contains('aparece--visible')) return;
+        if (!el.classList.contains('aparece')) {
+          // Retraso escalonado según la posición dentro de su lista
+          const i = el.parentElement ? [...el.parentElement.children].indexOf(el) % 6 : 0;
+          el.style.setProperty('--retraso', `${i * 70}ms`);
+          el.classList.add('aparece');
+        }
         visto.observe(el);
       });
     };
@@ -33,7 +42,16 @@ export default function Animaciones() {
     preparar(main);
     const cambios = new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && preparar(n.parentElement || n))));
     cambios.observe(main, { childList: true, subtree: true });
-    return () => { visto.disconnect(); cambios.disconnect(); };
+
+    // Red de seguridad: lo que esté en pantalla y siga escondido se muestra igual
+    const reloj = setInterval(() => {
+      document.querySelectorAll('.aparece:not(.aparece--visible)').forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top < innerHeight && r.bottom > 0) mostrar(el);
+      });
+    }, 1500);
+
+    return () => { visto.disconnect(); cambios.disconnect(); clearInterval(reloj); mostrarTodo(); };
   }, [pathname]);
 
   return null;

@@ -7,6 +7,7 @@ import { useCarrito } from '../context/CarritoContext.jsx';
 import ProductoImagen from '../components/ProductoImagen.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import { enlaceArticulo } from '../components/CarritoLateral.jsx';
+import { descargarCalendario } from '../lib/calendario.js';
 
 // Los datos de contacto se recuerdan en este navegador para la próxima compra (nunca los de la tarjeta)
 const GUARDADO = 'naile-cliente';
@@ -48,21 +49,26 @@ export default function FinalizarCompra() {
   const [errores, setErrores] = useState({});
   const [estado, setEstado] = useState({ enviando: false, error: '', pedido: null });
 
-  const items = useMemo(() => articulos.map((i) => ({ productoId: i.productoId ?? i.id, cantidad: i.cantidad, detalle: i.detalle })), [articulos]);
-  const claveItems = JSON.stringify(items);
+  // Productos de la tienda y citas (una por persona) viajan por separado
+  const items = useMemo(() => articulos.filter((i) => i.tipo !== 'cita').map((i) => ({ productoId: i.productoId ?? i.id, cantidad: i.cantidad, detalle: i.detalle })), [articulos]);
+  const citas = useMemo(() => articulos.filter((i) => i.tipo === 'cita').map((i) => ({
+    servicioId: i.servicioId, especialistaId: i.especialistaId, fecha: i.fecha, hora: i.hora,
+    disenoId: i.disenoId, fotoRefId: i.fotoRefId, persona: i.persona, notas: i.notas
+  })), [articulos]);
+  const claveItems = JSON.stringify([items, citas]);
 
   useEffect(() => { api.cupones().then(setCupones).catch(() => setCupones([])); }, []);
 
   // El resumen lo calcula el servidor (precios reales y cupón con el patrón Decorator)
   useEffect(() => {
-    if (!items.length) { setCotizacion(null); return; }
-    api.cotizarPedido({ items, cupon })
+    if (!items.length && !citas.length) { setCotizacion(null); return; }
+    api.cotizarPedido({ items, citas, cupon, metodoPago: metodo })
       .then((c) => { setCotizacion(c); setErrores((e) => ({ ...e, cupon: '' })); })
       .catch((err) => {
         setErrores((e) => ({ ...e, cupon: err.message }));
         if (cupon) setCupon('');
       });
-  }, [claveItems, cupon]);
+  }, [claveItems, cupon, metodo]);
 
   const numero = soloNumeros(tarjeta.numero);
   const anioActual = new Date().getFullYear();
@@ -111,7 +117,7 @@ export default function FinalizarCompra() {
     try {
       // Al servidor solo va lo que la pasarela simulada necesita; el CVV no sale del navegador
       const pago = metodo === 'tarjeta' ? { numero, mes: tarjeta.mes, anio: tarjeta.anio } : { comprobante };
-      const pedido = await api.crearPedido({ items, cliente, metodoPago: metodo, pago, cupon, notas: regalo.abierto ? regalo.texto : '' });
+      const pedido = await api.crearPedido({ items, citas, cliente, metodoPago: metodo, pago, cupon, notas: regalo.abierto ? regalo.texto : '' });
       try { localStorage.setItem(GUARDADO, JSON.stringify(cliente)); } catch { /* sin almacenamiento */ }
       carrito.quitarSeleccionados();
       setEstado({ enviando: false, error: '', pedido });
@@ -128,18 +134,31 @@ export default function FinalizarCompra() {
       <div className="contenedor pagina compra-lista">
         <div className="compra-lista__caja" role="status">
           <span className="compra-lista__check" aria-hidden="true">✓</span>
-          <h1>¡Pedido #{p.id} recibido!</h1>
+          <h1>{p.id ? `¡Pedido #${p.id} recibido!` : p.citas.length > 1 ? '¡Tus citas están reservadas!' : '¡Tu cita está reservada!'}</h1>
           <p>Total: <strong>{dinero(p.total)}</strong>{p.descuento > 0 && <> · ahorraste {dinero(p.descuento)} con tu cupón</>}</p>
-          <p className="tenue">Pago: {p.metodo}{p.referenciaPago && p.referenciaPago !== 'EN-SALON' ? ` (${p.referenciaPago})` : ''}</p>
+          <p className="tenue">Pagaste hoy {dinero(p.pagado)}{p.enSalon > 0 ? ` · pagas ${dinero(p.enSalon)} en el salón` : ''} · {p.metodo}{p.referenciaPago && p.referenciaPago !== 'EN-SALON' ? ` (${p.referenciaPago})` : ''}</p>
+          {p.citas.length > 0 && (
+            <ul className="cita-lista__citas">
+              {p.citas.map((c) => (
+                <li key={c.id} className="cita-lista__tarjeta">
+                  <p className="cita-lista__fecha">{new Date(`${c.fecha}T12:00:00`).toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                  <p className="cita-lista__hora">{c.hora}</p>
+                  <p>{c.servicio} con {c.especialista} · para {c.cliente_nombre}</p>
+                  <p className="tenue">Reserva #{c.id} · {c.estado === 'confirmada' ? 'Confirmada' : 'Pendiente de confirmar'}</p>
+                </li>
+              ))}
+            </ul>
+          )}
           <ol className="compra-lista__pasos">
             {p.requiereVerificacion && metodo === 'sinpe' && <li>Revisamos tu comprobante de SINPE Móvil.</li>}
-            <li>Preparamos tu pedido en el salón.</li>
-            <li>Te escribimos por WhatsApp al {cliente.telefono} cuando esté listo.</li>
-            <li>Lo retiras en {SALON.direccion}{metodo === 'salon' ? ' y pagas ahí mismo' : ''}.</li>
+            {p.id && <li>Preparamos tu pedido y te escribimos por WhatsApp al {cliente.telefono} cuando esté listo para retirar.</li>}
+            {p.citas.length > 0 && <li>Te recordamos tu cita por WhatsApp un día antes.</li>}
+            <li>Te esperamos en {SALON.direccion}{p.enSalon > 0 ? ` (ahí pagas lo que falta)` : ''}.</li>
           </ol>
           <div className="compra-lista__botones">
-            <Link to="/tienda" className="boton">Seguir comprando</Link>
-            <Link to="/reservar" className="boton boton--contorno">Reservar una cita</Link>
+            {p.citas.length > 0 && <button type="button" className="boton" onClick={() => descargarCalendario(p.citas)}>Agregar a mi calendario</button>}
+            <Link to="/tienda" className={p.citas.length ? 'boton boton--contorno' : 'boton'}>Seguir comprando</Link>
+            {!p.citas.length && <Link to="/reservar" className="boton boton--contorno">Reservar una cita</Link>}
           </div>
         </div>
       </div>
@@ -205,9 +224,19 @@ export default function FinalizarCompra() {
               )}
             </section>
             <section aria-labelledby="t-retiro" className="compra__retiro">
-              <h2 id="t-retiro">Retiro en el salón: <span className="gratis">GRATIS</span></h2>
-              <p>Te escribimos por WhatsApp cuando esté listo ›</p>
-              <p className="tenue">Horario: {SALON.horario.map((h) => `${h.dias} ${h.horas}`).join(' · ')}</p>
+              {items.length > 0 && <h2 id="t-retiro">Retiro en el salón: <span className="gratis">GRATIS</span></h2>}
+              {items.length > 0 && <p>Te escribimos por WhatsApp cuando tu pedido esté listo ›</p>}
+              {citas.length > 0 && (
+                <>
+                  <h2 id={items.length ? undefined : 't-retiro'} className="compra__citas-titulo">{citas.length > 1 ? `Tus ${citas.length} citas` : 'Tu cita'}</h2>
+                  <ul className="compra__citas">
+                    {articulos.filter((i) => i.tipo === 'cita').map((i) => (
+                      <li key={i.clave}><strong>{i.fechaTexto}, {i.hora}</strong> · {i.nombre} con {i.especialistaNombre}{i.persona ? ` (para ${i.persona})` : ''}</li>
+                    ))}
+                  </ul>
+                  <p className="tenue">Hoy pagas el 30 % de las citas para apartar el espacio; el resto, en el salón.</p>
+                </>
+              )}
             </section>
           </div>
 
@@ -221,7 +250,7 @@ export default function FinalizarCompra() {
                 <li key={i.clave}>
                   <Link to={enlaceArticulo(i)} className="compra__foto">
                     <ProductoImagen producto={i} />
-                    {i.stock > 0 && i.stock < 10 && <span>Casi agotado</span>}
+                    {i.tipo === 'cita' ? <span>{i.fechaTexto} · {i.hora}</span> : i.stock > 0 && i.stock < 10 && <span>Casi agotado</span>}
                     {i.cantidad > 1 && <b>×{i.cantidad}</b>}
                   </Link>
                   <p className="compra__precio">
@@ -299,7 +328,7 @@ export default function FinalizarCompra() {
                     <div className="metodo__panel">
                       <ol className="ficha__pasos">
                         <li>Abre la app de tu banco y elige SINPE Móvil.</li>
-                        <li><span>Envía <strong>{dinero(cotizacion?.total ?? carrito.totalElegido)}</strong> al <strong>{SALON.sinpe.numero}</strong> ({SALON.sinpe.nombre}).</span></li>
+                        <li><span>Envía <strong>{dinero(cotizacion?.pagasHoy ?? carrito.totalElegido)}</strong> al <strong>{SALON.sinpe.numero}</strong> ({SALON.sinpe.nombre}).</span></li>
                         <li>Copia aquí el número de comprobante.</li>
                       </ol>
                       <div className="campo">
@@ -312,7 +341,7 @@ export default function FinalizarCompra() {
                   )}
                   {metodo === m.id && m.id === 'salon' && (
                     <div className="metodo__panel">
-                      <p>Apartamos tu pedido y lo pagas cuando lo retires, en efectivo, tarjeta o SINPE.</p>
+                      <p>Apartamos tu pedido{citas.length ? ' y tus citas' : ''} y pagas todo en el salón, en efectivo, tarjeta o SINPE.{citas.length ? ' Las citas quedan pendientes hasta que te confirmemos por WhatsApp.' : ''}</p>
                     </div>
                   )}
                 </div>
@@ -353,11 +382,13 @@ export default function FinalizarCompra() {
 
           {cotizacion ? (
             <dl>
-              <div><dt>Total de los productos:</dt><dd>{cotizacion.ahorroOfertas > 0 ? <s>{dinero(cotizacion.sinOfertas)}</s> : dinero(cotizacion.sinOfertas)}</dd></div>
+              <div><dt>Total de los artículos:</dt><dd>{cotizacion.ahorroOfertas > 0 ? <s>{dinero(cotizacion.sinOfertas)}</s> : dinero(cotizacion.sinOfertas)}</dd></div>
               {cotizacion.ahorroOfertas > 0 && <div><dt>✓ Descuento de artículo(s):</dt><dd className="resumen-pedido__menos">-{dinero(cotizacion.ahorroOfertas)}</dd></div>}
               {cotizacion.descuento > 0 && <div><dt>✓ Cupón {cotizacion.cupon.codigo}:</dt><dd className="resumen-pedido__menos">-{dinero(cotizacion.descuento)}</dd></div>}
-              <div><dt>✓ Retiro en el salón:</dt><dd className="resumen-pedido__gratis">GRATIS</dd></div>
+              {items.length > 0 && <div><dt>✓ Retiro en el salón:</dt><dd className="resumen-pedido__gratis">GRATIS</dd></div>}
               <div className="resumen-pedido__total"><dt>Total del pedido:</dt><dd>{dinero(cotizacion.total)}</dd></div>
+              {cotizacion.enSalon > 0 && <div><dt>Pagas hoy:</dt><dd><strong>{dinero(cotizacion.pagasHoy)}</strong></dd></div>}
+              {cotizacion.enSalon > 0 && <div><dt>Pagas en el salón:</dt><dd>{dinero(cotizacion.enSalon)}</dd></div>}
             </dl>
           ) : <p className="tenue" role="status">Calculando…</p>}
           <p className="resumen-pedido__nota">Al finalizar la compra aceptas que te contactemos por WhatsApp para coordinar el retiro.</p>

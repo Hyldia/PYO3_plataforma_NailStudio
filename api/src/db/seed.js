@@ -3,6 +3,7 @@
 import { getDb } from './connection.js';
 import { cargarDatosEjemplo } from './datosEjemplo.js';
 import { cargarResenasEjemplo } from './resenasEjemplo.js';
+import { ESPECIALISTAS, VERSION_ESPECIALISTAS } from './especialistasEjemplo.js';
 import { generarCatalogo } from './catalogoProductos.js';
 import { SERVICIOS, CUPONES } from './catalogoServicios.js';
 import { FOTOS_MUESTRA, IMAGENES_PRODUCTOS, VERSION_FOTOS } from './fotosMuestra.js';
@@ -15,9 +16,10 @@ export function seed({ force = false } = {}) {
     const servicios = cargarServicios(db);
     const catalogo = cargarCatalogo(db);
     const fotos = cargarFotosMuestra(db);
+    const equipo = cargarEspecialistas(db);
     const datos = cargarDatosEjemplo(db);
     const resenas = cargarResenasEjemplo(db);
-    return servicios || catalogo || fotos || datos || resenas;
+    return servicios || catalogo || fotos || equipo || datos || resenas;
   }
 
   db.exec(`
@@ -28,14 +30,29 @@ export function seed({ force = false } = {}) {
 
   cargarServicios(db);
 
-  const esp = db.prepare('INSERT INTO especialistas (nombre, especialidad) VALUES (?, ?)');
-  [['Camila', 'Nail art y diseños a mano'], ['Daniela', 'Acrílico y polygel'], ['Sofía', 'Pedicure y cuidado']].forEach((e) => esp.run(...e));
+  cargarEspecialistas(db);
 
   cargarCatalogo(db);
 
   cargarFotosMuestra(db);
   cargarDatosEjemplo(db);
   cargarResenasEjemplo(db);
+  return true;
+}
+
+// Equipo del salón: actualiza las que existen (por nombre) y agrega las nuevas, una vez por versión
+function cargarEspecialistas(db) {
+  const actual = Number(db.prepare("SELECT valor FROM ajustes WHERE clave = 'version_especialistas'").get()?.valor || 0);
+  if (actual >= VERSION_ESPECIALISTAS) return false;
+  const buscar = db.prepare('SELECT id FROM especialistas WHERE nombre = ?');
+  const actualizar = db.prepare(`UPDATE especialistas SET especialidad = @especialidad, bio = @bio, experiencia = @experiencia,
+    dias = @dias, hora_inicio = @hora_inicio, hora_fin = @hora_fin WHERE id = @id`);
+  const insertar = db.prepare(`INSERT INTO especialistas (nombre, especialidad, bio, experiencia, dias, hora_inicio, hora_fin)
+    VALUES (@nombre, @especialidad, @bio, @experiencia, @dias, @hora_inicio, @hora_fin)`);
+  db.transaction(() => {
+    ESPECIALISTAS.forEach((e) => { const ya = buscar.get(e.nombre); if (ya) actualizar.run({ ...e, id: ya.id }); else insertar.run(e); });
+    db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('version_especialistas', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor").run(String(VERSION_ESPECIALISTAS));
+  })();
   return true;
 }
 

@@ -9,7 +9,8 @@
     "limpiar": "node src/db/limpiar.js",
     "fotos": "node src/db/fotosUnsplash.js",
     "fotos-productos": "node src/db/fotosProductos.js",
-    "importar": "node src/db/importarCarpeta.js"
+    "importar": "node src/db/importarCarpeta.js",
+    "fotos-especialistas": "node src/db/fotosEspecialistas.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",

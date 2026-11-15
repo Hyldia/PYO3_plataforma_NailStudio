@@ -13,12 +13,20 @@ function reducer(items, accion) {
       const clave = `${producto.id}|${opciones.detalle || ''}`;
       const cantidad = Math.max(1, Number(opciones.cantidad) || 1);
       const existe = items.find((i) => i.clave === clave);
-      if (existe) return items.map((i) => (i.clave === clave ? { ...i, cantidad: i.cantidad + cantidad } : i));
+      // Lo que es para una sola persona (un press-on con un diseño) no se suma: se queda en 1
+      if (existe) return items.map((i) => (i.clave === clave ? { ...i, cantidad: i.unico ? 1 : i.cantidad + cantidad } : i));
       return [...items, { ...producto, ...opciones, imagen: opciones.imagen ?? producto.imagen, clave, productoId: producto.id, cantidad, seleccionado: true }];
     }
+    case 'agregarCitas':
+      // Cada cita es una persona con un diseño: cantidad 1, nunca se suman
+      return [...items, ...accion.citas.map((c, n) => ({ ...c, tipo: 'cita', clave: `cita|${Date.now()}|${n}`, cantidad: 1, unico: true, seleccionado: true }))];
     case 'cambiar':
       return items
-        .map((i) => (i.clave === accion.clave ? { ...i, cantidad: accion.fijar ?? i.cantidad + accion.delta } : i))
+        .map((i) => {
+          if (i.clave !== accion.clave) return i;
+          const nueva = accion.fijar ?? i.cantidad + accion.delta;
+          return { ...i, cantidad: i.unico ? Math.min(1, nueva) : nueva };
+        })
         .filter((i) => i.cantidad > 0);
     case 'seleccionar':
       return items.map((i) => (accion.clave === undefined || i.clave === accion.clave ? { ...i, seleccionado: accion.valor } : i));
@@ -30,6 +38,7 @@ function reducer(items, accion) {
       // Stock y precio actuales desde el servidor (lo guardado en el navegador puede estar viejo)
       const porId = new Map(accion.productos.map((p) => [p.id, p]));
       return items.map((i) => {
+        if (i.tipo === 'cita') return i;
         const p = porId.get(i.productoId ?? i.id);
         return p ? { ...i, stock: p.stock, precio: p.precio, precio_anterior: p.precio_anterior } : i;
       });
@@ -80,6 +89,12 @@ export function CarritoProvider({ children }) {
     quitar: (clave) => dispatch({ tipo: 'quitar', clave }),
     quitarSeleccionados: () => dispatch({ tipo: 'quitarSeleccionados' }),
     refrescar: (productos) => dispatch({ tipo: 'refrescar', productos }),
+    agregarCitas: (citas) => {
+      dispatch({ tipo: 'agregarCitas', citas });
+      setUltimo({ nombre: citas.length > 1 ? `${citas.length} citas` : `Cita: ${citas[0].nombre}`, detalle: `${citas[0].fechaTexto}, ${citas[0].hora}`, marca: Date.now() });
+    },
+    productosElegidos: elegidos.filter((i) => i.tipo !== 'cita'),
+    citasElegidas: elegidos.filter((i) => i.tipo === 'cita'),
     vaciar: () => dispatch({ tipo: 'vaciar' })
   };
   }, [items, abierto, ultimo]);

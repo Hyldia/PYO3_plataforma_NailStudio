@@ -6,7 +6,7 @@ import ProductoImagen from './ProductoImagen.jsx';
 
 // Carrito fijo a la derecha en pantallas anchas (como en las tiendas en línea grandes).
 // En celular y tablet se llega al carrito desde el ícono del encabezado.
-export const enlaceArticulo = (i) => (i.fotoId ? `/galeria/${i.fotoId}` : `/tienda/${i.productoId ?? i.id}`);
+export const enlaceArticulo = (i) => (i.tipo === 'cita' ? (i.fotoRefId ? `/galeria/${i.fotoRefId}` : '/servicios') : i.fotoId ? `/galeria/${i.fotoId}` : `/tienda/${i.productoId ?? i.id}`);
 
 export default function CarritoLateral() {
   const carrito = useCarrito();
@@ -53,11 +53,18 @@ export default function CarritoLateral() {
               {i.stock === 0 && <span>Agotado</span>}
             </div>
             <p className="carrito-lateral__precio">{dinero(i.precio)}</p>
-            <label className="solo-lector" htmlFor={`cant-${i.clave}`}>Cantidad de {i.nombre}</label>
-            <select id={`cant-${i.clave}`} value={i.cantidad} onChange={(e) => carrito.fijar(i.clave, e.target.value)}>
-              <option value="0">Quitar</option>
-              {Array.from({ length: Math.max(10, i.cantidad) }, (_, n) => <option key={n + 1} value={n + 1}>{n + 1}</option>)}
-            </select>
+            {i.tipo === 'cita' && <p className="carrito-lateral__cita">{i.fechaTexto}, {i.hora}</p>}
+            {i.unico ? (
+              <button type="button" className="carrito-lateral__quitar" onClick={() => carrito.quitar(i.clave)}>Quitar</button>
+            ) : (
+              <>
+                <label className="solo-lector" htmlFor={`cant-${i.clave}`}>Cantidad de {i.nombre}</label>
+                <select id={`cant-${i.clave}`} value={i.cantidad} onChange={(e) => carrito.fijar(i.clave, e.target.value)}>
+                  <option value="0">Quitar</option>
+                  {Array.from({ length: Math.max(10, i.cantidad) }, (_, n) => <option key={n + 1} value={n + 1}>{n + 1}</option>)}
+                </select>
+              </>
+            )}
           </li>
         ))}
       </ul>

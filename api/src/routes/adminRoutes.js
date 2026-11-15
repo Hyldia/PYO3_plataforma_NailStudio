@@ -17,6 +17,7 @@ r.put('/fotos/:id', fotoController.editar);
 r.delete('/fotos/:id', fotoController.eliminar);
 
 r.post('/productos/:id/imagen', subirImagen.single('imagen'), productoAdminController.cambiarImagen);
+r.post('/especialistas/:id/foto', subirImagen.single('imagen'), productoAdminController.fotoEspecialista);
 r.get('/pedidos', productoAdminController.listarPedidos);
 
 r.get('/citas', citaController.listarDelDia);

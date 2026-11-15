@@ -19,7 +19,6 @@ export default function DisenoDetalle() {
   const [modo, setModo] = useState('salon');
   const [forma, setForma] = useState('Almendra');
   const [largo, setLargo] = useState('Medio');
-  const [cantidad, setCantidad] = useState(1);
   const agregarPresson = useAgregarPresson();
   const { actualizar } = useReserva();
   const navegar = useNavigate();
@@ -35,9 +34,9 @@ export default function DisenoDetalle() {
   if (!foto) return <div className="contenedor pagina"><p className="tenue" role="status">Cargando diseño…</p></div>;
 
   const p = foto.presson;
-  const reservar = () => { actualizar({ fotoRef: foto }); navegar(foto.servicio ? `/reservar?servicio=${foto.servicio.id}` : '/reservar'); };
-  const personalizar = () => { actualizar({ fotoRef: foto }); navegar('/disena'); };
-  const agregar = () => agregarPresson(foto, { forma, largo, cantidad, presson: p });
+  const reservar = () => { actualizar({ fotoRef: foto, diseno: null }); navegar(foto.servicio ? `/reservar?servicio=${foto.servicio.id}` : '/reservar'); };
+  const personalizar = () => { actualizar({ fotoRef: foto, diseno: null }); navegar('/disena'); };
+  const agregar = () => agregarPresson(foto, { forma, largo, presson: p });
   const descuentoPresson = p?.precio_anterior ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0;
 
   return (
@@ -125,12 +124,7 @@ export default function DisenoDetalle() {
                       {LARGOS.map((l) => <label key={l} className="chip"><input type="radio" name="largo" checked={largo === l} onChange={() => setLargo(l)} /><span>{l}</span></label>)}
                     </div>
                   </fieldset>
-                  <div className="campo campo--linea">
-                    <label htmlFor="cantidad">Cantidad</label>
-                    <select id="cantidad" value={cantidad} onChange={(e) => setCantidad(Number(e.target.value))}>
-                      {[1, 2, 3, 4, 5].map((n) => <option key={n}>{n}</option>)}
-                    </select>
-                  </div>
+                  <p className="tenue">Un set de 24 uñas con este diseño, para una persona.</p>
                 </>
               )}
             </div>

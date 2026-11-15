@@ -19,7 +19,7 @@ export default function Carrito() {
 
   // Al entrar, pedir el stock y precio actuales de lo que hay en el carrito
   useEffect(() => {
-    const ids = [...new Set(carrito.items.map((i) => i.productoId ?? i.id))];
+    const ids = [...new Set(carrito.items.filter((i) => i.tipo !== 'cita').map((i) => i.productoId ?? i.id))];
     if (ids.length) api.productosPorIds(ids).then(carrito.refrescar).catch(() => {});
   }, []);
 
@@ -56,7 +56,7 @@ export default function Carrito() {
         <div className="carrito-pagina__grid">
           <section aria-labelledby="cp-titulo" className="carrito-pagina__lista">
             <h1 id="cp-titulo" className="solo-lector">Carrito</h1>
-            <p className="carrito-pagina__envio"><span aria-hidden="true">✓</span> Retiro gratis en el salón <em>Oferta exclusiva</em></p>
+            <p className="carrito-pagina__envio"><span aria-hidden="true">✓</span> {items.some((i) => i.tipo !== 'cita') ? 'Retiro gratis en el salón' : 'Apartas tus citas con solo el 30 %'} <em>Oferta exclusiva</em></p>
 
             <div className="carrito-pagina__barra">
               <label className="carrito-pagina__todos">
@@ -88,7 +88,13 @@ export default function Carrito() {
                           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
                         </button>
                       </div>
-                      {i.detalle && <p className="linea-carrito__detalle">{i.detalle} ›</p>}
+                      {i.tipo === 'cita' ? (
+                        <div className="linea-carrito__cita">
+                          <span className="linea-carrito__chip">Cita en el salón</span>
+                          <p><strong>{i.fechaTexto}, {i.hora}</strong> con {i.especialistaNombre}</p>
+                          <p className="tenue">Para: {i.persona || 'ti'}{i.disenoTexto ? ` · Diseño: ${i.disenoTexto}` : ' · Diseño: lo eliges en el salón'}</p>
+                        </div>
+                      ) : i.detalle && <p className="linea-carrito__detalle">{i.detalle} ›</p>}
                       {descuento >= 15 && <p className="linea-carrito__venta">GRAN VENTA</p>}
                       <div className="linea-carrito__abajo">
                         <div className="linea-carrito__precios">
@@ -98,13 +104,17 @@ export default function Carrito() {
                             {descuento > 0 && <span className="linea-carrito__pct">-{descuento}%</span>}
                           </p>
                         </div>
-                        <label className="linea-carrito__cant">
-                          <span>Cant.</span>
-                          <select value={i.cantidad} onChange={(e) => carrito.fijar(i.clave, e.target.value)} aria-label={`Cantidad de ${i.nombre}`}>
-                            <option value="0">Quitar</option>
-                            {Array.from({ length: Math.max(10, i.cantidad) }, (_, n) => <option key={n + 1} value={n + 1}>{n + 1}</option>)}
-                          </select>
-                        </label>
+                        {i.unico ? (
+                          <span className="linea-carrito__unico">{i.tipo === 'cita' ? '1 persona' : '1 set'}</span>
+                        ) : (
+                          <label className="linea-carrito__cant">
+                            <span>Cant.</span>
+                            <select value={i.cantidad} onChange={(e) => carrito.fijar(i.clave, e.target.value)} aria-label={`Cantidad de ${i.nombre}`}>
+                              <option value="0">Quitar</option>
+                              {Array.from({ length: Math.max(10, i.cantidad) }, (_, n) => <option key={n + 1} value={n + 1}>{n + 1}</option>)}
+                            </select>
+                          </label>
+                        )}
                       </div>
                     </div>
                   </li>

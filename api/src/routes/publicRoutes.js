@@ -15,6 +15,7 @@ r.get('/servicios', catalogoController.listarServicios);
 r.get('/especialistas', catalogoController.listarEspecialistas);
 r.get('/productos', catalogoController.listarProductos);
 r.get('/productos/categorias', catalogoController.listarCategoriasProductos);
+r.get('/productos/portadas', detalleController.portadas);
 r.get('/productos/:id', detalleController.producto);
 r.get('/productos/:id/relacionados', detalleController.productosRelacionados);
 r.get('/productos/:id/resenas', resenaController.listar);
@@ -30,6 +31,8 @@ r.get('/disenos/opciones', disenoController.opciones);
 r.post('/disenos', disenoController.crear);
 
 r.get('/citas/disponibilidad', citaController.disponibilidad);
+r.get('/citas/libres', citaController.libres);
+r.get('/especialistas/:id/agenda', citaController.agenda);
 r.post('/citas', citaController.crear);
 
 r.post('/pedidos/cotizar', pedidoController.cotizar);

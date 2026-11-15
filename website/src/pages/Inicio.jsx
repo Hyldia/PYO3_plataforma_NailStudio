@@ -11,14 +11,14 @@ import Decoracion from '../components/Decoracion.jsx';
 
 const CATEGORIAS = [
   { nombre: 'Esmaltes y geles', tipo: 'frasco-gel', color: '#E0245E', to: '/tienda?categoria=Esmaltes y geles' },
-  { nombre: 'Rubber base', tipo: 'frasco-gel', color: '#F2C8CF', to: '/tienda?q=rubber' },
+  { nombre: 'Rubber base', tipo: 'frasco-gel', color: '#F2C8CF', to: '/tienda?q=rubber', clave: 'rubber' },
   { nombre: 'Lámparas', tipo: 'lampara', color: '#fff', to: '/tienda?categoria=Equipos' },
   { nombre: 'Herramientas', tipo: 'alicate', color: '#C0C4C8', to: '/tienda?categoria=Herramientas' },
   { nombre: 'Limas', tipo: 'lima', color: '#1E1A1C', to: '/tienda?categoria=Limas y pulidores' },
   { nombre: 'Cuidado de manos', tipo: 'crema', color: '#F2D4CB', to: '/tienda?categoria=Cuidado de manos' },
   { nombre: 'Pedicure', tipo: 'crema', color: '#A8E0C8', to: '/tienda?categoria=Pedicure' },
   { nombre: 'Manicure pro', tipo: 'caja', color: '#D9B79A', to: '/tienda?categoria=Manicure profesional' },
-  { nombre: 'Aceites', tipo: 'gotero', color: '#E8B65C', to: '/tienda?q=aceite' },
+  { nombre: 'Aceites', tipo: 'gotero', color: '#E8B65C', to: '/tienda?q=aceite', clave: 'aceite' },
   { nombre: 'Decoración', tipo: 'tarro', color: '#D4AF37', to: '/tienda?categoria=Decoración' },
   { nombre: 'Press-on', tipo: 'tips', color: '#E9A3BC', to: '/tienda?categoria=Tips y press-on' },
   { nombre: 'Kits', tipo: 'kit', color: '#8C1D4B', to: '/tienda?categoria=Kits' }
@@ -52,12 +52,15 @@ function TarjetaServicioMini({ s }) {
 export default function Inicio() {
   useTitulo('');
   const [ofertas, setOfertas] = useState([]);
+  const [portadas, setPortadas] = useState({});
   const [vendidosTodos, setVendidos] = useState([]);
   const [verVendidos, setVerVendidos] = useState(12);
   const vendidos = vendidosTodos.slice(0, verVendidos);
   const [servicios, setServicios] = useState([]);
   const [fotos, setFotos] = useState([]);
   const [aviso, setAviso] = useState('');
+
+  useEffect(() => { api.portadas().then(setPortadas).catch(() => {}); }, []);
 
   useEffect(() => {
     api.productos({ ofertas: '1', orden: 'descuento', limite: 12 }).then(setOfertas).catch(() => {});
@@ -127,7 +130,10 @@ export default function Inicio() {
           {CATEGORIAS.map((c) => (
             <li key={c.nombre} className="categoria-circulo">
               <Link to={c.to}>
-                <span className="categoria-circulo__imagen" aria-hidden="true"><ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color }} /></span>
+                <span className="categoria-circulo__imagen" aria-hidden="true">
+                  {/* Foto real del producto más vendido de la categoría; el dibujo solo si aún no hay foto */}
+                  <ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color, imagen: portadas[c.clave || decodeURIComponent(c.to.split('categoria=')[1] || '')] || null }} />
+                </span>
                 <span className="categoria-circulo__nombre">{c.nombre}</span>
               </Link>
             </li>
