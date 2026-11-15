@@ -15,7 +15,7 @@ export function PodioVendidos({ productos, categoria }) {
   const total = productos.slice(0, 20).reduce((s, p) => s + (p.vendidos || 0), 0);
   return (
     <section className="podio" aria-labelledby="t-podio">
-      <span className="podio__chispas" aria-hidden="true">{Array.from({ length: 14 }, (_, i) => <i key={i} style={{ '--i': i }} />)}</span>
+      <span className="podio__chispas" aria-hidden="true">{Array.from({ length: 14 }, (_, i) => <i key={i} style={{ '--i': i, '--y': `${10 + ((i * 37) % 70)}%` }} />)}</span>
       <div className="podio__texto">
         <p className="podio__ante"><Rayo tam={16} /> Ranking en vivo</p>
         <h2 id="t-podio">Lo más vendido {categoria ? `en ${categoria}` : 'de AH Nails'}</h2>

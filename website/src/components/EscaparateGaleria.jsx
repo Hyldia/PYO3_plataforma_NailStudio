@@ -55,7 +55,7 @@ export default function EscaparateGaleria({ total }) {
   return (
     <>
       <section className="inspira" aria-labelledby="t-inspira">
-        <span className="inspira__brillos" aria-hidden="true">{Array.from({ length: 10 }, (_, n) => <i key={n} style={{ '--n': n }} />)}</span>
+        <span className="inspira__brillos" aria-hidden="true">{Array.from({ length: 10 }, (_, n) => <i key={n} style={{ '--n': n, '--y': `${(n * 29) % 90}%` }} />)}</span>
         <div className="inspira__texto">
           <p className="inspira__ante">Galería AH Nails</p>
           <h2 id="t-inspira">Encuentra tu próximo <em>set favorito</em></h2>

@@ -52,8 +52,8 @@ export default function TarjetaDiseno({ foto, indice = 0 }) {
         <Link to={`/galeria/${foto.id}`} className="tarjeta-diseno__titulo">{foto.titulo}</Link>
         {datos.length > 0 && <p className="tarjeta-diseno__datos">{datos.map((d) => <span key={d}>{d}</span>)}</p>}
         <p className="tarjeta-diseno__precio">
-          <small>Desde</small> {dinero(foto.precio_salon ?? foto.precio_presson)}
-          <span className="tarjeta-diseno__vistas">{miles(foto.vistas)} vistas</span>
+          {(foto.precio_salon ?? foto.precio_presson) != null && <><small>Desde</small> {dinero(foto.precio_salon ?? foto.precio_presson)}</>}
+          {foto.vistas != null && <span className="tarjeta-diseno__vistas">{miles(foto.vistas)} vistas</span>}
         </p>
         {popular ? (
           <p className="tarjeta-diseno__ranking"><b>#{foto.puesto} MÁS POPULAR</b> en {foto.categoria}</p>
