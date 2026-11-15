@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useReserva } from '../context/ReservaContext.jsx';
+import { useVistaRapida } from '../context/VistaRapidaContext.jsx';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { dinero } from '../config.js';
 import Foto from './Foto.jsx';
@@ -29,6 +30,7 @@ export function useAgregarPresson() {
 export default function TarjetaDiseno({ foto, indice = 0 }) {
   const { actualizar } = useReserva();
   const irA = useNavigate();
+  const vistaRapida = useVistaRapida();
   const popular = foto.puesto && foto.puesto <= 3 && foto.vistas > 0;
   const reservar = () => { actualizar({ fotoRef: foto, diseno: null }); irA(foto.servicio_id ? `/reservar?servicio=${foto.servicio_id}` : '/reservar'); };
   const datos = [foto.forma, foto.color, foto.acabado].filter(Boolean);
@@ -39,6 +41,7 @@ export default function TarjetaDiseno({ foto, indice = 0 }) {
         {foto.destacada ? <span className="tarjeta-diseno__marca">Destacado</span> : null}
         <span className="tarjeta-diseno__cat">{foto.categoria}</span>
       </Link>
+      <button type="button" className="boton-vista" onClick={() => vistaRapida({ tipo: 'diseno', id: foto.id })}>Vista previa<span className="solo-lector"> de {foto.titulo}</span></button>
       <div className="tarjeta-diseno__cuerpo">
         <Link to={`/galeria/${foto.id}`} className="tarjeta-diseno__titulo">{foto.titulo}</Link>
         {datos.length > 0 && <p className="tarjeta-diseno__datos">{datos.map((d) => <span key={d}>{d}</span>)}</p>}

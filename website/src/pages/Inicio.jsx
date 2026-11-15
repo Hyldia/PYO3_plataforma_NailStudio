@@ -4,6 +4,7 @@ import { api } from '../lib/api.js';
 import { SALON, campanaActual, dinero } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
+import VerMas from '../components/VerMas.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import ProductoImagen from '../components/ProductoImagen.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
@@ -54,7 +55,7 @@ export default function Inicio() {
   const [ofertas, setOfertas] = useState([]);
   const [portadas, setPortadas] = useState({});
   const [vendidosTodos, setVendidos] = useState([]);
-  const [verVendidos, setVerVendidos] = useState(12);
+  const [verVendidos, setVerVendidos] = useState(20);
   const vendidos = vendidosTodos.slice(0, verVendidos);
   const [servicios, setServicios] = useState([]);
   const [fotos, setFotos] = useState([]);
@@ -225,12 +226,10 @@ export default function Inicio() {
           <h2 id="t-vendidos">Lo más vendido en la tienda</h2>
           <Link to="/tienda?orden=vendidos" className="enlace-flecha">Ver la tienda <Flecha /></Link>
         </div>
-        <ul className="productos-rejilla">
+        <ul className="productos-rejilla productos-rejilla--grande">
           {vendidos.map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
         </ul>
-        {verVendidos < vendidosTodos.length && (
-          <div className="mas"><button type="button" className="boton-ver-mas" onClick={() => setVerVendidos((n) => n + 12)}>Ver más <span aria-hidden="true">⌄</span></button></div>
-        )}
+        <VerMas vistos={vendidos.length} total={vendidosTodos.length} cosa="productos" onClick={() => setVerVendidos((n) => n + 20)} />
       </section>
 
       {/* Galería */}

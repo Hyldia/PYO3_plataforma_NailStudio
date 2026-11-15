@@ -173,7 +173,7 @@ export default function Carrito() {
         <section className="relacionados" aria-labelledby="cp-sugeridos">
           <h2 id="cp-sugeridos">{items.length ? 'Agrega también' : 'Lo más vendido'}</h2>
           <ul className="productos-rejilla productos-rejilla--grande">
-            {sugeridos.filter((p) => !enCarrito.has(p.id)).slice(0, 14).map((p) => <TarjetaProducto key={p.id} p={p} />)}
+            {sugeridos.filter((p) => !enCarrito.has(p.id)).slice(0, 10).map((p) => <TarjetaProducto key={p.id} p={p} />)}
           </ul>
         </section>
       )}

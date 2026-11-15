@@ -3,18 +3,20 @@
 // el servidor recalcula para no confiar en el precio que llega del navegador.
 
 export const OPCIONES = {
-  formas: ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'],
+  formas: ['Almendra', 'Ovalada', 'Redonda', 'Cuadrada', 'Squoval', 'Coffin', 'Stiletto'],
   largos: ['Corto', 'Medio', 'Largo'],
-  colores: ['Nude', 'Rosa palo', 'Rosa intenso', 'Rojo', 'Vino', 'Lila', 'Celeste', 'Verde salvia', 'Negro', 'Blanco'],
-  acabados: ['Brillante', 'Mate', 'Chrome', 'Glitter'],
-  decoraciones: ['Ninguna', 'Francesa', 'Baby boomer', 'Líneas', 'Flores a mano', 'Pedrería']
+  colores: ['Nude', 'Beige', 'Milky white', 'Rosa palo', 'Rosa chicle', 'Rosa intenso', 'Fucsia', 'Coral', 'Durazno', 'Rojo', 'Rojo cereza',
+    'Vino', 'Borgoña', 'Lila', 'Lavanda', 'Celeste', 'Azul marino', 'Verde salvia', 'Verde esmeralda', 'Mostaza', 'Chocolate', 'Gris', 'Negro', 'Blanco', 'Dorado', 'Plateado'],
+  acabados: ['Brillante', 'Mate', 'Chrome', 'Glitter', 'Ojo de gato', 'Aurora', 'Perlado'],
+  decoraciones: ['Ninguna', 'Francesa', 'Francesa de color', 'Baby boomer', 'Ombré', 'Mármol', 'Líneas', 'Puntos', 'Corazones', 'Flores a mano', 'Animal print', 'Foil dorado', 'Pedrería']
 };
 
 // Recargos sobre el servicio base (en colones). Ajustar a la lista real del salón.
 const PRECIO = {
   largo: { Corto: 0, Medio: 2000, Largo: 4000 },
-  acabado: { Brillante: 0, Mate: 1000, Chrome: 3000, Glitter: 2000 },
-  decoracion: { Ninguna: 0, Francesa: 2500, 'Baby boomer': 3000, 'Líneas': 2000, 'Flores a mano': 4500, 'Pedrería': 4000 },
+  acabado: { Brillante: 0, Mate: 1000, Chrome: 3000, Glitter: 2000, 'Ojo de gato': 3000, Aurora: 3000, Perlado: 2000 },
+  decoracion: { Ninguna: 0, Francesa: 2500, 'Francesa de color': 2500, 'Baby boomer': 3000, 'Ombré': 3000, 'Mármol': 3500, 'Líneas': 2000, Puntos: 1500,
+    Corazones: 2500, 'Flores a mano': 4500, 'Animal print': 3500, 'Foil dorado': 3000, 'Pedrería': 4000 },
   acento: 2500
 };
 

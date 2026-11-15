@@ -55,13 +55,11 @@ function TarjetaServicio({ s }) {
           </ul>
         )}
         <div className="servicio__pie">
-          <div>
-            <Precio s={s} />
-            <p className="servicio__duracion">{Icono.reloj}{duracion(s.duracion_min)}</p>
-          </div>
-          <Link to={`/reservar?servicio=${s.id}`} className="boton boton--chico">Reservar<span className="solo-lector"> {s.nombre}</span></Link>
+          <Precio s={s} />
+          <p className="servicio__duracion">{Icono.reloj}{duracion(s.duracion_min)}</p>
         </div>
         {ahorro(s) > 0 && <p className="servicio__ahorro">Ahorras {dinero(ahorro(s))}</p>}
+        <Link to={`/reservar?servicio=${s.id}`} className="servicio__reservar">Reservar<span className="solo-lector"> {s.nombre}</span></Link>
       </div>
     </li>
   );
@@ -125,34 +123,36 @@ export default function Servicios() {
 
   return (
     <div className="servicios-pagina">
-      <section className="servicios-hero">
+      <section className="campana servicios-campana" aria-labelledby="t-servicios">
         <Decoracion />
-        <div className="contenedor servicios-hero__rejilla">
-          <div>
+        <div className="contenedor campana__rejilla">
+          <div className="servicios-campana__texto">
             <p className="servicios-hero__antetitulo">Carta de servicios</p>
-            <h1>Servicios y precios</h1>
+            <h1 id="t-servicios" className="servicios-campana__titulo">Servicios y precios</h1>
             <p className="servicios-hero__texto">Manicure, uñas acrílicas, gel, pedicure y tratamientos para tus manos. Combina servicios en un combo y ahorra hasta {mayorAhorro}{'\u00a0'}%.</p>
+            <ul className="servicios-campana__datos">
+              <li><strong><Contador valor={servicios.length} /></strong> servicios</li>
+              <li><strong><Contador valor={ofertas.length} /></strong> en oferta</li>
+              <li><strong>{Number.isFinite(comboMinimo) ? <Contador valor={comboMinimo} formato={dinero} /> : '—'}</strong> combos desde</li>
+            </ul>
             <div className="botones">
-              <a href="#lista-servicios" className="boton boton--claro">Ver todos los servicios</a>
-              <button type="button" className="boton boton--borde-claro" onClick={() => { fijar('ofertas', '1'); document.getElementById('lista-servicios')?.scrollIntoView(); }}>Ver ofertas</button>
+              <a href="#lista-servicios" className="campana__boton servicios-campana__boton">Ver servicios</a>
+              <button type="button" className="boton boton--borde-claro" onClick={() => { fijar('ofertas', '1'); document.getElementById('lista-servicios')?.scrollIntoView({ behavior: 'smooth' }); }}>Ver ofertas</button>
             </div>
           </div>
-          <ul className="servicios-hero__datos">
-            <li>
-              <span className="dato__icono" aria-hidden="true">💅</span>
-              <strong><Contador valor={servicios.length} /></strong><span>servicios para manos y pies</span>
-            </li>
-            <li>
-              <span className="dato__icono" aria-hidden="true">🏷️</span>
-              <strong><Contador valor={ofertas.length} /></strong><span>servicios en oferta</span>
-            </li>
-            <li>
-              <span className="dato__icono" aria-hidden="true">✨</span>
-              <strong>{Number.isFinite(comboMinimo) ? <Contador valor={comboMinimo} formato={dinero} /> : '—'}</strong><span>combos desde</span>
-            </li>
+          <ul className="campana__productos servicios-campana__fotos" aria-label="Servicios en oferta">
+            {ofertas.slice(0, 3).map((s) => (
+              <li key={s.id}>
+                <Link to={`/reservar?servicio=${s.id}`} className="campana__producto">
+                  <span className="campana__etiqueta">-{porcentaje(s)}%</span>
+                  <Foto archivo={s.imagen} alt="" />
+                  <span className="servicios-campana__nombre">{s.nombre}</span>
+                  <span className="campana__precio">{dinero(s.precio_oferta)}</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
-        <svg className="onda" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 240 70 480 0 720 26 S 1200 60 1440 20 V60 H0 Z" /></svg>
       </section>
 
       {cupones.length > 0 && (
@@ -166,11 +166,19 @@ export default function Servicios() {
       )}
 
       <div id="lista-servicios" className="contenedor servicios-lista-nueva">
-        <div className="servicios-filtros">
-          <div className="pestanas" role="group" aria-label="Categorías">
-            {['Todos', ...categorias].map((c) => (
-              <button key={c} type="button" className="pestana" aria-pressed={categoria === c} onClick={() => fijar('categoria', c === 'Todos' ? '' : c)}>{c}</button>
-            ))}
+        <div className="servicios-filtros servicios-filtros--nuevo">
+          <div className="filtro-fotos" role="group" aria-label="Categorías">
+            {['Todos', ...categorias].map((c) => {
+              const foto = c === 'Todos' ? servicios[0]?.imagen : servicios.find((s) => s.categoria === c)?.imagen;
+              const n = c === 'Todos' ? servicios.length : servicios.filter((s) => s.categoria === c).length;
+              return (
+                <button key={c} type="button" className="filtro-foto" aria-pressed={categoria === c} onClick={() => fijar('categoria', c === 'Todos' ? '' : c)}>
+                  <span className="filtro-foto__img"><Foto archivo={foto} alt="" /></span>
+                  <span className="filtro-foto__nombre">{c}</span>
+                  <span className="filtro-foto__n">{n}</span>
+                </button>
+              );
+            })}
           </div>
           <div className="servicios-filtros__fila">
             <label className="buscador buscador--chico">
@@ -178,15 +186,16 @@ export default function Servicios() {
               <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
               <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Busca: pedicure, francesa, parafina…" />
             </label>
-            <label className="casilla">
-              <input type="checkbox" checked={soloOfertas} onChange={(e) => fijar('ofertas', e.target.checked ? '1' : '')} />
+            <label className="interruptor">
+              <input type="checkbox" role="switch" checked={soloOfertas} onChange={(e) => fijar('ofertas', e.target.checked ? '1' : '')} />
+              <span className="interruptor__pista" aria-hidden="true"><span /></span>
               <span>Solo ofertas</span>
             </label>
+            <p className="tenue servicios-filtros__cuenta" aria-live="polite">{filtrados.length} {filtrados.length === 1 ? 'servicio' : 'servicios'}</p>
           </div>
         </div>
 
         {error && <p role="alert" className="error">{error}</p>}
-        <p className="tenue" aria-live="polite">{filtrados.length} {filtrados.length === 1 ? 'servicio' : 'servicios'}</p>
         {servicios.length > 0 && filtrados.length === 0 && (
           <div className="vacio"><p>No hay servicios con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={() => { setTexto(''); setParams({}, { replace: true }); }}>Ver todos</button></div>
         )}
@@ -197,14 +206,15 @@ export default function Servicios() {
               <h2 id={`g-${cat}`}>{cat === 'Combos' ? 'Combos y paquetes' : cat}</h2>
               {cat === 'Combos' && <p className="tenue">Varios servicios en una sola cita, a mejor precio.</p>}
             </div>
-            <ul className={`servicios-rejilla ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
+            <ul key={`${categoria}-${soloOfertas}-${texto}`} className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
               {lista.map((s) => <TarjetaServicio key={s.id} s={s} />)}
             </ul>
           </section>
         ))}
       </div>
 
-      <section className="contenedor servicios-ayuda">
+      <section className="contenedor servicios-ayuda servicios-ayuda--foto">
+        <Foto archivo={servicios.find((x) => x.categoria === 'Manos')?.imagen} alt="" className="servicios-ayuda__foto" />
         <div>
           <h2>¿No sabes cuál elegir?</h2>
           <p>Diseña tus uñas y te recomendamos el servicio, o escríbenos y te asesoramos sin compromiso.</p>

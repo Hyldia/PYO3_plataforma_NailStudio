@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { useDebounce, useTitulo } from '../lib/hooks.js';
 import Desplegable from '../components/Desplegable.jsx';
+import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaDiseno from '../components/TarjetaDiseno.jsx';
 
 const CAMPOS = [
@@ -12,7 +13,7 @@ const CAMPOS = [
   { clave: 'acabado', titulo: 'Acabado' }
 ];
 const ORDENES = { recientes: 'Más recientes', populares: 'Más populares', antiguas: 'Más antiguos' };
-const POR_PAGINA = 30;
+const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
 
 export default function Galeria() {
   useTitulo('Galería');
@@ -109,14 +110,10 @@ export default function Galeria() {
       )}
 
       <ul className="disenos-rejilla">
-        {resultado.fotos.map((f, i) => <TarjetaDiseno key={f.id} foto={f} indice={i} presson={presson} />)}
+        {resultado.fotos.map((f, i) => <TarjetaDiseno key={f.id} foto={f} indice={i} />)}
+        {cargando && pagina > 1 && <Fantasmas n={Math.min(POR_PAGINA, resultado.total - resultado.fotos.length)} />}
       </ul>
-      {resultado.fotos.length < resultado.total && (
-        <div className="mas">
-          <p className="tenue">Viendo {resultado.fotos.length} de {resultado.total}</p>
-          <button type="button" className="boton boton--contorno" disabled={cargando} onClick={() => setPagina(pagina + 1)}>{cargando ? 'Cargando…' : 'Ver más diseños'}</button>
-        </div>
-      )}
+      <VerMas vistos={resultado.fotos.length} total={resultado.total} cargando={cargando} cosa="diseños" texto="Ver más diseños" onClick={() => setPagina(pagina + 1)} />
     </div>
   );
 }

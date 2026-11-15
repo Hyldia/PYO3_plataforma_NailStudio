@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { useDebounce, useTitulo } from '../lib/hooks.js';
+import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import Desplegable from '../components/Desplegable.jsx';
 
-const POR_PAGINA = 30;
+const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
 const ORDENES = { relevancia: 'Relevancia', vendidos: 'Más vendidos', descuento: 'Mayor descuento', calificacion: 'Mejor calificados', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', nuevos: 'Más nuevos' };
 const RANGOS = [['', '', 'Cualquier precio'], ['', '3000', 'Hasta ₡3 000'], ['3000', '8000', '₡3 000 a ₡8 000'], ['8000', '20000', '₡8 000 a ₡20 000'], ['20000', '', 'Más de ₡20 000']];
 
@@ -19,6 +20,7 @@ export default function Tienda() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [visibles, setVisibles] = useState(POR_PAGINA);
+  const [cargandoMas, setCargandoMas] = useState(false);
 
   const categoria = params.get('categoria') || '';
   const orden = params.get('orden') || 'relevancia';
@@ -109,13 +111,10 @@ export default function Tienda() {
       )}
       <ul className="productos-rejilla productos-rejilla--grande">
         {productos.slice(0, visibles).map((p) => <TarjetaProducto key={p.id} p={p} />)}
+        {cargandoMas && <Fantasmas n={Math.min(POR_PAGINA, productos.length - visibles)} />}
       </ul>
-      {visibles < productos.length && (
-        <div className="mas">
-          <p className="tenue">Viendo {visibles} de {productos.length}</p>
-          <button type="button" className="boton boton--contorno" onClick={() => setVisibles(visibles + POR_PAGINA)}>Ver más productos</button>
-        </div>
-      )}
+      <VerMas vistos={Math.min(visibles, productos.length)} total={productos.length} cargando={cargandoMas} cosa="productos" texto="Ver más productos"
+              onClick={() => { setCargandoMas(true); setTimeout(() => { setVisibles((v) => v + POR_PAGINA); setCargandoMas(false); }, 450); }} />
     </div>
   );
 }

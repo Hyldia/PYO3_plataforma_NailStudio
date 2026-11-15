@@ -3,6 +3,7 @@ import { api, sesionAdmin } from '../lib/api.js';
 import { SALON, dinero, enlaceWhatsApp } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
+import Modal from '../components/Modal.jsx';
 import ProductoImagen from '../components/ProductoImagen.jsx';
 
 const CATEGORIAS = ['Manicure', 'Acrílicas', 'Polygel', 'Gel', 'Pedicure', 'Nail art'];
@@ -146,8 +147,29 @@ function Galeria() {
     </>
   );
 
+  const modal = editando && (
+    <Modal titulo="Editar diseño" onCerrar={() => setEditando(null)} ancho>
+      <form onSubmit={guardarEdicion} className="editar-foto">
+        <div className="editar-foto__previa">
+          <Foto archivo={editando.archivo} alt={editando.descripcion || editando.titulo} />
+          <p className="tenue">Así se verá en la galería:</p>
+          <div className="editar-foto__tarjeta">
+            <p><strong>{editando.titulo || 'Sin título'}</strong></p>
+            <p className="editar-foto__chips">{[editando.categoria, editando.forma, editando.color, editando.acabado].filter(Boolean).map((x) => <span key={x}>{x}</span>)}</p>
+            {editando.destacada && <span className="tarjeta-diseno__marca editar-foto__dest">Destacado</span>}
+          </div>
+        </div>
+        <div className="editar-foto__campos">
+          {camposFoto(editando, setEditando, `e${editando.id}`)}
+          <div className="botones"><button type="submit" className="boton">Guardar cambios</button><button type="button" className="boton boton--contorno" onClick={() => setEditando(null)}>Cancelar</button></div>
+        </div>
+      </form>
+    </Modal>
+  );
+
   return (
     <section aria-labelledby="t-galeria-admin">
+      {modal}
       <h2 id="t-galeria-admin">Galería</h2>
       <form className="caja" onSubmit={subir}>
         <h3>Subir fotos</h3>
@@ -166,21 +188,14 @@ function Galeria() {
         {fotos.map((f) => (
           <li key={f.id} className="admin-foto">
             <Foto archivo={f.archivo} alt={f.titulo} />
-            {editando?.id === f.id ? (
-              <form onSubmit={guardarEdicion} className="admin-foto__form">
-                {camposFoto(editando, setEditando, `e${f.id}`)}
-                <div className="botones"><button type="submit" className="boton boton--chico">Guardar</button><button type="button" className="boton boton--contorno boton--chico" onClick={() => setEditando(null)}>Cancelar</button></div>
-              </form>
-            ) : (
-              <div className="admin-foto__info">
-                <p><strong>{f.titulo}</strong>{f.destacada ? ' (destacada)' : ''}</p>
-                <p className="tenue">{[f.categoria, f.forma, f.color, f.acabado].filter(Boolean).join(', ')}. {f.vistas} vistas</p>
-                <div className="botones">
-                  <button type="button" className="boton boton--contorno boton--chico" onClick={() => setEditando({ ...f, destacada: !!f.destacada })}>Editar<span className="solo-lector"> {f.titulo}</span></button>
-                  <button type="button" className="boton boton--peligro boton--chico" onClick={() => borrar(f)}>Borrar<span className="solo-lector"> {f.titulo}</span></button>
-                </div>
+            <div className="admin-foto__info">
+              <p><strong>{f.titulo}</strong>{f.destacada ? ' (destacada)' : ''}</p>
+              <p className="tenue">{[f.categoria, f.forma, f.color, f.acabado].filter(Boolean).join(', ')}. {f.vistas} vistas</p>
+              <div className="botones">
+                <button type="button" className="boton boton--contorno boton--chico" onClick={() => setEditando({ ...f, destacada: !!f.destacada })}>Editar<span className="solo-lector"> {f.titulo}</span></button>
+                <button type="button" className="boton boton--peligro boton--chico" onClick={() => borrar(f)}>Borrar<span className="solo-lector"> {f.titulo}</span></button>
               </div>
-            )}
+            </div>
           </li>
         ))}
       </ul>
