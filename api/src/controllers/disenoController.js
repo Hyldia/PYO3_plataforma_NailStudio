@@ -9,7 +9,7 @@ export const disenoController = {
     const b = req.body;
     const diseno = new DisenoBuilder()
       .forma(b.forma).largo(b.largo).color(b.color).acabado(b.acabado)
-      .decoracion(b.decoracion).acento(b.acento).notas(b.notas).referencia(b.fotoRefId)
+      .decoracion(OPCIONES.decoraciones.includes(b.decoracion) ? b.decoracion : 'Ninguna').acento(b.acento).notas(b.notas).referencia(b.fotoRefId).unas(b.unas)
       .build();
     res.status(201).json(DisenoModel.crear(diseno));
   }

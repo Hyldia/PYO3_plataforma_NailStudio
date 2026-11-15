@@ -1,4 +1,5 @@
 // Patrón Builder (versión del cliente): arma el diseño paso a paso.
+import { ESMALTES, esmalte, calcularDiseno } from './esmaltes.js';
 // El servidor tiene la misma tabla y recalcula el recargo al guardar.
 
 // Colores agrupados como en un muestrario real de salón
@@ -19,8 +20,8 @@ export const COLORES = [
 ];
 
 export const OPCIONES = {
-  forma: ['Almendra', 'Ovalada', 'Redonda', 'Cuadrada', 'Squoval', 'Coffin', 'Stiletto'],
-  largo: ['Corto', 'Medio', 'Largo'],
+  forma: ['Almendra', 'Ovalada', 'Redonda', 'Cuadrada', 'Squoval', 'Coffin', 'Stiletto', 'Ballerina'],
+  largo: ['Corto', 'Medio', 'Largo', 'Extra largo'],
   acabado: ['Brillante', 'Mate', 'Chrome', 'Glitter', 'Ojo de gato', 'Aurora', 'Perlado'],
   decoracion: ['Ninguna', 'Francesa', 'Francesa de color', 'Baby boomer', 'Ombré', 'Mármol', 'Líneas', 'Puntos', 'Corazones', 'Flores a mano', 'Animal print', 'Foil dorado', 'Pedrería']
 };
@@ -32,16 +33,18 @@ export const BUSQUEDA_GALERIA = {
 };
 
 export const PRECIO = {
-  largo: { Corto: 0, Medio: 2000, Largo: 4000 },
+  largo: { Corto: 0, Medio: 2000, Largo: 4000, 'Extra largo': 6000 },
   acabado: { Brillante: 0, Mate: 1000, Chrome: 3000, Glitter: 2000, 'Ojo de gato': 3000, Aurora: 3000, Perlado: 2000 },
   decoracion: { Ninguna: 0, Francesa: 2500, 'Francesa de color': 2500, 'Baby boomer': 3000, 'Ombré': 3000, 'Mármol': 3500, 'Líneas': 2000, Puntos: 1500,
     Corazones: 2500, 'Flores a mano': 4500, 'Animal print': 3500, 'Foil dorado': 3000, 'Pedrería': 4000 },
   acento: 2500
 };
 
+const UNA_INICIAL = { esmalte: 'AH-038', acabado: 'Brillante', decoracion: 'Ninguna' };
 export const DISENO_INICIAL = {
-  forma: 'Almendra', largo: 'Medio', color: 'Nude', acabado: 'Brillante',
-  decoracion: 'Ninguna', acento: false, notas: '', fotoRefId: null
+  forma: 'Almendra', largo: 'Medio', color: 'Rosa ballet', acabado: 'Brillante',
+  decoracion: 'Ninguna', acento: false, notas: '', fotoRefId: null,
+  unas: [UNA_INICIAL, UNA_INICIAL, UNA_INICIAL, UNA_INICIAL, UNA_INICIAL]
 };
 
 export class DisenoBuilder {
@@ -51,17 +54,23 @@ export class DisenoBuilder {
 }
 
 export function calcularRecargo(d) {
+  if (d.unas) return calcularDiseno(d).total;
   return PRECIO.largo[d.largo] + PRECIO.acabado[d.acabado]
     + PRECIO.decoracion[d.decoracion] + (d.acento ? PRECIO.acento : 0);
 }
 
 export function describir(d) {
+  if (d.unas) {
+    const nombres = [...new Set(d.unas.map((u) => esmalte(u.esmalte)?.nombre).filter(Boolean))];
+    const extras = [...new Set(d.unas.flatMap((u) => [u.acabado !== 'Brillante' && u.acabado, u.decoracion !== 'Ninguna' && u.decoracion]).filter(Boolean))];
+    return [d.forma, d.largo.toLowerCase(), nombres.join(' + ').toLowerCase(), ...extras.map((x) => x.toLowerCase())].join(', ');
+  }
   const partes = [d.forma, d.largo.toLowerCase(), d.color.toLowerCase(), d.acabado.toLowerCase()];
   if (d.decoracion !== 'Ninguna') partes.push(d.decoracion.toLowerCase());
   if (d.acento) partes.push('uña de acento');
   return partes.join(', ');
 }
 
-export const hexDe = (nombre) => (COLORES.find((c) => c.nombre === nombre) || COLORES[0]).hex;
+export const hexDe = (nombre) => (COLORES.find((c) => c.nombre === nombre) || ESMALTES.find((e) => e.nombre === nombre) || COLORES[0]).hex;
 // Diseños guardados con nombres viejos siguen funcionando
-export const normalizar = (d) => ({ ...d, forma: OPCIONES.forma.includes(d.forma) ? d.forma : 'Almendra', acabado: OPCIONES.acabado.includes(d.acabado) ? d.acabado : 'Brillante', decoracion: OPCIONES.decoracion.includes(d.decoracion) ? d.decoracion : 'Ninguna' });
+export const normalizar = (d) => ({ ...DISENO_INICIAL, ...d, unas: Array.isArray(d.unas) && d.unas.length === 5 ? d.unas : DISENO_INICIAL.unas, forma: OPCIONES.forma.includes(d.forma) ? d.forma : 'Almendra', acabado: OPCIONES.acabado.includes(d.acabado) ? d.acabado : 'Brillante', decoracion: OPCIONES.decoracion.includes(d.decoracion) ? d.decoracion : 'Ninguna' });

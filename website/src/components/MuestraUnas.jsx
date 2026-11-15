@@ -1,9 +1,10 @@
 import { useId } from 'react';
 import { hexDe } from '../lib/disenoBuilder.js';
+import { esmalte } from '../lib/esmaltes.js';
 
 // Muestra del diseño. Cada uña se dibuja en SVG con su forma, largo, color, acabado y decoración.
 // <MuestraUnas> son tres uñas sueltas (para resúmenes); <ManoPrevia> pone las cinco uñas sobre una mano.
-const LARGO = { Corto: 0, Medio: 14, Largo: 28 };
+const LARGO = { Corto: 0, Medio: 14, Largo: 28, 'Extra largo': 40 };
 export const TONOS_PIEL = [
   { nombre: 'Clara', hex: '#F3D3C0' }, { nombre: 'Media clara', hex: '#E2B69A' }, { nombre: 'Media', hex: '#C98E6B' },
   { nombre: 'Morena', hex: '#9A6447' }, { nombre: 'Oscura', hex: '#6B402B' }
@@ -17,6 +18,7 @@ function contorno(forma, t) {
     case 'Squoval': return `M8 100 V${t + 10} Q8 ${t} 18 ${t} H42 Q52 ${t} 52 ${t + 10} ${base}`;
     case 'Redonda': return `M8 100 V${t + 18} C8 ${t + 2} 52 ${t + 2} 52 ${t + 18} ${base}`;
     case 'Coffin': return `M8 100 V${t + 30} L18 ${t} H42 L52 ${t + 30} ${base}`;
+    case 'Ballerina': return `M8 100 V${t + 34} C8 ${t + 22} 18 ${t + 6} 22 ${t} H38 C42 ${t + 6} 52 ${t + 22} 52 ${t + 34} ${base}`;
     case 'Stiletto': return `M8 100 V${t + 36} C8 ${t + 20} 26 ${t + 4} 30 ${t - 12} C34 ${t + 4} 52 ${t + 20} 52 ${t + 36} ${base}`;
     default: return `M8 100 V${t + 22} C8 ${t - 4} 52 ${t - 4} 52 ${t + 22} ${base}`;
   }
@@ -28,8 +30,8 @@ const claro = (hex) => { const n = parseInt(hex.slice(1), 16); return ((n >> 16)
 export function Una({ d, acento = false, ...pos }) {
   const id = useId().replace(/:/g, '');
   const t = 40 - LARGO[d.largo];
-  const color = hexDe(d.color);
-  const acabado = acento ? 'Glitter' : d.acabado;
+  const color = d.hex || hexDe(d.color);
+  const acabado = acento ? 'Glitter' : d.tipo === 'Glitter' && d.acabado === 'Brillante' ? 'Glitter' : d.tipo === 'Metálico' && d.acabado === 'Brillante' ? 'Chrome' : d.acabado;
   const deco = acento ? 'Pedrería' : d.decoracion;
   const contraste = claro(color) ? '#C2187A' : '#FFFFFF';
   const punta = d.color === 'Blanco' || d.color === 'Milky white' ? '#E8B4BC' : '#FFFFFF';
@@ -113,12 +115,20 @@ export function Una({ d, acento = false, ...pos }) {
   );
 }
 
+// Datos para dibujar una uña concreta del diseño (uña por uña)
+export const datosUna = (diseno, i) => {
+  const u = diseno.unas?.[i];
+  if (!u) return diseno;
+  const e = esmalte(u.esmalte);
+  return { forma: diseno.forma, largo: diseno.largo, hex: e?.hex, tipo: e?.tipo, color: e?.nombre, acabado: u.acabado, decoracion: u.decoracion };
+};
+
 export default function MuestraUnas({ diseno }) {
   return (
     <div className="muestra-unas">
-      <Una d={diseno} />
-      <Una d={diseno} acento={diseno.acento} />
-      <Una d={diseno} />
+      {diseno.unas ? [1, 2, 3].map((i) => <Una key={i} d={datosUna(diseno, i)} />) : (
+        <><Una d={diseno} /><Una d={diseno} acento={diseno.acento} /><Una d={diseno} /></>
+      )}
     </div>
   );
 }
