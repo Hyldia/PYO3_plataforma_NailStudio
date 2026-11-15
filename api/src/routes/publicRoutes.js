@@ -8,6 +8,8 @@ import { pedidoController } from '../controllers/pedidoController.js';
 import { cuponController } from '../controllers/cuponController.js';
 import { detalleController } from '../controllers/detalleController.js';
 import { resenaController } from '../controllers/resenaController.js';
+import { comentarioController } from '../controllers/comentarioController.js';
+import { ruletaController } from '../controllers/ruletaController.js';
 
 const r = Router();
 
@@ -20,6 +22,11 @@ r.get('/productos/:id', detalleController.producto);
 r.get('/productos/:id/relacionados', detalleController.productosRelacionados);
 r.get('/productos/:id/resenas', resenaController.listar);
 r.post('/productos/:id/resenas', resenaController.crear);
+r.get('/comentarios/:tipo', comentarioController.resumenes);
+r.get('/comentarios/:tipo/:id', comentarioController.listar);
+r.post('/comentarios/:tipo/:id', comentarioController.crear);
+r.get('/ruleta', ruletaController.premios);
+r.post('/ruleta', ruletaController.girar);
 
 r.get('/fotos', fotoController.buscar);
 r.get('/fotos/filtros', fotoController.opcionesDeFiltro);

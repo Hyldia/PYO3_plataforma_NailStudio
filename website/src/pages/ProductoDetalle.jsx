@@ -8,6 +8,7 @@ import ProductoImagen from '../components/ProductoImagen.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import Resenas from '../components/Resenas.jsx';
+import BotonFavorito from '../components/BotonFavorito.jsx';
 import { miles } from '../components/TarjetaDiseno.jsx';
 import { fichaProducto, etiquetaVariante } from '../lib/fichaProducto.js';
 
@@ -57,6 +58,8 @@ export default function ProductoDetalle() {
           <div className={`detalle__imagen ${agotado ? 'detalle__imagen--agotado' : ''}`}>
             <ProductoImagen producto={p} />
             {agotado && <span className="sello-agotado">Agotado</span>}
+            <BotonFavorito tipo="producto" nombre={p.nombre} clase="corazon--grande"
+                           datos={{ id: p.id, nombre: p.nombre, precio: p.precio, precio_anterior: p.precio_anterior, imagen: p.imagen, color: p.color, tipo_producto: p.tipo, stock: p.stock, calificacion: p.calificacion, resenas: p.resenas, vendidos: p.vendidos, categoria: p.categoria }} />
           </div>
           {p.imagen_autor && <p className="tenue detalle__credito">Foto de <a className="enlace" href={p.imagen_autor_url} target="_blank" rel="noreferrer">{p.imagen_autor}</a> en Unsplash</p>}
         </div>

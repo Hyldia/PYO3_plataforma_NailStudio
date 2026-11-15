@@ -162,3 +162,16 @@ CREATE TABLE IF NOT EXISTS resenas (
   creada_en    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_resenas_producto ON resenas(producto_id);
+
+-- Comentarios de la galería (diseños) y de los servicios. "tipo" dice a qué se refiere ref_id.
+CREATE TABLE IF NOT EXISTS comentarios (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  tipo        TEXT NOT NULL CHECK (tipo IN ('foto', 'servicio')),
+  ref_id      INTEGER NOT NULL,
+  nombre      TEXT NOT NULL,
+  estrellas   INTEGER NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+  comentario  TEXT NOT NULL,
+  ejemplo     INTEGER NOT NULL DEFAULT 0,
+  creada_en   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_comentarios_ref ON comentarios(tipo, ref_id);

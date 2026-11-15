@@ -5,6 +5,7 @@ import { useDebounce, useTitulo } from '../lib/hooks.js';
 import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import Desplegable from '../components/Desplegable.jsx';
+import { BannerOfertas, PodioVendidos } from '../components/BannersTienda.jsx';
 
 const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
 const ORDENES = { relevancia: 'Relevancia', vendidos: 'Más vendidos', descuento: 'Mayor descuento', calificacion: 'Mejor calificados', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', nuevos: 'Más nuevos' };
@@ -45,13 +46,15 @@ export default function Tienda() {
   }, [params]);
 
   const limpiar = () => { setTexto(''); setParams({}, { replace: true }); };
-  const hayFiltros = categoria || ofertas || disponibles || rango !== RANGOS[0];
+  const hayFiltros = categoria || ofertas || disponibles || rango !== RANGOS[0] || orden !== 'relevancia';
+  const vendidos = orden === 'vendidos';
+  const verVendidos = () => fijar({ orden: vendidos ? '' : 'vendidos', ofertas: '' });
 
   return (
     <div className="contenedor pagina pagina--resultados">
       <header className="resultados-cabeza">
         <div>
-          <h1>{categoria || (ofertas ? 'Ofertas' : 'Tienda')}</h1>
+          <h1>{categoria || (ofertas ? 'Ofertas' : vendidos ? 'Más vendidos' : 'Tienda')}</h1>
           <p className="tenue">Productos profesionales para tus uñas y tus manos. Se retiran gratis en el salón.</p>
         </div>
         <label className="buscador buscador--chico">
@@ -62,7 +65,11 @@ export default function Tienda() {
       </header>
 
       <div className="barra-chips" role="group" aria-label="Filtros y orden">
-        <button type="button" className={`chip-filtro ${ofertas ? 'chip-filtro--activo' : ''}`} aria-pressed={ofertas}
+        <button type="button" className={`chip-filtro chip-filtro--fuego ${vendidos ? 'chip-filtro--activo' : ''}`} aria-pressed={vendidos} onClick={verVendidos}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4 5 5.5 5 10.5A5 5 0 0 1 7 13c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z" /></svg>
+          Más vendidos
+        </button>
+        <button type="button" className={`chip-filtro chip-filtro--rayo ${ofertas ? 'chip-filtro--activo' : ''}`} aria-pressed={ofertas}
                 onClick={() => fijar({ ofertas: ofertas ? '' : '1', orden: ofertas ? '' : 'descuento' })}>
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
           Ofertas que terminan hoy
@@ -104,13 +111,16 @@ export default function Tienda() {
         {hayFiltros && <button type="button" className="chip-filtro chip-filtro--limpiar" onClick={limpiar}>Quitar filtros</button>}
       </div>
 
+      {!cargando && !error && vendidos && !ofertas && <PodioVendidos productos={productos} categoria={categoria} />}
+      {!cargando && !error && ofertas && <BannerOfertas productos={productos} />}
+
       <p className="tenue" aria-live="polite">{cargando ? 'Buscando…' : `${productos.length} ${productos.length === 1 ? 'producto' : 'productos'}`}</p>
       {error && <p role="alert" className="error">{error}</p>}
       {!cargando && productos.length === 0 && (
         <div className="vacio"><p>No hay productos con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>
       )}
-      <ul className="productos-rejilla productos-rejilla--grande">
-        {productos.slice(0, visibles).map((p) => <TarjetaProducto key={p.id} p={p} />)}
+      <ul className={`productos-rejilla productos-rejilla--grande ${ofertas ? 'productos-rejilla--ofertas' : ''}`} key={`${orden}-${ofertas}`}>
+        {productos.slice(0, visibles).map((p, i) => <TarjetaProducto key={p.id} p={p} puesto={vendidos && i < 20 ? i + 1 : undefined} oferta={ofertas} />)}
         {cargandoMas && <Fantasmas n={Math.min(POR_PAGINA, productos.length - visibles)} />}
       </ul>
       <VerMas vistos={Math.min(visibles, productos.length)} total={productos.length} cargando={cargandoMas} cosa="productos" texto="Ver más productos"

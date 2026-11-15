@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
+import { premioGuardado } from '../components/Ruleta.jsx';
 import { SALON, dinero } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import { useCarrito } from '../context/CarritoContext.jsx';
@@ -359,6 +360,13 @@ export default function FinalizarCompra() {
             <button type="submit" className="chip-filtro chip-filtro--borde">Aplicar</button>
           </form>
           {errores.cupon && <p className="error-campo" role="alert">{errores.cupon}</p>}
+          {premioGuardado()?.codigo && cotizacion?.cupon?.codigo !== premioGuardado().codigo && (
+            <button type="button" className="premio-aviso" onClick={() => aplicarCupon(premioGuardado().codigo)}>
+              <span aria-hidden="true" className="premio-aviso__regalo" />
+              <span>Ganaste <b>{premioGuardado().etiqueta}</b> en la ruleta</span>
+              <strong>Usar {premioGuardado().codigo}</strong>
+            </button>
+          )}
           {cotizacion?.cupon && (
             <p className="cupon-aplicado">✓ {cotizacion.cupon.codigo}: {cotizacion.cupon.descripcion}
               <button type="button" className="enlace-boton" onClick={() => { setCupon(''); setCuponTexto(''); }}>Quitar</button>

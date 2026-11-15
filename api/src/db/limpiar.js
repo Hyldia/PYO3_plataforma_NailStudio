@@ -7,8 +7,11 @@ const db = getDb();
 db.exec(`
   DELETE FROM recordatorios; DELETE FROM citas; DELETE FROM disenos;
   DELETE FROM resenas WHERE ejemplo = 1;
+  DELETE FROM comentarios WHERE ejemplo = 1;
   DELETE FROM pedido_items; DELETE FROM pedidos;
   INSERT INTO ajustes (clave, valor) VALUES ('datos_ejemplo', '1')
+    ON CONFLICT(clave) DO UPDATE SET valor = '1';
+  INSERT INTO ajustes (clave, valor) VALUES ('comentarios_ejemplo', '1')
     ON CONFLICT(clave) DO UPDATE SET valor = '1';
   INSERT INTO ajustes (clave, valor) VALUES ('resenas_ejemplo', '1')
     ON CONFLICT(clave) DO UPDATE SET valor = '1';

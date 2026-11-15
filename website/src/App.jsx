@@ -19,6 +19,8 @@ import DisenoDetalle from './pages/DisenoDetalle.jsx';
 import Carrito from './pages/Carrito.jsx';
 import FinalizarCompra from './pages/FinalizarCompra.jsx';
 import ProductoDetalle from './pages/ProductoDetalle.jsx';
+import Favoritos from './pages/Favoritos.jsx';
+import Ruleta from './components/Ruleta.jsx';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -49,6 +51,7 @@ export default function App() {
           <Route path="/buscar" element={<Buscar />} />
           <Route path="/galeria/:id" element={<DisenoDetalle />} />
           <Route path="/tienda/:id" element={<ProductoDetalle />} />
+          <Route path="/favoritos" element={<Favoritos />} />
           <Route path="/carrito" element={<Carrito />} />
           <Route path="/finalizar-compra" element={<FinalizarCompra />} />
           <Route path="*" element={<NoEncontrada />} />
@@ -57,6 +60,7 @@ export default function App() {
       <Pie />
       <Aviso />
       <CarritoLateral />
+      <Ruleta />
       <Animaciones />
     </>
   );

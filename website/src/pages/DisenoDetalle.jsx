@@ -6,6 +6,9 @@ import { useTitulo } from '../lib/hooks.js';
 import { useReserva } from '../context/ReservaContext.jsx';
 import Foto from '../components/Foto.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
+import Resenas from '../components/Resenas.jsx';
+import BotonFavorito from '../components/BotonFavorito.jsx';
+import { olvidarResumenes, useResumenes } from '../lib/resumenes.js';
 import TarjetaDiseno, { miles, positivo, useAgregarPresson } from '../components/TarjetaDiseno.jsx';
 
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
@@ -15,6 +18,7 @@ export default function DisenoDetalle() {
   const { id } = useParams();
   const [foto, setFoto] = useState(null);
   const [relacionados, setRelacionados] = useState([]);
+  const resumenes = useResumenes('foto');
   const [error, setError] = useState('');
   const [modo, setModo] = useState('salon');
   const [forma, setForma] = useState('Almendra');
@@ -37,6 +41,7 @@ export default function DisenoDetalle() {
   const reservar = () => { actualizar({ fotoRef: foto, diseno: null }); navegar(foto.servicio ? `/reservar?servicio=${foto.servicio.id}` : '/reservar'); };
   const personalizar = () => { actualizar({ fotoRef: foto, diseno: null }); navegar('/disena'); };
   const agregar = () => agregarPresson(foto, { forma, largo, presson: p });
+  const opinion = resumenes.get(foto.id);
   const descuentoPresson = p?.precio_anterior ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0;
 
   return (
@@ -52,7 +57,10 @@ export default function DisenoDetalle() {
 
       <div className="detalle">
         <div className="detalle__galeria">
-          <div className="detalle__imagen"><Foto archivo={foto.archivo} alt={foto.descripcion || foto.titulo} prioridad /></div>
+          <div className="detalle__imagen"><Foto archivo={foto.archivo} alt={foto.descripcion || foto.titulo} prioridad />
+            <BotonFavorito tipo="diseno" nombre={foto.titulo} clase="corazon--grande"
+                           datos={{ id: foto.id, titulo: foto.titulo, archivo: foto.archivo, descripcion: foto.descripcion, categoria: foto.categoria, forma: foto.forma, color: foto.color, acabado: foto.acabado, vistas: foto.vistas, precio_salon: foto.servicio?.precio, servicio_id: foto.servicio?.id }} />
+          </div>
           {foto.autor && <p className="tenue detalle__credito">Foto de <a className="enlace" href={foto.autor_url} target="_blank" rel="noreferrer">{foto.autor}</a> en Unsplash</p>}
         </div>
 
@@ -68,7 +76,8 @@ export default function DisenoDetalle() {
             <span>{miles(foto.vistas)} vistas</span>
             <span aria-hidden="true">|</span>
             <span>{foto.categoria}</span>
-            <span className="detalle__estrellas" aria-label={`${positivo(foto.id)} % de opiniones positivas`}><span aria-hidden="true">★★★★★</span> {positivo(foto.id)} %</span>
+            {opinion ? <a href="#resenas" className="detalle__estrellas" aria-label={`${opinion.promedio} de 5 estrellas, ${opinion.total} opiniones`}><span aria-hidden="true">{'★'.repeat(Math.round(opinion.promedio))}</span> {opinion.promedio} ({opinion.total})</a>
+              : <span className="detalle__estrellas" aria-label={`${positivo(foto.id)} % de opiniones positivas`}><span aria-hidden="true">★★★★★</span> {positivo(foto.id)} %</span>}
           </p>
           {foto.puesto <= 10 && <p className="insignia-ranking">🏆 #{foto.puesto} MÁS POPULAR <span>en {foto.categoria}</span></p>}
 
@@ -145,6 +154,8 @@ export default function DisenoDetalle() {
           {foto.etiquetas && <p className="tenue">Etiquetas: {foto.etiquetas.split(',').filter((t) => !t.includes('archivo:')).join(', ')}</p>}
         </div>
       </div>
+
+      <Resenas tipo="foto" refId={foto.id} nombreProducto={`«${foto.titulo}»`} titulo="Opiniones de quienes se lo hicieron" onCambio={() => olvidarResumenes('foto')} />
 
       {relacionados.length > 0 && (
         <section className="relacionados" aria-labelledby="t-rel">

@@ -6,7 +6,7 @@ export const resenaController = {
   listar(req, res) {
     const id = Number(req.params.id);
     if (!ProductoModel.buscarPorId(id)) return res.status(404).json({ error: 'Producto no encontrado.' });
-    res.json(ResenaModel.deProducto(id, req.query.limite));
+    res.json(ResenaModel.deProducto(id, req.query.limite, req.query.filtro));
   },
   crear(req, res) {
     const id = Number(req.params.id);

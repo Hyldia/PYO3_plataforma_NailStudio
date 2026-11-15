@@ -3,6 +3,7 @@
 import { getDb } from './connection.js';
 import { cargarDatosEjemplo } from './datosEjemplo.js';
 import { cargarResenasEjemplo } from './resenasEjemplo.js';
+import { cargarComentariosEjemplo } from './comentariosEjemplo.js';
 import { ESPECIALISTAS, VERSION_ESPECIALISTAS } from './especialistasEjemplo.js';
 import { generarCatalogo } from './catalogoProductos.js';
 import { SERVICIOS, CUPONES } from './catalogoServicios.js';
@@ -19,11 +20,12 @@ export function seed({ force = false } = {}) {
     const equipo = cargarEspecialistas(db);
     const datos = cargarDatosEjemplo(db);
     const resenas = cargarResenasEjemplo(db);
-    return servicios || catalogo || fotos || equipo || datos || resenas;
+    const comentarios = cargarComentariosEjemplo(db);
+    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios;
   }
 
   db.exec(`
-    DELETE FROM resenas; DELETE FROM pedido_items; DELETE FROM pedidos; DELETE FROM recordatorios;
+    DELETE FROM comentarios; DELETE FROM resenas; DELETE FROM pedido_items; DELETE FROM pedidos; DELETE FROM recordatorios;
     DELETE FROM citas; DELETE FROM disenos; DELETE FROM productos;
     DELETE FROM especialistas; DELETE FROM servicios; DELETE FROM cupones; DELETE FROM fotos; DELETE FROM ajustes;
   `);
@@ -37,6 +39,7 @@ export function seed({ force = false } = {}) {
   cargarFotosMuestra(db);
   cargarDatosEjemplo(db);
   cargarResenasEjemplo(db);
+  cargarComentariosEjemplo(db);
   return true;
 }
 

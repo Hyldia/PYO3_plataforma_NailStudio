@@ -6,6 +6,9 @@ import { useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
 import Decoracion from '../components/Decoracion.jsx';
 import Contador from '../components/Contador.jsx';
+import Modal from '../components/Modal.jsx';
+import Resenas from '../components/Resenas.jsx';
+import { olvidarResumenes, useResumenes } from '../lib/resumenes.js';
 
 const ORDEN_CATEGORIAS = ['Combos', 'Manos', 'Uñas acrílicas', 'Gel y polygel', 'Pies', 'Tratamientos', 'Diseños y extras', 'Retiros y reparaciones'];
 const FECHA = new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'long' });
@@ -34,7 +37,7 @@ function Precio({ s, grande = false }) {
   );
 }
 
-function TarjetaServicio({ s }) {
+function TarjetaServicio({ s, opinion, onOpiniones }) {
   const incluye = (s.incluye || '').split('|').filter(Boolean);
   return (
     <li className={`servicio ${s.es_combo ? 'servicio--combo' : ''}`}>
@@ -48,6 +51,13 @@ function TarjetaServicio({ s }) {
       <div className="servicio__cuerpo">
         <p className="servicio__categoria">{s.categoria}</p>
         <h3 className="servicio__nombre">{s.nombre}</h3>
+        {opinion && (
+          <button type="button" className="servicio__opiniones" onClick={() => onOpiniones(s)}>
+            <span className="estrellas-mini" aria-hidden="true" style={{ '--p': `${(opinion.promedio / 5) * 100}%` }}>★★★★★</span>
+            <b>{opinion.promedio}</b> <span>({opinion.total} opiniones)</span>
+            <span className="solo-lector">: {opinion.promedio} de 5 estrellas. Ver opiniones de {s.nombre}</span>
+          </button>
+        )}
         <p className="servicio__descripcion">{s.descripcion}</p>
         {incluye.length > 0 && (
           <ul className="servicio__incluye" aria-label="Incluye">
@@ -101,6 +111,8 @@ export default function Servicios() {
   const [texto, setTexto] = useState('');
   const categoria = params.get('categoria') || 'Todos';
   const soloOfertas = params.get('ofertas') === '1';
+  const resumenes = useResumenes('servicio');
+  const [opiniones, setOpiniones] = useState(null);
 
   useEffect(() => {
     api.servicios().then(setServicios).catch((e) => setError(e.message));
@@ -207,7 +219,7 @@ export default function Servicios() {
               {cat === 'Combos' && <p className="tenue">Varios servicios en una sola cita, a mejor precio.</p>}
             </div>
             <ul key={`${categoria}-${soloOfertas}-${texto}`} className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
-              {lista.map((s) => <TarjetaServicio key={s.id} s={s} />)}
+              {lista.map((s) => <TarjetaServicio key={s.id} s={s} opinion={resumenes.get(s.id)} onOpiniones={setOpiniones} />)}
             </ul>
           </section>
         ))}
@@ -224,6 +236,23 @@ export default function Servicios() {
           <a href={enlaceWhatsApp('Hola, quiero que me ayuden a elegir un servicio.')} target="_blank" rel="noreferrer" className="boton boton--contorno">Escribir por WhatsApp</a>
         </div>
       </section>
+
+      {opiniones && (
+        <Modal titulo={`Opiniones de ${opiniones.nombre}`} onCerrar={() => setOpiniones(null)} ancho>
+          <div className="opiniones-servicio">
+            <div className="opiniones-servicio__cabeza">
+              <Foto archivo={opiniones.imagen} alt="" />
+              <div>
+                <p className="servicio__categoria">{opiniones.categoria}</p>
+                <p className="opiniones-servicio__nombre">{opiniones.nombre}</p>
+                <p className="tenue">{dinero(opiniones.precio_oferta ?? opiniones.precio)} · {duracion(opiniones.duracion_min)}</p>
+              </div>
+              <Link to={`/reservar?servicio=${opiniones.id}`} className="boton">Reservar</Link>
+            </div>
+            <Resenas tipo="servicio" refId={opiniones.id} compacto onCambio={() => olvidarResumenes('servicio')} />
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

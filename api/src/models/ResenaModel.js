@@ -7,16 +7,19 @@ export const SQL_RESUMEN = `UPDATE productos SET
   calificacion = (SELECT ROUND(AVG(estrellas), 1) FROM resenas r WHERE r.producto_id = productos.id)`;
 export const actualizarResumen = (db, productoId) => db.prepare(`${SQL_RESUMEN} WHERE id = ?`).run(productoId);
 
+// Buenas: 4 y 5 estrellas · Regulares: 3 · Malas: 1 y 2
+export const FILTRO_ESTRELLAS = { buenas: 'AND estrellas >= 4', regulares: 'AND estrellas = 3', malas: 'AND estrellas <= 2' };
+
 export const ResenaModel = {
   // Resumen (promedio y cuántas hay de cada estrella) + las más recientes
-  deProducto(productoId, limite = 6) {
+  deProducto(productoId, limite = 6, filtro = '') {
     const db = getDb();
     const filas = db.prepare('SELECT estrellas, COUNT(*) AS n FROM resenas WHERE producto_id = ? GROUP BY estrellas').all(productoId);
     const distribucion = [5, 4, 3, 2, 1].map((e) => ({ estrellas: e, cantidad: filas.find((f) => f.estrellas === e)?.n || 0 }));
     const total = distribucion.reduce((s, d) => s + d.cantidad, 0);
     const promedio = total ? Math.round(distribucion.reduce((s, d) => s + d.estrellas * d.cantidad, 0) / total * 10) / 10 : null;
     const resenas = db.prepare(`SELECT id, nombre, estrellas, comentario, opcion, creada_en, pedido_id IS NOT NULL AS verificada
-      FROM resenas WHERE producto_id = ? ORDER BY creada_en DESC, id DESC LIMIT ?`).all(productoId, Math.min(Number(limite) || 6, 50));
+      FROM resenas WHERE producto_id = ? ${FILTRO_ESTRELLAS[filtro] || ''} ORDER BY creada_en DESC, id DESC LIMIT ?`).all(productoId, Math.min(Number(limite) || 6, 50));
     return { total, promedio, distribucion, resenas };
   },
 

@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Logo from './Logo.jsx';
 import { SALON } from '../config.js';
 import { useCarrito } from '../context/CarritoContext.jsx';
+import { useFavoritos } from '../context/FavoritosContext.jsx';
 
 const ENLACES = [
   { to: '/tienda?orden=vendidos', texto: 'Más vendidos', icono: 'pulgar' },
@@ -48,6 +49,7 @@ export default function Encabezado() {
   const [menu, setMenu] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const { cantidad } = useCarrito();
+  const favoritos = useFavoritos();
   const { pathname, search } = useLocation();
   const navegar = useNavigate();
   useEffect(() => setMenu(false), [pathname, search]);
@@ -101,6 +103,10 @@ export default function Encabezado() {
             <Link to="/contacto" className="encabezado__ayuda">
               <Icono d={<><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01" /></>} />
               <span>Ayuda</span>
+            </Link>
+            <Link to="/favoritos" className="encabezado__favoritos" aria-label={`Favoritos, ${favoritos.cantidad} guardados`}>
+              <Icono d={<path d="M12 20.5s-7.5-4.6-9.3-9.4C1.4 7.6 3.6 4 7.2 4c2 0 3.6 1.1 4.8 2.8C13.2 5.1 14.8 4 16.8 4c3.6 0 5.8 3.6 4.5 7.1-1.8 4.8-9.3 9.4-9.3 9.4z" />} />
+              {favoritos.cantidad > 0 && <span aria-hidden="true" className="encabezado__cuenta encabezado__cuenta--fav" key={favoritos.ultimo}>{favoritos.cantidad}</span>}
             </Link>
             {Carrito}
             <button type="button" className="boton-menu" aria-expanded={menu} aria-controls="menu-principal" onClick={() => setMenu(!menu)}>

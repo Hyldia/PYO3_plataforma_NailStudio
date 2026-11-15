@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 
-const Estrellas = ({ valor, grande = false }) => (
+export const Estrellas = ({ valor, grande = false }) => (
   <span className={`puntos ${grande ? 'puntos--grande' : ''}`} aria-hidden="true">
     {[1, 2, 3, 4, 5].map((n) => <span key={n} className={n <= Math.round(valor) ? 'llena' : ''}>★</span>)}
   </span>
@@ -9,24 +9,36 @@ const Estrellas = ({ valor, grande = false }) => (
 
 const fecha = (iso) => new Date(iso.replace(' ', 'T') + 'Z').toLocaleDateString('es-CR', { day: 'numeric', month: 'short', year: 'numeric' });
 
-// Reseñas del producto: resumen con barras, tarjetas y formulario para dejar una
-export default function Resenas({ productoId, nombreProducto, onCambio }) {
+const FILTROS = [['', 'Todas'], ['buenas', 'Buenas'], ['regulares', 'Regulares'], ['malas', 'Malas']];
+const CUENTA = { '': () => true, buenas: (e) => e >= 4, regulares: (e) => e === 3, malas: (e) => e <= 2 };
+
+// Fuente de las opiniones: reseñas de productos o comentarios de la galería y de los servicios
+const fuenteDe = (tipo, id) => tipo === 'producto'
+  ? { listar: (l, f) => api.resenas(id, l, f), crear: (d) => api.crearResena(id, d) }
+  : { listar: (l, f) => api.comentarios(tipo, id, l, f), crear: (d) => api.crearComentario(tipo, id, d) };
+
+// Reseñas/opiniones: resumen con barras, filtro (buenas, regulares, malas), tarjetas y formulario
+export default function Resenas({ productoId, tipo = 'producto', refId, nombreProducto, onCambio, titulo, compacto = false }) {
+  const id = refId ?? productoId;
+  const fuente = fuenteDe(tipo, id);
+  const esProducto = tipo === 'producto';
   const [datos, setDatos] = useState(null);
+  const [filtro, setFiltro] = useState('');
   const [limite, setLimite] = useState(6);
   const [abierto, setAbierto] = useState(false);
   const [form, setForm] = useState({ nombre: '', estrellas: 5, comentario: '', pedido: '', telefono: '' });
   const [estado, setEstado] = useState({ enviando: false, error: '', ok: '' });
 
-  const cargar = () => api.resenas(productoId, limite).then(setDatos).catch(() => setDatos({ total: 0, distribucion: [], resenas: [] }));
-  useEffect(() => { cargar(); }, [productoId, limite]);
-  useEffect(() => { setLimite(6); setAbierto(false); setEstado({ enviando: false, error: '', ok: '' }); }, [productoId]);
+  const cargar = () => fuente.listar(limite, filtro).then(setDatos).catch(() => setDatos({ total: 0, distribucion: [], resenas: [] }));
+  useEffect(() => { cargar(); }, [tipo, id, limite, filtro]);
+  useEffect(() => { setLimite(6); setFiltro(''); setAbierto(false); setEstado({ enviando: false, error: '', ok: '' }); }, [tipo, id]);
 
   async function enviar(e) {
     e.preventDefault();
     setEstado({ enviando: true, error: '', ok: '' });
     try {
-      const r = await api.crearResena(productoId, form);
-      setEstado({ enviando: false, error: '', ok: r.verificada ? '¡Gracias! Tu reseña se publicó como compra verificada.' : '¡Gracias! Tu reseña se publicó.' });
+      const r = await fuente.crear(form);
+      setEstado({ enviando: false, error: '', ok: r.verificada ? '¡Gracias! Tu reseña se publicó como compra verificada.' : (esProducto ? '¡Gracias! Tu reseña se publicó.' : '¡Gracias! Tu opinión se publicó.') });
       setForm({ nombre: '', estrellas: 5, comentario: '', pedido: '', telefono: '' });
       setAbierto(false);
       cargar();
@@ -39,16 +51,31 @@ export default function Resenas({ productoId, nombreProducto, onCambio }) {
   if (!datos) return null;
   const { total, promedio, distribucion, resenas } = datos;
   const verificadas = resenas.filter((r) => r.verificada).length;
+  const cuantas = (f) => distribucion.filter((d) => CUENTA[f](d.estrellas)).reduce((n, d) => n + d.cantidad, 0);
+  const totalFiltro = cuantas(filtro);
+  const nombreH = `t-resenas-${tipo}-${id}`;
 
   return (
-    <section className="resenas" id="resenas" aria-labelledby="t-resenas">
+    <section className={`resenas ${compacto ? 'resenas--compacto' : ''}`} id="resenas" aria-labelledby={nombreH}>
       <div className="resenas__cabeza">
-        <h2 id="t-resenas">
-          {total} {total === 1 ? 'reseña' : 'reseñas'}
+        <h2 id={nombreH}>
+          {titulo && <span className="resenas__titulo">{titulo}</span>}
+          {total} {esProducto ? (total === 1 ? 'reseña' : 'reseñas') : (total === 1 ? 'opinión' : 'opiniones')}
           {promedio && <><span className="resenas__sep" aria-hidden="true">|</span>{promedio} <Estrellas valor={promedio} grande /><span className="solo-lector"> de 5 estrellas</span></>}
         </h2>
         {verificadas > 0 && <p className="resenas__sello">✓ Las reseñas con sello son de compras verificadas</p>}
       </div>
+
+      {total > 0 && (
+        <div className="resenas__filtros" role="group" aria-label="Filtrar opiniones">
+          {FILTROS.map(([k, t]) => (
+            <button key={k} type="button" className={`chip-resena chip-resena--${k || 'todas'}`} aria-pressed={filtro === k}
+                    onClick={() => { setFiltro(k); setLimite(6); }}>
+              {t} <span>{cuantas(k)}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {total > 0 ? (
         <div className="resenas__rejilla">
@@ -61,9 +88,10 @@ export default function Resenas({ productoId, nombreProducto, onCambio }) {
               </li>
             ))}
           </ul>
-          <ul className="resenas__lista">
-            {resenas.map((r) => (
-              <li key={r.id} className="resena">
+          <ul className="resenas__lista" key={filtro}>
+            {resenas.length === 0 && <li className="tenue resenas__nada">No hay opiniones de este tipo todavía.</li>}
+            {resenas.map((r, i) => (
+              <li key={r.id} className={`resena resena--${r.estrellas >= 4 ? 'buena' : r.estrellas === 3 ? 'regular' : 'mala'}`} style={{ '--i': i % 12 }}>
                 <div className="resena__autora">
                   <span className="resena__avatar" aria-hidden="true">{r.nombre[0]}</span>
                   <div>
@@ -80,12 +108,12 @@ export default function Resenas({ productoId, nombreProducto, onCambio }) {
           </ul>
         </div>
       ) : (
-        <p className="tenue">Todavía no hay reseñas de {nombreProducto}. ¡Sé la primera en contarnos qué te pareció!</p>
+        <p className="tenue">Todavía no hay opiniones{nombreProducto ? ` de ${nombreProducto}` : ''}. ¡Sé la primera en contarnos qué te pareció!</p>
       )}
 
       <div className="resenas__acciones">
-        {resenas.length < total && <button type="button" className="boton-ver-mas" onClick={() => setLimite((l) => l + 12)}>Ver más reseñas <span aria-hidden="true">⌄</span></button>}
-        <button type="button" className="boton boton--contorno" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)}>Escribir una reseña</button>
+        {resenas.length < totalFiltro && <button type="button" className="boton-ver-mas" onClick={() => setLimite((l) => l + 12)}>Ver más reseñas <span aria-hidden="true">⌄</span></button>}
+        <button type="button" className="boton boton--contorno" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)}>{esProducto ? 'Escribir una reseña' : 'Dejar mi opinión'}</button>
       </div>
       {estado.ok && <p role="status" className="resenas__ok">{estado.ok}</p>}
 
@@ -96,20 +124,21 @@ export default function Resenas({ productoId, nombreProducto, onCambio }) {
             <div className="elegir-estrellas">
               {[1, 2, 3, 4, 5].map((n) => (
                 <label key={n} className={n <= form.estrellas ? 'activa' : ''}>
-                  <input type="radio" name="estrellas" value={n} checked={form.estrellas === n} onChange={() => setForm({ ...form, estrellas: n })} />
+                  <input type="radio" name={`${nombreH}-e`} value={n} checked={form.estrellas === n} onChange={() => setForm({ ...form, estrellas: n })} />
                   <span aria-hidden="true">★</span><span className="solo-lector">{n} {n === 1 ? 'estrella' : 'estrellas'}</span>
                 </label>
               ))}
             </div>
           </fieldset>
           <div className="campo">
-            <label htmlFor="r-nombre">Nombre</label>
-            <input id="r-nombre" required maxLength={60} value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
+            <label htmlFor={`${nombreH}-n`}>Nombre</label>
+            <input id={`${nombreH}-n`} required maxLength={60} value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           </div>
           <div className="campo">
-            <label htmlFor="r-comentario">Comentario</label>
-            <textarea id="r-comentario" required rows={4} maxLength={800} value={form.comentario} onChange={(e) => setForm({ ...form, comentario: e.target.value })} />
+            <label htmlFor={`${nombreH}-c`}>Comentario</label>
+            <textarea id={`${nombreH}-c`} required rows={4} maxLength={800} value={form.comentario} onChange={(e) => setForm({ ...form, comentario: e.target.value })} />
           </div>
+          {esProducto && <>
           <p className="tenue">Opcional: si lo compraste aquí, escribe tu número de pedido y teléfono para que salga como <strong>compra verificada</strong>.</p>
           <div className="resenas__form-fila">
             <div className="campo">
@@ -121,8 +150,9 @@ export default function Resenas({ productoId, nombreProducto, onCambio }) {
               <input id="r-tel" type="tel" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
             </div>
           </div>
+          </>}
           {estado.error && <p role="alert" className="error">{estado.error}</p>}
-          <button type="submit" className="boton" disabled={estado.enviando}>{estado.enviando ? 'Publicando…' : 'Publicar reseña'}</button>
+          <button type="submit" className="boton" disabled={estado.enviando}>{estado.enviando ? 'Publicando…' : esProducto ? 'Publicar reseña' : 'Publicar opinión'}</button>
         </form>
       )}
     </section>
