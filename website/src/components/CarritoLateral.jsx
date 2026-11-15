@@ -50,6 +50,7 @@ export default function CarritoLateral() {
               <input type="checkbox" className="marca carrito-lateral__marca" checked={i.seleccionado !== false}
                      onChange={(e) => carrito.seleccionar(i.clave, e.target.checked)} aria-label={`Incluir ${i.nombre} en el pedido`} />
               {i.stock > 0 && i.stock < 10 && <span>Casi agotado</span>}
+              {i.stock === 0 && <span>Agotado</span>}
             </div>
             <p className="carrito-lateral__precio">{dinero(i.precio)}</p>
             <label className="solo-lector" htmlFor={`cant-${i.clave}`}>Cantidad de {i.nombre}</label>

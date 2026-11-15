@@ -7,6 +7,7 @@ import { citaController } from '../controllers/citaController.js';
 import { pedidoController } from '../controllers/pedidoController.js';
 import { cuponController } from '../controllers/cuponController.js';
 import { detalleController } from '../controllers/detalleController.js';
+import { resenaController } from '../controllers/resenaController.js';
 
 const r = Router();
 
@@ -16,6 +17,8 @@ r.get('/productos', catalogoController.listarProductos);
 r.get('/productos/categorias', catalogoController.listarCategoriasProductos);
 r.get('/productos/:id', detalleController.producto);
 r.get('/productos/:id/relacionados', detalleController.productosRelacionados);
+r.get('/productos/:id/resenas', resenaController.listar);
+r.post('/productos/:id/resenas', resenaController.crear);
 
 r.get('/fotos', fotoController.buscar);
 r.get('/fotos/filtros', fotoController.opcionesDeFiltro);

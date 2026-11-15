@@ -16,11 +16,19 @@ export default function Carrito() {
   const [vista, setVista] = useState('todos');
   const [sugeridos, setSugeridos] = useState([]);
 
+  // Al entrar, pedir el stock y precio actuales de lo que hay en el carrito
   useEffect(() => {
-    api.productos({ orden: 'vendidos', limite: 12 }).then((r) => setSugeridos(r.productos || r)).catch(() => setSugeridos([]));
+    const ids = [...new Set(carrito.items.map((i) => i.productoId ?? i.id))];
+    if (ids.length) api.productosPorIds(ids).then(carrito.refrescar).catch(() => {});
   }, []);
 
-  const { items, elegidos } = carrito;
+  useEffect(() => {
+    api.productos({ orden: 'vendidos', limite: 20 }).then((r) => setSugeridos(r.productos || r)).catch(() => setSugeridos([]));
+  }, []);
+
+  const { elegidos } = carrito;
+  const items = carrito.items.filter((i) => i.stock !== 0);
+  const agotados = carrito.items.filter((i) => i.stock === 0);
   const todos = items.length > 0 && items.every((i) => i.seleccionado !== false);
   const lista = vista === 'elegidos' ? elegidos : items;
   const ahorro = carrito.totalSinDescuento - carrito.totalElegido;
@@ -33,7 +41,7 @@ export default function Carrito() {
         <ol><li><Link to="/">Inicio</Link></li><li aria-current="page">Carrito</li></ol>
       </nav>
 
-      {items.length === 0 ? (
+      {carrito.items.length === 0 ? (
         <section className="carrito-vacio">
           <svg aria-hidden="true" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6" /><circle cx="10" cy="20" r="1.4" /><circle cx="17" cy="20" r="1.4" /></svg>
           <h1>Tu carrito está vacío</h1>
@@ -103,6 +111,27 @@ export default function Carrito() {
               })}
               {lista.length === 0 && <li className="tenue">No hay artículos seleccionados.</li>}
             </ul>
+
+            {agotados.length > 0 && (
+              <section className="no-disponibles" aria-labelledby="cp-agotados">
+                <h2 id="cp-agotados">Artículos no disponibles ({agotados.length})</h2>
+                <ul>
+                  {agotados.map((i) => (
+                    <li key={i.clave}>
+                      <Link to={enlaceArticulo(i)} className="no-disponibles__foto">
+                        <ProductoImagen producto={i} />
+                        <span>Agotado</span>
+                      </Link>
+                      <p className="no-disponibles__nombre">{i.nombre}</p>
+                      <div className="no-disponibles__botones">
+                        <Link to={`/tienda?categoria=${encodeURIComponent(i.categoria || '')}`} className="chip-filtro chip-filtro--borde">Similares ›</Link>
+                        <button type="button" className="chip-filtro chip-filtro--borde" onClick={() => carrito.quitar(i.clave)}>Quitar</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </section>
 
           <aside className="resumen-pedido" aria-labelledby="rp-titulo">
@@ -133,7 +162,7 @@ export default function Carrito() {
         <section className="relacionados" aria-labelledby="cp-sugeridos">
           <h2 id="cp-sugeridos">{items.length ? 'Agrega también' : 'Lo más vendido'}</h2>
           <ul className="productos-rejilla productos-rejilla--grande">
-            {sugeridos.filter((p) => !enCarrito.has(p.id)).slice(0, 10).map((p) => <TarjetaProducto key={p.id} p={p} />)}
+            {sugeridos.filter((p) => !enCarrito.has(p.id)).slice(0, 14).map((p) => <TarjetaProducto key={p.id} p={p} />)}
           </ul>
         </section>
       )}

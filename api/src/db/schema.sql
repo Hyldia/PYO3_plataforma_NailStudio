@@ -148,3 +148,17 @@ CREATE TABLE IF NOT EXISTS ajustes (
   clave  TEXT PRIMARY KEY,
   valor  TEXT
 );
+
+-- Reseñas de productos. Si viene de un pedido, se marca como compra verificada.
+CREATE TABLE IF NOT EXISTS resenas (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  producto_id  INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+  pedido_id    INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
+  nombre       TEXT NOT NULL,
+  estrellas    INTEGER NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+  comentario   TEXT NOT NULL,
+  opcion       TEXT,
+  ejemplo      INTEGER NOT NULL DEFAULT 0,   -- 1 = reseña de muestra (se borra con npm run limpiar)
+  creada_en    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_resenas_producto ON resenas(producto_id);

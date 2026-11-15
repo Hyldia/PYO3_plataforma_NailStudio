@@ -25,7 +25,15 @@ function reducer(items, accion) {
     case 'quitar':
       return items.filter((i) => i.clave !== accion.clave);
     case 'quitarSeleccionados':
-      return items.filter((i) => !i.seleccionado);
+      return items.filter((i) => i.seleccionado === false || i.stock === 0);
+    case 'refrescar': {
+      // Stock y precio actuales desde el servidor (lo guardado en el navegador puede estar viejo)
+      const porId = new Map(accion.productos.map((p) => [p.id, p]));
+      return items.map((i) => {
+        const p = porId.get(i.productoId ?? i.id);
+        return p ? { ...i, stock: p.stock, precio: p.precio, precio_anterior: p.precio_anterior } : i;
+      });
+    }
     case 'vaciar':
       return [];
     default:
@@ -51,7 +59,7 @@ export function CarritoProvider({ children }) {
   const [ultimo, setUltimo] = useState(null);
 
   const valor = useMemo(() => {
-    const elegidos = items.filter((i) => i.seleccionado !== false);
+    const elegidos = items.filter((i) => i.seleccionado !== false && i.stock !== 0);
     return {
     items, elegidos, abierto, abrir: () => setAbierto(true), cerrar: () => setAbierto(false),
     cantidad: items.reduce((s, i) => s + i.cantidad, 0),
@@ -71,6 +79,7 @@ export function CarritoProvider({ children }) {
     seleccionarTodo: (valor) => dispatch({ tipo: 'seleccionar', valor }),
     quitar: (clave) => dispatch({ tipo: 'quitar', clave }),
     quitarSeleccionados: () => dispatch({ tipo: 'quitarSeleccionados' }),
+    refrescar: (productos) => dispatch({ tipo: 'refrescar', productos }),
     vaciar: () => dispatch({ tipo: 'vaciar' })
   };
   }, [items, abierto, ultimo]);

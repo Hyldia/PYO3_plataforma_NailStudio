@@ -2,6 +2,7 @@
 // Las fotos de la galería y de los productos se suben desde /admin.
 import { getDb } from './connection.js';
 import { cargarDatosEjemplo } from './datosEjemplo.js';
+import { cargarResenasEjemplo } from './resenasEjemplo.js';
 import { generarCatalogo } from './catalogoProductos.js';
 import { SERVICIOS, CUPONES } from './catalogoServicios.js';
 import { FOTOS_MUESTRA, IMAGENES_PRODUCTOS, VERSION_FOTOS } from './fotosMuestra.js';
@@ -15,11 +16,12 @@ export function seed({ force = false } = {}) {
     const catalogo = cargarCatalogo(db);
     const fotos = cargarFotosMuestra(db);
     const datos = cargarDatosEjemplo(db);
-    return servicios || catalogo || fotos || datos;
+    const resenas = cargarResenasEjemplo(db);
+    return servicios || catalogo || fotos || datos || resenas;
   }
 
   db.exec(`
-    DELETE FROM pedido_items; DELETE FROM pedidos; DELETE FROM recordatorios;
+    DELETE FROM resenas; DELETE FROM pedido_items; DELETE FROM pedidos; DELETE FROM recordatorios;
     DELETE FROM citas; DELETE FROM disenos; DELETE FROM productos;
     DELETE FROM especialistas; DELETE FROM servicios; DELETE FROM cupones; DELETE FROM fotos; DELETE FROM ajustes;
   `);
@@ -33,6 +35,7 @@ export function seed({ force = false } = {}) {
 
   cargarFotosMuestra(db);
   cargarDatosEjemplo(db);
+  cargarResenasEjemplo(db);
   return true;
 }
 
@@ -59,7 +62,7 @@ function cargarFotosMuestra(db) {
 }
 
 // Catálogo de la tienda (~470 productos). Se carga una vez por versión y no duplica productos por nombre.
-const VERSION_CATALOGO = 5;
+const VERSION_CATALOGO = 6;
 function cargarCatalogo(db) {
   const actual = Number(db.prepare("SELECT valor FROM ajustes WHERE clave = 'version_catalogo'").get()?.valor || 0);
   if (actual >= VERSION_CATALOGO) return false;
@@ -83,6 +86,8 @@ function cargarCatalogo(db) {
     // Descuentos, estrellas y ventas: a todo en la versión 4, y después solo a lo nuevo
     if (actual < 4) darDatosDeVenta(db);
     else if (nuevos.length) darDatosDeVenta(db, nuevos);
+    // Versión 6: algunos productos agotados, como en cualquier tienda real
+    if (actual < 6) marcarAgotados(db);
     if (actual < 3) db.exec("UPDATE productos SET imagen = NULL WHERE imagen LIKE 'https://images.unsplash.com/%' AND imagen_autor IS NULL");
     db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('version_catalogo', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor").run(String(VERSION_CATALOGO));
   })();
@@ -111,6 +116,13 @@ function cargarServicios(db) {
 }
 
 // Descuentos, estrellas, reseñas y unidades vendidas de ejemplo (siempre los mismos, por id)
+function marcarAgotados(db) {
+  const azar = (id) => { const x = Math.sin(id * 7919 + 104729) * 233280; return x - Math.floor(x); };
+  const upd = db.prepare('UPDATE productos SET stock = 0 WHERE id = ?');
+  db.prepare("SELECT id FROM productos WHERE nombre != 'Press-on personalizado con tu diseño'").all()
+    .forEach(({ id }) => { if (azar(id) < 0.07) upd.run(id); });
+}
+
 function darDatosDeVenta(db, ids = null) {
   const azar = (id, n) => { const x = Math.sin(id * 9301 + n * 49297) * 233280; return x - Math.floor(x); };
   const todos = db.prepare('SELECT id, precio FROM productos').all();

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { SALON, dinero, enlaceWhatsApp } from '../config.js';
+import { SALON, campanaActual, dinero } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
@@ -52,14 +52,16 @@ function TarjetaServicioMini({ s }) {
 export default function Inicio() {
   useTitulo('');
   const [ofertas, setOfertas] = useState([]);
-  const [vendidos, setVendidos] = useState([]);
+  const [vendidosTodos, setVendidos] = useState([]);
+  const [verVendidos, setVerVendidos] = useState(12);
+  const vendidos = vendidosTodos.slice(0, verVendidos);
   const [servicios, setServicios] = useState([]);
   const [fotos, setFotos] = useState([]);
   const [aviso, setAviso] = useState('');
 
   useEffect(() => {
     api.productos({ ofertas: '1', orden: 'descuento', limite: 12 }).then(setOfertas).catch(() => {});
-    api.productos({ orden: 'vendidos', limite: 12 }).then(setVendidos).catch(() => {});
+    api.productos({ orden: 'vendidos', limite: 100 }).then(setVendidos).catch(() => {});
     api.servicios().then(setServicios).catch(() => {});
     api.fotos({ limite: 10, orden: 'populares' }).then((r) => setFotos(r.fotos)).catch(() => {});
   }, []);
@@ -68,38 +70,54 @@ export default function Inicio() {
   const combos = servicios.filter((s) => s.es_combo);
   const agregado = (p) => setAviso(`${p.nombre} se agregó al carrito.`);
   const maxDescuento = Math.max(0, ...ofertas.map((p) => Math.round((1 - p.precio / p.precio_anterior) * 100)));
+  const campana = campanaActual();
+  // En el banner, primero las ofertas que tienen foto real
+  const destacados = [...ofertas].filter((p) => p.stock > 0).sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen)).slice(0, 3);
+  const liquidacion = vendidosTodos.filter((p) => p.stock > 0 && p.stock < 10).slice(0, 3);
 
   return (
     <>
       <p role="status" className="solo-lector">{aviso}</p>
 
-      {/* Banner principal */}
-      <section className="banner" aria-labelledby="t-banner">
+      {/* Banner principal: campaña del mes */}
+      <section className={`campana campana--${campana.tema}`} aria-labelledby="t-banner">
         <Decoracion />
-        <div className="contenedor banner__rejilla">
-          <div className="banner__texto">
-            <p className="banner__antetitulo">Ofertas de temporada</p>
-            <h1 id="t-banner"><span>Hasta</span> {maxDescuento || 40}{' '}% <span>de descuento</span></h1>
-            <p className="banner__bajada">En productos para tus uñas y en combos de manicure y pedicure.</p>
-            <CuentaRegresiva claro />
-            <div className="botones">
-              <Link to="/tienda?ofertas=1&orden=descuento" className="boton boton--claro boton--grande">Comprar ya <Flecha /></Link>
-              <Link to="/reservar" className="boton boton--borde-claro boton--grande">Reservar cita</Link>
-            </div>
+        <span className="campana__cupon campana__cupon--1" aria-hidden="true" />
+        <span className="campana__cupon campana__cupon--2" aria-hidden="true" />
+        <div className="contenedor campana__rejilla">
+          <Link to="/tienda?ofertas=1&orden=descuento" className="campana__oferta">
+            <span className="regalo" aria-hidden="true">
+              <span className="regalo__mono" />
+              <span className="regalo__tapa" />
+              <span className="regalo__caja">
+                <span className="regalo__marca">{SALON.nombre}</span>
+                <span className="regalo__hasta">HASTA</span>
+                <span className="regalo__pct">{maxDescuento || 40}%<small>OFF</small></span>
+              </span>
+            </span>
+            <span className="campana__texto">
+              <span className="campana__antes">{campana.antes}</span>
+              <span id="t-banner" className="campana__titulo">{campana.titulo}</span>
+              <span className="campana__boton">COMPRA YA <Flecha /></span>
+            </span>
+            <span className="solo-lector">: hasta {maxDescuento || 40} % de descuento en productos para uñas</span>
+          </Link>
+          <div className="campana__lado">
+            <ul className="campana__productos" aria-label="Ofertas destacadas">
+              {destacados.map((p) => (
+                <li key={p.id}>
+                  <Link to={`/tienda/${p.id}`} className="campana__producto">
+                    <span className="campana__etiqueta">-{Math.round((1 - p.precio / p.precio_anterior) * 100)}%</span>
+                    <ProductoImagen producto={p} />
+                    <span className="campana__precio">{dinero(p.precio)}</span>
+                    <span className="solo-lector">{p.nombre}, antes {dinero(p.precio_anterior)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="campana__reloj"><CuentaRegresiva claro /></p>
           </div>
-          <ul className="banner__productos" aria-label="Ofertas destacadas">
-            {ofertas.slice(0, 3).map((p) => (
-              <li key={p.id}>
-                <Link to={`/tienda?q=${encodeURIComponent(p.nombre)}`} className="banner__producto">
-                  <ProductoImagen producto={p} />
-                  <span className="banner__precio">{dinero(p.precio)}<s>{dinero(p.precio_anterior)}</s></span>
-                  <span className="solo-lector">{p.nombre}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
-        <svg className="onda" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 240 70 480 0 720 26 S 1200 60 1440 20 V60 H0 Z" /></svg>
       </section>
 
       {/* Compra por categoría */}
@@ -130,6 +148,11 @@ export default function Inicio() {
             <li>Retiro gratis en el salón</li>
             <li>Especialistas certificadas</li>
           </ul>
+          <p className="confianza__recordatorio">
+            <span aria-hidden="true">🔔</span>
+            <span>Recordatorio de seguridad: solo confirmamos citas y pedidos desde nuestro WhatsApp oficial ({SALON.telefono}). Nunca te pediremos claves ni códigos por mensaje.</span>
+            <Link to="/contacto">Ver <Flecha /></Link>
+          </p>
         </section>
       </div>
 
@@ -147,7 +170,23 @@ export default function Inicio() {
             {ofertas.slice(3, 6).map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
           </ul>
         </section>
-        <section className="bloque-ofertas" aria-labelledby="t-serv-oferta">
+        <section className="bloque-ofertas" aria-labelledby="t-liquidacion">
+          <div className="bloque-ofertas__cabeza">
+            <h2 id="t-liquidacion" className="titulo-oferta titulo-oferta--rojo">
+              <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h6v6H8V7.4l-3.3 3.3-1.4-1.4L6.6 6H4zm16 16h-6v-2h2.6l-5.3-5.3 1.4-1.4 5.3 5.3V14h2z" /></svg>
+              Ofertas de liquidación
+            </h2>
+            <Link to="/tienda?orden=vendidos&disponibles=1" className="enlace-flecha">Inventario limitado <Flecha /></Link>
+          </div>
+          <ul className="productos-rejilla productos-rejilla--tres">
+            {liquidacion.map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
+          </ul>
+        </section>
+      </div>
+
+      {/* Servicios en oferta */}
+      {serviciosOferta.length > 0 && (
+        <section className="contenedor seccion-tienda" aria-labelledby="t-serv-oferta">
           <div className="bloque-ofertas__cabeza">
             <h2 id="t-serv-oferta" className="titulo-oferta">
               <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a4 4 0 0 0-4 4v9a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z" /></svg>
@@ -155,11 +194,11 @@ export default function Inicio() {
             </h2>
             <Link to="/servicios?ofertas=1" className="enlace-flecha">Ver todos <Flecha /></Link>
           </div>
-          <ul className="productos-rejilla productos-rejilla--tres">
-            {serviciosOferta.slice(0, 3).map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
+          <ul className="productos-rejilla">
+            {serviciosOferta.slice(0, 6).map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
           </ul>
         </section>
-      </div>
+      )}
 
       {/* Combos */}
       {combos.length > 0 && (
@@ -183,6 +222,9 @@ export default function Inicio() {
         <ul className="productos-rejilla">
           {vendidos.map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
         </ul>
+        {verVendidos < vendidosTodos.length && (
+          <div className="mas"><button type="button" className="boton-ver-mas" onClick={() => setVerVendidos((n) => n + 12)}>Ver más <span aria-hidden="true">⌄</span></button></div>
+        )}
       </section>
 
       {/* Galería */}
@@ -205,23 +247,12 @@ export default function Inicio() {
         </section>
       )}
 
-      {/* Visítanos */}
-      <section className="seccion seccion--oscura" aria-labelledby="t-visita">
-        <div className="contenedor visita">
-          <div>
-            <h2 id="t-visita">Visítanos</h2>
-            <p>{SALON.direccion}</p>
-            <dl className="horario horario--claro">
-              {SALON.horario.map((h) => (<div key={h.dias}><dt>{h.dias}</dt><dd>{h.horas}</dd></div>))}
-            </dl>
-            <a className="boton boton--claro" href={enlaceWhatsApp('Hola, quisiera hacer una consulta.')} target="_blank" rel="noreferrer">Escríbenos por WhatsApp</a>
-          </div>
-          {SALON.mapaEmbed && (
-            <iframe className="mapa" title={`Mapa de ubicación de ${SALON.nombre}`} src={SALON.mapaEmbed} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-          )}
-        </div>
-      </section>
-
+      {/* Mapa (los datos de contacto y el horario están en el pie de página) */}
+      {SALON.mapaEmbed && (
+        <section className="contenedor seccion-tienda" aria-label="Cómo llegar">
+          <iframe className="mapa" title={`Mapa de ubicación de ${SALON.nombre}`} src={SALON.mapaEmbed} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+        </section>
+      )}
     </>
   );
 }
