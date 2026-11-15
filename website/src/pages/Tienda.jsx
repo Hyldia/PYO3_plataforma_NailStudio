@@ -6,6 +6,7 @@ import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import Desplegable from '../components/Desplegable.jsx';
 import { BannerOfertas, PodioVendidos } from '../components/BannersTienda.jsx';
+import EscaparateTienda from '../components/EscaparateTienda.jsx';
 
 const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
 const ORDENES = { relevancia: 'Relevancia', vendidos: 'Más vendidos', descuento: 'Mayor descuento', calificacion: 'Mejor calificados', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', nuevos: 'Más nuevos' };
@@ -111,6 +112,8 @@ export default function Tienda() {
         {hayFiltros && <button type="button" className="chip-filtro chip-filtro--limpiar" onClick={limpiar}>Quitar filtros</button>}
       </div>
 
+      {![...params.keys()].length && <EscaparateTienda categorias={categorias} />}
+      {![...params.keys()].length && <h2 className="fila-titulo fila-titulo--todos">Todos los productos</h2>}
       {!cargando && !error && vendidos && !ofertas && <PodioVendidos productos={productos} categoria={categoria} />}
       {!cargando && !error && ofertas && <BannerOfertas productos={productos} />}
 

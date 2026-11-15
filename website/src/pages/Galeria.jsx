@@ -5,6 +5,7 @@ import { useDebounce, useTitulo } from '../lib/hooks.js';
 import Desplegable from '../components/Desplegable.jsx';
 import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaDiseno from '../components/TarjetaDiseno.jsx';
+import EscaparateGaleria, { HistoriasCategorias } from '../components/EscaparateGaleria.jsx';
 
 const CAMPOS = [
   { clave: 'categoria', titulo: 'Tipo de servicio' },
@@ -71,6 +72,10 @@ export default function Galeria() {
           <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Busca: francesa, nude, coffin, flores…" />
         </label>
       </header>
+
+      {![...params.keys()].length && <EscaparateGaleria total={resultado.total} />}
+      <HistoriasCategorias opciones={opciones.categoria || []} activas={lista('categoria')}
+                           onElegir={(v) => fijar('categoria', v ? (lista('categoria').includes(v) && lista('categoria').length === 1 ? [] : [v]) : [])} />
 
       <div className="barra-chips" role="group" aria-label="Filtros y orden">
         <button type="button" className={`chip-filtro ${orden === 'populares' ? 'chip-filtro--activo' : ''}`} aria-pressed={orden === 'populares'}
