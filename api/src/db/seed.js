@@ -4,6 +4,7 @@ import { getDb } from './connection.js';
 import { cargarDatosEjemplo } from './datosEjemplo.js';
 import { cargarResenasEjemplo } from './resenasEjemplo.js';
 import { cargarComentariosEjemplo } from './comentariosEjemplo.js';
+import { cargarAgendaEjemplo } from './agendaEjemplo.js';
 import { ESPECIALISTAS, VERSION_ESPECIALISTAS } from './especialistasEjemplo.js';
 import { generarCatalogo } from './catalogoProductos.js';
 import { SERVICIOS, CUPONES } from './catalogoServicios.js';
@@ -21,7 +22,8 @@ export function seed({ force = false } = {}) {
     const datos = cargarDatosEjemplo(db);
     const resenas = cargarResenasEjemplo(db);
     const comentarios = cargarComentariosEjemplo(db);
-    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios;
+    const agenda = cargarAgendaEjemplo(db);
+    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda;
   }
 
   db.exec(`
@@ -40,6 +42,7 @@ export function seed({ force = false } = {}) {
   cargarDatosEjemplo(db);
   cargarResenasEjemplo(db);
   cargarComentariosEjemplo(db);
+  cargarAgendaEjemplo(db);
   return true;
 }
 

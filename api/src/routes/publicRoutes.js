@@ -10,6 +10,8 @@ import { detalleController } from '../controllers/detalleController.js';
 import { resenaController } from '../controllers/resenaController.js';
 import { comentarioController } from '../controllers/comentarioController.js';
 import { ruletaController } from '../controllers/ruletaController.js';
+import { cuentaController as cuenta } from '../controllers/cuentaController.js';
+import { conUsuario, soloUsuario } from '../middleware/usuario.js';
 
 const r = Router();
 
@@ -43,7 +45,21 @@ r.get('/especialistas/:id/agenda', citaController.agenda);
 r.post('/citas', citaController.crear);
 
 r.post('/pedidos/cotizar', pedidoController.cotizar);
-r.post('/pedidos', pedidoController.crear);
+r.post('/pedidos', soloUsuario, pedidoController.crear);
+
+// Cuentas de clientas
+r.get('/auth/config', cuenta.config);
+r.post('/auth/registro', cuenta.registro);
+r.post('/auth/entrar', cuenta.entrar);
+r.post('/auth/:proveedor(google|facebook)', cuenta.entrar);
+r.post('/auth/salir', conUsuario, cuenta.salir);
+r.get('/cuenta', soloUsuario, cuenta.yo);
+r.put('/cuenta', soloUsuario, cuenta.actualizar);
+r.get('/cuenta/historial', soloUsuario, cuenta.historial);
+r.post('/cuenta/direcciones', soloUsuario, cuenta.crearDireccion);
+r.put('/cuenta/direcciones/:id', soloUsuario, cuenta.editarDireccion);
+r.post('/cuenta/direcciones/:id/principal', soloUsuario, cuenta.principal);
+r.delete('/cuenta/direcciones/:id', soloUsuario, cuenta.borrarDireccion);
 
 r.get('/cupones', cuponController.listar);
 r.get('/cupones/validar', cuponController.validar);

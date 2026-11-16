@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { api, sesionAdmin } from '../lib/api.js';
-import { SALON, dinero, enlaceWhatsApp } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
 import Modal from '../components/Modal.jsx';
-import ProductoImagen from '../components/ProductoImagen.jsx';
+import AgendaAdmin from './admin/AgendaAdmin.jsx';
+import ProductosAdmin from './admin/ProductosAdmin.jsx';
+import EquipoAdmin from './admin/EquipoAdmin.jsx';
+import PedidosAdmin from './admin/PedidosAdmin.jsx';
+import { ZonaFotos, BotonFoto, formData } from './admin/comunes.jsx';
 
 const CATEGORIAS = ['Manicure', 'Acrílicas', 'Polygel', 'Gel', 'Pedicure', 'Nail art'];
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
 const COLORES = ['Nude', 'Rosa', 'Rojo', 'Vino', 'Morado', 'Azul', 'Verde', 'Negro', 'Blanco', 'Dorado', 'Multicolor'];
 const ACABADOS = ['Brillante', 'Mate', 'Chrome', 'Glitter'];
-const ACCIONES = { pendiente: ['confirmar', 'cancelar'], confirmada: ['completar', 'cancelar'], completada: [], cancelada: [] };
-const TEXTO_ACCION = { confirmar: 'Confirmar', completar: 'Marcar atendida', cancelar: 'Cancelar' };
-const hoy = () => new Date().toISOString().slice(0, 10);
 
 function Entrar({ onEntrar }) {
   const [clave, setClave] = useState('');
@@ -35,56 +35,6 @@ function Entrar({ onEntrar }) {
   );
 }
 
-function Agenda() {
-  const [fecha, setFecha] = useState(hoy());
-  const [citas, setCitas] = useState([]);
-  const [error, setError] = useState('');
-  const cargar = () => api.admin.citas(fecha).then(setCitas).catch((e) => setError(e.message));
-  useEffect(() => { cargar(); }, [fecha]);
-
-  const cambiar = async (id, accion) => {
-    try { await api.admin.estadoCita(id, accion); cargar(); } catch (e) { setError(e.message); }
-  };
-
-  return (
-    <section aria-labelledby="t-agenda">
-      <div className="admin__cabeza">
-        <h2 id="t-agenda">Agenda</h2>
-        <label className="campo campo--linea"><span>Día</span><input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} /></label>
-      </div>
-      {error && <p role="alert" className="error">{error}</p>}
-      {citas.length === 0 ? <p className="tenue">No hay citas este día.</p> : (
-        <div className="tabla-envoltura">
-          <table className="tabla">
-            <thead><tr><th scope="col">Hora</th><th scope="col">Clienta</th><th scope="col">Servicio</th><th scope="col">Diseño</th><th scope="col">Pago</th><th scope="col">Estado</th><th scope="col"><span className="solo-lector">Acciones</span></th></tr></thead>
-            <tbody>
-              {citas.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.hora}</td>
-                  <td>{c.cliente_nombre}<br /><a className="enlace" href={enlaceWhatsApp(`Hola ${c.cliente_nombre}, te escribimos de ${SALON.nombre} sobre tu cita del ${c.fecha} a las ${c.hora}.`)} target="_blank" rel="noreferrer">{c.cliente_telefono}</a></td>
-                  <td>{c.servicio}<br /><span className="tenue">con {c.especialista}</span></td>
-                  <td>
-                    {c.forma ? `${c.forma}, ${c.largo}, ${c.color}, ${c.acabado}${c.decoracion !== 'Ninguna' ? `, ${c.decoracion}` : ''}` : <span className="tenue">En el salón</span>}
-                    {c.foto_ref && <Foto archivo={c.foto_ref} alt="Foto de referencia" className="tabla__miniatura" />}
-                    {c.notas && <p className="tenue">{c.notas}</p>}
-                  </td>
-                  <td>{dinero(c.total)}<br /><span className="tenue">Adelanto {dinero(c.anticipo)}, {c.metodo_pago}</span></td>
-                  <td><span className={`estado estado--${c.estado}`}>{c.estado}</span></td>
-                  <td className="tabla__acciones">
-                    {ACCIONES[c.estado].map((a) => (
-                      <button key={a} type="button" className={`boton boton--chico ${a === 'cancelar' ? 'boton--contorno' : ''}`} onClick={() => cambiar(c.id, a)}>{TEXTO_ACCION[a]}</button>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
-}
-
 const Elegir = ({ id, etiqueta, opciones, valor, onCambio, vacio = true }) => (
   <div className="campo">
     <label htmlFor={id}>{etiqueta}</label>
@@ -102,8 +52,21 @@ function Galeria() {
   const [fotos, setFotos] = useState([]);
   const [estado, setEstado] = useState({ subiendo: false, mensaje: '', error: '' });
   const [editando, setEditando] = useState(null);
+  const [nuevaFoto, setNuevaFoto] = useState(null);
+  const [buscar, setBuscar] = useState('');
+  const [cat, setCat] = useState('');
+  const [visibles, setVisibles] = useState(24);
 
-  const cargar = () => api.fotos({ limite: 100 }).then((r) => setFotos(r.fotos));
+  // Trae todas las fotos (el servidor entrega de a 100)
+  const cargar = async () => {
+    const todas = [];
+    for (let pagina = 1; pagina < 30; pagina++) {
+      const r = await api.fotos({ limite: 100, pagina });
+      todas.push(...r.fotos);
+      if (r.fotos.length < 100) break;
+    }
+    setFotos(todas);
+  };
   useEffect(() => { cargar(); }, []);
 
   async function subir(e) {
@@ -118,13 +81,15 @@ function Galeria() {
         await api.admin.subirFoto(fd);
       }
       setEstado({ subiendo: false, mensaje: `${archivos.length} ${archivos.length === 1 ? 'foto subida' : 'fotos subidas'}.`, error: '' });
-      setArchivos([]); setDatos(VACIO); e.target.reset(); cargar();
+      setArchivos([]); setDatos(VACIO); cargar();
     } catch (err) { setEstado({ subiendo: false, mensaje: '', error: err.message }); }
   }
 
   async function guardarEdicion(e) {
     e.preventDefault();
-    await api.admin.editarFoto(editando.id, editando); setEditando(null); cargar();
+    await api.admin.editarFoto(editando.id, editando);
+    if (nuevaFoto) await api.admin.cambiarFotoDiseno(editando.id, formData(nuevaFoto));
+    setEditando(null); setNuevaFoto(null); cargar();
   }
 
   async function borrar(f) {
@@ -147,11 +112,17 @@ function Galeria() {
     </>
   );
 
+  const lista = fotos.filter((f) => (!cat || f.categoria === cat) && (!buscar || [f.titulo, f.color, f.forma, f.acabado, f.descripcion].join(' ').toLowerCase().includes(buscar.toLowerCase())));
+
   const modal = editando && (
-    <Modal titulo="Editar diseño" onCerrar={() => setEditando(null)} ancho>
+    <Modal titulo="Editar diseño" onCerrar={() => { setEditando(null); setNuevaFoto(null); }} ancho>
       <form onSubmit={guardarEdicion} className="editar-foto">
         <div className="editar-foto__previa">
-          <Foto archivo={editando.archivo} alt={editando.descripcion || editando.titulo} />
+          <div className="editar-foto__imagen">
+            {nuevaFoto ? <img src={URL.createObjectURL(nuevaFoto)} alt="Foto nueva" /> : <Foto archivo={editando.archivo} alt={editando.descripcion || editando.titulo} />}
+            {nuevaFoto && <span className="editar-foto__nueva">Foto nueva · se guarda al tocar «Guardar cambios»</span>}
+          </div>
+          <BotonFoto texto={nuevaFoto ? 'Elegir otra foto' : 'Cambiar foto'} etiqueta={`de ${editando.titulo}`} onArchivo={setNuevaFoto} />
           <p className="tenue">Así se verá en la galería:</p>
           <div className="editar-foto__tarjeta">
             <p><strong>{editando.titulo || 'Sin título'}</strong></p>
@@ -161,7 +132,7 @@ function Galeria() {
         </div>
         <div className="editar-foto__campos">
           {camposFoto(editando, setEditando, `e${editando.id}`)}
-          <div className="botones"><button type="submit" className="boton">Guardar cambios</button><button type="button" className="boton boton--contorno" onClick={() => setEditando(null)}>Cancelar</button></div>
+          <div className="botones"><button type="submit" className="boton">Guardar cambios</button><button type="button" className="boton boton--contorno" onClick={() => { setEditando(null); setNuevaFoto(null); }}>Cancelar</button></div>
         </div>
       </form>
     </Modal>
@@ -171,119 +142,45 @@ function Galeria() {
     <section aria-labelledby="t-galeria-admin">
       {modal}
       <h2 id="t-galeria-admin">Galería</h2>
-      <form className="caja" onSubmit={subir}>
-        <h3>Subir fotos</h3>
-        <div className="campo">
-          <label htmlFor="g-archivos">Imágenes (JPG, PNG o WebP, máximo 8 MB cada una)</label>
-          <input id="g-archivos" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => setArchivos([...e.target.files])} />
-          {archivos.length > 1 && <p className="tenue">Las {archivos.length} fotos se guardan con los mismos datos y títulos numerados.</p>}
+      <form className="subida" onSubmit={subir}>
+        <div className="subida__cabeza">
+          <span className="subida__icono" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M6 10l6-6 6 6M4 20h16" /></svg></span>
+          <div><h3>Subir fotos nuevas</h3><p className="tenue">Arrastra varias a la vez: se guardan con los mismos datos y títulos numerados.</p></div>
         </div>
-        {camposFoto(datos, setDatos, 'g')}
+        <div className="subida__cuerpo">
+          <ZonaFotos archivos={archivos} onCambio={setArchivos} id="g-archivos" />
+          <div className="subida__campos">{camposFoto(datos, setDatos, 'g')}</div>
+        </div>
         {estado.error && <p role="alert" className="error">{estado.error}</p>}
-        {estado.mensaje && <p role="status" className="exito">{estado.mensaje}</p>}
-        <button type="submit" className="boton" disabled={estado.subiendo}>{estado.subiendo ? 'Subiendo…' : 'Subir a la galería'}</button>
+        {estado.mensaje && <p role="status" className="aviso-ok">{estado.mensaje}</p>}
+        <button type="submit" className="boton subida__boton" disabled={estado.subiendo || !archivos.length}>{estado.subiendo ? 'Subiendo…' : archivos.length ? `Subir ${archivos.length} ${archivos.length === 1 ? 'foto' : 'fotos'} a la galería` : 'Elige fotos para subir'}</button>
       </form>
 
-      <ul className="admin-fotos">
-        {fotos.map((f) => (
-          <li key={f.id} className="admin-foto">
-            <Foto archivo={f.archivo} alt={f.titulo} />
-            <div className="admin-foto__info">
-              <p><strong>{f.titulo}</strong>{f.destacada ? ' (destacada)' : ''}</p>
-              <p className="tenue">{[f.categoria, f.forma, f.color, f.acabado].filter(Boolean).join(', ')}. {f.vistas} vistas</p>
-              <div className="botones">
-                <button type="button" className="boton boton--contorno boton--chico" onClick={() => setEditando({ ...f, destacada: !!f.destacada })}>Editar<span className="solo-lector"> {f.titulo}</span></button>
-                <button type="button" className="boton boton--peligro boton--chico" onClick={() => borrar(f)}>Borrar<span className="solo-lector"> {f.titulo}</span></button>
-              </div>
+      <div className="filtros-admin">
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar diseño</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setVisibles(24); }} placeholder="Buscar por título, color o forma" /></label>
+        <label><span className="solo-lector">Servicio</span><select value={cat} onChange={(e) => { setCat(e.target.value); setVisibles(24); }}><option value="">Todos los servicios</option>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></label>
+      </div>
+      <p className="tenue">{lista.length} diseños</p>
+      <ul className="admin-tarjetas">
+        {lista.slice(0, visibles).map((f, i) => (
+          <li key={f.id} className="admin-tarjeta" style={{ '--n': i % 24 }}>
+            <div className="admin-tarjeta__foto">
+              <Foto archivo={f.archivo} alt={f.titulo} />
+              {f.destacada ? <span className="admin-tarjeta__sello admin-tarjeta__sello--oro">Destacado</span> : null}
+            </div>
+            <div className="admin-tarjeta__info">
+              <p className="admin-tarjeta__nombre">{f.titulo}</p>
+              <p className="editar-foto__chips">{[f.categoria, f.forma, f.color, f.acabado].filter(Boolean).map((x) => <span key={x}>{x}</span>)}</p>
+              <p className="tenue">{f.vistas} vistas</p>
+            </div>
+            <div className="admin-tarjeta__botones">
+              <button type="button" className="boton boton--chico" onClick={() => setEditando({ ...f, destacada: !!f.destacada })}>Editar<span className="solo-lector"> {f.titulo}</span></button>
+              <button type="button" className="boton boton--chico boton--peligro" onClick={() => borrar(f)}>Borrar<span className="solo-lector"> {f.titulo}</span></button>
             </div>
           </li>
         ))}
       </ul>
-    </section>
-  );
-}
-
-function Equipo() {
-  const [lista, setLista] = useState([]);
-  const [error, setError] = useState('');
-  const cargar = () => api.especialistas().then(setLista);
-  useEffect(() => { cargar(); }, []);
-  const subir = async (id, archivo) => {
-    const fd = new FormData(); fd.append('imagen', archivo);
-    try { await api.admin.fotoEspecialista(id, fd); cargar(); } catch (e) { setError(e.message); }
-  };
-  return (
-    <section aria-labelledby="t-equipo">
-      <h2 id="t-equipo">Fotos del equipo</h2>
-      <p className="tenue">Suban una foto real de cada especialista: es la que ven las clientas al reservar.</p>
-      {error && <p role="alert" className="error">{error}</p>}
-      <ul className="admin-fotos">
-        {lista.map((e) => (
-          <li key={e.id} className="admin-foto">
-            {e.foto ? <Foto archivo={e.foto} alt={e.nombre} /> : <div className="admin-foto__inicial" aria-hidden="true">{e.nombre[0]}</div>}
-            <div className="admin-foto__info">
-              <p><strong>{e.nombre}</strong></p>
-              <p className="tenue">{e.especialidad}</p>
-              <label className="boton boton--contorno boton--chico subir">
-                {e.foto ? 'Cambiar foto' : 'Subir foto'}<span className="solo-lector"> de {e.nombre}</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(ev) => ev.target.files[0] && subir(e.id, ev.target.files[0])} />
-              </label>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function Productos() {
-  const [productos, setProductos] = useState([]);
-  const [error, setError] = useState('');
-  const cargar = () => api.productos().then(setProductos);
-  useEffect(() => { cargar(); }, []);
-  const subir = async (id, archivo) => {
-    const fd = new FormData(); fd.append('imagen', archivo);
-    try { await api.admin.imagenProducto(id, fd); cargar(); } catch (e) { setError(e.message); }
-  };
-  return (
-    <section aria-labelledby="t-prod">
-      <h2 id="t-prod">Fotos de productos</h2>
-      {error && <p role="alert" className="error">{error}</p>}
-      <ul className="admin-fotos">
-        {productos.map((p) => (
-          <li key={p.id} className="admin-foto">
-            <ProductoImagen producto={p} />
-            <div className="admin-foto__info">
-              <p><strong>{p.nombre}</strong></p>
-              <p className="tenue">{dinero(p.precio)}, {p.stock} en stock</p>
-              <label className="boton boton--contorno boton--chico subir">
-                {p.imagen ? 'Cambiar foto' : 'Subir foto'}<span className="solo-lector"> de {p.nombre}</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => e.target.files[0] && subir(p.id, e.target.files[0])} />
-              </label>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function Pedidos() {
-  const [pedidos, setPedidos] = useState([]);
-  useEffect(() => { api.admin.pedidos().then(setPedidos).catch(() => {}); }, []);
-  return (
-    <section aria-labelledby="t-ped">
-      <h2 id="t-ped">Pedidos de la tienda</h2>
-      {pedidos.length === 0 ? <p className="tenue">Todavía no hay pedidos.</p> : (
-        <div className="tabla-envoltura">
-          <table className="tabla">
-            <thead><tr><th scope="col">N.º</th><th scope="col">Fecha</th><th scope="col">Clienta</th><th scope="col">Productos</th><th scope="col">Total</th><th scope="col">Pago</th></tr></thead>
-            <tbody>{pedidos.map((p) => (
-              <tr key={p.id}><td>{p.id}</td><td>{p.creado_en.slice(0, 16)}</td><td>{p.cliente_nombre}<br /><span className="tenue">{p.cliente_telefono}</span></td><td>{p.detalle}</td><td>{dinero(p.total)}</td><td>{p.metodo_pago}</td></tr>
-            ))}</tbody>
-          </table>
-        </div>
-      )}
+      {visibles < lista.length && <button type="button" className="boton boton--contorno boton--centro" onClick={() => setVisibles(visibles + 24)}>Ver más ({lista.length - visibles})</button>}
     </section>
   );
 }
@@ -373,7 +270,7 @@ function BaseDeDatos() {
   );
 }
 
-const SECCIONES = { agenda: ['Agenda', Agenda], galeria: ['Galería', Galeria], productos: ['Productos', Productos], equipo: ['Equipo', Equipo], pedidos: ['Pedidos', Pedidos], bd: ['Base de datos', BaseDeDatos] };
+const SECCIONES = { agenda: ['Agenda', AgendaAdmin], galeria: ['Galería', Galeria], productos: ['Productos', ProductosAdmin], equipo: ['Equipo', EquipoAdmin], pedidos: ['Pedidos', PedidosAdmin], bd: ['Base de datos', BaseDeDatos] };
 
 export default function Admin() {
   useTitulo('Panel del salón');

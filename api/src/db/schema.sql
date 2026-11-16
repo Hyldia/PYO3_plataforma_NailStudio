@@ -175,3 +175,54 @@ CREATE TABLE IF NOT EXISTS comentarios (
   creada_en   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_comentarios_ref ON comentarios(tipo, ref_id);
+
+-- Mensajes enviados (o preparados) a las clientas por WhatsApp desde el panel
+CREATE TABLE IF NOT EXISTS mensajes (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  cita_id     INTEGER REFERENCES citas(id) ON DELETE SET NULL,
+  pedido_id   INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
+  cliente     TEXT NOT NULL,
+  telefono    TEXT NOT NULL,
+  tipo        TEXT NOT NULL,
+  texto       TEXT NOT NULL,
+  enlace      TEXT NOT NULL,
+  enviado     INTEGER NOT NULL DEFAULT 0,
+  creado_en   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Cuentas de clientas: con formulario (correo y contraseña), Google o Facebook
+CREATE TABLE IF NOT EXISTS usuarios (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre          TEXT NOT NULL,
+  correo          TEXT UNIQUE,
+  telefono        TEXT,
+  contrasena_hash TEXT,                    -- solo las cuentas de formulario (scrypt con sal)
+  proveedor       TEXT NOT NULL DEFAULT 'formulario' CHECK (proveedor IN ('formulario', 'google', 'facebook')),
+  proveedor_id    TEXT,
+  foto            TEXT,
+  creado_en       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS usuarios_proveedor ON usuarios (proveedor, proveedor_id) WHERE proveedor_id IS NOT NULL;
+
+-- Sesiones: se guarda el hash del token, nunca el token
+CREATE TABLE IF NOT EXISTS sesiones (
+  token_hash  TEXT PRIMARY KEY,
+  usuario_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  vence_en    TEXT NOT NULL,
+  creada_en   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Hasta 3 direcciones por clienta (formato de Costa Rica)
+CREATE TABLE IF NOT EXISTS direcciones (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id   INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  etiqueta     TEXT NOT NULL,              -- Casa, Trabajo...
+  destinatario TEXT NOT NULL,
+  telefono     TEXT NOT NULL,
+  provincia    TEXT NOT NULL,
+  canton       TEXT NOT NULL,
+  distrito     TEXT NOT NULL,
+  senas        TEXT NOT NULL,              -- otras señas
+  principal    INTEGER NOT NULL DEFAULT 0,
+  creada_en    TEXT NOT NULL DEFAULT (datetime('now'))
+);

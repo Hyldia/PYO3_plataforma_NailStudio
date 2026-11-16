@@ -2,6 +2,7 @@
 // sin conocerse entre sí. Al crear una cita se programan sus recordatorios.
 import { EventEmitter } from 'node:events';
 import { RecordatorioModel } from '../models/RecordatorioModel.js';
+import { MensajeModel } from '../models/MensajeModel.js';
 
 export const eventos = new EventEmitter();
 
@@ -24,4 +25,9 @@ eventos.on('cita:creada', ({ cita, recordatorios }) => {
 
 eventos.on('cita:cancelada', ({ citaId }) => {
   RecordatorioModel.eliminarDeCita(citaId);
+});
+
+// Cada mensaje de WhatsApp que se prepara en el panel queda en el historial
+eventos.on('mensaje:preparado', (m) => {
+  MensajeModel.registrar(m);
 });

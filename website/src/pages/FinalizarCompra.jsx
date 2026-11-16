@@ -9,10 +9,10 @@ import ProductoImagen from '../components/ProductoImagen.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import { enlaceArticulo } from '../components/CarritoLateral.jsx';
 import { descargarCalendario } from '../lib/calendario.js';
+import { useUsuario } from '../context/UsuarioContext.jsx';
+import Acceso from '../components/Acceso.jsx';
+import { ListaDirecciones } from '../components/Direcciones.jsx';
 
-// Los datos de contacto se recuerdan en este navegador para la próxima compra (nunca los de la tarjeta)
-const GUARDADO = 'naile-cliente';
-const leerCliente = () => { try { return JSON.parse(localStorage.getItem(GUARDADO)) || null; } catch { return null; } };
 
 // Tarjeta: formato, marca y validación (Luhn) en el navegador; el servidor vuelve a validar
 const soloNumeros = (v) => v.replace(/\D/g, '');
@@ -34,10 +34,23 @@ export default function FinalizarCompra() {
   useTitulo('Finalizar compra');
   const carrito = useCarrito();
   const articulos = carrito.elegidos;
-  const anterior = leerCliente();
+  const sesion = useUsuario();
+  const u = sesion.usuario;
 
-  const [cliente, setCliente] = useState(anterior || { nombre: '', telefono: '', email: '' });
-  const [editando, setEditando] = useState(!anterior);
+  // Los datos vienen de la cuenta; "Cambiar datos" los actualiza en la cuenta
+  const [cliente, setCliente] = useState({ nombre: '', telefono: '', email: '' });
+  const [editando, setEditando] = useState(false);
+  const [entrega, setEntrega] = useState('retiro');
+  const [direccionId, setDireccionId] = useState(null);
+  useEffect(() => {
+    if (!u) return;
+    setCliente({ nombre: u.nombre, telefono: u.telefono || '', email: u.correo || '' });
+    setEditando(!u.telefono);
+  }, [u?.id]);
+  useEffect(() => {
+    if (!sesion.direcciones.some((d) => d.id === direccionId)) setDireccionId(sesion.direcciones.find((d) => d.principal)?.id ?? sesion.direcciones[0]?.id ?? null);
+  }, [sesion.direcciones]);
+  const envio = entrega === 'envio';
   const [metodo, setMetodo] = useState('sinpe');
   const [tarjeta, setTarjeta] = useState({ numero: '', mes: '', anio: '', cvv: '' });
   const [comprobante, setComprobante] = useState('');
@@ -63,13 +76,14 @@ export default function FinalizarCompra() {
   // El resumen lo calcula el servidor (precios reales y cupón con el patrón Decorator)
   useEffect(() => {
     if (!items.length && !citas.length) { setCotizacion(null); return; }
-    api.cotizarPedido({ items, citas, cupon, metodoPago: metodo })
+    api.cotizarPedido({ items, citas, cupon, metodoPago: metodo, entrega })
       .then((c) => { setCotizacion(c); setErrores((e) => ({ ...e, cupon: '' })); })
       .catch((err) => {
         setErrores((e) => ({ ...e, cupon: err.message }));
         if (cupon) setCupon('');
       });
-  }, [claveItems, cupon, metodo]);
+  }, [claveItems, cupon, metodo, entrega]);
+  useEffect(() => { if (envio && metodo === 'salon') setMetodo('sinpe'); }, [envio]);
 
   const numero = soloNumeros(tarjeta.numero);
   const anioActual = new Date().getFullYear();
@@ -84,12 +98,14 @@ export default function FinalizarCompra() {
     setVerCupones(false);
   }
 
-  function confirmarDatos() {
+  async function confirmarDatos() {
     const e = {};
     if (!cliente.nombre.trim()) e.nombre = 'Escribe tu nombre.';
     if (!/^[\d\s+-]{8,15}$/.test(cliente.telefono)) e.telefono = 'Escribe un teléfono de 8 dígitos.';
     setErrores((x) => ({ ...x, nombre: e.nombre, telefono: e.telefono }));
-    if (!e.nombre && !e.telefono) setEditando(false);
+    if (e.nombre || e.telefono) return;
+    try { sesion.actualizarUsuario(await api.cuenta.actualizar({ nombre: cliente.nombre, telefono: cliente.telefono })); setEditando(false); }
+    catch (err) { setErrores((x) => ({ ...x, telefono: err.message })); }
   }
 
   function validar() {
@@ -103,6 +119,7 @@ export default function FinalizarCompra() {
       else if (Number(tarjeta.anio) === anioActual && Number(tarjeta.mes) < new Date().getMonth() + 1) e.vence = 'La tarjeta está vencida.';
       if (!/^\d{3,4}$/.test(tarjeta.cvv)) e.cvv = 'El CVV tiene 3 o 4 dígitos.';
     }
+    if (envio && items.length && !direccionId) e.direccion = 'Elige o agrega la dirección de envío.';
     if (metodo === 'sinpe' && !/^\d{6,25}$/.test(comprobante)) e.comprobante = 'Escribe el número de comprobante de SINPE Móvil.';
     setErrores(e);
     if (e.nombre || e.telefono || e.email) setEditando(true);
@@ -118,12 +135,12 @@ export default function FinalizarCompra() {
     try {
       // Al servidor solo va lo que la pasarela simulada necesita; el CVV no sale del navegador
       const pago = metodo === 'tarjeta' ? { numero, mes: tarjeta.mes, anio: tarjeta.anio } : { comprobante };
-      const pedido = await api.crearPedido({ items, citas, cliente, metodoPago: metodo, pago, cupon, notas: regalo.abierto ? regalo.texto : '' });
-      try { localStorage.setItem(GUARDADO, JSON.stringify(cliente)); } catch { /* sin almacenamiento */ }
+      const pedido = await api.crearPedido({ items, citas, cliente, metodoPago: metodo, pago, cupon, notas: regalo.abierto ? regalo.texto : '', entrega: envio ? 'envio' : 'retiro', direccionId });
       carrito.quitarSeleccionados();
       setEstado({ enviando: false, error: '', pedido });
       window.scrollTo(0, 0);
     } catch (err) {
+      if (err.requiereCuenta) sesion.recargar();
       setEstado({ enviando: false, error: err.message, pedido: null });
     }
   }
@@ -152,9 +169,11 @@ export default function FinalizarCompra() {
           )}
           <ol className="compra-lista__pasos">
             {p.requiereVerificacion && metodo === 'sinpe' && <li>Revisamos tu comprobante de SINPE Móvil.</li>}
-            {p.id && <li>Preparamos tu pedido y te escribimos por WhatsApp al {cliente.telefono} cuando esté listo para retirar.</li>}
+            {p.id && (p.direccion
+              ? <li>Preparamos tu pedido y lo enviamos a: {p.direccion}. Te escribimos por WhatsApp al {cliente.telefono} cuando salga.</li>
+              : <li>Preparamos tu pedido y te escribimos por WhatsApp al {cliente.telefono} cuando esté listo para retirar.</li>)}
             {p.citas.length > 0 && <li>Te recordamos tu cita por WhatsApp un día antes.</li>}
-            <li>Te esperamos en {SALON.direccion}{p.enSalon > 0 ? ` (ahí pagas lo que falta)` : ''}.</li>
+            {(!p.direccion || p.citas.length > 0) && <li>Te esperamos en {SALON.direccion}{p.enSalon > 0 ? ` (ahí pagas lo que falta)` : ''}.</li>}
           </ol>
           <div className="compra-lista__botones">
             {p.citas.length > 0 && <button type="button" className="boton" onClick={() => descargarCalendario(p.citas)}>Agregar a mi calendario</button>}
@@ -172,6 +191,34 @@ export default function FinalizarCompra() {
         <h1>No hay artículos para pagar</h1>
         <p className="tenue">Marca en el carrito los artículos que quieres pedir.</p>
         <Link to="/carrito" className="boton">Ir al carrito</Link>
+      </div>
+    );
+  }
+
+  // Para comprar hay que tener cuenta: así sabemos quién compra y a dónde va el pedido
+  if (!u) {
+    return (
+      <div className="contenedor pagina compra compra--acceso">
+        <nav aria-label="Ruta" className="migas">
+          <ol><li><Link to="/">Inicio</Link></li><li><Link to="/carrito">Carrito</Link></li><li aria-current="page">Finalizar compra</li></ol>
+        </nav>
+        {sesion.cargando ? <p className="tenue">Cargando…</p> : (
+          <div className="compra-acceso">
+            <Acceso titulo="Entra para finalizar tu compra" bajada={`Tu carrito te espera: ${cantidad} ${cantidad === 1 ? 'artículo' : 'artículos'}. Con tu cuenta guardas tus direcciones y sigues tus pedidos.`} />
+            <aside className="compra-acceso__lado">
+              <p className="compra-acceso__titulo">Al crear tu cuenta</p>
+              <ul>
+                <li>Guardas hasta 3 direcciones de envío</li>
+                <li>Ves el estado de tus pedidos y citas</li>
+                <li>Te avisamos por WhatsApp cuando esté listo</li>
+                <li>Pagas más rápido la próxima vez</li>
+              </ul>
+              <ul className="compra-acceso__fotos" aria-hidden="true">
+                {articulos.slice(0, 4).map((i) => <li key={i.clave}><ProductoImagen producto={i} /></li>)}
+              </ul>
+            </aside>
+          </div>
+        )}
       </div>
     );
   }
@@ -195,7 +242,7 @@ export default function FinalizarCompra() {
 
       <div className="compra__grid">
         <div className="compra__principal">
-          <p className="carrito-pagina__envio"><span aria-hidden="true">✓</span> Retiro gratis especial para ti <em>Oferta exclusiva</em></p>
+          <p className="carrito-pagina__envio"><span aria-hidden="true">✓</span> {envio ? `Envío a domicilio por ${dinero(cotizacion?.costoEnvio ?? 2500)}` : 'Retiro gratis especial para ti'} <em>Oferta exclusiva</em></p>
           {ahorro > 0 && (
             <p className="carrito-pagina__envio compra__ahorro">
               <span aria-hidden="true">✓</span> Estás ahorrando {dinero(ahorro)} en este pedido
@@ -206,27 +253,42 @@ export default function FinalizarCompra() {
           <div className="compra__dos">
             <section aria-labelledby="t-datos">
               <div className="compra__cabeza">
-                <h2 id="t-datos">Datos para el retiro</h2>
+                <h2 id="t-datos">Tus datos</h2>
                 {!editando && <button type="button" className="enlace-boton" onClick={() => setEditando(true)}>Cambiar datos ›</button>}
               </div>
               {editando ? (
                 <div className="tarjeta-datos tarjeta-datos--form">
                   {campo('nombre', 'Nombre completo', { autoComplete: 'name', required: true })}
                   {campo('telefono', 'Teléfono (WhatsApp)', { autoComplete: 'tel', inputMode: 'tel', required: true })}
-                  {campo('email', 'Correo (opcional)', { autoComplete: 'email', type: 'email' })}
-                  {anterior && <button type="button" className="boton boton--contorno" onClick={confirmarDatos}>Listo</button>}
+                  <p className="tenue">Correo de la cuenta: {cliente.email}</p>
+                  <button type="button" className="boton boton--contorno" onClick={confirmarDatos}>Guardar en mi cuenta</button>
                 </div>
               ) : (
                 <div className="tarjeta-datos">
                   <p><strong>{cliente.nombre}</strong> <span>{cliente.telefono}</span></p>
                   {cliente.email && <p className="tenue">{cliente.email}</p>}
-                  <p className="tarjeta-datos__lugar">Retiro en: {SALON.direccion}</p>
+                  <p className="tarjeta-datos__lugar">{envio && items.length ? `Envío a: ${sesion.direcciones.find((d) => d.id === direccionId)?.etiqueta || 'elige una dirección'}` : `Retiro en: ${SALON.direccion}`}</p>
                 </div>
               )}
             </section>
             <section aria-labelledby="t-retiro" className="compra__retiro">
-              {items.length > 0 && <h2 id="t-retiro">Retiro en el salón: <span className="gratis">GRATIS</span></h2>}
-              {items.length > 0 && <p>Te escribimos por WhatsApp cuando tu pedido esté listo ›</p>}
+              {items.length > 0 && (
+                <>
+                  <h2 id="t-retiro">¿Cómo recibes tus productos?</h2>
+                  <div className="entrega" role="radiogroup" aria-labelledby="t-retiro">
+                    <label className={`entrega__opcion ${!envio ? 'entrega__opcion--activa' : ''}`}>
+                      <input type="radio" name="entrega" className="marca" checked={!envio} onChange={() => setEntrega('retiro')} />
+                      <span><strong>Retiro en el salón</strong><small>Te avisamos por WhatsApp cuando esté listo</small></span>
+                      <b className="gratis">GRATIS</b>
+                    </label>
+                    <label className={`entrega__opcion ${envio ? 'entrega__opcion--activa' : ''}`}>
+                      <input type="radio" name="entrega" className="marca" checked={envio} onChange={() => setEntrega('envio')} />
+                      <span><strong>Envío a domicilio</strong><small>A una de tus direcciones guardadas</small></span>
+                      <b>{dinero(cotizacion?.costoEnvio ?? 2500)}</b>
+                    </label>
+                  </div>
+                </>
+              )}
               {citas.length > 0 && (
                 <>
                   <h2 id={items.length ? undefined : 't-retiro'} className="compra__citas-titulo">{citas.length > 1 ? `Tus ${citas.length} citas` : 'Tu cita'}</h2>
@@ -240,6 +302,14 @@ export default function FinalizarCompra() {
               )}
             </section>
           </div>
+
+          {envio && items.length > 0 && (
+            <section aria-labelledby="t-dir" className="compra__direcciones">
+              <div className="compra__cabeza"><h2 id="t-dir">¿A dónde lo enviamos?</h2><Link to="/cuenta" className="enlace-flecha">Mis direcciones ›</Link></div>
+              <ListaDirecciones elegida={direccionId} onElegir={(id) => { setDireccionId(id); setErrores((x) => ({ ...x, direccion: '' })); }} />
+              {errores.direccion && <p role="alert" className="error">{errores.direccion}</p>}
+            </section>
+          )}
 
           <section aria-labelledby="t-art" className="compra__articulos">
             <div className="compra__cabeza">
@@ -276,7 +346,7 @@ export default function FinalizarCompra() {
           <section aria-labelledby="t-pago" className="compra__pago">
             <h2 id="t-pago">Métodos de pago</h2>
             <div role="radiogroup" aria-labelledby="t-pago" className="metodos">
-              {METODOS.map((m) => (
+              {METODOS.filter((m) => !(envio && items.length && m.id === 'salon')).map((m) => (
                 <div key={m.id} className={`metodo ${metodo === m.id ? 'metodo--activo' : ''}`}>
                   <label className="metodo__fila">
                     <input type="radio" className="marca" name="metodo" value={m.id} checked={metodo === m.id} onChange={() => setMetodo(m.id)} />
@@ -393,7 +463,9 @@ export default function FinalizarCompra() {
               <div><dt>Total de los artículos:</dt><dd>{cotizacion.ahorroOfertas > 0 ? <s>{dinero(cotizacion.sinOfertas)}</s> : dinero(cotizacion.sinOfertas)}</dd></div>
               {cotizacion.ahorroOfertas > 0 && <div><dt>✓ Descuento de artículo(s):</dt><dd className="resumen-pedido__menos">-{dinero(cotizacion.ahorroOfertas)}</dd></div>}
               {cotizacion.descuento > 0 && <div><dt>✓ Cupón {cotizacion.cupon.codigo}:</dt><dd className="resumen-pedido__menos">-{dinero(cotizacion.descuento)}</dd></div>}
-              {items.length > 0 && <div><dt>✓ Retiro en el salón:</dt><dd className="resumen-pedido__gratis">GRATIS</dd></div>}
+              {items.length > 0 && (cotizacion.envio > 0
+                ? <div><dt>Envío a domicilio:</dt><dd>{dinero(cotizacion.envio)}</dd></div>
+                : <div><dt>✓ Retiro en el salón:</dt><dd className="resumen-pedido__gratis">GRATIS</dd></div>)}
               <div className="resumen-pedido__total"><dt>Total del pedido:</dt><dd>{dinero(cotizacion.total)}</dd></div>
               {cotizacion.enSalon > 0 && <div><dt>Pagas hoy:</dt><dd><strong>{dinero(cotizacion.pagasHoy)}</strong></dd></div>}
               {cotizacion.enSalon > 0 && <div><dt>Pagas en el salón:</dt><dd>{dinero(cotizacion.enSalon)}</dd></div>}

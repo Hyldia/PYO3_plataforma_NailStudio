@@ -141,7 +141,8 @@ export default function Reservar() {
       const base = (s, e, hora, extra) => ({
         id: `cita-${s.id}`, nombre: s.nombre, precio: precio(s) + (extra.recargo || 0), precio_anterior: s.precio_oferta != null ? s.precio + (extra.recargo || 0) : null,
         imagen: extra.imagen || s.imagen, servicioId: s.id, especialistaId: e.id, especialistaNombre: e.nombre,
-        fecha: sel.fecha, fechaTexto: CORTA.format(deISO(sel.fecha)), hora, duracion_min: s.duracion_min, ...extra
+        fecha: sel.fecha, fechaTexto: CORTA.format(deISO(sel.fecha)), hora, duracion_min: s.duracion_min, ...extra,
+        imagen: extra.imagen || s.imagen
       });
       const citas = [base(servicio, especialista, sel.hora, {
         recargo, disenoId, fotoRefId: reserva.fotoRef?.id || null, disenoTexto, imagen: reserva.fotoRef?.archivo, notas

@@ -80,12 +80,32 @@ export const CitaModel = {
   crear(c) {
     const r = getDb().prepare(`
       INSERT INTO citas (servicio_id, especialista_id, diseno_id, foto_ref_id, cliente_nombre, cliente_telefono, cliente_email,
-                         notas, fecha, hora, estado, total, anticipo, cupon_codigo, descuento, metodo_pago, pedido_id)
+                         notas, fecha, hora, estado, total, anticipo, cupon_codigo, descuento, metodo_pago, pedido_id, usuario_id)
       VALUES (@servicioId, @especialistaId, @disenoId, @fotoRefId, @nombre, @telefono, @email,
-              @notas, @fecha, @hora, @estado, @total, @anticipo, @cuponCodigo, @descuento, @metodoPago, @pedidoId)
-    `).run({ pedidoId: null, ...c });
+              @notas, @fecha, @hora, @estado, @total, @anticipo, @cuponCodigo, @descuento, @metodoPago, @pedidoId, @usuarioId)
+    `).run({ pedidoId: null, usuarioId: null, ...c });
     return this.buscarPorId(r.lastInsertRowid);
   },
+
+  // Calendario del panel: por cada día del mes, cuántas citas hay y cuántos espacios tiene el salón
+  resumenMes(mes) {
+    const [a, m] = mes.split('-').map(Number);
+    const dias = new Date(a, m, 0).getDate();
+    const especialistas = EspecialistaModel.listar();
+    const filas = getDb().prepare(`SELECT fecha, estado, COUNT(*) AS n FROM citas WHERE fecha LIKE ? GROUP BY fecha, estado`).all(`${mes}-%`);
+    return Array.from({ length: dias }, (_, i) => {
+      const fecha = `${mes}-${String(i + 1).padStart(2, '0')}`;
+      const capacidad = especialistas.reduce((s, e) => s + this.horasDe(e, fecha).length, 0);
+      const de = filas.filter((f) => f.fecha === fecha);
+      const n = (est) => de.filter((f) => est.includes(f.estado)).reduce((s, f) => s + f.n, 0);
+      const ocupadas = n(['pendiente', 'confirmada', 'completada']);
+      return { fecha, capacidad, ocupadas, pendientes: n(['pendiente']), canceladas: n(['cancelada']), completadas: n(['completada']),
+        nivel: !capacidad ? 'cerrado' : ocupadas >= capacidad ? 'lleno' : ocupadas / capacidad >= 0.6 ? 'casi' : ocupadas > 0 ? 'medio' : 'libre' };
+    });
+  },
+  activasDelDia: (fecha, especialistaId) => getDb().prepare(`${SELECT} WHERE c.fecha = ? AND c.estado IN ('pendiente', 'confirmada')
+    ${especialistaId ? 'AND c.especialista_id = ?' : ''} ORDER BY c.hora`).all(...[fecha, especialistaId].filter(Boolean)),
+  guardarMotivo: (id, motivo) => getDb().prepare('UPDATE citas SET motivo_cancelacion = ? WHERE id = ?').run(motivo, id),
 
   cambiarEstado(id, estado) {
     getDb().prepare('UPDATE citas SET estado = ? WHERE id = ?').run(estado, id);

@@ -1,4 +1,17 @@
+import { useEffect, useState } from 'react';
 import Foto from './Foto.jsx';
+import { api } from '../lib/api.js';
+
+// Citas guardadas en el carrito sin foto: se usa la foto del servicio (la lista se pide una sola vez)
+let serviciosPromesa = null;
+function FotoServicio({ producto, className }) {
+  const [imagen, setImagen] = useState(null);
+  useEffect(() => {
+    serviciosPromesa ||= api.servicios().catch(() => []);
+    serviciosPromesa.then((l) => setImagen((l.servicios || l).find((s) => s.id === producto.servicioId)?.imagen || null));
+  }, [producto.servicioId]);
+  return imagen ? <Foto archivo={imagen} alt={producto.nombre} className={className} /> : <div className={`foto ${className}`} aria-hidden="true" />;
+}
 
 // Ilustración del producto cuando todavía no tiene foto: se dibuja según su tipo y color.
 // Así la tienda se ve completa y ordenada mientras el salón sube las fotos reales.
@@ -141,6 +154,7 @@ function Dibujo({ tipo, c }) {
 
 export default function ProductoImagen({ producto, className = '' }) {
   if (producto.imagen) return <Foto archivo={producto.imagen} alt={producto.nombre} className={className} />;
+  if (producto.tipo === 'cita' && producto.servicioId) return <FotoServicio producto={producto} className={className} />;
   return (
     <div className={`foto producto-ilustracion ${className}`} role="img" aria-label={producto.nombre}>
       <svg viewBox="0 0 200 200" aria-hidden="true">

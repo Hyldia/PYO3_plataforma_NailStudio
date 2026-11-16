@@ -18,7 +18,7 @@ export function PodioVendidos({ productos, categoria }) {
       <span className="podio__chispas" aria-hidden="true">{Array.from({ length: 14 }, (_, i) => <i key={i} style={{ '--i': i, '--y': `${10 + ((i * 37) % 70)}%` }} />)}</span>
       <div className="podio__texto">
         <p className="podio__ante"><Rayo tam={16} /> Ranking en vivo</p>
-        <h2 id="t-podio">Lo más vendido {categoria ? `en ${categoria}` : 'de AH Nails'}</h2>
+        <h2 id="t-podio"><Link to={`/tienda/${top[0].id}`} className="enlace-titulo">Lo más vendido {categoria ? `en ${categoria}` : 'de AH Nails'}</Link></h2>
         <p>Lo que más compran nuestras clientas, actualizado con cada pedido.</p>
         <p className="podio__total"><strong><Contador valor={total} formato={(n) => n.toLocaleString('es-CR')} /></strong> unidades vendidas del top 20</p>
       </div>
@@ -59,15 +59,18 @@ export function BannerOfertas({ productos }) {
             <p>{conDescuento.length} productos rebajados · solo por hoy</p>
           </div>
         </div>
-        <p className="relampago__hasta"><small>hasta</small><strong>-{maximo}<span>%</span></strong></p>
+        <Link to={`/tienda/${conDescuento.find((p) => pct(p) === maximo).id}`} className="relampago__hasta" aria-label={`Ver el producto con ${maximo} % de descuento`}><small>hasta</small><strong>-{maximo}<span>%</span></strong></Link>
         <div className="relampago__reloj"><CuentaRegresiva claro /></div>
       </div>
-      <div className="relampago__cinta" aria-hidden="true">
-        <ul>
+      <div className="relampago__cinta">
+        <ul aria-label="Productos en oferta">
           {[...cinta, ...cinta].map((p, i) => (
-            <li key={`${p.id}-${i}`}>
-              <span className="relampago__mini"><ProductoImagen producto={p} /></span>
-              <span><b>-{pct(p)} %</b>{dinero(p.precio)}</span>
+            <li key={`${p.id}-${i}`} aria-hidden={i >= cinta.length || undefined}>
+              <Link to={`/tienda/${p.id}`} tabIndex={i >= cinta.length ? -1 : undefined}>
+                <span className="relampago__mini"><ProductoImagen producto={p} /></span>
+                <span><b>-{pct(p)} %</b>{dinero(p.precio)}</span>
+                <span className="solo-lector">{p.nombre}</span>
+              </Link>
             </li>
           ))}
         </ul>

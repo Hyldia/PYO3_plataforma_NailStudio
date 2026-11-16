@@ -4,6 +4,7 @@ import Logo from './Logo.jsx';
 import { SALON } from '../config.js';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { useFavoritos } from '../context/FavoritosContext.jsx';
+import { useUsuario } from '../context/UsuarioContext.jsx';
 
 const ENLACES = [
   { to: '/tienda?orden=vendidos', texto: 'Más vendidos', icono: 'pulgar' },
@@ -50,6 +51,7 @@ export default function Encabezado() {
   const [busqueda, setBusqueda] = useState('');
   const { cantidad } = useCarrito();
   const favoritos = useFavoritos();
+  const { usuario } = useUsuario();
   const { pathname, search } = useLocation();
   const navegar = useNavigate();
   useEffect(() => setMenu(false), [pathname, search]);
@@ -103,6 +105,11 @@ export default function Encabezado() {
             <Link to="/contacto" className="encabezado__ayuda">
               <Icono d={<><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01" /></>} />
               <span>Ayuda</span>
+            </Link>
+            <Link to="/cuenta" className="encabezado__cuenta-link" aria-label={usuario ? `Mi cuenta, ${usuario.nombre}` : 'Entrar o crear cuenta'}>
+              {usuario?.foto ? <img src={usuario.foto} alt="" referrerPolicy="no-referrer" className="encabezado__avatar" /> : usuario ? <span className="encabezado__avatar">{usuario.nombre[0]}</span>
+                : <Icono d={<><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></>} />}
+              <span className="encabezado__cuenta-texto">{usuario ? usuario.nombre.split(' ')[0] : 'Entrar'}</span>
             </Link>
             <Link to="/favoritos" className="encabezado__favoritos" aria-label={`Favoritos, ${favoritos.cantidad} guardados`}>
               <Icono d={<path d="M12 20.5s-7.5-4.6-9.3-9.4C1.4 7.6 3.6 4 7.2 4c2 0 3.6 1.1 4.8 2.8C13.2 5.1 14.8 4 16.8 4c3.6 0 5.8 3.6 4.5 7.1-1.8 4.8-9.3 9.4-9.3 9.4z" />} />

@@ -58,7 +58,7 @@ export default function EscaparateGaleria({ total }) {
         <span className="inspira__brillos" aria-hidden="true">{Array.from({ length: 10 }, (_, n) => <i key={n} style={{ '--n': n, '--y': `${(n * 29) % 90}%` }} />)}</span>
         <div className="inspira__texto">
           <p className="inspira__ante">Galería AH Nails</p>
-          <h2 id="t-inspira">Encuentra tu próximo <em>set favorito</em></h2>
+          <h2 id="t-inspira"><Link to={`/galeria/${top[0].id}`} className="enlace-titulo">Encuentra tu próximo <em>set favorito</em></Link></h2>
           <p>Diseños reales hechos en el salón. Resérvalo igualito o llévalo en press-on.</p>
           <ul className="inspira__datos">
             <li><strong><Contador valor={total} /></strong> diseños</li>
@@ -81,7 +81,7 @@ export default function EscaparateGaleria({ total }) {
       </section>
 
       <section className="tendencias" aria-labelledby="t-tendencias">
-        <h2 id="t-tendencias" className="fila-titulo"><span className="tendencias__punto" aria-hidden="true" />Tendencias de la semana</h2>
+        <h2 id="t-tendencias" className="fila-titulo"><Link to="/galeria?orden=populares" className="enlace-titulo"><span className="tendencias__punto" aria-hidden="true" />Tendencias de la semana</Link></h2>
         <div className="tendencias__pista">
           <ul>
             {[...cinta, ...cinta].map((f, n) => (

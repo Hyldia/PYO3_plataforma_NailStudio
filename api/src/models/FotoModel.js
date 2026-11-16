@@ -79,6 +79,7 @@ export const FotoModel = {
     return this.buscarPorId(id);
   },
 
+  cambiarArchivo: (id, archivo) => getDb().prepare('UPDATE fotos SET archivo = ?, autor = NULL, autor_url = NULL WHERE id = ?').run(archivo, id),
   eliminar: (id) => getDb().prepare('DELETE FROM fotos WHERE id = ?').run(id),
 
   // Regla del modelo: normaliza lo que llega del formulario del panel

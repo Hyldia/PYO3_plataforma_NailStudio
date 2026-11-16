@@ -120,7 +120,7 @@ export function cargarDatosEjemplo(db) {
         if (!lineas.some((l) => l.p.id === p.id)) lineas.push({ p, cantidad: az.entero(1, 2) });
       }
       const total = lineas.reduce((s, l) => s + l.p.precio * l.cantidad, 0);
-      const estado = dias > 5 ? 'entregado' : dias > 1 ? 'listo para retirar' : 'recibido';
+      const estado = dias > 5 ? 'completado' : dias > 1 ? 'listo' : 'recibido';
       const pedidoId = insPedido.run(clienta.nombre, clienta.telefono, clienta.email, total, estado,
         az.prob(0.7) ? 'SINPE Móvil' : 'Pago en el salón', fechaHora(fecha)).lastInsertRowid;
       lineas.forEach((l) => insItem.run(pedidoId, l.p.id, l.cantidad, l.p.precio));

@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { CarritoProvider } from './context/CarritoContext.jsx';
 import { ReservaProvider } from './context/ReservaContext.jsx';
+import { UsuarioProvider } from './context/UsuarioContext.jsx';
 import { FavoritosProvider } from './context/FavoritosContext.jsx';
 import { VistaRapidaProvider } from './context/VistaRapidaContext.jsx';
 // Tipografías incluidas en el proyecto (no dependen de Google Fonts)
@@ -21,11 +22,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <CarritoProvider>
         <ReservaProvider>
+          <UsuarioProvider>
           <FavoritosProvider>
             <VistaRapidaProvider>
               <App />
             </VistaRapidaProvider>
           </FavoritosProvider>
+          </UsuarioProvider>
         </ReservaProvider>
       </CarritoProvider>
     </BrowserRouter>

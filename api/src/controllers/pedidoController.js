@@ -11,6 +11,10 @@ import { DisenoModel } from '../models/DisenoModel.js';
 import { crearMetodoPago } from '../patterns/pagos.js';
 import { calcularPrecioPedido } from '../patterns/precio.js';
 import { eventos } from '../patterns/eventos.js';
+import { UsuarioModel } from '../models/UsuarioModel.js';
+
+// Envío a domicilio (solo productos; las citas son en el salón). Se cambia con la variable COSTO_ENVIO.
+export const COSTO_ENVIO = Number(process.env.COSTO_ENVIO ?? 2500);
 
 const error = (mensaje, status = 400) => Object.assign(new Error(mensaje), { status });
 
@@ -47,7 +51,7 @@ function armarCitas(citas = []) {
 }
 
 // Total con cupón (patrón Decorator) y cuánto se paga hoy: productos completos + 30 % de las citas
-function cotizar(productos, citas, codigo, metodoPago) {
+function cotizar(productos, citas, codigo, metodoPago, entrega = 'retiro') {
   const lineas = [...productos, ...citas];
   let base = calcularPrecioPedido(lineas);
   let cupon = null;
@@ -61,13 +65,15 @@ function cotizar(productos, citas, codigo, metodoPago) {
   const subProductos = productos.reduce((s, l) => s + l.precio * l.cantidad, 0);
   const productosNeto = Math.round(subProductos * factor);
   const citasNeto = base.total - productosNeto;
+  const envio = entrega === 'envio' && productos.length ? COSTO_ENVIO : 0;
+  if (envio && metodoPago === 'salon') throw error('Para el envío a domicilio paga con SINPE Móvil o tarjeta.');
   const anticipo = metodoPago === 'salon' ? 0 : Math.round(citasNeto * PORCENTAJE_ADELANTO);
-  const pagasHoy = metodoPago === 'salon' ? 0 : productosNeto + anticipo;
+  const pagasHoy = metodoPago === 'salon' ? 0 : productosNeto + envio + anticipo;
   const sinOfertas = lineas.reduce((s, l) => s + (l.precioAnterior || l.precio) * l.cantidad, 0);
-  return { ...base, cupon, factor, productosNeto, citasNeto, anticipo, pagasHoy, enSalon: base.total - pagasHoy, sinOfertas, ahorroOfertas: sinOfertas - base.subtotal };
+  return { ...base, total: base.total + envio, envio, cupon, factor, productosNeto, citasNeto, anticipo, pagasHoy, enSalon: base.total + envio - pagasHoy, sinOfertas, ahorroOfertas: sinOfertas - base.subtotal };
 }
 
-const publico = (c) => ({ subtotal: c.subtotal, total: c.total, descuento: c.descuento, detalle: c.detalle,
+const publico = (c) => ({ subtotal: c.subtotal, total: c.total, envio: c.envio, costoEnvio: COSTO_ENVIO, descuento: c.descuento, detalle: c.detalle,
   cupon: c.cupon ? { codigo: c.cupon.codigo, descripcion: c.cupon.descripcion } : null,
   productosNeto: c.productosNeto, citasNeto: c.citasNeto, anticipo: c.anticipo, pagasHoy: c.pagasHoy, enSalon: c.enSalon,
   sinOfertas: c.sinOfertas, ahorroOfertas: c.ahorroOfertas });
@@ -75,20 +81,29 @@ const publico = (c) => ({ subtotal: c.subtotal, total: c.total, descuento: c.des
 export const pedidoController = {
   // POST /api/pedidos/cotizar: el resumen antes de pagar
   cotizar(req, res) {
-    const { items = [], citas = [], cupon, metodoPago = 'sinpe' } = req.body;
+    const { items = [], citas = [], cupon, metodoPago = 'sinpe', entrega = 'retiro' } = req.body;
     if (!items.length && !citas.length) return res.status(400).json({ error: 'No hay nada seleccionado.' });
-    res.json(publico(cotizar(armarProductos(items), armarCitas(citas), cupon, metodoPago)));
+    res.json(publico(cotizar(armarProductos(items), armarCitas(citas), cupon, metodoPago, entrega)));
   },
 
   crear(req, res) {
-    const { items = [], citas: citasPedidas = [], cliente = {}, metodoPago, pago, cupon, notas } = req.body;
+    const { items = [], citas: citasPedidas = [], metodoPago, pago, cupon, notas, entrega = 'retiro', direccionId } = req.body;
     if (!items.length && !citasPedidas.length) return res.status(400).json({ error: 'El carrito está vacío.' });
+    // La clienta tiene cuenta (middleware soloUsuario): sus datos vienen de la cuenta
+    const u = req.usuario;
+    const cliente = { nombre: req.body.cliente?.nombre || u.nombre, telefono: req.body.cliente?.telefono || u.telefono || '', email: u.correo };
+    let direccion = null;
+    if (entrega === 'envio' && items.length) {
+      const d = UsuarioModel.direccion(u.id, direccionId);
+      if (!d) return res.status(400).json({ error: 'Elige la dirección de envío.' });
+      direccion = UsuarioModel.textoDireccion(d);
+    }
     const errorCliente = PedidoModel.validarCliente(cliente);
     if (errorCliente) return res.status(400).json({ error: errorCliente });
 
     const productos = armarProductos(items);
     const citas = armarCitas(citasPedidas);
-    const c = cotizar(productos, citas, cupon, metodoPago);
+    const c = cotizar(productos, citas, cupon, metodoPago, direccion ? 'envio' : 'retiro');
 
     // Strategy + Factory: se cobra lo que toca pagar hoy
     const metodo = crearMetodoPago(metodoPago);
@@ -98,7 +113,7 @@ export const pedidoController = {
     // Todo o nada: si una cita se ocupó en este momento, no se guarda nada
     const resultado = getDb().transaction(() => {
       const pedido = productos.length ? PedidoModel.crear(cliente, productos, metodo.nombre, {
-        total: c.productosNeto, descuento: Math.round(productos.reduce((s, l) => s + l.precio * l.cantidad, 0) * (1 - c.factor)),
+        total: c.productosNeto + c.envio, usuarioId: u.id, entrega: direccion ? 'envio' : 'retiro', direccion, costoEnvio: c.envio, descuento: Math.round(productos.reduce((s, l) => s + l.precio * l.cantidad, 0) * (1 - c.factor)),
         cupon: c.cupon?.codigo, notas: notas ? String(notas).slice(0, 300) : null, referencia: cobro.referencia
       }) : null;
       const creadas = citas.map((l) => {
@@ -110,7 +125,7 @@ export const pedidoController = {
           notas: [l.persona ? `Viene con ${cliente.nombre.trim()}` : null, l.notas].filter(Boolean).join('. ') || null,
           fecha: l.fecha, hora: l.hora, estado: cobro.requiereVerificacion ? 'pendiente' : 'confirmada',
           total, anticipo: metodoPago === 'salon' ? 0 : Math.round(total * PORCENTAJE_ADELANTO),
-          cuponCodigo: c.cupon?.codigo ?? null, descuento: l.precio - total, metodoPago: metodo.nombre, pedidoId: pedido?.id ?? null
+          cuponCodigo: c.cupon?.codigo ?? null, descuento: l.precio - total, metodoPago: metodo.nombre, pedidoId: pedido?.id ?? null, usuarioId: u.id
         });
       });
       return { pedido, creadas };
@@ -121,7 +136,7 @@ export const pedidoController = {
     resultado.creadas.forEach((cita) => eventos.emit('cita:creada', { cita, recordatorios: { whatsapp: true } }));
     res.status(201).json({
       id: resultado.pedido?.id ?? null, citas: resultado.creadas, total: c.total, descuento: c.descuento,
-      pagado: c.pagasHoy, enSalon: c.enSalon, metodo: metodo.nombre, referenciaPago: cobro.referencia, requiereVerificacion: Boolean(cobro.requiereVerificacion)
+      pagado: c.pagasHoy, enSalon: c.enSalon, envio: c.envio, direccion, metodo: metodo.nombre, referenciaPago: cobro.referencia, requiereVerificacion: Boolean(cobro.requiereVerificacion)
     });
   }
 };

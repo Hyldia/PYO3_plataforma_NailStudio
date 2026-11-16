@@ -41,7 +41,7 @@ function Carrusel({ ofertas, vendidos, kits }) {
       <span className="vitrina__burbujas" aria-hidden="true">{Array.from({ length: 8 }, (_, n) => <i key={n} style={{ '--n': n }} />)}</span>
       <div className="vitrina__texto" key={`t${i}`}>
         <p className="vitrina__ante">{s.ante}</p>
-        <h2>{s.titulo}</h2>
+        <h2><Link to={s.to} className="enlace-titulo">{s.titulo}</Link></h2>
         <p>{s.texto}</p>
         {s.reloj && <CuentaRegresiva claro />}
         <Link to={s.to} className="vitrina__boton">{s.boton} <Flecha /></Link>
@@ -94,7 +94,7 @@ function FilaRelampago({ productos }) {
   return (
     <section className="fila-flash" aria-labelledby="t-fila-flash">
       <div className="fila-flash__cabeza">
-        <h2 id="t-fila-flash"><span className="fila-flash__rayo" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg></span>Ofertas relámpago</h2>
+        <h2 id="t-fila-flash"><Link to="/tienda?ofertas=1&orden=descuento" className="enlace-titulo"><span className="fila-flash__rayo" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg></span>Ofertas relámpago</Link></h2>
         <CuentaRegresiva claro />
         <Link to="/tienda?ofertas=1&orden=descuento" className="fila-flash__todo">Ver todo <Flecha /></Link>
       </div>
@@ -114,7 +114,7 @@ function FilaRelampago({ productos }) {
                                  datos={{ id: p.id, nombre: p.nombre, precio: p.precio, precio_anterior: p.precio_anterior, imagen: p.imagen, color: p.color, tipo_producto: p.tipo, stock: p.stock, calificacion: p.calificacion, resenas: p.resenas, vendidos: p.vendidos, categoria: p.categoria }} />
                   <Link to={`/tienda/${p.id}`} className="flash-tarjeta__nombre">{p.nombre}</Link>
                   <p className="flash-tarjeta__precio"><b>{dinero(p.precio)}</b><s>{dinero(p.precio_anterior)}</s></p>
-                  <div className="flash-tarjeta__barra" aria-label={`${vendido} % vendido`}><span style={{ '--v': `${vendido}%` }} /><em>{vendido >= 85 ? '¡Casi agotado!' : `${vendido} % vendido`}</em></div>
+                  <Link to={`/tienda/${p.id}`} className="flash-tarjeta__barra" aria-label={`${vendido} % vendido`}><span style={{ '--v': `${vendido}%` }} /><em>{vendido >= 85 ? '¡Casi agotado!' : `${vendido} % vendido`}</em></Link>
                 </div>
               </li>
             );

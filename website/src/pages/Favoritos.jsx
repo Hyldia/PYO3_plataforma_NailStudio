@@ -90,10 +90,12 @@ export default function Favoritos() {
         </div>
         {fav.cantidad > 0 && (
           <div className="fav-hero__resumen">
-            <ul className="fav-hero__collage" aria-hidden="true">
+            <ul className="fav-hero__collage">
               {collage.map((i, n) => (
                 <li key={i.clave} style={{ '--n': n }}>
-                  {i.tipo === 'producto' ? <ProductoImagen producto={{ ...i, tipo: i.tipo_producto }} /> : <Foto archivo={i.archivo} alt="" />}
+                  <Link to={i.tipo === 'producto' ? `/tienda/${i.id}` : `/galeria/${i.id}`} tabIndex={-1}>
+                    {i.tipo === 'producto' ? <ProductoImagen producto={{ ...i, tipo: i.tipo_producto }} /> : <Foto archivo={i.archivo} alt="" />}
+                  </Link>
                 </li>
               ))}
             </ul>
