@@ -37,6 +37,7 @@ const qs = (params) => {
 
 export const api = {
   servicios: () => pedir('/servicios'),
+  asistente: () => pedir('/asistente'),
   auth: {
     config: () => pedir('/auth/config'),
     registro: (d) => pedir('/auth/registro', { method: 'POST', body: d }),
@@ -101,6 +102,8 @@ export const api = {
     mensajes: () => pedir('/admin/mensajes', { admin: true }),
     tiposMensaje: () => pedir('/admin/mensajes/tipos', { admin: true }),
     mensajeEnviado: (id) => pedir(`/admin/mensajes/${id}/enviado`, { method: 'POST', admin: true }).catch(() => {}),
+    fotoAsistente: (formData) => pedir('/admin/asistente/foto', { method: 'POST', body: formData, admin: true }),
+    quitarFotoAsistente: () => pedir('/admin/asistente/foto', { method: 'DELETE', admin: true }),
     cambiarFotoDiseno: (id, formData) => pedir(`/admin/fotos/${id}/imagen`, { method: 'POST', body: formData, admin: true }),
     productos: (filtros = {}) => pedir(`/admin/productos${qs(filtros)}`, { admin: true }),
     crearProducto: (d) => pedir('/admin/productos', { method: 'POST', body: d, admin: true }),

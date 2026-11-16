@@ -7,6 +7,7 @@ import { citaController } from '../controllers/citaController.js';
 import { productoAdminController } from '../controllers/productoAdminController.js';
 import { baseDatosController } from '../controllers/baseDatosController.js';
 import { adminController as a } from '../controllers/adminController.js';
+import { asistenteController } from '../controllers/asistenteController.js';
 
 const r = Router();
 r.use(soloAdmin);
@@ -19,6 +20,8 @@ r.delete('/fotos/:id', fotoController.eliminar);
 
 r.post('/productos/:id/imagen', subirImagen.single('imagen'), productoAdminController.cambiarImagen);
 r.post('/especialistas/:id/foto', subirImagen.single('imagen'), productoAdminController.fotoEspecialista);
+r.post('/asistente/foto', subirImagen.single('imagen'), asistenteController.subirFoto);
+r.delete('/asistente/foto', asistenteController.quitarFoto);
 r.post('/fotos/:id/imagen', subirImagen.single('imagen'), a.cambiarFotoDiseno);
 
 // Productos: listar, crear, editar y eliminar

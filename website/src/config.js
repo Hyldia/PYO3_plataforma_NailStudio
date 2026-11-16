@@ -19,7 +19,13 @@ export const SALON = {
     facebook: 'https://facebook.com/',
     tiktok: ''
   },
-  sinpe: { numero: '0000 0000', nombre: '[Nombre del titular]' }
+  sinpe: { numero: '0000 0000', nombre: '[Nombre del titular]' },
+  // Asistente virtual del chat. Cambien la foto por una de su recepcionista (con su permiso) cuando la tengan.
+  asistente: {
+    nombre: 'Sofi',
+    foto: 'https://images.unsplash.com/photo-1758518727888-ffa196002e59?w=240&h=240&fit=crop&crop=faces&q=80',
+    credito: { autor: 'Vitaly Gariev', url: 'https://unsplash.com/@silverkblack' }
+  }
 };
 
 const formato = new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', maximumFractionDigits: 0 });

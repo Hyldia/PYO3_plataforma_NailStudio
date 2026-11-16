@@ -4,6 +4,32 @@ import { api } from '../../lib/api.js';
 import Foto from '../../components/Foto.jsx';
 import Modal from '../../components/Modal.jsx';
 import { BotonFoto, ZonaFotos, DIAS_SEMANA, HORAS, formData } from './comunes.jsx';
+import { AvatarSofi, avisarFotoAsistente } from '../../components/ChatAsistente.jsx';
+
+// Foto de la asistente del chat (Sofi)
+function FotoAsistente({ onAviso }) {
+  const subir = async (archivo) => {
+    try { const r = await api.admin.fotoAsistente(formData(archivo)); avisarFotoAsistente(r.foto); onAviso({ texto: 'Listo: la foto nueva ya sale en el chat.' }); }
+    catch (e) { onAviso({ texto: e.message, error: true }); }
+  };
+  const quitar = async () => {
+    try { await api.admin.quitarFotoAsistente(); avisarFotoAsistente(null); onAviso({ texto: 'Se quitó la foto subida; el chat vuelve a la foto de config.js.' }); }
+    catch (e) { onAviso({ texto: e.message, error: true }); }
+  };
+  return (
+    <div className="asistente-admin">
+      <span className="asistente-admin__foto"><AvatarSofi tam={96} /></span>
+      <div>
+        <p className="admin-tarjeta__nombre">Foto de Sofi, la asistente del chat</p>
+        <p className="tenue">Es la que ven las clientas en el botón del chat (abajo a la derecha). Usen una foto de una sola persona, de frente; se recorta en círculo.</p>
+        <div className="botones">
+          <BotonFoto texto="Subir foto" etiqueta="de la asistente del chat" clase="boton boton--chico" onArchivo={subir} />
+          <button type="button" className="boton boton--chico boton--contorno" onClick={quitar}>Quitar foto subida</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const VACIA = { nombre: '', especialidad: '', bio: '', experiencia: '', dias: '1,2,3,4,5', hora_inicio: '09:00', hora_fin: '17:30', activa: 1 };
 const textoDias = (dias = '') => DIAS_SEMANA.filter(([k]) => dias.split(',').includes(k)).map(([, t]) => t).join(' · ');
@@ -101,6 +127,7 @@ export default function EquipoAdmin() {
         <div><h2 id="t-equipo">Equipo</h2><p className="tenue">Las clientas ven estas fotos, días y horarios al reservar.</p></div>
         <button type="button" className="boton" onClick={() => setEditando({})}>+ Agregar especialista</button>
       </div>
+      <FotoAsistente onAviso={setAviso} />
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <ul className="admin-tarjetas admin-tarjetas--equipo">
         {lista.map((e, i) => (

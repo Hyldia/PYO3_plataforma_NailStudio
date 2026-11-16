@@ -22,6 +22,8 @@ import ProductoDetalle from './pages/ProductoDetalle.jsx';
 import Favoritos from './pages/Favoritos.jsx';
 import Cuenta from './pages/Cuenta.jsx';
 import Ruleta from './components/Ruleta.jsx';
+import ChatAsistente from './components/ChatAsistente.jsx';
+import Accesibilidad from './components/Accesibilidad.jsx';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -63,6 +65,8 @@ export default function App() {
       <Aviso />
       <CarritoLateral />
       <Ruleta />
+      <ChatAsistente />
+      <Accesibilidad />
       <Animaciones />
     </>
   );

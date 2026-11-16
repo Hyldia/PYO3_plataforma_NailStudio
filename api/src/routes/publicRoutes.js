@@ -10,6 +10,7 @@ import { detalleController } from '../controllers/detalleController.js';
 import { resenaController } from '../controllers/resenaController.js';
 import { comentarioController } from '../controllers/comentarioController.js';
 import { ruletaController } from '../controllers/ruletaController.js';
+import { asistenteController } from '../controllers/asistenteController.js';
 import { cuentaController as cuenta } from '../controllers/cuentaController.js';
 import { conUsuario, soloUsuario } from '../middleware/usuario.js';
 
@@ -27,6 +28,7 @@ r.post('/productos/:id/resenas', resenaController.crear);
 r.get('/comentarios/:tipo', comentarioController.resumenes);
 r.get('/comentarios/:tipo/:id', comentarioController.listar);
 r.post('/comentarios/:tipo/:id', comentarioController.crear);
+r.get('/asistente', asistenteController.ver);
 r.get('/ruleta', ruletaController.premios);
 r.post('/ruleta', ruletaController.girar);
 
