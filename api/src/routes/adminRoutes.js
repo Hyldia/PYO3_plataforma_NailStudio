@@ -18,10 +18,6 @@ r.post('/fotos', subirImagen.single('imagen'), fotoController.subir);
 r.put('/fotos/:id', fotoController.editar);
 r.delete('/fotos/:id', fotoController.eliminar);
 
-r.post('/productos', productoAdminController.crear);
-r.put('/productos/:id', productoAdminController.actualizar);
-r.delete('/productos/:id', productoAdminController.eliminar);
-
 r.post('/productos/:id/imagen', subirImagen.single('imagen'), productoAdminController.cambiarImagen);
 r.post('/especialistas/:id/foto', subirImagen.single('imagen'), productoAdminController.fotoEspecialista);
 r.post('/asistente/foto', subirImagen.single('imagen'), asistenteController.subirFoto);

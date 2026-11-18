@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { dinero } from '../config.js';
+import { SALON, dinero } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import { useUsuario } from '../context/UsuarioContext.jsx';
 import Acceso from '../components/Acceso.jsx';
@@ -27,7 +27,22 @@ export default function Cuenta() {
   if (!sesion.usuario) {
     return (
       <div className="contenedor pagina cuenta-entrar">
-        <Acceso titulo="Entra a tu cuenta" bajada="Guarda tus direcciones, sigue tus pedidos y reserva más rápido." onListo={() => volver && irA(volver)} />
+        <div className="compra-acceso">
+          <Acceso titulo="Entra a tu cuenta" bajada="Guarda tus direcciones, sigue tus pedidos y reserva más rápido." onListo={() => volver && irA(volver)} />
+          <aside className="compra-acceso__lado">
+            <p className="compra-acceso__titulo">Con tu cuenta de {SALON.nombre}</p>
+            <ul>
+              <li>Guardas hasta 3 direcciones de envío</li>
+              <li>Ves el estado de tus pedidos y citas</li>
+              <li>Te avisamos por WhatsApp cuando esté listo</li>
+              <li>Pagas más rápido la próxima vez</li>
+            </ul>
+            <div className="compra-acceso__cta">
+              <Link to="/galeria" className="compra-acceso__enlace">Ver diseños</Link>
+              <Link to="/tienda" className="compra-acceso__enlace">Ir a la tienda</Link>
+            </div>
+          </aside>
+        </div>
       </div>
     );
   }

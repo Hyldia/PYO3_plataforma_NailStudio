@@ -2,8 +2,7 @@
 export const SALON = {
   nombre: 'AH Nails',
   descripcion: 'Salón de uñas',
-  lema: 'Diseñamos lo que imaginas, en la punta de tus dedos.',
-  descripcionPortada: 'Manicure, uñas acrílicas, polygel y pedicure. Mira nuestros trabajos, elige tu diseño y reserva en línea.',
+  lema: 'Uñas cuidadas, diseños hechos a tu medida.',
   telefono: '+506 0000 0000',
   whatsapp: '50600000000',          // solo números, con código de país
   correo: 'hola@naile.cr',
