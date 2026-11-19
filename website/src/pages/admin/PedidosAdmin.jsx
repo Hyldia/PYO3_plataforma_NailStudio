@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { SALON, dinero } from '../../config.js';
 import Modal from '../../components/Modal.jsx';
+import VerMas from '../../components/VerMas.jsx';
 import { TarjetaMensaje, isoLocal } from './piezasPanel.jsx';
 
+const POR_PAGINA = 4;
 const ESTADOS = { recibido: 'Recibido', listo: 'Listo para retirar', completado: 'Completado', cancelado: 'Cancelado' };
 const SIGUIENTE = { recibido: ['listo', 'completado', 'cancelado'], listo: ['completado', 'recibido', 'cancelado'], completado: ['listo'], cancelado: [] };
 const TEXTO = { listo: 'Listo para retirar', completado: 'Ya lo retiró', recibido: 'Volver a recibido', cancelado: 'Cancelar' };
@@ -81,6 +83,7 @@ export default function PedidosAdmin() {
   const [texto, setTexto] = useState('');
   const [rapido, setRapido] = useState('');
   const [pedidos, setPedidos] = useState([]);
+  const [pagina, setPagina] = useState(1);
   const [pagos, setPagos] = useState([]);
   const [ventana, setVentana] = useState(null);
   const [error, setError] = useState('');
@@ -95,25 +98,28 @@ export default function PedidosAdmin() {
   useEffect(() => { cargar(); }, [filtros]);
   useEffect(() => { api.admin.pedidos().then((l) => setPagos([...new Set(l.map((p) => p.metodo_pago))])).catch(() => {}); }, []);
   useEffect(() => { const t = setTimeout(() => setFiltros((f) => ({ ...f, q: texto })), 300); return () => clearTimeout(t); }, [texto]);
+  const paginas = Math.ceil(pedidos.length / POR_PAGINA);
+  const pedidosPagina = pedidos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  useEffect(() => { if (pagina > paginas) setPagina(Math.max(paginas, 1)); }, [pagina, paginas]);
 
   // Nombre: set
   // Descripción: Cambia un filtro.
   // Entrada: El nombre del filtro.
   // Salida: Una función para el campo.
   // Objetivo: Filtrar pedidos.
-  const set = (k) => (e) => { setFiltros({ ...filtros, [k]: e.target.value }); if (k === 'desde' || k === 'hasta') setRapido(''); };
+  const set = (k) => (e) => { setFiltros({ ...filtros, [k]: e.target.value }); setPagina(1); if (k === 'desde' || k === 'hasta') setRapido(''); };
   // Nombre: elegirRapido
   // Descripción: Elige un rango rápido.
   // Entrada: El tipo.
   // Salida: Nada.
   // Objetivo: Filtrar rápido.
-  const elegirRapido = (t) => { setRapido(t); setFiltros({ ...filtros, ...rango(t) }); };
+  const elegirRapido = (t) => { setRapido(t); setFiltros({ ...filtros, ...rango(t) }); setPagina(1); };
   // Nombre: limpiar
   // Descripción: Quita los filtros.
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Ver todo.
-  const limpiar = () => { setTexto(''); setRapido(''); setFiltros({ desde: '', hasta: '', q: '', estado: '', pago: '' }); };
+  const limpiar = () => { setTexto(''); setRapido(''); setFiltros({ desde: '', hasta: '', q: '', estado: '', pago: '' }); setPagina(1); };
 
   const resumen = useMemo(() => {
     const validos = pedidos.filter((p) => p.estado !== 'cancelado');
@@ -165,7 +171,7 @@ export default function PedidosAdmin() {
             <button key={k} type="button" className={`chip-filtro ${rapido === k && (k || !filtros.desde) ? 'chip-filtro--activo' : ''}`} onClick={() => elegirRapido(k)}>{t}</button>
           ))}
         </div>
-        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar</span><input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Nombre, teléfono o N.º de pedido" /></label>
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar</span><input type="search" value={texto} onChange={(e) => { setTexto(e.target.value); setPagina(1); }} placeholder="Nombre, teléfono o N.º de pedido" /></label>
         <label className="filtros-admin__fecha"><span>Desde</span><input type="date" value={filtros.desde} onChange={set('desde')} /></label>
         <label className="filtros-admin__fecha"><span>Hasta</span><input type="date" value={filtros.hasta} onChange={set('hasta')} /></label>
         <label><span className="solo-lector">Estado</span><select value={filtros.estado} onChange={set('estado')}><option value="">Todos los estados</option>{Object.entries(ESTADOS).map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></label>
@@ -176,7 +182,7 @@ export default function PedidosAdmin() {
 
       {pedidos.length === 0 ? <p className="tenue">No hay pedidos con esos filtros.</p> : (
         <ul className="pedidos-lista">
-          {pedidos.map((p, n) => {
+          {pedidosPagina.map((p, n) => {
             const pasos = ['recibido', 'listo', 'completado'];
             const paso = pasos.indexOf(p.estado);
             const siguientes = p.estado === 'completado' ? [] : (SIGUIENTE[p.estado] || []).filter((e) => e === 'listo' || e === 'completado');
@@ -231,6 +237,7 @@ export default function PedidosAdmin() {
           })}
         </ul>
       )}
+      <VerMas pagina={pagina} paginas={paginas} onCambiar={(n) => { setPagina(n); document.getElementById('t-ped')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
 
       {ventana?.tipo === 'completar' && <VentanaCompletar pedido={ventana.pedido} onCerrar={() => setVentana(null)} onListo={cargar} />}
       {ventana?.tipo === 'mensaje' && (

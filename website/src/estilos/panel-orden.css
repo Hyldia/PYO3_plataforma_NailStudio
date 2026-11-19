@@ -39,6 +39,9 @@
 .nomina-periodo input[type="date"] { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--linea); background: var(--papel); font: inherit; }
 .filtros-admin--agenda { padding: 10px 12px; }
 .filtros-admin--agenda .filtros-admin__buscar { flex: 1 1 200px; }
+.filtros-admin--agenda .barra-chips { display: flex; flex: 1 1 100%; flex-wrap: nowrap; gap: 2px; width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.filtros-admin--agenda .barra-chips::-webkit-scrollbar { display: none; }
+.filtros-admin--agenda .chip-filtro { flex: 0 0 auto; min-height: 34px; padding: 0 10px; white-space: nowrap; font-size: 0.82rem; }
 
 /* ---- Galería: formulario que se abre con el botón ---- */
 .subida { position: relative; animation: subir-suave 0.35s ease both; }

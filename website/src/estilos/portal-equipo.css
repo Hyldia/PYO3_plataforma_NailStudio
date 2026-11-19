@@ -58,7 +58,7 @@
 .portal-dia--libre small { color: var(--apagado); }
 .portal-dia--activo { background: var(--vino); border-color: var(--vino); color: #fff; box-shadow: 0 10px 20px rgba(140,29,75,0.3); }
 .portal-dia--activo span, .portal-dia--activo small { color: rgba(255,255,255,0.9); }
-.portal-sub { font-size: 1.2rem; margin: 4px 0 10px; }
+.portal-sub { font-size: 1.2rem; margin: 4px 0 10px; scroll-margin-top: 72px; }
 .portal-sub::first-letter, .nomina-resumen__fecha::first-letter, .ausencias-lista__fecha::first-letter { text-transform: uppercase; }
 .portal-vacio { margin: 0; padding: 28px 18px; border-radius: 16px; background: var(--papel); border: 1px dashed var(--linea); text-align: center; color: var(--gris); }
 

@@ -8,8 +8,11 @@ import { SALON, dinero, urlFoto } from '../config.js';
 import Foto from '../components/Foto.jsx';
 import Modal from '../components/Modal.jsx';
 import AvatarClienta from '../components/AvatarClienta.jsx';
+import VerMas from '../components/VerMas.jsx';
 import { fechaLarga, isoLocal, DIAS_SEMANA } from './admin/piezasPanel.jsx';
 
+const CITAS_POR_PAGINA = 4;
+const CLIENTAS_POR_PAGINA = 10;
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ESTADO = { pendiente: 'Por confirmar', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada' };
 const TIPO = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Incapacidad', permiso: 'Permiso' };
@@ -334,6 +337,8 @@ function Panel({ d, onSalir, onRecargar }) {
   const [pestana, setPestana] = useState('citas');
   const [cancelando, setCancelando] = useState(null);
   const [dia, setDia] = useState(d.hoy);
+  const [paginaCitas, setPaginaCitas] = useState(1);
+  const [paginaClientas, setPaginaClientas] = useState(1);
   const [buscar, setBuscar] = useState('');
   const p = d.perfil;
   const ausencias = useMemo(() => Object.fromEntries(d.ausencias.map((a) => [a.fecha, a])), [d]);
@@ -346,9 +351,16 @@ function Panel({ d, onSalir, onRecargar }) {
   const trabaja = (f) => p.dias.split(',').includes(String(new Date(`${f}T12:00:00`).getDay() || 7));
   const dias14 = Array.from({ length: 14 }, (_, i) => sumar(d.hoy, i));
   const deHoy = porDia[d.hoy] || [];
+  const citasDia = porDia[dia] || [];
+  const paginasCitas = Math.ceil(citasDia.length / CITAS_POR_PAGINA);
+  const citasDiaPagina = citasDia.slice((paginaCitas - 1) * CITAS_POR_PAGINA, paginaCitas * CITAS_POR_PAGINA);
+  useEffect(() => { if (paginaCitas > paginasCitas) setPaginaCitas(Math.max(paginasCitas, 1)); }, [paginaCitas, paginasCitas]);
   const semana = dias14.slice(0, 7).reduce((n, f) => n + (porDia[f]?.length || 0), 0);
   const q = d.quincena;
   const clientas = d.clientas.filter((c) => !buscar || `${c.nombre} ${c.telefono}`.toLowerCase().includes(buscar.toLowerCase()));
+  const paginasClientas = Math.ceil(clientas.length / CLIENTAS_POR_PAGINA);
+  const clientasPagina = clientas.slice((paginaClientas - 1) * CLIENTAS_POR_PAGINA, paginaClientas * CLIENTAS_POR_PAGINA);
+  useEffect(() => { if (paginaClientas > paginasClientas) setPaginaClientas(Math.max(paginasClientas, 1)); }, [paginaClientas, paginasClientas]);
   const hora = new Date().getHours();
   const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
   // Cuántos días de la quincena ya pasaron (para la barra de avance)
@@ -396,7 +408,7 @@ function Panel({ d, onSalir, onRecargar }) {
               const dt = new Date(`${f}T12:00:00`);
               return (
                 <li key={f}>
-                  <button type="button" className={`portal-dia ${dia === f ? 'portal-dia--activo' : ''} ${fuera ? 'portal-dia--libre' : ''} ${f === d.hoy ? 'portal-dia--hoy' : ''}`} onClick={() => setDia(f)} aria-pressed={dia === f}>
+                  <button type="button" className={`portal-dia ${dia === f ? 'portal-dia--activo' : ''} ${fuera ? 'portal-dia--libre' : ''} ${f === d.hoy ? 'portal-dia--hoy' : ''}`} onClick={() => { setDia(f); setPaginaCitas(1); }} aria-pressed={dia === f}>
                     <span>{DIAS_CORTOS[dt.getDay()]}</span><strong>{dt.getDate()}</strong>
                     <small>{ausencias[f] ? TIPO[ausencias[f].tipo] : !trabaja(f) ? 'Libre' : n ? `${n} ${n === 1 ? 'cita' : 'citas'}` : 'Sin citas'}</small>
                   </button>
@@ -404,11 +416,12 @@ function Panel({ d, onSalir, onRecargar }) {
               );
             })}
           </ol>
-          <h2 className="portal-sub">{dia === d.hoy ? 'Hoy, ' : ''}{fechaLarga(dia)}</h2>
+          <h2 id="portal-citas-fecha" className="portal-sub">{dia === d.hoy ? 'Hoy, ' : ''}{fechaLarga(dia)}</h2>
           {ausencias[dia] ? <p className="portal-vacio">Este día lo tienes como <b>{TIPO[ausencias[dia].tipo].toLowerCase()}</b>. Nadie puede reservar contigo.</p>
             : !trabaja(dia) ? <p className="portal-vacio">Este día no trabajas por horario. ¡A descansar!</p>
-            : !(porDia[dia] || []).length ? <p className="portal-vacio">No tienes citas este día todavía.</p>
-            : <ul className="portal-citas">{porDia[dia].map((c) => <TarjetaCita key={c.id} c={c} hoy={d.hoy} onCancelar={setCancelando} />)}</ul>}
+            : !citasDia.length ? <p className="portal-vacio">No tienes citas este día todavía.</p>
+            : <ul className="portal-citas">{citasDiaPagina.map((c) => <TarjetaCita key={c.id} c={c} hoy={d.hoy} onCancelar={setCancelando} />)}</ul>}
+          <VerMas pagina={paginaCitas} paginas={paginasCitas} onCambiar={(n) => { setPaginaCitas(n); document.getElementById('portal-citas-fecha')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
           {d.recientes.length > 0 && (
             <details className="portal-historial">
               <summary>Citas de los últimos 30 días ({d.recientes.length})</summary>
@@ -420,23 +433,26 @@ function Panel({ d, onSalir, onRecargar }) {
 
       {pestana === 'clientas' && (
         <section aria-label="Mis clientas">
-          <label className="portal-buscar"><span className="solo-lector">Buscar clienta</span><input type="search" value={buscar} onChange={(e) => setBuscar(e.target.value)} placeholder="Buscar por nombre o teléfono" /></label>
+          <label id="portal-clientas-buscar" className="portal-buscar" style={{ scrollMarginTop: '64px' }}><span className="solo-lector">Buscar clienta</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setPaginaClientas(1); }} placeholder="Buscar por nombre o teléfono" /></label>
           {clientas.length === 0 ? <p className="portal-vacio">Aquí aparecen las clientas que ya atendiste.</p> : (
-            <ul className="portal-clientas">
-              {clientas.map((c, i) => (
-                <li key={c.telefono} style={{ '--n': i % 20 }} className="clienta-tarjeta">
-                  {c.visitas >= 3 && <span className="clienta-tarjeta__sello">Frecuente</span>}
-                  <AvatarClienta nombre={c.nombre} foto={c.foto} tam={72} />
-                  <p className="clienta-tarjeta__nombre">{c.nombre}</p>
-                  <p className="clienta-tarjeta__servicio">{c.servicio}</p>
-                  <dl className="clienta-tarjeta__datos">
-                    <div><dt>Visitas</dt><dd>{c.visitas}</dd></div>
-                    <div><dt>Última</dt><dd>{fechaCorta(c.ultima)}</dd></div>
-                  </dl>
-                  <a className="portal-cita__wa clienta-tarjeta__wa" href={wa(c.telefono, `Hola ${c.nombre.split(' ')[0]}, te escribe tu especialista de ${SALON.nombre}.`)} target="_blank" rel="noreferrer">WhatsApp<span className="solo-lector"> a {c.nombre}</span></a>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="portal-clientas">
+                {clientasPagina.map((c, i) => (
+                  <li key={c.telefono} style={{ '--n': i % CLIENTAS_POR_PAGINA }} className="clienta-tarjeta">
+                    {c.visitas >= 3 && <span className="clienta-tarjeta__sello">Frecuente</span>}
+                    <AvatarClienta nombre={c.nombre} foto={c.foto} tam={72} />
+                    <p className="clienta-tarjeta__nombre">{c.nombre}</p>
+                    <p className="clienta-tarjeta__servicio">{c.servicio}</p>
+                    <dl className="clienta-tarjeta__datos">
+                      <div><dt>Visitas</dt><dd>{c.visitas}</dd></div>
+                      <div><dt>Última</dt><dd>{fechaCorta(c.ultima)}</dd></div>
+                    </dl>
+                    <a className="portal-cita__wa clienta-tarjeta__wa" href={wa(c.telefono, `Hola ${c.nombre.split(' ')[0]}, te escribe tu especialista de ${SALON.nombre}.`)} target="_blank" rel="noreferrer">WhatsApp<span className="solo-lector"> a {c.nombre}</span></a>
+                  </li>
+                ))}
+              </ul>
+              <VerMas pagina={paginaClientas} paginas={paginasClientas} onCambiar={(n) => { setPaginaClientas(n); document.getElementById('portal-clientas-buscar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
+            </>
           )}
           <p className="tenue portal-nota">La foto es la de su cuenta del sitio (por ejemplo, la de Google). Si no tiene, sale un dibujo que siempre es el mismo para esa clienta.</p>
         </section>

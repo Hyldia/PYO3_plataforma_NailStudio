@@ -4,6 +4,7 @@ import { useTitulo } from '../lib/hooks.js';
 import { dinero } from '../config.js';
 import Foto from '../components/Foto.jsx';
 import Modal from '../components/Modal.jsx';
+import VerMas from '../components/VerMas.jsx';
 import AgendaAdmin from './admin/AgendaAdmin.jsx';
 import ProductosAdmin from './admin/ProductosAdmin.jsx';
 import EquipoAdmin from './admin/EquipoAdmin.jsx';
@@ -19,6 +20,7 @@ const CATEGORIAS = ['Manicure', 'Acrílicas', 'Polygel', 'Gel', 'Pedicure', 'Nai
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
 const COLORES = ['Nude', 'Rosa', 'Rojo', 'Vino', 'Morado', 'Azul', 'Verde', 'Negro', 'Blanco', 'Dorado', 'Multicolor'];
 const ACABADOS = ['Brillante', 'Mate', 'Chrome', 'Glitter'];
+const POR_PAGINA_GALERIA = 8;
 
 // Nombre: Entrar
 // Descripción: Muestra la entrada al panel.
@@ -88,7 +90,7 @@ function Galeria() {
   const [nuevaFoto, setNuevaFoto] = useState(null);
   const [buscar, setBuscar] = useState('');
   const [cat, setCat] = useState('');
-  const [visibles, setVisibles] = useState(24);
+  const [pagina, setPagina] = useState(1);
   const [subiendoAbierto, setSubiendoAbierto] = useState(false);
 
   // Trae todas las fotos (el servidor entrega de a 100)
@@ -176,6 +178,9 @@ function Galeria() {
   );
 
   const lista = fotos.filter((f) => (!cat || f.categoria === cat) && (!buscar || [f.titulo, f.color, f.forma, f.acabado, f.descripcion].join(' ').toLowerCase().includes(buscar.toLowerCase())));
+  const paginas = Math.ceil(lista.length / POR_PAGINA_GALERIA);
+  const fotosPagina = lista.slice((pagina - 1) * POR_PAGINA_GALERIA, pagina * POR_PAGINA_GALERIA);
+  useEffect(() => { if (pagina > paginas) setPagina(Math.max(paginas, 1)); }, [pagina, paginas]);
 
   const modal = editando && (
     <Modal titulo="Editar diseño" onCerrar={() => { setEditando(null); setNuevaFoto(null); }} ancho>
@@ -227,12 +232,12 @@ function Galeria() {
       )}
 
       <div className="filtros-admin">
-        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar diseño</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setVisibles(24); }} placeholder="Buscar por título, color o forma" /></label>
-        <label><span className="solo-lector">Servicio</span><select value={cat} onChange={(e) => { setCat(e.target.value); setVisibles(24); }}><option value="">Todos los servicios</option>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></label>
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar diseño</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setPagina(1); }} placeholder="Buscar por título, color o forma" /></label>
+        <label><span className="solo-lector">Servicio</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todos los servicios</option>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></label>
       </div>
       <p className="tenue">{lista.length} diseños</p>
       <ul className="admin-tarjetas">
-        {lista.slice(0, visibles).map((f, i) => (
+        {fotosPagina.map((f, i) => (
           <li key={f.id} className="admin-tarjeta" style={{ '--n': i % 24 }}>
             <div className="admin-tarjeta__foto">
               <Foto archivo={f.archivo} alt={f.titulo} />
@@ -250,7 +255,7 @@ function Galeria() {
           </li>
         ))}
       </ul>
-      {visibles < lista.length && <button type="button" className="boton boton--contorno boton--centro" onClick={() => setVisibles(visibles + 24)}>Ver más ({lista.length - visibles})</button>}
+      <VerMas pagina={pagina} paginas={paginas} onCambiar={(n) => { setPagina(n); document.getElementById('t-galeria-admin')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
     </section>
   );
 }

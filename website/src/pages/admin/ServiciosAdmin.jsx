@@ -4,8 +4,10 @@ import { api } from '../../lib/api.js';
 import { dinero } from '../../config.js';
 import Modal from '../../components/Modal.jsx';
 import Foto from '../../components/Foto.jsx';
+import VerMas from '../../components/VerMas.jsx';
 import { BotonFoto, ZonaFotos, formData } from './piezasPanel.jsx';
 
+const POR_PAGINA = 8;
 const ETIQUETAS = ['', 'Más pedido', 'Nuevo', 'Oferta', 'Especial'];
 const VACIO = { nombre: '', descripcion: '', categoria: 'Manos', duracion_min: 60, precio: '', precio_oferta: '', incluye: '', etiqueta: '', es_combo: 0, destacado: 0, activo: 1 };
 // Nombre: horas
@@ -117,6 +119,7 @@ export default function ServiciosAdmin() {
   const [buscar, setBuscar] = useState('');
   const [cat, setCat] = useState('');
   const [ver, setVer] = useState('');
+  const [pagina, setPagina] = useState(1);
   const [editando, setEditando] = useState(null);
   const [aviso, setAviso] = useState({ texto: '', error: false });
   // Nombre: cargar
@@ -130,6 +133,9 @@ export default function ServiciosAdmin() {
   const lista = useMemo(() => datos.servicios.filter((s) => (!cat || s.categoria === cat)
     && (!ver || (ver === 'ocultos' ? !s.activo : ver === 'oferta' ? s.precio_oferta : s.activo))
     && (!buscar || `${s.nombre} ${s.descripcion || ''}`.toLowerCase().includes(buscar.toLowerCase()))), [datos, cat, ver, buscar]);
+  const paginas = Math.ceil(lista.length / POR_PAGINA);
+  const serviciosPagina = lista.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  useEffect(() => { if (pagina > paginas) setPagina(Math.max(paginas, 1)); }, [pagina, paginas]);
   const cifras = useMemo(() => ({
     activos: datos.servicios.filter((s) => s.activo).length,
     ofertas: datos.servicios.filter((s) => s.activo && s.precio_oferta).length,
@@ -180,16 +186,16 @@ export default function ServiciosAdmin() {
         <li className="cifras-admin--verde"><strong className="cifras-admin__texto">{cifras.top?.nombre || '—'}</strong>el más pedido</li>
       </ul>
       <div className="filtros-admin">
-        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar servicio</span><input type="search" value={buscar} onChange={(e) => setBuscar(e.target.value)} placeholder="Buscar servicio" /></label>
-        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => setCat(e.target.value)}><option value="">Todas las categorías</option>{datos.categorias.map((c) => <option key={c}>{c}</option>)}</select></label>
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar servicio</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setPagina(1); }} placeholder="Buscar servicio" /></label>
+        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{datos.categorias.map((c) => <option key={c}>{c}</option>)}</select></label>
         <div className="barra-chips barra-chips--compacta" role="group" aria-label="Mostrar">
-          {[['', 'Todos'], ['visibles', 'Visibles'], ['oferta', 'Con oferta'], ['ocultos', 'Ocultos']].map(([k, t]) => <button key={k} type="button" className={`chip-filtro ${ver === k ? 'chip-filtro--activo' : ''}`} onClick={() => setVer(k)}>{t}</button>)}
+          {[['', 'Todos'], ['visibles', 'Visibles'], ['oferta', 'Con oferta'], ['ocultos', 'Ocultos']].map(([k, t]) => <button key={k} type="button" className={`chip-filtro ${ver === k ? 'chip-filtro--activo' : ''}`} onClick={() => { setVer(k); setPagina(1); }}>{t}</button>)}
         </div>
       </div>
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <p className="tenue">{lista.length} servicios</p>
       <ul className="admin-tarjetas admin-tarjetas--servicios">
-        {lista.map((s, i) => {
+        {serviciosPagina.map((s, i) => {
           const pct = s.precio_oferta ? Math.round((1 - s.precio_oferta / s.precio) * 100) : 0;
           return (
             <li key={s.id} className={`admin-tarjeta servicio-admin ${s.activo ? '' : 'admin-tarjeta--inactiva'}`} style={{ '--n': i % 24 }}>
@@ -215,6 +221,7 @@ export default function ServiciosAdmin() {
           );
         })}
       </ul>
+      <VerMas pagina={pagina} paginas={paginas} onCambiar={(n) => { setPagina(n); document.getElementById('t-serv')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
       {editando && <Editor servicio={editando} categorias={datos.categorias} onCerrar={() => setEditando(null)} onGuardado={(t) => { setAviso({ texto: t }); cargar(); }} />}
     </section>
   );

@@ -97,9 +97,8 @@
 .editar-foto__nueva { position: absolute; left: 8px; right: 8px; bottom: 8px; padding: 6px 10px; border-radius: 8px; background: rgba(31,107,69,0.92); color: #fff; font-size: 0.8rem; font-weight: 700; }
 
 /* Agenda: calendario y citas del día */
-.agenda-admin__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 22px; align-items: start; }
-@media (max-width: 1000px) { .agenda-admin__grid { grid-template-columns: 1fr; } }
-.cal { padding: 18px; border-radius: 20px; background: var(--superficie); border: 1px solid var(--linea); box-shadow: 0 10px 24px rgba(140,29,75,0.06); }
+.agenda-admin__grid { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+.cal { position: static; flex: 1 1 420px; min-width: 0; padding: 18px; border-radius: 20px; background: var(--superficie); border: 1px solid var(--linea); box-shadow: 0 10px 24px rgba(140,29,75,0.06); }
 .cal__cabeza { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .cal__cabeza h3 { margin: 0; text-transform: capitalize; font-size: 1.25rem; }
 .cal__flecha { width: 40px; height: 40px; border: none; border-radius: 50%; background: var(--rubor); color: var(--vino-texto); font-size: 1.5rem; line-height: 1; cursor: pointer; transition: background 0.2s, transform 0.2s; }
@@ -128,7 +127,7 @@
 .cal__punto--libre { background: #BFE5CD; } .cal__punto--medio { background: #FFE19A; } .cal__punto--casi { background: #FFC08F; } .cal__punto--lleno { background: #F2A0AE; } .cal__punto--cerrado { background: #DCD3D4; }
 @media (max-width: 520px) { .cal { padding: 12px; } .cal__rejilla { gap: 4px; } .cal__cuenta { display: none; } .cal__dia { padding: 4px 5px 7px; } }
 
-.dia-panel { display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 20px; background: var(--superficie); border: 1px solid var(--linea); min-width: 0; }
+.dia-panel { display: flex; flex: 1.15 1 420px; flex-direction: column; gap: 14px; padding: 18px; border-radius: 20px; background: var(--superficie); border: 1px solid var(--linea); min-width: 0; }
 .dia-panel__cabeza { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .dia-panel__ante { margin: 0; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--oferta); }
 .dia-panel h3 { margin: 2px 0 6px; text-transform: capitalize; font-size: 1.35rem; }
@@ -140,9 +139,7 @@
 @media (max-width: 520px) { .dia-panel__cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .dia-panel__vacio { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 30px 10px; color: var(--gris); text-align: center; }
 .dia-panel__vacio svg { color: var(--vino-texto); opacity: 0.5; }
-.citas-dia { list-style: none; margin: 0; padding: 0 4px 0 0; display: flex; flex-direction: column; gap: 10px; max-height: 72vh; overflow-y: auto; scrollbar-width: thin; }
-.cal { position: sticky; top: 60px; }
-@media (max-width: 1000px) { .cal { position: static; } .citas-dia { max-height: none; } }
+.citas-dia { list-style: none; margin: 0; padding: 0 4px 0 0; display: flex; flex-direction: column; gap: 10px; }
 .cita-admin { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 4px 14px; padding: 12px 14px; border-radius: 14px; background: var(--papel); border-left: 5px solid #E3C9C3; animation: entra-izq 0.45s ease both; animation-delay: calc(min(var(--n), 8) * 50ms); }
 .cita-admin--pendiente { border-left-color: #E8B04B; } .cita-admin--confirmada { border-left-color: var(--confianza); }
 .cita-admin--completada { border-left-color: #8C8CA8; opacity: 0.8; } .cita-admin--cancelada { border-left-color: var(--error); opacity: 0.7; }

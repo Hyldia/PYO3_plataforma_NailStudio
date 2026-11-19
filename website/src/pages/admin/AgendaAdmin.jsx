@@ -5,8 +5,10 @@ import { api } from '../../lib/api.js';
 import { dinero } from '../../config.js';
 import Foto from '../../components/Foto.jsx';
 import Modal from '../../components/Modal.jsx';
+import VerMas from '../../components/VerMas.jsx';
 import { TarjetaMensaje, Whats, fechaLarga, nombreMes, isoLocal } from './piezasPanel.jsx';
 
+const POR_PAGINA = 4;
 const ACCIONES = { pendiente: ['confirmar'], confirmada: ['completar'], completada: [], cancelada: [] };
 const TEXTO_ACCION = { confirmar: 'Confirmar', completar: 'Marcar atendida' };
 const NIVEL = { libre: 'Libre', medio: 'Con citas', casi: 'Casi lleno', lleno: 'Lleno', cerrado: 'Cerrado' };
@@ -184,6 +186,7 @@ export default function AgendaAdmin() {
   const [filtro, setFiltro] = useState('');
   const [verEstado, setVerEstado] = useState('');
   const [buscarClienta, setBuscarClienta] = useState('');
+  const [pagina, setPagina] = useState(1);
   const [ventana, setVentana] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [error, setError] = useState('');
@@ -227,13 +230,16 @@ export default function AgendaAdmin() {
   // Entrada: La fecha.
   // Salida: Nada.
   // Objetivo: Ver sus citas.
-  const elegirDia = (f) => { setFecha(f); if (f.slice(0, 7) !== mes) setMes(f.slice(0, 7)); };
+  const elegirDia = (f) => { setFecha(f); setPagina(1); if (f.slice(0, 7) !== mes) setMes(f.slice(0, 7)); };
 
   const dia = dias.find((d) => d.fecha === fecha);
   const ESTADOS_FILTRO = { activas: ['pendiente', 'confirmada'], completada: ['completada'], cancelada: ['cancelada'] };
   const visibles = citas.filter((c) => (!filtro || String(c.especialista_id) === filtro)
     && (!verEstado || ESTADOS_FILTRO[verEstado].includes(c.estado))
     && (!buscarClienta || `${c.cliente_nombre} ${c.cliente_telefono} ${c.servicio}`.toLowerCase().includes(buscarClienta.toLowerCase())));
+  const paginas = Math.ceil(visibles.length / POR_PAGINA);
+  const citasPagina = visibles.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  useEffect(() => { if (pagina > paginas) setPagina(Math.max(paginas, 1)); }, [pagina, paginas]);
   const activas = citas.filter((c) => ['pendiente', 'confirmada'].includes(c.estado));
   const cobrar = activas.reduce((s, c) => s + (c.total - c.anticipo), 0);
 
@@ -264,16 +270,16 @@ export default function AgendaAdmin() {
           </ul>
           {citas.length > 0 && (
             <div className="filtros-admin filtros-admin--agenda">
-              <label className="filtros-admin__buscar"><span className="solo-lector">Buscar clienta</span><input type="search" value={buscarClienta} onChange={(e) => setBuscarClienta(e.target.value)} placeholder="Buscar clienta o servicio" /></label>
+              <label className="filtros-admin__buscar"><span className="solo-lector">Buscar clienta</span><input type="search" value={buscarClienta} onChange={(e) => { setBuscarClienta(e.target.value); setPagina(1); }} placeholder="Buscar clienta o servicio" /></label>
               <label><span className="solo-lector">Especialista</span>
-                <select value={filtro} onChange={(e) => setFiltro(e.target.value)}>
+                <select value={filtro} onChange={(e) => { setFiltro(e.target.value); setPagina(1); }}>
                   <option value="">Todas las especialistas ({citas.length})</option>
                   {especialistas.filter((e) => citas.some((c) => c.especialista_id === e.id)).map((e) => <option key={e.id} value={e.id}>{e.nombre} ({citas.filter((c) => c.especialista_id === e.id).length})</option>)}
                 </select>
               </label>
               <div className="barra-chips barra-chips--compacta" role="group" aria-label="Mostrar">
                 {[['', 'Todas'], ['activas', 'Por atender'], ['completada', 'Atendidas'], ['cancelada', 'Canceladas']].map(([k, t]) => (
-                  <button key={k} type="button" className={`chip-filtro ${verEstado === k ? 'chip-filtro--activo' : ''}`} aria-pressed={verEstado === k} onClick={() => setVerEstado(k)}>{t}</button>
+                  <button key={k} type="button" className={`chip-filtro ${verEstado === k ? 'chip-filtro--activo' : ''}`} aria-pressed={verEstado === k} onClick={() => { setVerEstado(k); setPagina(1); }}>{t}</button>
                 ))}
               </div>
             </div>
@@ -283,7 +289,7 @@ export default function AgendaAdmin() {
             <div className="dia-panel__vacio"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /></svg><p>{dia?.nivel === 'cerrado' ? 'El salón está cerrado este día.' : citas.length ? 'Ninguna cita coincide con los filtros.' : 'No hay citas este día.'}</p></div>
           ) : (
             <ol className="citas-dia">
-              {visibles.map((c, i) => (
+              {citasPagina.map((c, i) => (
                 <li key={c.id} className={`cita-admin cita-admin--${c.estado}`} style={{ '--n': i }}>
                   <div className="cita-admin__hora"><strong>{c.hora}</strong><span>{c.duracion_min} min</span></div>
                   <div className="cita-admin__info">
@@ -303,6 +309,7 @@ export default function AgendaAdmin() {
               ))}
             </ol>
           )}
+          <VerMas pagina={pagina} paginas={paginas} onCambiar={setPagina} />
         </div>
       </div>
 

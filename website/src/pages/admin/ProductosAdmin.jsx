@@ -4,6 +4,7 @@ import { api } from '../../lib/api.js';
 import { dinero } from '../../config.js';
 import Modal from '../../components/Modal.jsx';
 import ProductoImagen from '../../components/ProductoImagen.jsx';
+import VerMas from '../../components/VerMas.jsx';
 import { BotonFoto, ZonaFotos, formData } from './piezasPanel.jsx';
 import { CATEGORIAS, claveCategoria } from '../../lib/categoriasPortada.js';
 
@@ -58,7 +59,7 @@ function FotosCategorias() {
 }
 
 const VACIO = { nombre: '', categoria: '', marca: 'AH Nails', precio: '', precio_anterior: '', stock: '10', descripcion: '' };
-const POR_PAGINA = 24;
+const POR_PAGINA = 8;
 
 // Nombre: Editor
 // Descripción: Muestra el formulario de un producto.
@@ -148,7 +149,7 @@ export default function ProductosAdmin() {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('');
   const [stock, setStock] = useState('');
-  const [visibles, setVisibles] = useState(POR_PAGINA);
+  const [pagina, setPagina] = useState(1);
   const [editando, setEditando] = useState(null);
   const [aviso, setAviso] = useState({ texto: '', error: false });
 
@@ -159,12 +160,13 @@ export default function ProductosAdmin() {
   // Objetivo: Mostrar la lista.
   const cargar = () => api.admin.productos().then(setProductos).catch((e) => setAviso({ texto: e.message, error: true }));
   useEffect(() => { cargar(); api.categoriasProductos().then(setCategorias).catch(() => {}); }, []);
-  useEffect(() => setVisibles(POR_PAGINA), [q, cat, stock]);
-
   const lista = useMemo(() => productos.filter((p) =>
     (!cat || p.categoria === cat) &&
     (!stock || (stock === 'agotado' ? p.stock === 0 : stock === 'poco' ? p.stock > 0 && p.stock < 10 : p.precio_anterior)) &&
     (!q || `${p.nombre} ${p.marca || ''} ${p.id}`.toLowerCase().includes(q.toLowerCase()))), [productos, q, cat, stock]);
+  const paginas = Math.ceil(lista.length / POR_PAGINA);
+  const productosPagina = lista.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  useEffect(() => { if (pagina > paginas) setPagina(Math.max(paginas, 1)); }, [pagina, paginas]);
 
   // Nombre: fotoNueva
   // Descripción: Cambia la foto de un producto.
@@ -227,14 +229,14 @@ export default function ProductosAdmin() {
       </ul>
       <FotosCategorias />
       <div className="filtros-admin">
-        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar producto</span><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre, marca o N.º" /></label>
-        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => setCat(e.target.value)}><option value="">Todas las categorías</option>{categorias.map((c) => <option key={c.valor} value={c.valor}>{c.valor} ({c.cantidad})</option>)}</select></label>
-        <label><span className="solo-lector">Stock</span><select value={stock} onChange={(e) => setStock(e.target.value)}><option value="">Todo el stock</option><option value="agotado">Agotados</option><option value="poco">Poco stock</option><option value="oferta">En oferta</option></select></label>
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar producto</span><input type="search" value={q} onChange={(e) => { setQ(e.target.value); setPagina(1); }} placeholder="Buscar por nombre, marca o N.º" /></label>
+        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{categorias.map((c) => <option key={c.valor} value={c.valor}>{c.valor} ({c.cantidad})</option>)}</select></label>
+        <label><span className="solo-lector">Stock</span><select value={stock} onChange={(e) => { setStock(e.target.value); setPagina(1); }}><option value="">Todo el stock</option><option value="agotado">Agotados</option><option value="poco">Poco stock</option><option value="oferta">En oferta</option></select></label>
       </div>
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <p className="tenue">{lista.length} {lista.length === 1 ? 'producto' : 'productos'}</p>
       <ul className="admin-tarjetas">
-        {lista.slice(0, visibles).map((p, i) => (
+        {productosPagina.map((p, i) => (
           <li key={p.id} className="admin-tarjeta" style={{ '--n': i % POR_PAGINA }}>
             <div className="admin-tarjeta__foto">
               <ProductoImagen producto={p} />
@@ -258,7 +260,7 @@ export default function ProductosAdmin() {
           </li>
         ))}
       </ul>
-      {visibles < lista.length && <button type="button" className="boton boton--contorno boton--centro" onClick={() => setVisibles(visibles + POR_PAGINA)}>Ver más ({lista.length - visibles})</button>}
+      <VerMas pagina={pagina} paginas={paginas} onCambiar={(n) => { setPagina(n); document.getElementById('t-prod')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
       {editando && <Editor producto={editando} categorias={categorias} onCerrar={() => setEditando(null)} onGuardado={() => { cargar(); setAviso({ texto: 'Producto guardado.' }); }} />}
     </section>
   );
