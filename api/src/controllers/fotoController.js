@@ -18,6 +18,12 @@ export const fotoController = {
   // Entrada: Nada.
   // Salida: Tipos, formas, colores y acabados.
   // Objetivo: Llenar los filtros.
+  // Nombre: parecidas
+  // Descripción: Devuelve fotos reales parecidas a un diseño.
+  // Entrada: Las palabras del diseño en ?palabras=rosa,almendra,perlas
+  // Salida: La lista de fotos.
+  // Objetivo: Que la clienta vea su idea en uñas reales.
+  parecidas: (req, res) => res.json(FotoModel.parecidas(String(req.query.palabras || '').split(','), req.query.limite)),
   opcionesDeFiltro: (req, res) => res.json(FotoModel.opcionesDeFiltro()),
 
   // Nombre: registrarVista

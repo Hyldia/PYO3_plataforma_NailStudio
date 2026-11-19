@@ -210,3 +210,18 @@
 .fuerza--0 i { width: 10%; background: var(--error); } .fuerza--1 i { width: 30%; background: var(--error); }
 .fuerza--2 i { width: 55%; background: #E8A317; } .fuerza--3 i { width: 80%; background: var(--confianza); } .fuerza--4 i { width: 100%; background: var(--confianza); }
 .admin-entrar .acceso__clave input { border-radius: 10px 0 0 10px; }
+
+/* Ventana "La clienta no llegó" */
+.no-asistio { display: flex; flex-direction: column; gap: 14px; }
+.no-asistio__opciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; border: none; }
+.no-asistio__opciones legend { margin-bottom: 8px; font-weight: 800; }
+.no-asistio__opciones label { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 14px; border: 1px solid var(--linea); background: var(--blanco); cursor: pointer; }
+.no-asistio__opciones label.activa { border-color: var(--vino); background: #FBEFF3; box-shadow: inset 0 0 0 1px var(--vino); }
+.no-asistio__opciones input { position: absolute; opacity: 0; pointer-events: none; }
+.no-asistio__opciones span { color: var(--gris); font-size: 0.86rem; }
+.no-asistio__campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.no-asistio__cobro { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.no-asistio__cobro button { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--linea); background: var(--blanco); font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
+.no-asistio__cobro button[aria-checked="true"] { border-color: var(--vino); background: #FBEFF3; color: var(--vino); }
+.no-asistio__cobro .campo { grid-column: 1 / -1; }
+@media (max-width: 560px) { .no-asistio__opciones, .no-asistio__campos, .no-asistio__cobro { grid-template-columns: 1fr; } }

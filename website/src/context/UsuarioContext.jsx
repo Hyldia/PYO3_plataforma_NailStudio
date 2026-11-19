@@ -26,7 +26,7 @@ export function UsuarioProvider({ children }) {
   // Salida: Una promesa.
   // Objetivo: Tener datos al día.
   const recargar = () => api.cuenta.yo()
-    .then((r) => { setUsuario(r.usuario); setDirecciones(r.direcciones); })
+    .then((respuesta) => { setUsuario(respuesta.usuario); setDirecciones(respuesta.direcciones); })
     .catch((e) => { if (e.status === 401) { sesionCliente.cerrar(); setUsuario(null); setDirecciones([]); } })
     .finally(() => setCargando(false));
 

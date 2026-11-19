@@ -76,3 +76,15 @@
 .servicios-barra__buscar { flex: 1 1 190px; max-width: 300px; margin-left: auto; }
 .servicios-barra .servicios-filtros__cuenta { margin: 0; white-space: nowrap; }
 @media (max-width: 760px) { .servicios-barra__buscar { flex: 1 1 100%; margin-left: 0; order: -1; } }
+
+/* Portada de servicios ordenada: texto y fotos ocupan cada uno la mitad, sin adornos sueltos ni huecos en medio */
+.servicios-campana .adornos { display: none; }
+.servicios-campana .campana__rejilla { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); padding-block: clamp(28px, 3.5vw, 48px); }
+.servicios-campana__fotos { max-width: none; width: 100%; justify-self: stretch; gap: clamp(12px, 1.4vw, 20px); }
+.servicios-campana__fotos .campana__producto { border-radius: 16px; animation: none; box-shadow: 0 14px 34px rgba(0,0,0,0.35); }
+.servicios-campana__fotos .campana__producto > .foto { aspect-ratio: 4 / 3; height: auto; }
+.servicios-campana__nombre { padding: 12px 12px 0; font-size: 0.95rem; }
+.servicios-campana__fotos .campana__precio { padding: 4px 12px 14px; text-align: center; font-size: 1.2rem; }
+.servicios-campana__fotos .campana__etiqueta { top: 10px; right: 10px; }
+@media (max-width: 900px) { .servicios-campana .campana__rejilla { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .servicios-campana__fotos { grid-template-columns: repeat(3, minmax(0, 1fr)); } .servicios-campana__nombre { font-size: 0.78rem; } .servicios-campana__fotos .campana__precio { font-size: 0.95rem; } }

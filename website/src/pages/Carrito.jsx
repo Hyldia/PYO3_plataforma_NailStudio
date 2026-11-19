@@ -30,7 +30,7 @@ export default function Carrito() {
   }, []);
 
   useEffect(() => {
-    api.productos({ orden: 'vendidos', limite: 20 }).then((r) => setSugeridos(r.productos || r)).catch(() => setSugeridos([]));
+    api.productos({ orden: 'vendidos', limite: 20 }).then((respuesta) => setSugeridos(respuesta.productos || respuesta)).catch(() => setSugeridos([]));
   }, []);
 
   const { elegidos } = carrito;
@@ -66,7 +66,7 @@ export default function Carrito() {
 
             <div className="carrito-pagina__barra">
               <label className="carrito-pagina__todos">
-                <input type="checkbox" className="marca" checked={todos} onChange={(e) => carrito.seleccionarTodo(e.target.checked)} />
+                <input type="checkbox" className="marca" checked={todos} onChange={(evento) => carrito.seleccionarTodo(evento.target.checked)} />
                 Seleccionar todo ({items.length})
               </label>
               <div className="carrito-pagina__vistas" role="group" aria-label="Mostrar">
@@ -82,7 +82,7 @@ export default function Carrito() {
                 return (
                   <li key={i.clave} className="linea-carrito">
                     <input type="checkbox" className="marca" checked={i.seleccionado !== false}
-                           onChange={(e) => carrito.seleccionar(i.clave, e.target.checked)} aria-label={`Incluir ${i.nombre} en el pedido`} />
+                           onChange={(evento) => carrito.seleccionar(i.clave, evento.target.checked)} aria-label={`Incluir ${i.nombre} en el pedido`} />
                     <Link to={enlaceArticulo(i)} className="linea-carrito__foto" tabIndex={-1} aria-hidden="true">
                       <ProductoImagen producto={i} />
                       {casi && <span>Casi agotado</span>}
@@ -115,7 +115,7 @@ export default function Carrito() {
                         ) : (
                           <label className="linea-carrito__cant">
                             <span>Cant.</span>
-                            <select value={i.cantidad} onChange={(e) => carrito.fijar(i.clave, e.target.value)} aria-label={`Cantidad de ${i.nombre}`}>
+                            <select value={i.cantidad} onChange={(evento) => carrito.fijar(i.clave, evento.target.value)} aria-label={`Cantidad de ${i.nombre}`}>
                               <option value="0">Quitar</option>
                               {Array.from({ length: Math.max(10, i.cantidad) }, (_, n) => <option key={n + 1} value={n + 1}>{n + 1}</option>)}
                             </select>

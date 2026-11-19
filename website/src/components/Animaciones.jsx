@@ -35,8 +35,8 @@ export default function Animaciones() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return undefined;
 
     const visto = new IntersectionObserver((entradas) => {
-      entradas.forEach((e) => {
-        if (e.isIntersecting) { mostrar(e.target); visto.unobserve(e.target); }
+      entradas.forEach((entrada) => {
+        if (entrada.isIntersecting) { mostrar(entrada.target); visto.unobserve(entrada.target); }
       });
     }, { rootMargin: '0px 0px -40px 0px', threshold: 0.01 });
 

@@ -31,7 +31,7 @@ export default function PagosEquipo() {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Mostrar la tabla.
-  const cargar = () => api.admin.nomina(periodo).then((d) => { setDatos(d); setError(''); }).catch((e) => setError(e.message));
+  const cargar = () => api.admin.nomina(periodo).then((respuesta) => { setDatos(respuesta); setError(''); }).catch((e) => setError(e.message));
   useEffect(() => { cargar(); }, [periodo]);
 
   const p = datos?.periodo;
@@ -51,7 +51,7 @@ export default function PagosEquipo() {
   const marcarAtendidas = async (e = null) => {
     const n = e ? e.porMarcar : totales.porMarcar;
     if (!window.confirm(`¿Marcar como atendidas ${n} ${n === 1 ? 'cita' : 'citas'} de días que ya pasaron${e ? ` de ${e.nombre}` : ''}? Hazlo solo si de verdad se atendieron.`)) return;
-    try { await api.admin.marcarAtendidas({ desde: p.desde, hasta: p.hasta, especialistaId: e?.id }); cargar(); } catch (err) { setError(err.message); }
+    try { await api.admin.marcarAtendidas({ desde: p.desde, hasta: p.hasta, especialistaId: e?.id }); cargar(); } catch (error) { setError(error.message); }
   };
 
   // Nombre: pagar
@@ -60,7 +60,7 @@ export default function PagosEquipo() {
   // Salida: Nada.
   // Objetivo: Registrar.
   const pagar = async (e) => {
-    try { await api.admin.marcarPagado(e.id, { desde: p.desde, hasta: p.hasta }); cargar(); } catch (err) { setError(err.message); }
+    try { await api.admin.marcarPagado(e.id, { desde: p.desde, hasta: p.hasta }); cargar(); } catch (error) { setError(error.message); }
   };
   // Nombre: deshacer
   // Descripción: Deshace un pago.
@@ -69,14 +69,14 @@ export default function PagosEquipo() {
   // Objetivo: Corregir.
   const deshacer = async (e) => {
     if (!window.confirm(`¿Quitar la marca de pagado a ${e.nombre}?`)) return;
-    try { await api.admin.quitarPagado(e.id, { desde: p.desde, hasta: p.hasta }); cargar(); } catch (err) { setError(err.message); }
+    try { await api.admin.quitarPagado(e.id, { desde: p.desde, hasta: p.hasta }); cargar(); } catch (error) { setError(error.message); }
   };
   // Nombre: descargar
   // Descripción: Descarga la planilla.
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Guardarla en Excel.
-  const descargar = async () => { setBajando(true); try { await api.admin.descargarNomina({ desde: p.desde, hasta: p.hasta }); } catch (e) { setError(e.message); } setBajando(false); };
+  const descargar = async () => { setBajando(true); try { await api.admin.descargarNomina({ desde: p.desde, hasta: p.hasta }); } catch (error) { setError(error.message); } setBajando(false); };
   const esActual = p && datos.actual.desde === p.desde && datos.actual.hasta === p.hasta;
   const esAnterior = p && datos.anterior.desde === p.desde && datos.anterior.hasta === p.hasta;
   const faltan = p ? diasFaltan(p.diaPago) : 0;
@@ -98,8 +98,8 @@ export default function PagosEquipo() {
               <button type="button" className={`chip-filtro ${esActual ? 'chip-filtro--activo' : ''}`} onClick={() => setPeriodo({ desde: datos.actual.desde, hasta: datos.actual.hasta })}>Esta quincena</button>
               <button type="button" className={`chip-filtro ${esAnterior ? 'chip-filtro--activo' : ''}`} onClick={() => setPeriodo({ desde: datos.anterior.desde, hasta: datos.anterior.hasta })}>Quincena pasada</button>
             </div>
-            <label className="filtros-admin__fecha"><span>Desde</span><input type="date" value={p.desde} onChange={(e) => setPeriodo({ desde: e.target.value, hasta: p.hasta })} /></label>
-            <label className="filtros-admin__fecha"><span>Hasta</span><input type="date" value={p.hasta} onChange={(e) => setPeriodo({ desde: p.desde, hasta: e.target.value })} /></label>
+            <label className="filtros-admin__fecha"><span>Desde</span><input type="date" value={p.desde} onChange={(evento) => setPeriodo({ desde: evento.target.value, hasta: p.hasta })} /></label>
+            <label className="filtros-admin__fecha"><span>Hasta</span><input type="date" value={p.hasta} onChange={(evento) => setPeriodo({ desde: p.desde, hasta: evento.target.value })} /></label>
           </div>
 
           <div className="nomina-resumen">

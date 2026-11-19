@@ -7,6 +7,7 @@ import { useTitulo, usePorPagina } from '../lib/hooks.js';
 import { SALON, dinero, urlFoto } from '../config.js';
 import Foto from '../components/Foto.jsx';
 import Modal from '../components/Modal.jsx';
+import VentanaNoAsistio from '../components/VentanaNoAsistio.jsx';
 import AvatarClienta from '../components/AvatarClienta.jsx';
 import VerMas from '../components/VerMas.jsx';
 import { fechaLarga, isoLocal, DIAS_SEMANA } from './admin/piezasPanel.jsx';
@@ -14,7 +15,7 @@ import { fechaLarga, isoLocal, DIAS_SEMANA } from './admin/piezasPanel.jsx';
 const CITAS_POR_PAGINA = 4;
 const CLIENTAS_POR_PAGINA_BASE = 10;
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const ESTADO = { pendiente: 'Por confirmar', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada' };
+const ESTADO = { pendiente: 'Por confirmar', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada', no_asistio: 'No llegó' };
 const TIPO = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Incapacidad', permiso: 'Permiso' };
 // Nombre: sumar
 // Descripción: Suma días a una fecha.
@@ -56,10 +57,10 @@ function Entrar({ onEntrar }) {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Entrar al portal.
-  const entrar = async (e) => {
-    e.preventDefault();
+  const entrar = async (evento) => {
+    evento.preventDefault();
     setCargando(true); setError('');
-    try { const r = await api.equipo.entrar(d); sesionEquipo.guardar(r.token); onEntrar(); } catch (err) { setError(err.message); setCargando(false); }
+    try { const r = await api.equipo.entrar(d); sesionEquipo.guardar(r.token); onEntrar(); } catch (error) { setError(error.message); setCargando(false); }
   };
   return (
     <div className="portal-entrar">
@@ -77,11 +78,11 @@ function Entrar({ onEntrar }) {
       <form className="portal-entrar__form" onSubmit={entrar}>
         <h1>Acceso del equipo</h1>
         <p className="tenue">Entra con el usuario y la contraseña que te dio el salón.</p>
-        <div className="campo"><label htmlFor="pe-usu">Usuario</label><input id="pe-usu" value={d.usuario} onChange={(e) => setD({ ...d, usuario: e.target.value })} autoComplete="username" autoCapitalize="none" required /></div>
+        <div className="campo"><label htmlFor="pe-usu">Usuario</label><input id="pe-usu" value={d.usuario} onChange={(evento) => setD({ ...d, usuario: evento.target.value })} autoComplete="username" autoCapitalize="none" required /></div>
         <div className="campo">
           <label htmlFor="pe-cla">Contraseña</label>
           <div className="acceso__clave">
-            <input id="pe-cla" type={ver ? 'text' : 'password'} value={d.contrasena} onChange={(e) => setD({ ...d, contrasena: e.target.value })} autoComplete="current-password" required />
+            <input id="pe-cla" type={ver ? 'text' : 'password'} value={d.contrasena} onChange={(evento) => setD({ ...d, contrasena: evento.target.value })} autoComplete="current-password" required />
             <button type="button" onClick={() => setVer(!ver)} aria-pressed={ver}>{ver ? 'Ocultar' : 'Ver'}</button>
           </div>
         </div>
@@ -216,7 +217,7 @@ function PedirLibre({ hoy, dias, ausencias, solicitudes, onListo }) {
           <div className="tipos-ausencia" role="radiogroup" aria-label="Tipo">
             {Object.entries(TIPO).map(([k, t]) => <label key={k} className={`tipo-ausencia ${tipo === k ? 'activo' : ''}`}><input type="radio" name="pl-tipo" value={k} checked={tipo === k} onChange={() => setTipo(k)} />{t}</label>)}
           </div>
-          <label className="libres-cal__motivo"><span className="solo-lector">Motivo (opcional)</span><input value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={160} placeholder="¿Por qué? (opcional) Ej.: cita médica" /></label>
+          <label className="libres-cal__motivo"><span className="solo-lector">Motivo (opcional)</span><input value={motivo} onChange={(evento) => setMotivo(evento.target.value)} maxLength={160} placeholder="¿Por qué? (opcional) Ej.: cita médica" /></label>
           <div className="botones">
             <button type="button" className="boton" disabled={estado.enviando} onClick={enviar}>{estado.enviando ? 'Enviando…' : 'Enviar solicitud'}</button>
             <button type="button" className="enlace enlace--boton" onClick={() => setSel({ desde: null, hasta: null })}>Borrar selección</button>
@@ -247,8 +248,8 @@ function CancelarCita({ c, onCerrar, onListo }) {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Cancelar la cita.
-  const enviar = async (e) => {
-    e.preventDefault();
+  const enviar = async (evento) => {
+    evento.preventDefault();
     setEstado({ enviando: true, error: '', aviso: null });
     try {
       const r = await api.equipo.cancelarCita(c.id, { motivo: texto, tipo });
@@ -276,7 +277,7 @@ function CancelarCita({ c, onCerrar, onListo }) {
                 <label key={m} className={motivo === m ? 'activo' : ''}><input type="radio" name="motivo" value={m} checked={motivo === m} onChange={() => setMotivo(m)} />{m === 'otro' ? 'Otro motivo' : m}</label>
               ))}
             </div>
-            {motivo === 'otro' && <input className="portal-cancelar__otro" value={otro} onChange={(e) => setOtro(e.target.value)} maxLength={160} placeholder="Ej.: una cita médica" aria-label="Otro motivo" autoFocus />}
+            {motivo === 'otro' && <input className="portal-cancelar__otro" value={otro} onChange={(evento) => setOtro(evento.target.value)} maxLength={160} placeholder="Ej.: una cita médica" aria-label="Otro motivo" autoFocus />}
           </fieldset>
           <fieldset className="grupo">
             <legend className="grupo__titulo grupo__titulo--chico">¿Qué le decimos a la clienta?</legend>
@@ -301,8 +302,13 @@ function CancelarCita({ c, onCerrar, onListo }) {
 // Entrada: La cita y opciones.
 // Salida: La tarjeta.
 // Objetivo: Ver la agenda.
-function TarjetaCita({ c, hoy, onCancelar }) {
-  const diseno = [c.forma, c.largo, c.color, c.acabado, c.decoracion !== 'Ninguna' ? c.decoracion : null].filter(Boolean);
+function TarjetaCita({ c, hoy, onCancelar, onNoAsistio }) {
+  const minutosQueFaltan = (new Date(`${c.fecha}T${c.hora}:00-06:00`).getTime() - Date.now()) / 60000;
+  const activa = ['pendiente', 'confirmada'].includes(c.estado);
+  let extras = [];
+  try { extras = JSON.parse(c.extras || '[]'); } catch { extras = []; }
+  const diseno = [c.forma, c.largo, c.color, c.acabado, c.decoracion !== 'Ninguna' ? c.decoracion : null,
+    ...extras.map((x) => `${x.tipo} ${String(x.variante).toLowerCase()} en ${x.dedos.length === 5 ? 'todas' : x.dedos.map((i) => ['pulgar', 'índice', 'medio', 'anular', 'meñique'][i]).join(', ')} (${String(x.posicion).toLowerCase()})`)].filter(Boolean);
   return (
     <li className={`portal-cita portal-cita--${c.estado}`}>
       <div className="portal-cita__hora"><strong>{hora12(c.hora)}</strong><span>{c.duracion_min} min</span></div>
@@ -316,13 +322,16 @@ function TarjetaCita({ c, hoy, onCancelar }) {
         <p className="portal-cita__servicio">{c.servicio} · {dinero(c.total)}{c.anticipo ? ` (adelantó ${dinero(c.anticipo)})` : ''}</p>
         {diseno.length > 0 && <p className="portal-cita__diseno">{diseno.map((x) => <span key={x}>{x}</span>)}</p>}
         {c.notas && <p className="portal-cita__nota">“{c.notas}”</p>}
+        {c.estado === 'no_asistio' && <p className="portal-cita__nota">No llegó · {c.decision_inasistencia === 'cobrada' ? `se cobró ${dinero(c.monto_cobrado)}` : 'se reprogramó'}</p>}
         <span className={`portal-cita__estado portal-cita__estado--${c.estado}`}>{ESTADO[c.estado] || c.estado}</span>
       </div>
       <div className="portal-cita__acciones">
         {c.foto_ref && <a href={urlFoto(c.foto_ref)} target="_blank" rel="noreferrer" className="portal-cita__ref" title="Foto de referencia"><Foto archivo={c.foto_ref} alt="Foto de referencia que eligió la clienta" /></a>}
         <a className="portal-cita__tel" href={`tel:${c.cliente_telefono.replace(/\s/g, '')}`}>{c.cliente_telefono}</a>
         <a className="portal-cita__wa" href={wa(c.cliente_telefono, `Hola ${c.cliente_nombre.split(' ')[0]}, te escribe tu especialista de ${SALON.nombre}.`)} target="_blank" rel="noreferrer">WhatsApp</a>
-        {['pendiente', 'confirmada'].includes(c.estado) && c.fecha >= hoy && <button type="button" className="portal-cita__cancelar" onClick={() => onCancelar(c)}>Cancelar cita</button>}
+        {activa && minutosQueFaltan <= 0 && <button type="button" className="portal-cita__cancelar" onClick={() => onNoAsistio(c)}>No llegó</button>}
+        {activa && minutosQueFaltan >= 120 && <button type="button" className="portal-cita__cancelar" onClick={() => onCancelar(c)}>Cancelar cita</button>}
+        {activa && minutosQueFaltan > 0 && minutosQueFaltan < 120 && <span className="portal-cita__nota-corta">Faltan menos de 2 horas: ya no se puede cancelar</span>}
       </div>
     </li>
   );
@@ -337,6 +346,7 @@ function Panel({ d, onSalir, onRecargar }) {
   const [rejilla, CLIENTAS_POR_PAGINA] = usePorPagina(2, CLIENTAS_POR_PAGINA_BASE); // filas completas, sin huecos
   const [pestana, setPestana] = useState('citas');
   const [cancelando, setCancelando] = useState(null);
+  const [sinLlegar, setSinLlegar] = useState(null);
   const [dia, setDia] = useState(d.hoy);
   const [paginaCitas, setPaginaCitas] = useState(1);
   const [paginaClientas, setPaginaClientas] = useState(1);
@@ -375,6 +385,7 @@ function Panel({ d, onSalir, onRecargar }) {
   return (
     <div className="portal">
       {cancelando && <CancelarCita c={cancelando} onCerrar={() => setCancelando(null)} onListo={onRecargar} />}
+      {sinLlegar && <VentanaNoAsistio cita={sinLlegar} enviar={api.equipo.noAsistio} onCerrar={() => setSinLlegar(null)} onListo={onRecargar} />}
       <header className="portal-hero">
         <span className="portal-hero__foto">{p.foto ? <Foto archivo={p.foto} alt="" /> : <span aria-hidden="true">{p.nombre[0]}</span>}</span>
         <div className="portal-hero__texto">
@@ -438,7 +449,7 @@ function Panel({ d, onSalir, onRecargar }) {
           {ausencias[dia] ? <p className="portal-vacio">Este día lo tienes como <b>{TIPO[ausencias[dia].tipo].toLowerCase()}</b>. Nadie puede reservar contigo.</p>
             : !trabaja(dia) ? <p className="portal-vacio">Este día no trabajas por horario. ¡A descansar!</p>
             : !citasDia.length ? <p className="portal-vacio">No tienes citas este día todavía.</p>
-            : <ul className="portal-citas">{citasDiaPagina.map((c) => <TarjetaCita key={c.id} c={c} hoy={d.hoy} onCancelar={setCancelando} />)}</ul>}
+            : <ul className="portal-citas">{citasDiaPagina.map((c) => <TarjetaCita key={c.id} c={c} hoy={d.hoy} onCancelar={setCancelando} onNoAsistio={setSinLlegar} />)}</ul>}
           <VerMas pagina={paginaCitas} paginas={paginasCitas} onCambiar={(n) => { setPaginaCitas(n); document.getElementById('portal-citas-fecha')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
           {d.recientes.length > 0 && (
             <details className="portal-historial">
@@ -451,7 +462,7 @@ function Panel({ d, onSalir, onRecargar }) {
 
       {pestana === 'clientas' && (
         <section aria-label="Mis clientas">
-          <label id="portal-clientas-buscar" className="portal-buscar" style={{ scrollMarginTop: '64px' }}><span className="solo-lector">Buscar clienta</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setPaginaClientas(1); }} placeholder="Buscar por nombre o teléfono" /></label>
+          <label id="portal-clientas-buscar" className="portal-buscar" style={{ scrollMarginTop: '64px' }}><span className="solo-lector">Buscar clienta</span><input type="search" value={buscar} onChange={(evento) => { setBuscar(evento.target.value); setPaginaClientas(1); }} placeholder="Buscar por nombre o teléfono" /></label>
           {clientas.length === 0 ? <p className="portal-vacio">Aquí aparecen las clientas que ya atendiste.</p> : (
             <>
               <ul ref={rejilla} className="portal-clientas">
@@ -582,7 +593,7 @@ export default function PortalEquipo() {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Llenar el portal.
-  const cargar = () => api.equipo.yo().then((d) => { setDatos(d); setEstado('dentro'); }).catch(() => { sesionEquipo.cerrar(); setEstado('fuera'); });
+  const cargar = () => api.equipo.yo().then((respuesta) => { setDatos(respuesta); setEstado('dentro'); }).catch(() => { sesionEquipo.cerrar(); setEstado('fuera'); });
   useEffect(() => { if (estado === 'cargando') cargar(); }, []);
   // Nombre: salir
   // Descripción: Sale del portal.

@@ -1,14 +1,11 @@
-// Datos del salón: cámbialos por los reales. Todo el sitio los lee de aquí.
+// Datos del salón. Todo el sitio los lee de aquí (si cambian, se cambian solo en este archivo).
 export const SALON = {
   nombre: 'AH Nails',
   descripcion: 'Salón de uñas',
   lema: 'Uñas cuidadas, diseños hechos a tu medida.',
-  telefono: '+506 0000 0000',
-  whatsapp: '50600000000',          // solo números, con código de país
-  correo: 'hola@naile.cr',
-  direccion: 'Limón, Costa Rica, frente a Correos de Costa Rica',
-  // Google Maps → Compartir → Insertar un mapa → copia solo la URL del src
-  mapaEmbed: '',
+  telefono: '+506 8532 6297',
+  whatsapp: '50685326297',          // solo números, con código de país (Costa Rica = 506)
+  direccion: 'Limón, Limón, Costa Rica',
   horario: [
     { dias: 'Lunes a viernes', horas: '9:00 a. m. – 7:00 p. m.' },
     { dias: 'Sábado', horas: '9:00 a. m. – 5:00 p. m.' },
@@ -19,7 +16,7 @@ export const SALON = {
     facebook: 'https://facebook.com/',
     tiktok: ''
   },
-  sinpe: { numero: '0000 0000', nombre: '[Nombre del titular]' },
+  sinpe: { numero: '8532 6297', nombre: 'AH Nails' },
   // Asistente virtual del chat. Cambien la foto por una de su recepcionista (con su permiso) cuando la tengan.
   asistente: {
     nombre: 'Sofi',

@@ -59,7 +59,7 @@ export default function Favoritos() {
   // Precio y stock actuales de los productos guardados
   useEffect(() => {
     if (!ids) return;
-    api.productosPorIds(ids.split(',')).then((r) => setFrescos(Object.fromEntries(lista(r).map((p) => [p.id, p])))).catch(() => {});
+    api.productosPorIds(ids.split(',')).then((respuesta) => setFrescos(Object.fromEntries(lista(respuesta).map((p) => [p.id, p])))).catch(() => {});
   }, [ids]);
 
   // Sugerencias parecidas a lo guardado (o lo más vendido si no hay nada)
@@ -67,9 +67,9 @@ export default function Favoritos() {
     const guardados = new Set(fav.items.map((i) => i.clave));
     const base = fav.items.find((i) => i.tipo === 'producto');
     (base ? api.productosRelacionados(base.id, 12) : api.productos({ orden: 'vendidos', limite: 12 }))
-      .then((r) => setSugeridos(lista(r).filter((p) => !guardados.has(`producto-${p.id}`)).slice(0, 10))).catch(() => setSugeridos([]));
+      .then((respuesta) => setSugeridos(lista(respuesta).filter((p) => !guardados.has(`producto-${p.id}`)).slice(0, 10))).catch(() => setSugeridos([]));
     const baseD = fav.items.find((i) => i.tipo === 'diseno');
-    (baseD ? api.fotosRelacionadas(baseD.id, 10).then((r) => r.fotos || r) : api.fotos({ orden: 'populares', limite: 10 }).then((r) => r.fotos))
+    (baseD ? api.fotosRelacionadas(baseD.id, 10).then((respuesta) => respuesta.fotos || respuesta) : api.fotos({ orden: 'populares', limite: 10 }).then((respuesta) => respuesta.fotos))
       .then((l) => setDisenosSug(l.filter((f) => !guardados.has(`diseno-${f.id}`)).slice(0, 5))).catch(() => setDisenosSug([]));
   }, [fav.cantidad]);
 

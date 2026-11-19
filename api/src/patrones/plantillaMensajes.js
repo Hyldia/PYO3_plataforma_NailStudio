@@ -9,8 +9,8 @@
 
 export const SALON = {
   nombre: process.env.SALON_NOMBRE || 'AH Nails',
-  direccion: process.env.SALON_DIRECCION || '[Dirección del local], Cartago, Costa Rica',
-  telefono: process.env.SALON_TELEFONO || '+506 0000 0000'
+  direccion: process.env.SALON_DIRECCION || 'Limón, Limón, Costa Rica',
+  telefono: process.env.SALON_TELEFONO || '+506 8532 6297'
 };
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -155,7 +155,7 @@ class MensajeRecordatorio extends PlantillaMensaje {
   // Entrada: Nada.
   // Salida: El texto.
   // Objetivo: Ayudar a llegar.
-  opciones() { return `Te esperamos en ${SALON.direccion}. Si no puedes venir, avísanos por aquí para darle el espacio a otra clienta.`; }
+  opciones() { return `Te esperamos en ${SALON.direccion}. Si no puedes venir, avísanos por aquí al menos 2 horas antes para darle el espacio a otra clienta.`; }
   // Nombre: despedida
   // Descripción: Escribe la despedida.
   // Entrada: Nada.
@@ -217,8 +217,62 @@ class MensajePedidoListo extends PlantillaMensaje {
 }
 
 // ---------- Factory ----------
-const PLANTILLAS = { cancelacion: MensajeCancelacion, reprogramacion: MensajeReprogramacion, recordatorio: MensajeRecordatorio, confirmacion: MensajeConfirmacion, 'pedido-listo': MensajePedidoListo };
-export const TIPOS_MENSAJE = Object.fromEntries(Object.entries(PLANTILLAS).map(([k, C]) => [k, new C().titulo]));
+// Mensajes cuando la clienta no llegó a su cita: la dueña o la especialista decide reprogramar o cobrar
+class MensajeInasistenciaReprogramada extends PlantillaMensaje {
+  tipo = 'no-asistio-reprogramada';
+  titulo = 'No llegó: cita reprogramada';
+  // Nombre: motivo
+  // Descripción: Explica que se reprogramó la cita a la que no llegó.
+  // Entrada: Los datos de la cita.
+  // Salida: El texto.
+  // Objetivo: Avisarle a la clienta su nueva cita.
+  motivo() { return 'Te esperamos en tu cita y no pudiste llegar. No te preocupes: te la reprogramamos.'; }
+  // Nombre: opciones
+  // Descripción: Da la nueva fecha y hora.
+  // Entrada: Los datos con la nueva fecha y hora.
+  // Salida: El texto.
+  // Objetivo: Que sepa cuándo venir.
+  opciones(d) {
+    return [`Tu nueva cita: ${fechaLarga(d.nuevaFecha)} a las ${horaBonita(d.nuevaHora)}.`, d.anticipo > 0 ? 'Tu adelanto se mantiene para la nueva cita.' : '',
+      'Si ese horario no te sirve, respóndenos por aquí. Recuerda que las citas se pueden cancelar hasta 2 horas antes.'].filter(Boolean).join('\n');
+  }
+  // Nombre: despedida
+  // Descripción: Cierra el mensaje.
+  // Entrada: Nada.
+  // Salida: El texto.
+  // Objetivo: Despedirse con amabilidad.
+  despedida() { return `¡Te esperamos!\n${SALON.nombre} · ${SALON.telefono}`; }
+}
+
+class MensajeInasistenciaCobro extends PlantillaMensaje {
+  tipo = 'no-asistio-cobro';
+  titulo = 'No llegó: cobro de la cita';
+  // Nombre: motivo
+  // Descripción: Explica que no llegó y que se cobra la cita.
+  // Entrada: Los datos con el monto.
+  // Salida: El texto.
+  // Objetivo: Avisar el cobro con claridad y respeto.
+  motivo(d) { return `Te esperamos en tu cita y no llegaste. Según nuestra política de citas, se cobra ₡${Math.round(d.monto || 0).toLocaleString('es-CR')} por la cita no asistida.`; }
+  // Nombre: opciones
+  // Descripción: Explica cómo pagar.
+  // Entrada: Los datos de la cita.
+  // Salida: El texto.
+  // Objetivo: Que pueda pagar fácil.
+  opciones(d) {
+    const colones = (monto) => `₡${Math.round(monto).toLocaleString('es-CR')}`;
+    const pago = !(d.anticipo > 0) ? 'Puedes pagarlo por SINPE Móvil o en tu próxima visita.'
+      : d.anticipo >= d.monto ? `Se descuenta de tu adelanto de ${colones(d.anticipo)}${d.anticipo > d.monto ? `; los ${colones(d.anticipo - d.monto)} que sobran quedan a tu favor para tu próxima cita` : ''}.`
+        : `Se toma tu adelanto de ${colones(d.anticipo)} y los ${colones(d.monto - d.anticipo)} que faltan los puedes pagar por SINPE Móvil o en tu próxima visita.`;
+    return [pago,
+      'Si fue una emergencia, escríbenos por aquí y lo conversamos.'].join('\n');
+  }
+}
+
+const PLANTILLAS = { cancelacion: MensajeCancelacion, reprogramacion: MensajeReprogramacion, recordatorio: MensajeRecordatorio, confirmacion: MensajeConfirmacion, 'pedido-listo': MensajePedidoListo,
+  'no-asistio-reprogramada': MensajeInasistenciaReprogramada, 'no-asistio-cobro': MensajeInasistenciaCobro };
+// Los mensajes que la dueña puede escribir a mano desde la agenda (los de "no llegó" se mandan solos al decidir)
+const TIPOS_MANUALES = ['cancelacion', 'reprogramacion', 'recordatorio', 'confirmacion', 'pedido-listo'];
+export const TIPOS_MENSAJE = Object.fromEntries(TIPOS_MANUALES.map((tipo) => [tipo, new PLANTILLAS[tipo]().titulo]));
 // Nombre: crearMensaje
 // Descripción: Elige el molde de mensaje.
 // Entrada: El tipo de mensaje.

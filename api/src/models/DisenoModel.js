@@ -15,9 +15,9 @@ export const DisenoModel = {
   // Objetivo: Reservarlo después.
   crear(d) {
     const r = getDb().prepare(`
-      INSERT INTO disenos (forma, largo, color, acabado, decoracion, acento, notas, foto_ref_id, precio, unas)
-      VALUES (@forma, @largo, @color, @acabado, @decoracion, @acento, @notas, @fotoRefId, @precio, @unas)
-    `).run({ ...d, acento: d.acento ? 1 : 0, notas: d.notas || null, fotoRefId: d.fotoRefId || null, unas: d.unas ? JSON.stringify(d.unas) : null });
+      INSERT INTO disenos (forma, largo, color, acabado, decoracion, acento, notas, foto_ref_id, precio, unas, extras)
+      VALUES (@forma, @largo, @color, @acabado, @decoracion, @acento, @notas, @fotoRefId, @precio, @unas, @extras)
+    `).run({ ...d, acento: d.acento ? 1 : 0, notas: d.notas || null, fotoRefId: d.fotoRefId || null, unas: d.unas ? JSON.stringify(d.unas) : null, extras: d.extras?.length ? JSON.stringify(d.extras) : null });
     return this.buscarPorId(r.lastInsertRowid);
   }
 };

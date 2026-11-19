@@ -156,8 +156,8 @@ export default function Accesibilidad() {
     // Entrada: El evento del clic.
     // Salida: Nada.
     // Objetivo: Ayudar a personas con poca vista.
-    const leerElemento = (e) => {
-      const el = e.target.closest?.(SELECTOR);
+    const leerElemento = (evento) => {
+      const el = evento.target.closest?.(SELECTOR);
       if (!el || el === ultimo.current || el.closest('.a11y')) return;
       clearTimeout(t);
       t = setTimeout(() => {
@@ -165,7 +165,7 @@ export default function Accesibilidad() {
         ultimo.current = el;
         el.classList.add('a11y-leyendo');
         hablar(el.getAttribute('aria-label') || el.innerText || el.alt || '');
-      }, e.type === 'focusin' ? 50 : 450);
+      }, evento.type === 'focusin' ? 50 : 450);
     };
     document.addEventListener('mouseover', leerElemento);
     document.addEventListener('focusin', leerElemento);

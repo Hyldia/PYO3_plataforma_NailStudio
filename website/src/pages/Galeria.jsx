@@ -74,7 +74,7 @@ export default function Galeria() {
     setCargando(true);
     const filtros = Object.fromEntries(CAMPOS.map((c) => [c.clave, lista(c.clave)]));
     api.fotos({ ...filtros, q: params.get('q') || '', orden, limite: POR_PAGINA, pagina })
-      .then((r) => { setResultado({ total: r.total, fotos: r.fotos }); setError(''); })
+      .then((respuesta) => { setResultado({ total: respuesta.total, fotos: respuesta.fotos }); setError(''); })
       .catch((e) => setError(e.message))
       .finally(() => setCargando(false));
   }, [params, pagina, POR_PAGINA]);
@@ -128,7 +128,7 @@ export default function Galeria() {
         <label className="buscador buscador--chico barra-filtros__buscar">
           <span className="solo-lector">Buscar en la galería</span>
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar diseño…" />
+          <input type="search" value={texto} onChange={(evento) => setTexto(evento.target.value)} placeholder="Buscar diseño…" />
         </label>
         <p className="barra-filtros__cuenta" aria-live="polite">{cargando && pagina === 1 ? 'Buscando…' : `${resultado.total} diseños`}</p>
       </div>

@@ -99,14 +99,14 @@ export default function Acceso({ titulo = 'Entra a tu cuenta', bajada, onListo }
   async function enviar(e) {
     e.preventDefault();
     setEstado({ enviando: true, error: '' });
-    try { await listo(modo === 'crear' ? await api.auth.registro(d) : await api.auth.entrar(d)); } catch (err) { fallo(err); }
+    try { await listo(modo === 'crear' ? await api.auth.registro(d) : await api.auth.entrar(d)); } catch (error) { fallo(error); }
   }
   // Nombre: set
   // Descripción: Guarda lo que se escribe en un campo.
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
 
   return (
     <div className="acceso">

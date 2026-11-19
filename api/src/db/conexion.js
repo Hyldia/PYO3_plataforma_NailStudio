@@ -60,6 +60,10 @@ function migrar(db) {
    ['hora_fin', "TEXT NOT NULL DEFAULT '17:30'"], ['foto_autor', 'TEXT'], ['foto_autor_url', 'TEXT']].forEach(([c, t]) => agregar('especialistas', c, t));
   agregar('citas', 'pedido_id', 'INTEGER');
   agregar('disenos', 'unas', 'TEXT');
+  agregar('disenos', 'extras', 'TEXT');
+  // Citas a las que la clienta no llegó: qué se decidió (reprogramada o cobrada), cuánto se cobró y quién decidió
+  [['decision_inasistencia', 'TEXT'], ['monto_cobrado', 'REAL NOT NULL DEFAULT 0'], ['reprogramada_a', 'INTEGER'], ['decidido_por', 'TEXT']]
+    .forEach(([columna, tipo]) => agregar('citas', columna, tipo));
   [['cupon_codigo', 'TEXT'], ['descuento', 'REAL NOT NULL DEFAULT 0'], ['notas', 'TEXT'], ['referencia_pago', 'TEXT']].forEach(([c, t]) => agregar('pedidos', c, t));
   [['precio_anterior', 'REAL'], ['calificacion', 'REAL'], ['resenas', 'INTEGER NOT NULL DEFAULT 0'],
    ['vendidos', 'INTEGER NOT NULL DEFAULT 0']].forEach(([c, t]) => agregar('productos', c, t));
@@ -71,13 +75,18 @@ function migrar(db) {
   [['usuario_id', 'INTEGER'], ['direccion', 'TEXT'], ['costo_envio', 'REAL NOT NULL DEFAULT 0']].forEach(([c, t]) => agregar('pedidos', c, t));
   agregar('citas', 'usuario_id', 'INTEGER');
   // Equipo: estación, forma de pago y acceso al portal de cada especialista
-  [['estacion', 'TEXT'], ['esquema_pago', "TEXT NOT NULL DEFAULT 'comision'"], ['comision', 'REAL NOT NULL DEFAULT 40'],
+  [['estacion', 'TEXT'], ['esquema_pago', "TEXT NOT NULL DEFAULT 'comision'"], ['comision', 'REAL NOT NULL DEFAULT 65'],
    ['salario_base', 'REAL NOT NULL DEFAULT 0'], ['usuario', 'TEXT'], ['contrasena_hash', 'TEXT']].forEach(([c, t]) => agregar('especialistas', c, t));
   agregar('fotos', 'precio', 'REAL');
   // Citas de muestra: se marcan para que solo ellas usen fotos de muestra de clientas
   if (!db.prepare('PRAGMA table_info(citas)').all().some((c) => c.name === 'ejemplo')) {
     db.exec('ALTER TABLE citas ADD COLUMN ejemplo INTEGER NOT NULL DEFAULT 0');
     if (db.prepare("SELECT 1 FROM ajustes WHERE clave = 'datos_ejemplo'").get()) db.exec('UPDATE citas SET ejemplo = 1');
+  }
+  // Una sola vez: todas las especialistas ganan el 65 % de lo que atienden (el 35 % es del salón)
+  if (!db.prepare("SELECT 1 FROM ajustes WHERE clave = 'comision_65'").get()) {
+    db.exec("UPDATE especialistas SET esquema_pago = 'comision', comision = 65, salario_base = 0");
+    db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('comision_65', '1')").run();
   }
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS especialistas_usuario ON especialistas (usuario) WHERE usuario IS NOT NULL");
   db.exec("UPDATE especialistas SET estacion = 'Estación ' || id WHERE estacion IS NULL");

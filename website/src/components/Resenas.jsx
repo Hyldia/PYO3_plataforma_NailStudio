@@ -202,22 +202,22 @@ export default function Resenas({ productoId, tipo = 'producto', refId, nombrePr
           </fieldset>
           <div className="campo">
             <label htmlFor={`${nombreH}-n`}>Nombre</label>
-            <input id={`${nombreH}-n`} required maxLength={60} value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
+            <input id={`${nombreH}-n`} required maxLength={60} value={form.nombre} onChange={(evento) => setForm({ ...form, nombre: evento.target.value })} />
           </div>
           <div className="campo">
             <label htmlFor={`${nombreH}-c`}>Comentario</label>
-            <textarea id={`${nombreH}-c`} required rows={4} maxLength={800} value={form.comentario} onChange={(e) => setForm({ ...form, comentario: e.target.value })} />
+            <textarea id={`${nombreH}-c`} required rows={4} maxLength={800} value={form.comentario} onChange={(evento) => setForm({ ...form, comentario: evento.target.value })} />
           </div>
           {esProducto && <>
           <p className="tenue">Opcional: si lo compraste aquí, escribe tu número de pedido y teléfono para que salga como <strong>compra verificada</strong>.</p>
           <div className="resenas__form-fila">
             <div className="campo">
               <label htmlFor="r-pedido">N.º de pedido</label>
-              <input id="r-pedido" inputMode="numeric" value={form.pedido} onChange={(e) => setForm({ ...form, pedido: e.target.value })} />
+              <input id="r-pedido" inputMode="numeric" value={form.pedido} onChange={(evento) => setForm({ ...form, pedido: evento.target.value })} />
             </div>
             <div className="campo">
               <label htmlFor="r-tel">Teléfono del pedido</label>
-              <input id="r-tel" type="tel" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
+              <input id="r-tel" type="tel" value={form.telefono} onChange={(evento) => setForm({ ...form, telefono: evento.target.value })} />
             </div>
           </div>
           </>}

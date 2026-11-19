@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { seed } from './db/seed.js';
+import { marcarCitasDeMuestraPasadas } from './db/citasDeMuestraAlDia.js';
 import { UPLOADS_DIR } from './db/conexion.js';
 import api from './routes/index.js';
 
@@ -12,6 +13,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 if (seed()) console.log('Se cargaron datos o fotos de muestra.');
+// Las citas de muestra que ya pasaron se marcan solas cada 15 minutos (las reales las marca la dueña o la especialista)
+marcarCitasDeMuestraPasadas();
+setInterval(marcarCitasDeMuestraPasadas, 15 * 60 * 1000).unref();
 
 app.use(cors());
 app.use(express.json());

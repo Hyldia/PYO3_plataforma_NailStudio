@@ -19,7 +19,7 @@ export function usarFotoAsistente() {
   const [foto, setFoto] = useState(fotoSubida);
   useEffect(() => {
     oyentes.add(setFoto);
-    if (fotoSubida === undefined) api.asistente().then((r) => { fotoSubida = r.foto ? urlFoto(r.foto) : null; oyentes.forEach((f) => f(fotoSubida)); }).catch(() => { fotoSubida = null; });
+    if (fotoSubida === undefined) api.asistente().then((respuesta) => { fotoSubida = respuesta.foto ? urlFoto(respuesta.foto) : null; oyentes.forEach((f) => f(fotoSubida)); }).catch(() => { fotoSubida = null; });
     return () => oyentes.delete(setFoto);
   }, []);
   return foto;
@@ -163,9 +163,9 @@ export default function ChatAsistente() {
   const subida = usarFotoAsistente();
 
   useEffect(() => {
-    api.servicios().then((r) => { ctx.current.servicios = r.servicios || r; }).catch(() => {});
-    api.cupones().then((r) => { ctx.current.cupones = r; }).catch(() => {});
-    api.especialistas().then((r) => { ctx.current.especialistas = r; }).catch(() => {});
+    api.servicios().then((respuesta) => { ctx.current.servicios = respuesta.servicios || respuesta; }).catch(() => {});
+    api.cupones().then((respuesta) => { ctx.current.cupones = respuesta; }).catch(() => {});
+    api.especialistas().then((respuesta) => { ctx.current.especialistas = respuesta; }).catch(() => {});
     // Saludo flotante una vez por visita
     const t = setTimeout(() => setSaludo(true), 4000);
     const t2 = setTimeout(() => setSaludo(false), 14000);
@@ -226,9 +226,9 @@ export default function ChatAsistente() {
             )}
           </ol>
           {SALON.asistente?.credito && !subida && <p className="chat__credito">Foto: <a href={SALON.asistente.credito.url} target="_blank" rel="noreferrer">{SALON.asistente.credito.autor}</a> / Unsplash</p>}
-          <form className="chat__form" onSubmit={(e) => { e.preventDefault(); enviar(texto); }}>
+          <form className="chat__form" onSubmit={(evento) => { evento.preventDefault(); enviar(texto); }}>
             <label htmlFor="chat-texto" className="solo-lector">Escribe tu pregunta</label>
-            <input id="chat-texto" ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Escribe tu pregunta…" autoComplete="off" maxLength={300} />
+            <input id="chat-texto" ref={entrada} value={texto} onChange={(evento) => setTexto(evento.target.value)} placeholder="Escribe tu pregunta…" autoComplete="off" maxLength={300} />
             <button type="submit" aria-label="Enviar" disabled={!texto.trim()}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5 21 12 3 3.5v6.6L15 12 3 13.9z" /></svg>
             </button>

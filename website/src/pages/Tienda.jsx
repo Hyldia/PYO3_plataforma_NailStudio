@@ -124,7 +124,7 @@ export default function Tienda() {
         <label className="buscador buscador--chico barra-filtros__buscar">
           <span className="solo-lector">Buscar productos</span>
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar producto…" />
+          <input type="search" value={texto} onChange={(evento) => setTexto(evento.target.value)} placeholder="Buscar producto…" />
         </label>
         <p className="barra-filtros__cuenta" aria-live="polite">{cargando ? 'Buscando…' : `${productos.length} ${productos.length === 1 ? 'producto' : 'productos'}`}</p>
       </div>

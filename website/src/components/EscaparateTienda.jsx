@@ -182,7 +182,7 @@ export default function EscaparateTienda({ categorias, children }) {
     // Primero la foto que la dueña eligió en el panel; si no hay, la del producto más vendido
     Promise.all([
       api.portadas().catch(() => ({})),
-      ...categorias.map((c) => api.productos({ categoria: c.valor, orden: 'vendidos', limite: 6 }).then((r) => [c.valor, conFotoPrimero(lista(r))[0]]).catch(() => [c.valor, null]))
+      ...categorias.map((c) => api.productos({ categoria: c.valor, orden: 'vendidos', limite: 6 }).then((respuesta) => [c.valor, conFotoPrimero(lista(respuesta))[0]]).catch(() => [c.valor, null]))
     ]).then(([portadas, ...pares]) => setMuestras(Object.fromEntries(pares.map(([k, p]) => [k, portadas[k] ? { ...(p || {}), nombre: k, imagen: portadas[k] } : p]))));
   }, [categorias]);
 

@@ -8,6 +8,7 @@ import { SolicitudLibreModel } from '../models/SolicitudLibreModel.js';
 import { quincenaDe, quincenaAnterior, hoyIso } from '../lib/fechas.js';
 import { CitaModel } from '../models/CitaModel.js';
 import { cancelarCita, revisarCancelacion } from '../servicios/citaServicio.js';
+import { registrarNoAsistio } from '../servicios/inasistenciaServicio.js';
 
 const fallos = new Map();
 const ESPERA = 5 * 60 * 1000;
@@ -49,7 +50,7 @@ export const portalEquipoController = {
     if (!cita || cita.especialista_id !== req.especialista.id) return res.status(404).json({ error: 'No encontramos esa cita en tu agenda.' });
     const motivo = String(req.body.motivo || '').trim();
     const tipo = req.body.tipo === 'reprogramacion' ? 'reprogramacion' : 'cancelacion';
-    try { revisarCancelacion(cita, { motivo, tipo, soloFuturas: true, motivoObligatorio: true }); } catch (e) { return res.status(e.codigo || 400).json({ error: e.message }); }
+    try { revisarCancelacion(cita, { motivo, tipo, soloFuturas: true, motivoObligatorio: true, conAnticipacion: true }); } catch (e) { return res.status(e.codigo || 400).json({ error: e.message }); }
     res.json(cancelarCita(cita, { motivo: motivo.slice(0, 160), tipo, nota: String(req.body.nota || '').slice(0, 300), quien: req.especialista.nombre }));
   },
   // Nombre: pedirLibre
@@ -57,6 +58,17 @@ export const portalEquipoController = {
   // Entrada: Las fechas y el motivo.
   // Salida: La solicitud creada.
   // Objetivo: Pedir libres a la dueña.
+  // Nombre: noAsistio
+  // Descripción: La especialista marca que su clienta no llegó y decide si se reprograma o se cobra.
+  // Entrada: El número de cita y { decision, fecha, hora, monto }.
+  // Salida: La cita, la nueva (si se reprogramó) y el mensaje de WhatsApp.
+  // Objetivo: Que la especialista también pueda decidir.
+  noAsistio(req, res) {
+    const cita = CitaModel.buscarPorId(req.params.id);
+    if (!cita || cita.especialista_id !== req.especialista.id) return res.status(404).json({ error: 'No encontramos esa cita en tu agenda.' });
+    try { res.json(registrarNoAsistio(cita, { ...req.body, quien: req.especialista.nombre })); } catch (e) { res.status(e.codigo || 400).json({ error: e.message }); }
+  },
+
   pedirLibre(req, res) { res.status(201).json(SolicitudLibreModel.pedirLibre(req.especialista.id, req.body)); },
   // Nombre: quitarSolicitud
   // Descripción: Retira una solicitud de día libre.

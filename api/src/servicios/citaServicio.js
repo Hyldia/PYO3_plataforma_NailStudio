@@ -1,7 +1,7 @@
 // SERVICIO DE CITAS: las reglas para cancelar una cita y el aviso para la clienta.
 // Lo usan el panel de la dueña y el portal del equipo, así ningún controlador depende de otro
 // (GRASP: Controlador delgado, Bajo acoplamiento y Fabricación pura).
-import { CitaModel } from '../models/CitaModel.js';
+import { CitaModel, minutosParaLaCita, HORAS_MINIMAS_PARA_CANCELAR } from '../models/CitaModel.js';
 import { aplicarAccion } from '../patrones/estadoCita.js';
 import { prepararMensaje } from '../patrones/plantillaMensajes.js';
 import { eventos } from '../patrones/observadorEventos.js';
@@ -29,12 +29,16 @@ export function mensajeDeCita(cita, tipo, extra = {}, soloVista = false) {
 // Entrada: La cita, el motivo, el tipo de aviso y si la fecha debe ser futura.
 // Salida: Nada, o lanza un error con el problema.
 // Objetivo: Tener las reglas de cancelación en un solo lugar.
-export function revisarCancelacion(cita, { motivo, tipo = 'cancelacion', soloFuturas = false, motivoObligatorio = false } = {}) {
+export function revisarCancelacion(cita, { motivo, tipo = 'cancelacion', soloFuturas = false, motivoObligatorio = false, conAnticipacion = false } = {}) {
   if (!cita) throw errorCita('No encontramos esa cita.', 404);
   if (!['cancelacion', 'reprogramacion'].includes(tipo)) throw errorCita('Tipo de aviso no válido.');
   if (!['pendiente', 'confirmada'].includes(cita.estado)) throw errorCita('Esa cita ya no se puede cancelar.');
   if (soloFuturas && cita.fecha < new Date().toLocaleDateString('en-CA', { timeZone: 'America/Costa_Rica' })) throw errorCita('Esa cita ya pasó.');
   if (motivoObligatorio && String(motivo || '').trim().length < 3) throw errorCita('Escribe el motivo para avisarle a la clienta.');
+  // Regla del salón: las clientas y las especialistas solo cancelan hasta 2 horas antes (la dueña puede siempre, por emergencias)
+  if (conAnticipacion && minutosParaLaCita(cita.fecha, cita.hora) < HORAS_MINIMAS_PARA_CANCELAR * 60) {
+    throw errorCita(`Las citas solo se pueden cancelar hasta ${HORAS_MINIMAS_PARA_CANCELAR} horas antes. Escríbenos por WhatsApp.`);
+  }
 }
 
 // Nombre: cancelarCita

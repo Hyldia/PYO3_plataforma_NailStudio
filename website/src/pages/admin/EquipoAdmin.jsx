@@ -74,7 +74,7 @@ export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
   const dias = d.dias.split(',').filter(Boolean);
   // Nombre: alternarDia
   // Descripción: Marca o desmarca un día de trabajo.
@@ -135,7 +135,7 @@ export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
             <div className="campo"><label htmlFor="e-ini">Entra a las</label><select id="e-ini" value={d.hora_inicio} onChange={set('hora_inicio')}>{HORAS.map((h) => <option key={h}>{h}</option>)}</select></div>
             <div className="campo"><label htmlFor="e-fin">Última cita a las</label><select id="e-fin" value={d.hora_fin} onChange={set('hora_fin')}>{HORAS.map((h) => <option key={h}>{h}</option>)}</select></div>
           </div>
-          <label className="casilla"><input type="checkbox" checked={Boolean(Number(d.activa))} onChange={(e) => setD({ ...d, activa: e.target.checked ? 1 : 0 })} /><span>Activa (aparece al reservar)</span></label>
+          <label className="casilla"><input type="checkbox" checked={Boolean(Number(d.activa))} onChange={(evento) => setD({ ...d, activa: evento.target.checked ? 1 : 0 })} /><span>Activa (aparece al reservar)</span></label>
           {estado.error && <p role="alert" className="error">{estado.error}</p>}
           {estado.ok && <p role="status" className="aviso-ok">{estado.ok}</p>}
           <div className="botones">

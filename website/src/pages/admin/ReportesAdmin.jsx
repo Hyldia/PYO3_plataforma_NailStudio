@@ -53,7 +53,7 @@ export default function ReportesAdmin() {
   // Entrada: El campo.
   // Salida: Una función para el campo.
   // Objetivo: Elegir fechas.
-  const cambiarFecha = (k) => (e) => { setRapido(''); setRango({ ...rango, [k]: e.target.value }); };
+  const cambiarFecha = (k) => (evento) => { setRapido(''); setRango({ ...rango, [k]: evento.target.value }); };
 
   // Si son más de 2 meses, la gráfica de ventas se agrupa por mes
   const ventas = useMemo(() => {

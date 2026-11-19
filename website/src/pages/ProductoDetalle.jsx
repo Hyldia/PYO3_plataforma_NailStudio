@@ -155,7 +155,7 @@ export default function ProductoDetalle() {
                       <p className="anadido__ok">✓ Añadido{variante ? `: ${variante}` : ''}</p>
                       <label className="linea-carrito__cant">
                         <span>Cant.</span>
-                        <select value={enCarrito.cantidad} onChange={(e) => carrito.fijar(clave, e.target.value)} aria-label="Cantidad en el carrito">
+                        <select value={enCarrito.cantidad} onChange={(evento) => carrito.fijar(clave, evento.target.value)} aria-label="Cantidad en el carrito">
                           <option value="0">Quitar</option>
                           {Array.from({ length: Math.max(Math.min(10, p.stock), enCarrito.cantidad) }, (_, n) => <option key={n + 1} value={n + 1}>{n + 1}</option>)}
                         </select>
@@ -166,7 +166,7 @@ export default function ProductoDetalle() {
                 ) : (
                   <div className="campo campo--linea">
                     <label htmlFor="cantidad-p">Cantidad</label>
-                    <select id="cantidad-p" value={cantidad} onChange={(e) => setCantidad(Number(e.target.value))}>
+                    <select id="cantidad-p" value={cantidad} onChange={(evento) => setCantidad(Number(evento.target.value))}>
                       {Array.from({ length: Math.min(10, Math.max(1, p.stock)) }, (_, n) => <option key={n + 1}>{n + 1}</option>)}
                     </select>
                   </div>

@@ -1,5 +1,7 @@
 // CONTROLADOR: registro, inicio de sesión (formulario, Google o Facebook) y "Mi cuenta" con direcciones.
 import { UsuarioModel, PROVINCIAS, MAX_DIRECCIONES } from '../models/UsuarioModel.js';
+import { CitaModel } from '../models/CitaModel.js';
+import { cancelarCita, revisarCancelacion } from '../servicios/citaServicio.js';
 import { crearEstrategia, configuracionPublica, Contrasenas } from '../patrones/estrategiaAutenticacion.js';
 
 // Nombre: sesion
@@ -51,7 +53,7 @@ export const cuentaController = {
         u = UsuarioModel.desdeProveedor(datos);
       }
       res.json(sesion(u));
-    } catch (e) { next(e); }
+    } catch (error) { next(error); }
   },
 
   // Nombre: salir
@@ -83,6 +85,19 @@ export const cuentaController = {
   // Entrada: Su sesión.
   // Salida: Su historial.
   // Objetivo: Que vea sus compras y citas.
+  // Nombre: cancelarMiCita
+  // Descripción: La clienta cancela su propia cita (solo hasta 2 horas antes).
+  // Entrada: El número de cita y el motivo (opcional).
+  // Salida: La cita cancelada.
+  // Objetivo: Que la clienta libere su espacio a tiempo.
+  cancelarMiCita(req, res) {
+    const cita = CitaModel.buscarPorId(req.params.id);
+    if (!cita || cita.usuario_id !== req.usuario.id) return res.status(404).json({ error: 'No encontramos esa cita en tu cuenta.' });
+    const motivo = String(req.body?.motivo || 'Cancelada por la clienta').trim().slice(0, 160);
+    try { revisarCancelacion(cita, { motivo, soloFuturas: true, conAnticipacion: true }); } catch (e) { return res.status(e.codigo || 400).json({ error: e.message }); }
+    res.json(cancelarCita(cita, { motivo, quien: 'la clienta' }).cita);
+  },
+
   historial: (req, res) => res.json({ pedidos: UsuarioModel.pedidos(req.usuario.id), citas: UsuarioModel.citas(req.usuario.id) }),
 
   // Nombre: crearDireccion

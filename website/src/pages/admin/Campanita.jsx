@@ -39,13 +39,13 @@ export default function Campanita({ seccion, onIr }) {
     // Entrada: El clic.
     // Salida: Nada.
     // Objetivo: No estorbar.
-    const fuera = (e) => { if (caja.current && !caja.current.contains(e.target)) setAbierta(false); };
+    const fuera = (evento) => { if (caja.current && !caja.current.contains(evento.target)) setAbierta(false); };
     // Nombre: esc
     // Descripción: Cierra con Escape.
     // Entrada: La tecla.
     // Salida: Nada.
     // Objetivo: Usar con teclado.
-    const esc = (e) => { if (e.key === 'Escape') setAbierta(false); };
+    const esc = (evento) => { if (evento.key === 'Escape') setAbierta(false); };
     document.addEventListener('pointerdown', fuera); document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('pointerdown', fuera); document.removeEventListener('keydown', esc); };
   }, []);
@@ -65,7 +65,7 @@ export default function Campanita({ seccion, onIr }) {
       const r = await api.admin.resolverSolicitud(x.id, { aprobar, respuesta });
       setMensaje(aprobar ? `Aprobado: ${x.nombre} no trabaja esos días.${r.citasAfectadas ? ` Tenía ${r.citasAfectadas} ${r.citasAfectadas === 1 ? 'cita' : 'citas'}; avísales desde Agenda.` : ''}` : `Le respondiste a ${x.nombre} que no.`);
       cargar();
-    } catch (e) { setMensaje(e.message); }
+    } catch (error) { setMensaje(error.message); }
   };
   // Nombre: ir
   // Descripción: Va a una sección del panel.

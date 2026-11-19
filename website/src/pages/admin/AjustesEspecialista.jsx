@@ -13,14 +13,14 @@ const TIPOS = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Inc
 // Salida: El formulario.
 // Objetivo: Configurar su pago.
 function Pago({ persona, onGuardado }) {
-  const [d, setD] = useState({ estacion: persona.estacion || '', esquema_pago: persona.esquema_pago || 'comision', comision: persona.comision ?? 40, salario_base: persona.salario_base || '' });
+  const [d, setD] = useState({ estacion: persona.estacion || '', esquema_pago: persona.esquema_pago || 'comision', comision: persona.comision ?? 65, salario_base: persona.salario_base || '' });
   const [estado, setEstado] = useState({ texto: '', error: false });
   // Nombre: set
   // Descripción: Guarda lo que se escribe en un campo.
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
   const ejemplo = 100000;
   const ganaria = Math.round(ejemplo * (Number(d.comision) || 0) / 100) + (d.esquema_pago === 'base_comision' ? Number(d.salario_base) || 0 : 0);
   // Nombre: guardar
@@ -28,8 +28,8 @@ function Pago({ persona, onGuardado }) {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Calcular su pago.
-  const guardar = async (e) => {
-    e.preventDefault();
+  const guardar = async (evento) => {
+    evento.preventDefault();
     try { await api.admin.pagoEspecialista(persona.id, d); setEstado({ texto: 'Guardado.' }); onGuardado(); } catch (err) { setEstado({ texto: err.message, error: true }); }
   };
   return (
@@ -68,22 +68,22 @@ function DiasLibres({ persona, onGuardado }) {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Mostrar la lista.
-  const cargar = () => api.admin.ausencias(persona.id).then((r) => setLista(r.ausencias.filter((a) => a.fecha >= hoy))).catch(() => {});
+  const cargar = () => api.admin.ausencias(persona.id).then((respuesta) => setLista(respuesta.ausencias.filter((a) => a.fecha >= hoy))).catch(() => {});
   useEffect(() => { cargar(); }, []);
   // Nombre: set
   // Descripción: Guarda lo que se escribe en un campo.
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setD({ ...d, [k]: e.target.value, ...(k === 'desde' && e.target.value > d.hasta ? { hasta: e.target.value } : {}) });
+  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value, ...(k === 'desde' && evento.target.value > d.hasta ? { hasta: evento.target.value } : {}) });
 
   // Nombre: agregar
   // Descripción: Agrega días libres.
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Registrar libres.
-  const agregar = async (e) => {
-    e.preventDefault();
+  const agregar = async (evento) => {
+    evento.preventDefault();
     try {
       const r = await api.admin.agregarAusencias(persona.id, d);
       setEstado({ texto: r.citasAfectadas ? `Guardado. Ojo: ${persona.nombre} tiene ${r.citasAfectadas} ${r.citasAfectadas === 1 ? 'cita' : 'citas'} en esos días. Avísales a las clientas desde Agenda → «Emergencia».` : `Guardado. Esos días ya no se pueden reservar con ${persona.nombre}.`, error: false, alerta: r.citasAfectadas > 0 });
@@ -146,8 +146,8 @@ function Acceso({ persona, onGuardado }) {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Darle entrada.
-  const guardar = async (e) => {
-    e.preventDefault();
+  const guardar = async (evento) => {
+    evento.preventDefault();
     try {
       const r = await api.admin.accesoEspecialista(persona.id, { usuario, contrasena: clave });
       setEstado({ texto: clave ? `Listo. ${persona.nombre} entra en «Acceso del equipo» con el usuario «${r.usuario}» y la contraseña que escribiste. Dásela en persona.` : 'Usuario actualizado.' });
@@ -178,11 +178,11 @@ function Acceso({ persona, onGuardado }) {
     <form className="ajustes-esp__form" onSubmit={guardar}>
       <p className="tenue">Con esto {persona.nombre} entra en <b>Acceso del equipo</b> (enlace al pie de la página o en <b>/equipo</b>) y ve sus citas, sus clientas, sus días libres y cuánto lleva ganado. No ve nada de las demás.</p>
       <p className={`acceso-esp__estado ${tiene ? 'acceso-esp__estado--si' : ''}`}>{tiene ? `Tiene acceso con el usuario «${persona.usuario}».` : 'Todavía no tiene acceso.'}</p>
-      <div className="campo"><label htmlFor="ac-usu">Usuario</label><input id="ac-usu" value={usuario} onChange={(e) => setUsuario(e.target.value.toLowerCase().replace(/\s/g, ''))} autoComplete="off" required /></div>
+      <div className="campo"><label htmlFor="ac-usu">Usuario</label><input id="ac-usu" value={usuario} onChange={(evento) => setUsuario(evento.target.value.toLowerCase().replace(/\s/g, ''))} autoComplete="off" required /></div>
       <div className="campo">
         <label htmlFor="ac-cla">{tiene ? 'Contraseña nueva (vacío = dejar la que tiene)' : 'Contraseña'}</label>
         <div className="acceso__clave">
-          <input id="ac-cla" type={ver ? 'text' : 'password'} value={clave} onChange={(e) => setClave(e.target.value)} autoComplete="new-password" required={!tiene} minLength={8} />
+          <input id="ac-cla" type={ver ? 'text' : 'password'} value={clave} onChange={(evento) => setClave(evento.target.value)} autoComplete="new-password" required={!tiene} minLength={8} />
           <button type="button" onClick={() => setVer(!ver)} aria-pressed={ver}>{ver ? 'Ocultar' : 'Ver'}</button>
         </div>
         <button type="button" className="enlace enlace--boton enlace--chico" onClick={sugerir}>Inventar una contraseña segura</button>

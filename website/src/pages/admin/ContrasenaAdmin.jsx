@@ -33,7 +33,7 @@ export default function ContrasenaAdmin({ onCambiada }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
   const fuerza = nivel(d.nueva);
 
   // Nombre: guardar

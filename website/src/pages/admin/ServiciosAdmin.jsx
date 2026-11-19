@@ -33,13 +33,13 @@ function Editor({ servicio, categorias, onCerrar, onGuardado }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
   // Nombre: marcar
   // Descripción: Marca o desmarca una casilla.
   // Entrada: El nombre del campo.
   // Salida: Una función para la casilla.
   // Objetivo: Llenar el formulario.
-  const marcar = (k) => (e) => setD({ ...d, [k]: e.target.checked ? 1 : 0 });
+  const marcar = (k) => (evento) => setD({ ...d, [k]: evento.target.checked ? 1 : 0 });
   const oferta = Number(d.precio_oferta) > 0 && Number(d.precio_oferta) < Number(d.precio);
   const pct = oferta ? Math.round((1 - d.precio_oferta / d.precio) * 100) : 0;
   const incluye = d.incluye.split('\n').map((x) => x.trim()).filter(Boolean);
@@ -188,8 +188,8 @@ export default function ServiciosAdmin() {
         <li className="cifras-admin--verde"><strong className="cifras-admin__texto">{cifras.top?.nombre || '—'}</strong>el más pedido</li>
       </ul>
       <div className="filtros-admin">
-        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar servicio</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setPagina(1); }} placeholder="Buscar servicio" /></label>
-        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{datos.categorias.map((c) => <option key={c}>{c}</option>)}</select></label>
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar servicio</span><input type="search" value={buscar} onChange={(evento) => { setBuscar(evento.target.value); setPagina(1); }} placeholder="Buscar servicio" /></label>
+        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(evento) => { setCat(evento.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{datos.categorias.map((c) => <option key={c}>{c}</option>)}</select></label>
         <div className="barra-chips barra-chips--compacta" role="group" aria-label="Mostrar">
           {[['', 'Todos'], ['visibles', 'Visibles'], ['oferta', 'Con oferta'], ['ocultos', 'Ocultos'], ['sinfoto', 'Sin foto'], ['hombres', 'Para hombres']].map(([k, t]) => <button key={k} type="button" className={`chip-filtro ${ver === k ? 'chip-filtro--activo' : ''}`} onClick={() => { setVer(k); setPagina(1); }}>{t}</button>)}
         </div>

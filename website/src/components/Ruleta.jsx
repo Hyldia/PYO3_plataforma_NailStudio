@@ -238,7 +238,7 @@ export default function Ruleta() {
     if (girando) return;
     setError(''); setCopiado(false);
     let r;
-    try { r = await api.girarRuleta(); } catch (e) { setError(e.message); return; }
+    try { r = await api.girarRuleta(); } catch (error) { setError(error.message); return; }
     const paso = 360 / premios.length;
     const ajuste = (Math.random() - 0.5) * paso * 0.6;
     // Vueltas completas y luego el segmento ganador queda debajo del indicador de arriba

@@ -16,7 +16,7 @@ export default function Modal({ titulo, onCerrar, children, ancho = false, ocult
   }, []);
   return (
     <dialog ref={ref} className={`modal ${ancho ? 'modal--ancho' : ''}`} aria-label={titulo} onClose={onCerrar}
-            onClick={(e) => { if (e.target === ref.current) onCerrar(); }}>
+            onClick={(evento) => { if (evento.target === ref.current) onCerrar(); }}>
       <div className="modal__cuerpo">
         <div className="modal__cabeza">
           <h2 className={ocultarTitulo ? 'solo-lector' : ''}>{titulo}</h2>

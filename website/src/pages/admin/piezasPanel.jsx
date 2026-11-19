@@ -51,7 +51,7 @@ export function TarjetaMensaje({ mensaje, nombre, onEnviado }) {
         {enviado && <span className="msj__ok">✓ Abierto en WhatsApp</span>}
       </div>
       <label className="solo-lector" htmlFor={`msj-${mensaje.telefono}-${mensaje.tipo}`}>Texto del mensaje para {nombre}</label>
-      <textarea id={`msj-${mensaje.telefono}-${mensaje.tipo}`} className="msj__texto" rows={Math.min(12, texto.split('\n').length + 2)} value={texto} onChange={(e) => setTexto(e.target.value)} />
+      <textarea id={`msj-${mensaje.telefono}-${mensaje.tipo}`} className="msj__texto" rows={Math.min(12, texto.split('\n').length + 2)} value={texto} onChange={(evento) => setTexto(evento.target.value)} />
       <a className="boton-whatsapp" href={enlace} target="_blank" rel="noreferrer" onClick={() => { setEnviado(true); onEnviado?.(); }}>
         <Whats /> {enviado ? 'Abrir de nuevo' : 'Enviar por WhatsApp'}
       </a>
@@ -75,9 +75,9 @@ export function ZonaFotos({ archivos, onCambio, multiple = true, id = 'zona-foto
   const tomar = (lista) => onCambio([...lista].filter((f) => /^image\/(jpeg|png|webp)$/.test(f.type)).slice(0, multiple ? 20 : 1));
   return (
     <div className={`zona-fotos ${encima ? 'zona-fotos--encima' : ''} ${archivos.length ? 'zona-fotos--llena' : ''}`}
-         onDragOver={(e) => { e.preventDefault(); setEncima(true); }} onDragLeave={() => setEncima(false)}
-         onDrop={(e) => { e.preventDefault(); setEncima(false); tomar(e.dataTransfer.files); }}>
-      <input id={id} type="file" accept="image/jpeg,image/png,image/webp" multiple={multiple} className="solo-lector" onChange={(e) => tomar(e.target.files)} />
+         onDragOver={(evento) => { evento.preventDefault(); setEncima(true); }} onDragLeave={() => setEncima(false)}
+         onDrop={(evento) => { evento.preventDefault(); setEncima(false); tomar(evento.dataTransfer.files); }}>
+      <input id={id} type="file" accept="image/jpeg,image/png,image/webp" multiple={multiple} className="solo-lector" onChange={(evento) => tomar(evento.target.files)} />
       {archivos.length === 0 ? (
         <label htmlFor={id} className="zona-fotos__vacia">
           <span className="zona-fotos__icono" aria-hidden="true">
@@ -111,7 +111,7 @@ export function BotonFoto({ onArchivo, texto = 'Cambiar foto', etiqueta, clase =
   return (
     <label className={`${clase} subir`}>
       {texto}{etiqueta && <span className="solo-lector"> {etiqueta}</span>}
-      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { if (e.target.files[0]) onArchivo(e.target.files[0]); e.target.value = ''; }} />
+      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(evento) => { if (evento.target.files[0]) onArchivo(evento.target.files[0]); evento.target.value = ''; }} />
     </label>
   );
 }

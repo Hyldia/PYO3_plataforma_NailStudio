@@ -23,7 +23,7 @@ export function FormularioDireccion({ inicial, onCerrar, onGuardada }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
 
   // Nombre: guardar
   // Descripción: Guarda la dirección.
@@ -63,7 +63,7 @@ export function FormularioDireccion({ inicial, onCerrar, onGuardada }) {
         <div className="campo"><label htmlFor="dir-senas">Otras señas</label>
           <textarea id="dir-senas" rows="3" value={d.senas} onChange={set('senas')} placeholder="Ej.: 100 m norte de la iglesia, casa blanca con portón negro" required /></div>
         {(direcciones.length > 0 || !nueva) && !inicial?.principal && (
-          <label className="casilla"><input type="checkbox" checked={Boolean(d.principal)} onChange={(e) => setD({ ...d, principal: e.target.checked })} /><span>Usar como dirección principal</span></label>
+          <label className="casilla"><input type="checkbox" checked={Boolean(d.principal)} onChange={(evento) => setD({ ...d, principal: evento.target.checked })} /><span>Usar como dirección principal</span></label>
         )}
         {estado.error && <p role="alert" className="error">{estado.error}</p>}
         <div className="botones">
@@ -93,14 +93,14 @@ export function ListaDirecciones({ elegida, onElegir }) {
   // Objetivo: Quitarla.
   const borrar = async (dir) => {
     if (!window.confirm(`¿Borrar la dirección «${dir.etiqueta}»?`)) return;
-    try { setDirecciones(await api.cuenta.borrarDireccion(dir.id)); if (elegida === dir.id) onElegir?.(null); } catch (e) { setError(e.message); }
+    try { setDirecciones(await api.cuenta.borrarDireccion(dir.id)); if (elegida === dir.id) onElegir?.(null); } catch (error) { setError(error.message); }
   };
   // Nombre: principal
   // Descripción: Marca la dirección principal.
   // Entrada: La dirección.
   // Salida: Nada.
   // Objetivo: Usarla por defecto.
-  const principal = async (dir) => { try { setDirecciones(await api.cuenta.principal(dir.id)); } catch (e) { setError(e.message); } };
+  const principal = async (dir) => { try { setDirecciones(await api.cuenta.principal(dir.id)); } catch (error) { setError(error.message); } };
 
   return (
     <div className="direcciones">

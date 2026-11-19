@@ -136,7 +136,7 @@ export function crearCadena() {
   }));
 
   const cancelar = regla(['cancelar', 'cambiar mi cita', 'reprogramar', 'mover mi cita', 'no puedo ir', 'cambiar la hora', 'cambiar la fecha'], () => ({
-    texto: 'Si necesitas cancelar o cambiar tu cita, escríbenos por WhatsApp con al menos 24 horas de anticipación y te buscamos otro espacio. Tu adelanto queda a tu favor para la nueva cita.',
+    texto: 'Puedes cancelar o cambiar tu cita hasta 2 horas antes, desde «Mi cuenta» o por WhatsApp al 8532 6297. Tu adelanto queda a tu favor para la nueva cita. Si no llegas, la dueña o tu especialista decide si se reprograma o se cobra.',
     enlaces: [{ texto: 'Avisar por WhatsApp', href: enlaceWhatsApp('Hola, necesito cambiar mi cita.') }]
   }));
 

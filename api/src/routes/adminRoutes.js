@@ -1,4 +1,5 @@
 // RUTAS del panel del salón: todas pasan primero por soloAdmin.
+import { reporteAdminController as reportes } from '../controllers/reporteAdminController.js';
 import { Router } from 'express';
 import { soloAdmin } from '../middleware/admin.js';
 import { subirImagen } from '../middleware/subidas.js';
@@ -69,7 +70,8 @@ r.get('/nomina/excel', equipo.nominaExcel);
 r.post('/nomina/atender-pasadas', equipo.marcarAtendidas);
 r.post('/nomina/:id/pagado', equipo.marcarPagado);
 r.delete('/nomina/:id/pagado', equipo.quitarPagado);
-r.get('/reportes', equipo.reportes);
+r.get('/reportes', reportes.reportes);
+r.get('/reportes/cierre', reportes.cierre);
 
 // Pedidos con filtros y estados
 r.get('/pedidos', pedidos.pedidos);
@@ -83,6 +85,7 @@ r.get('/mensajes', agenda.mensajes);
 r.post('/mensajes/:id/enviado', agenda.mensajeEnviado);
 r.post('/citas/emergencia', agenda.emergencia);
 r.post('/citas/:id/cancelar', agenda.cancelar);
+r.post('/citas/:id/no-asistio', agenda.noAsistio);
 r.post('/citas/:id/mensaje', agenda.mensaje);
 
 r.get('/citas', citaController.listarDelDia);

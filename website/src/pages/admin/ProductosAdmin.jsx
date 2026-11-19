@@ -45,7 +45,7 @@ function FotosCategorias() {
   // Salida: Nada.
   // Objetivo: Cambiarla.
   const subir = async (c, archivo) => {
-    try { await api.admin.fotoPortada(c.clave, formData(archivo)); setAviso(`Listo: «${c.nombre}» tiene foto nueva en la portada.`); cargar(); } catch (e) { setAviso(e.message); }
+    try { await api.admin.fotoPortada(c.clave, formData(archivo)); setAviso(`Listo: «${c.nombre}» tiene foto nueva en la portada.`); cargar(); } catch (error) { setAviso(error.message); }
   };
   // Nombre: quitar
   // Descripción: Quita una portada.
@@ -92,7 +92,7 @@ function Editor({ producto, categorias, onCerrar, onGuardado }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
   const descuento = d.precio_anterior && Number(d.precio_anterior) > Number(d.precio) ? Math.round((1 - d.precio / d.precio_anterior) * 100) : 0;
 
   // Nombre: guardar
@@ -246,9 +246,9 @@ export default function ProductosAdmin() {
       </ul>
       <FotosCategorias />
       <div className="filtros-admin">
-        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar producto</span><input type="search" value={q} onChange={(e) => { setQ(e.target.value); setPagina(1); }} placeholder="Buscar por nombre, marca o N.º" /></label>
-        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{categorias.map((c) => <option key={c.valor} value={c.valor}>{c.valor} ({c.cantidad})</option>)}</select></label>
-        <label><span className="solo-lector">Mostrar</span><select value={stock} onChange={(e) => { setStock(e.target.value); setPagina(1); }}><option value="">Mostrar todos</option><option value="agotado">Agotados</option><option value="poco">Poco stock</option><option value="oferta">En oferta</option><option value="sinfoto">Sin foto</option><option value="hombres">Para hombres</option></select></label>
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar producto</span><input type="search" value={q} onChange={(evento) => { setQ(evento.target.value); setPagina(1); }} placeholder="Buscar por nombre, marca o N.º" /></label>
+        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(evento) => { setCat(evento.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{categorias.map((c) => <option key={c.valor} value={c.valor}>{c.valor} ({c.cantidad})</option>)}</select></label>
+        <label><span className="solo-lector">Mostrar</span><select value={stock} onChange={(evento) => { setStock(evento.target.value); setPagina(1); }}><option value="">Mostrar todos</option><option value="agotado">Agotados</option><option value="poco">Poco stock</option><option value="oferta">En oferta</option><option value="sinfoto">Sin foto</option><option value="hombres">Para hombres</option></select></label>
       </div>
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <p className="tenue">{lista.length} {lista.length === 1 ? 'producto' : 'productos'}</p>

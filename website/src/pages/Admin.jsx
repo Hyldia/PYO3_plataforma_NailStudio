@@ -13,6 +13,7 @@ import ContrasenaAdmin from './admin/ContrasenaAdmin.jsx';
 import ServiciosAdmin from './admin/ServiciosAdmin.jsx';
 import PagosEquipo from './admin/PagosEquipo.jsx';
 import ReportesAdmin from './admin/ReportesAdmin.jsx';
+import CierreDia from './admin/CierreDia.jsx';
 import Campanita from './admin/Campanita.jsx';
 import { ZonaFotos, BotonFoto, formData } from './admin/piezasPanel.jsx';
 
@@ -36,13 +37,13 @@ function Entrar({ onEntrar }) {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Entrar al panel.
-  const entrar = async (e) => {
-    e.preventDefault();
+  const entrar = async (evento) => {
+    evento.preventDefault();
     try {
       const r = await api.admin.entrar(clave);
       sesionAdmin.guardar(r.token);
       onEntrar(r.contrasenaInicial);
-    } catch (err) { setError(err.message); }
+    } catch (error) { setError(error.message); }
   };
   return (
     <form className="caja admin-entrar" onSubmit={entrar}>
@@ -50,7 +51,7 @@ function Entrar({ onEntrar }) {
       <div className="campo">
         <label htmlFor="clave">Contraseña del salón</label>
         <div className="acceso__clave">
-          <input id="clave" type={ver ? 'text' : 'password'} autoComplete="current-password" value={clave} onChange={(e) => setClave(e.target.value)} />
+          <input id="clave" type={ver ? 'text' : 'password'} autoComplete="current-password" value={clave} onChange={(evento) => setClave(evento.target.value)} />
           <button type="button" onClick={() => setVer(!ver)} aria-pressed={ver}>{ver ? 'Ocultar' : 'Ver'}</button>
         </div>
       </div>
@@ -68,7 +69,7 @@ function Entrar({ onEntrar }) {
 const Elegir = ({ id, etiqueta, opciones, valor, onCambio, vacio = true }) => (
   <div className="campo">
     <label htmlFor={id}>{etiqueta}</label>
-    <select id={id} value={valor || ''} onChange={(e) => onCambio(e.target.value)}>
+    <select id={id} value={valor || ''} onChange={(evento) => onCambio(evento.target.value)}>
       {vacio && <option value="">Sin especificar</option>}
       {opciones.map((o) => <option key={o}>{o}</option>)}
     </select>
@@ -161,7 +162,7 @@ function Galeria() {
   // Objetivo: Repetir el formulario.
   const camposFoto = (d, set, prefijo) => (
     <>
-      <div className="campo"><label htmlFor={`${prefijo}-titulo`}>Título</label><input id={`${prefijo}-titulo`} value={d.titulo} onChange={(e) => set({ ...d, titulo: e.target.value })} placeholder="Ej.: Francesa almendra con brillo" /></div>
+      <div className="campo"><label htmlFor={`${prefijo}-titulo`}>Título</label><input id={`${prefijo}-titulo`} value={d.titulo} onChange={(evento) => set({ ...d, titulo: evento.target.value })} placeholder="Ej.: Francesa almendra con brillo" /></div>
       <div className="campos-cuatro">
         <Elegir id={`${prefijo}-cat`} etiqueta="Servicio" opciones={CATEGORIAS} valor={d.categoria} vacio={false} onCambio={(v) => set({ ...d, categoria: v })} />
         <Elegir id={`${prefijo}-forma`} etiqueta="Forma" opciones={FORMAS} valor={d.forma} onCambio={(v) => set({ ...d, forma: v })} />
@@ -170,11 +171,11 @@ function Galeria() {
       </div>
       <div className="campo campo--precio">
         <label htmlFor={`${prefijo}-precio`}>Precio de este diseño (₡) <span className="tenue">(opcional: cualquier monto; vacío = precio normal del servicio)</span></label>
-        <input id={`${prefijo}-precio`} type="number" min="0" step="any" inputMode="numeric" value={d.precio ?? ''} onChange={(e) => set({ ...d, precio: e.target.value })} placeholder="Ej.: 18500" />
+        <input id={`${prefijo}-precio`} type="number" min="0" step="any" inputMode="numeric" value={d.precio ?? ''} onChange={(evento) => set({ ...d, precio: evento.target.value })} placeholder="Ej.: 18500" />
       </div>
-      <div className="campo"><label htmlFor={`${prefijo}-desc`}>Descripción <span className="tenue">(se lee en voz alta para personas ciegas)</span></label><input id={`${prefijo}-desc`} value={d.descripcion || ''} onChange={(e) => set({ ...d, descripcion: e.target.value })} placeholder="Ej.: Uñas largas almendradas, base nude con punta blanca" /></div>
-      <div className="campo"><label htmlFor={`${prefijo}-tags`}>Palabras clave para el buscador</label><input id={`${prefijo}-tags`} value={d.etiquetas || ''} onChange={(e) => set({ ...d, etiquetas: e.target.value })} placeholder="boda, elegante, verano" /></div>
-      <label className="casilla"><input type="checkbox" checked={!!d.destacada} onChange={(e) => set({ ...d, destacada: e.target.checked })} /><span>Destacar (aparece primero y en la portada)</span></label>
+      <div className="campo"><label htmlFor={`${prefijo}-desc`}>Descripción <span className="tenue">(se lee en voz alta para personas ciegas)</span></label><input id={`${prefijo}-desc`} value={d.descripcion || ''} onChange={(evento) => set({ ...d, descripcion: evento.target.value })} placeholder="Ej.: Uñas largas almendradas, base nude con punta blanca" /></div>
+      <div className="campo"><label htmlFor={`${prefijo}-tags`}>Palabras clave para el buscador</label><input id={`${prefijo}-tags`} value={d.etiquetas || ''} onChange={(evento) => set({ ...d, etiquetas: evento.target.value })} placeholder="boda, elegante, verano" /></div>
+      <label className="casilla"><input type="checkbox" checked={!!d.destacada} onChange={(evento) => set({ ...d, destacada: evento.target.checked })} /><span>Destacar (aparece primero y en la portada)</span></label>
     </>
   );
 
@@ -233,8 +234,8 @@ function Galeria() {
       )}
 
       <div className="filtros-admin">
-        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar diseño</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setPagina(1); }} placeholder="Buscar por título, color o forma" /></label>
-        <label><span className="solo-lector">Servicio</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todos los servicios</option>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></label>
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar diseño</span><input type="search" value={buscar} onChange={(evento) => { setBuscar(evento.target.value); setPagina(1); }} placeholder="Buscar por título, color o forma" /></label>
+        <label><span className="solo-lector">Servicio</span><select value={cat} onChange={(evento) => { setCat(evento.target.value); setPagina(1); }}><option value="">Todos los servicios</option>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></label>
       </div>
       <p className="tenue">{lista.length} diseños</p>
       <ul ref={rejilla} className="admin-tarjetas">
@@ -264,7 +265,7 @@ function Galeria() {
 
 const SECCIONES = {
   agenda: ['Agenda', AgendaAdmin], servicios: ['Servicios', ServiciosAdmin], galeria: ['Galería', Galeria], productos: ['Productos', ProductosAdmin],
-  equipo: ['Equipo', EquipoAdmin], pagos: ['Pagos al equipo', PagosEquipo], pedidos: ['Pedidos', PedidosAdmin], graficas: ['Gráficas', ReportesAdmin],
+  equipo: ['Equipo', EquipoAdmin], pagos: ['Pagos al equipo', PagosEquipo], pedidos: ['Pedidos', PedidosAdmin], graficas: ['Gráficas', ReportesAdmin], cierre: ['Cierre del día', CierreDia],
   contrasena: ['Contraseña', ContrasenaAdmin]
 };
 // Menú del panel ordenado por grupos, cada opción con su ícono
@@ -272,7 +273,7 @@ const GRUPOS = [
   ['Salón', ['agenda', 'servicios', 'galeria']],
   ['Tienda', ['productos', 'pedidos']],
   ['Equipo', ['equipo', 'pagos']],
-  ['Números', ['graficas']],
+  ['Números', ['cierre', 'graficas']],
   ['Seguridad', ['contrasena']]
 ];
 const ICONOS = {
@@ -284,6 +285,7 @@ const ICONOS = {
   equipo: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5" /><circle cx="17.5" cy="9" r="2.5" /><path d="M16 14.6c2.6.2 4.6 2 5.3 4.9" /></>,
   pagos: <><rect x="2.5" y="6" width="19" height="13" rx="2.5" /><circle cx="12" cy="12.5" r="2.5" /><path d="M6 9.5v6M18 9.5v6" /></>,
   graficas: <><path d="M4 20V10M10 20V4M16 20v-7M21 20H3" /></>,
+  cierre: <><rect x="4" y="3" width="16" height="18" rx="2.5" /><path d="M8 8h8M8 12h8M8 16h4" /><path d="m14.5 16.5 1.5 1.5 3-3" /></>,
   contrasena: <><rect x="4" y="10.5" width="16" height="10.5" rx="2.5" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /><circle cx="12" cy="15.5" r="1.4" /></>
 };
 
@@ -298,7 +300,7 @@ export default function Admin() {
   const [seccion, setSeccion] = useState('agenda');
   const [inicial, setInicial] = useState(false);
 
-  useEffect(() => { if (sesionAdmin.obtener()) api.admin.verificar().then((r) => { setDentro(true); setInicial(r.contrasenaInicial); }).catch(() => sesionAdmin.cerrar()); }, []);
+  useEffect(() => { if (sesionAdmin.obtener()) api.admin.verificar().then((respuesta) => { setDentro(true); setInicial(respuesta.contrasenaInicial); }).catch(() => sesionAdmin.cerrar()); }, []);
 
   if (!dentro) return <div className="contenedor pagina"><Entrar onEntrar={(ini) => { setDentro(true); setInicial(ini); }} /></div>;
   const Seccion = SECCIONES[seccion][1];
@@ -321,6 +323,11 @@ export default function Admin() {
       {inicial && seccion !== 'contrasena' && (
         <p className="aviso-alerta" role="alert">
           Están usando la contraseña inicial del panel. <button type="button" className="enlace enlace--boton" onClick={() => setSeccion('contrasena')}>Cámbienla aquí</button> para que nadie más pueda entrar.
+        </p>
+      )}
+      {new Date().getHours() >= 17 && seccion !== 'cierre' && (
+        <p className="aviso-cierre">
+          El salón está por cerrar. <button type="button" className="enlace enlace--boton" onClick={() => setSeccion('cierre')}>Ver el cierre de hoy</button> con ganancias, pérdidas y citas perdidas.
         </p>
       )}
       <div className="panel-marco">

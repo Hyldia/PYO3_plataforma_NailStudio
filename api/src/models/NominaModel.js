@@ -12,7 +12,9 @@ export const NominaModel = {
   // Objetivo: Pagar lo justo.
   calcularPago(e, { desde, hasta }) {
     const db = getDb();
-    const citas = db.prepare(`SELECT fecha, total FROM citas WHERE especialista_id = ? AND estado = 'completada' AND fecha BETWEEN ? AND ?`).all(e.id, desde, hasta);
+    // Cuentan las citas atendidas y lo que se cobró de las citas a las que la clienta no llegó
+    const citas = db.prepare(`SELECT fecha, CASE WHEN estado = 'completada' THEN total ELSE monto_cobrado END AS total FROM citas
+      WHERE especialista_id = ? AND fecha BETWEEN ? AND ? AND (estado = 'completada' OR (estado = 'no_asistio' AND monto_cobrado > 0))`).all(e.id, desde, hasta);
     const vendido = citas.reduce((s, c) => s + c.total, 0);
     const ausencias = AusenciaModel.ausencias(e.id, desde, hasta);
     const fechasAusencia = new Set(ausencias.map((a) => a.fecha));

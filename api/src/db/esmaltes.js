@@ -83,16 +83,51 @@ export const OPCIONES_DISENO = {
   forma: ['Almendra', 'Cuadrada', 'Redonda', 'Stiletto', 'Coffin', 'Ovalada', 'Squoval', 'Ballerina'],
   largo: ['Corto', 'Medio', 'Largo', 'Extra largo'],
   acabado: ['Brillante', 'Mate', 'Chrome', 'Glitter', 'Ojo de gato', 'Aurora', 'Perlado'],
-  decoracion: ['Ninguna', 'Francesa', 'Francesa de color', 'Baby boomer', 'Ombré', 'Mármol', 'Líneas', 'Puntos', 'Corazones', 'Flores a mano', 'Animal print', 'Foil dorado', 'Pedrería']
+  decoracion: ['Ninguna', 'Francesa', 'Francesa de color', 'Baby boomer', 'Ombré', 'Mármol', 'Líneas', 'Puntos', 'Corazones', 'Flores a mano', 'Animal print', 'Foil dorado', 'Pedrería', 'Aura']
 };
 // Precios en colones. Largo: por el juego completo. Acabado y decoración: por dedo (en las dos manos).
 export const PRECIO_DISENO = {
   largo: { Corto: 0, Medio: 2000, Largo: 4000, 'Extra largo': 6000 },
   acabado: { Brillante: 0, Mate: 200, Chrome: 600, Glitter: 400, 'Ojo de gato': 600, Aurora: 600, Perlado: 400 },
   decoracion: { Ninguna: 0, Francesa: 500, 'Francesa de color': 500, 'Baby boomer': 600, 'Ombré': 600, 'Mármol': 700, 'Líneas': 400, Puntos: 300,
-    Corazones: 500, 'Flores a mano': 900, 'Animal print': 700, 'Foil dorado': 600, 'Pedrería': 800 },
+    Corazones: 500, 'Flores a mano': 900, 'Animal print': 700, 'Foil dorado': 600, 'Pedrería': 800, Aura: 600 },
   colorExtra: 500
 };
+
+// Decoraciones que se pegan o se aplican encima del color (se eligen en qué uñas y en qué parte de la uña).
+// Precio por uña, en las dos manos.
+export const EXTRAS = {
+  Perlas: { precio: 400, variantes: ['Blancas', 'Doradas', 'De colores'] },
+  Cristales: { precio: 400, variantes: ['Transparentes', 'Tornasol', 'Dorados', 'De colores'] },
+  Stickers: { precio: 300, variantes: ['Flores', 'Mariposas', 'Corazones', 'Estrellas', 'Letras'] },
+  Polvo: { precio: 500, variantes: ['Glitter', 'Cromo espejo', 'Aurora', 'Terciopelo', 'Perlado'] },
+  'Flores 3D': { precio: 900, variantes: ['Rosas', 'Margaritas', 'Florecitas'] },
+  Foil: { precio: 400, variantes: ['Dorado', 'Plateado', 'Tornasol'] },
+  Charms: { precio: 700, variantes: ['Moños', 'Corazones', 'Estrellas', 'Mariposas'] },
+  'Líneas finas': { precio: 300, variantes: ['Doradas', 'Blancas', 'Negras'] }
+};
+export const POSICIONES = ['Base', 'Centro', 'Punta', 'Un lado', 'Toda la uña'];
+
+// Nombre: limpiarExtras
+// Descripción: Revisa la lista de decoraciones extra.
+// Entrada: La lista que manda la clienta.
+// Salida: La lista limpia (o un error si algo no existe).
+// Objetivo: Guardar solo decoraciones válidas.
+export function limpiarExtras(lista) {
+  if (!Array.isArray(lista)) return [];
+  return lista.slice(0, 12).map((x) => {
+    const tipo = EXTRAS[x?.tipo];
+    if (!tipo) throw new Error(`Decoración no válida: ${x?.tipo}`);
+    const dedos = [...new Set((x.dedos || []).map(Number))].filter((i) => i >= 0 && i <= 4).sort();
+    if (!dedos.length) throw new Error(`Elige en qué uñas van las ${String(x.tipo).toLowerCase()}.`);
+    return {
+      tipo: x.tipo,
+      variante: tipo.variantes.includes(x.variante) ? x.variante : tipo.variantes[0],
+      posicion: POSICIONES.includes(x.posicion) ? x.posicion : 'Centro',
+      dedos
+    };
+  });
+}
 
 // Recargo del diseño uña por uña. Devuelve el total y las líneas para mostrar el desglose.
 // Nombre: calcularDiseno
@@ -113,6 +148,11 @@ export function calcularDiseno(d) {
     ].filter(([nombre, monto]) => nombre && monto);
     const monto = partes.reduce((s, [, m]) => s + m, 0) * 2;
     if (monto) lineas.push({ concepto: `${DEDOS[i]}: ${partes.map(([n]) => n.toLowerCase()).join(' + ')} (x2 manos)`, monto, dedo: i });
+  });
+  (d.extras || []).forEach((x) => {
+    const p = EXTRAS[x.tipo];
+    if (!p || !x.dedos?.length) return;
+    lineas.push({ concepto: `${x.tipo} ${x.variante.toLowerCase()} en ${x.dedos.length === 5 ? 'todas las uñas' : x.dedos.map((i) => DEDOS[i].toLowerCase()).join(', ')} (x2 manos)`, monto: p.precio * x.dedos.length * 2 });
   });
   const distintos = new Set((d.unas || []).map((u) => u.esmalte)).size;
   if (distintos > 1) lineas.push({ concepto: `${distintos} colores combinados`, monto: (distintos - 1) * PRECIO_DISENO.colorExtra });

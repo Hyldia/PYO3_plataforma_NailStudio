@@ -72,7 +72,7 @@ export default function Inicio() {
     api.productos({ ofertas: '1', orden: 'descuento', limite: 12 }).then(setOfertas).catch(() => {});
     api.productos({ orden: 'vendidos', limite: 100 }).then(setVendidos).catch(() => {});
     api.servicios().then(setServicios).catch(() => {});
-    api.fotos({ limite: 10, orden: 'populares' }).then((r) => setFotos(r.fotos)).catch(() => {});
+    api.fotos({ limite: 10, orden: 'populares' }).then((respuesta) => setFotos(respuesta.fotos)).catch(() => {});
   }, []);
 
   const serviciosOferta = servicios.filter((s) => s.precio_oferta != null);
@@ -269,13 +269,6 @@ export default function Inicio() {
               </li>
             ))}
           </CarruselAuto>
-        </section>
-      )}
-
-      {/* Mapa (los datos de contacto y el horario están en el pie de página) */}
-      {SALON.mapaEmbed && (
-        <section className="contenedor seccion-tienda" aria-label="Cómo llegar">
-          <iframe className="mapa" title={`Mapa de ubicación de ${SALON.nombre}`} src={SALON.mapaEmbed} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
         </section>
       )}
     </>

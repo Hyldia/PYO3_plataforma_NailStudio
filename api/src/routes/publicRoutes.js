@@ -34,6 +34,7 @@ r.post('/ruleta', ruletaController.girar);
 
 r.get('/fotos', fotoController.buscar);
 r.get('/fotos/filtros', fotoController.opcionesDeFiltro);
+r.get('/fotos/parecidas', fotoController.parecidas);
 r.post('/fotos/:id/vista', fotoController.registrarVista);
 r.get('/fotos/:id', detalleController.foto);
 r.get('/fotos/:id/relacionados', detalleController.fotosRelacionadas);
@@ -58,6 +59,7 @@ r.post('/auth/salir', conUsuario, cuenta.salir);
 r.get('/cuenta', soloUsuario, cuenta.yo);
 r.put('/cuenta', soloUsuario, cuenta.actualizar);
 r.get('/cuenta/historial', soloUsuario, cuenta.historial);
+r.post('/cuenta/citas/:id/cancelar', soloUsuario, cuenta.cancelarMiCita);
 r.post('/cuenta/direcciones', soloUsuario, cuenta.crearDireccion);
 r.put('/cuenta/direcciones/:id', soloUsuario, cuenta.editarDireccion);
 r.post('/cuenta/direcciones/:id/principal', soloUsuario, cuenta.principal);

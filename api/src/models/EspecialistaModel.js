@@ -59,8 +59,8 @@ export const EspecialistaModel = {
   // Salida: La especialista.
   // Objetivo: Sumar al equipo.
   crear(d) {
-    const r = getDb().prepare(`INSERT INTO especialistas (nombre, especialidad, bio, experiencia, dias, hora_inicio, hora_fin, activa)
-      VALUES (@nombre, @especialidad, @bio, @experiencia, @dias, @hora_inicio, @hora_fin, @activa)`).run(d);
+    const r = getDb().prepare(`INSERT INTO especialistas (nombre, especialidad, bio, experiencia, dias, hora_inicio, hora_fin, activa, esquema_pago, comision)
+      VALUES (@nombre, @especialidad, @bio, @experiencia, @dias, @hora_inicio, @hora_fin, @activa, 'comision', 65)`).run(d);
     return this.buscarPorId(r.lastInsertRowid);
   },
   // Nombre: actualizar

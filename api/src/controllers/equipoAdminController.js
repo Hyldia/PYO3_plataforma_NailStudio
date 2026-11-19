@@ -175,13 +175,5 @@ export const equipoAdminController = {
     res.setHeader('Content-Disposition', `attachment; filename="pagos-equipo-${periodo.desde}-al-${periodo.hasta}.xlsx"`);
     await libro.xlsx.write(res);
     res.end();
-  },
-
-  // ----- Gráficas -----
-  // Nombre: reportes
-  // Descripción: Arma los reportes del negocio.
-  // Entrada: El periodo.
-  // Salida: Ventas, citas y gráficos.
-  // Objetivo: Ver cómo va el salón.
-  reportes: (req, res) => res.json(ReporteModel.generar(ReporteModel.periodo(req.query)))
+  }
 };

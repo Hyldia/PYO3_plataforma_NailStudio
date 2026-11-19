@@ -43,6 +43,130 @@ const claro = (hex) => { const n = parseInt(hex.slice(1), 16); return ((n >> 16)
 // Entrada: El diseño y su posición.
 // Salida: La uña.
 // Objetivo: Ver el diseño.
+
+// Puntos de la uña donde se ponen las decoraciones pegadas, según la parte elegida
+// Nombre: puntosDe
+// Descripción: Calcula dónde van las piedras o stickers en la uña.
+// Entrada: La parte de la uña, la punta (t) y cuántos.
+// Salida: Lista de puntos [x, y].
+// Objetivo: Dibujar cada decoración en su lugar.
+function puntosDe(posicion, t, varios = true) {
+  const c = Math.round((t + 114) / 2);
+  if (!varios) return [{ Base: [30, 90], Punta: [30, t + 22], Centro: [30, c], 'Un lado': [17, c], 'Toda la uña': [30, c] }[posicion] || [30, c]];
+  return {
+    Base: [[21, 93], [30, 96], [39, 93]],
+    Punta: [[22, t + 21], [30, t + 17], [38, t + 21]],
+    Centro: [[30, c - 10], [30, c], [30, c + 10]],
+    'Un lado': [[15, t + 30], [15, t + 44], [15, t + 58], [15, t + 72], [15, t + 86]],
+    'Toda la uña': [[20, t + 24], [38, t + 32], [27, t + 46], [41, t + 58], [19, t + 68], [33, t + 80], [24, 94], [40, 90]]
+  }[posicion] || [[30, c]];
+}
+// Zona de la uña para polvos (glitter, cromo...)
+// Nombre: zonaDe
+// Descripción: Da el rectángulo de la parte de la uña.
+// Entrada: La parte y la punta (t).
+// Salida: x, y, ancho y alto.
+// Objetivo: Pintar polvo solo donde va.
+function zonaDe(posicion, t) {
+  const c = Math.round((t + 114) / 2);
+  return { Base: [0, 80, 60, 50], Punta: [0, -20, 60, t + 50], Centro: [0, c - 15, 60, 30], 'Un lado': [0, -20, 22, 150] }[posicion] || [0, -20, 60, 150];
+}
+const COLOR_PIEDRA = { Blancas: '#FFFFFF', Doradas: '#E9C46A', Transparentes: '#F4FAFF', Tornasol: '#E6D9FF', Dorados: '#E9C46A', Dorado: '#D4AF37', Plateado: '#C9CED6',
+  Doradas_l: '#D4AF37', Blancas_l: '#FFFFFF', Negras: '#1E1A1C' };
+const COLORES_VARIOS = ['#F49AC1', '#8FC9F0', '#B9E3A8', '#F7D27A', '#C8A8F0'];
+// Las piedras y figuras se dibujan un poco más grandes para que se vean bien en la mano
+// Nombre: crecer
+// Descripción: Agranda una figura sin moverla de su lugar.
+// Entrada: El punto (x, y) y cuánto crece.
+// Salida: El texto de transformación.
+// Objetivo: Que las decoraciones se noten.
+const crecer = (x, y, k = 1.45) => `translate(${x} ${y}) scale(${k}) translate(${-x} ${-y})`;
+
+// Nombre: Adornos
+// Descripción: Dibuja las decoraciones pegadas de una uña (perlas, cristales, stickers, polvo, flores 3D, foil, charms, líneas).
+// Entrada: Las decoraciones, la punta (t), el id y el color de contraste.
+// Salida: Dos grupos: lo que va dentro de la uña y lo que sobresale (3D).
+// Objetivo: Que la clienta vea en la mano lo que va eligiendo.
+function adornos(extras, t, id, contraste) {
+  const dentro = []; const encima = [];
+  (extras || []).forEach((x, n) => {
+    const k = `${x.tipo}${n}`;
+    const varios = x.variante === 'De colores';
+    if (x.tipo === 'Polvo') {
+      const [zx, zy, zw, zh] = zonaDe(x.posicion, t);
+      const relleno = { Glitter: `url(#gl${id})`, 'Cromo espejo': `url(#cromo${id})`, Aurora: `url(#aurora${id})`, Terciopelo: `url(#gato${id})`, Perlado: `url(#perla${id})` }[x.variante];
+      dentro.push(<rect key={k} x={zx} y={zy} width={zw} height={zh} fill={relleno} />);
+      if (x.variante === 'Glitter') dentro.push(<rect key={`${k}b`} x={zx} y={zy} width={zw} height={zh} fill={`url(#gl${id})`} transform="translate(3 2)" />);
+    }
+    if (x.tipo === 'Foil') {
+      const color = COLOR_PIEDRA[x.variante] || '#D4AF37';
+      puntosDe(x.posicion, t).forEach(([px, py], i) => dentro.push(
+        <path key={`${k}${i}`} d={`M${px - 4} ${py - 2} l7 -2 l2 6 l-6 3z`} fill={x.variante === 'Tornasol' ? `url(#aurora${id})` : color} stroke={color} strokeWidth="0.4" opacity="0.95" />));
+    }
+    if (x.tipo === 'Líneas finas') {
+      const color = { Doradas: '#D4AF37', Blancas: '#FFFFFF', Negras: '#1E1A1C' }[x.variante];
+      const [, zy, , zh] = zonaDe(x.posicion, t);
+      const y0 = Math.max(zy, t + 8); const y1 = Math.min(zy + zh, 104);
+      dentro.push(<path key={k} d={`M10 ${y0 + 6} C24 ${y0 + 14} 34 ${y0 + 2} 52 ${y0 + 12} M8 ${(y0 + y1) / 2} C22 ${(y0 + y1) / 2 + 8} 36 ${(y0 + y1) / 2 - 6} 52 ${(y0 + y1) / 2 + 4}`} fill="none" stroke={color} strokeWidth="1.1" strokeLinecap="round" />);
+    }
+    if (x.tipo === 'Stickers') {
+      puntosDe(x.posicion, t).forEach(([px, py], i) => {
+        const col = contraste;
+        const forma = {
+          Flores: <g>{[0, 72, 144, 216, 288].map((a) => <circle key={a} cx={px + 2.6 * Math.cos(a * Math.PI / 180)} cy={py + 2.6 * Math.sin(a * Math.PI / 180)} r="1.9" fill={col} />)}<circle cx={px} cy={py} r="1.3" fill="#E9B949" /></g>,
+          Mariposas: <g fill={col}><ellipse cx={px - 2.4} cy={py - 1} rx="2.4" ry="3" /><ellipse cx={px + 2.4} cy={py - 1} rx="2.4" ry="3" /><ellipse cx={px - 1.8} cy={py + 2.4} rx="1.6" ry="1.8" /><ellipse cx={px + 1.8} cy={py + 2.4} rx="1.6" ry="1.8" /><rect x={px - 0.4} y={py - 3} width="0.8" height="6.5" fill="#2A1A12" /></g>,
+          Corazones: <path d={`M${px} ${py + 3.4} C${px - 6} ${py - 1} ${px - 3} ${py - 6} ${px} ${py - 2.6} C${px + 3} ${py - 6} ${px + 6} ${py - 1} ${px} ${py + 3.4}Z`} fill={col} />,
+          Estrellas: <path d={`M${px} ${py - 4} l1.2 2.6 2.8.3-2.1 1.9.6 2.8-2.5-1.4-2.5 1.4.6-2.8-2.1-1.9 2.8-.3z`} fill={col} />,
+          Letras: <text x={px} y={py + 2.5} fontSize="7" fontFamily="serif" fontStyle="italic" fontWeight="700" textAnchor="middle" fill={col}>{'AH'[i % 2]}</text>
+        }[x.variante];
+        dentro.push(<g key={`${k}${i}`} transform={crecer(px, py, 1.35)}>{forma}</g>);
+      });
+    }
+    if (x.tipo === 'Perlas') {
+      puntosDe(x.posicion, t).forEach(([px, py], i) => {
+        const col = varios ? COLORES_VARIOS[i % 5] : COLOR_PIEDRA[x.variante];
+        encima.push(<g key={`${k}${i}`} transform={crecer(px, py)}><circle cx={px} cy={py + 0.6} r="3.3" fill="rgba(60,30,30,0.25)" /><circle cx={px} cy={py} r="3.2" fill={col} /><circle cx={px} cy={py} r="3.2" fill={`url(#perla3d${id})`} /></g>);
+      });
+    }
+    if (x.tipo === 'Cristales') {
+      puntosDe(x.posicion, t).forEach(([px, py], i) => {
+        const col = varios ? COLORES_VARIOS[i % 5] : COLOR_PIEDRA[x.variante];
+        encima.push(<g key={`${k}${i}`} transform={crecer(px, py)}>
+          <path d={`M${px} ${py - 3.6} L${px + 3.4} ${py} L${px} ${py + 3.6} L${px - 3.4} ${py}Z`} fill={x.variante === 'Tornasol' ? `url(#aurora${id})` : col} stroke="rgba(120,140,170,0.8)" strokeWidth="0.5" />
+          <path d={`M${px} ${py - 3.6} L${px + 1} ${py} L${px} ${py + 3.6} M${px - 3.4} ${py} H${px + 3.4}`} stroke="rgba(255,255,255,0.9)" strokeWidth="0.4" fill="none" />
+          <circle cx={px - 1} cy={py - 1.2} r="0.7" fill="#fff" />
+        </g>);
+      });
+    }
+    if (x.tipo === 'Flores 3D') {
+      const grande = x.posicion === 'Toda la uña' ? 1.35 : 1;
+      const lista = x.variante === 'Florecitas' ? puntosDe(x.posicion, t).slice(0, 3) : puntosDe(x.posicion, t, false);
+      lista.forEach(([px, py], i) => {
+        const r = (x.variante === 'Florecitas' ? 2.6 : 4.4) * grande;
+        const petalo = x.variante === 'Rosas' ? '#F2A7BC' : '#FFFFFF';
+        encima.push(<g key={`${k}${i}`} filter={`url(#sombra${id})`} transform={crecer(px, py, 1.3)}>
+          {[0, 72, 144, 216, 288].map((a) => <ellipse key={a} cx={px + r * 0.8 * Math.cos((a - 90) * Math.PI / 180)} cy={py + r * 0.8 * Math.sin((a - 90) * Math.PI / 180)} rx={r * 0.62} ry={r * 0.62} fill={petalo} stroke="rgba(180,120,140,0.5)" strokeWidth="0.3" />)}
+          {x.variante === 'Rosas'
+            ? <><circle cx={px} cy={py} r={r * 0.55} fill="#E57E9B" /><path d={`M${px - r * 0.3} ${py} a${r * 0.3} ${r * 0.3} 0 1 1 ${r * 0.4} ${r * 0.1}`} fill="none" stroke="#C45A79" strokeWidth="0.5" /></>
+            : <circle cx={px} cy={py} r={r * 0.38} fill="#F2C94C" />}
+        </g>);
+      });
+    }
+    if (x.tipo === 'Charms') {
+      const [px, py] = puntosDe(x.posicion, t, false)[0];
+      const oro = '#D9AE48';
+      const forma = {
+        'Moños': <g><path d={`M${px} ${py} C${px - 6} ${py - 5} ${px - 7} ${py + 4} ${px} ${py}Z M${px} ${py} C${px + 6} ${py - 5} ${px + 7} ${py + 4} ${px} ${py}Z`} fill={oro} /><path d={`M${px - 1} ${py} l-2 5 M${px + 1} ${py} l2 5`} stroke={oro} strokeWidth="1.2" /><circle cx={px} cy={py} r="1.4" fill="#F4D98A" /></g>,
+        Corazones: <path d={`M${px} ${py + 5} C${px - 8} ${py - 1} ${px - 4} ${py - 8} ${px} ${py - 3.5} C${px + 4} ${py - 8} ${px + 8} ${py - 1} ${px} ${py + 5}Z`} fill={oro} stroke="#B38A2E" strokeWidth="0.5" />,
+        Estrellas: <path d={`M${px} ${py - 6} l1.8 3.9 4.2.5-3.1 2.9.8 4.2-3.7-2.1-3.7 2.1.8-4.2-3.1-2.9 4.2-.5z`} fill={oro} stroke="#B38A2E" strokeWidth="0.5" />,
+        Mariposas: <g fill={oro} stroke="#B38A2E" strokeWidth="0.4"><ellipse cx={px - 3.4} cy={py - 1.5} rx="3.4" ry="4" /><ellipse cx={px + 3.4} cy={py - 1.5} rx="3.4" ry="4" /><ellipse cx={px - 2.4} cy={py + 3} rx="2.2" ry="2.4" /><ellipse cx={px + 2.4} cy={py + 3} rx="2.2" ry="2.4" /></g>
+      }[x.variante];
+      encima.push(<g key={k} filter={`url(#sombra${id})`} transform={crecer(px, py, 1.3)}>{forma}<circle cx={px - 1.5} cy={py - 2} r="0.9" fill="#FFF6D6" /></g>);
+    }
+  });
+  return { dentro, encima };
+}
+
 export function Una({ d, acento = false, ...pos }) {
   const id = useId().replace(/:/g, '');
   const t = 40 - LARGO[d.largo];
@@ -57,6 +181,7 @@ export function Una({ d, acento = false, ...pos }) {
   // Salida: El rectángulo.
   // Objetivo: Pintar la uña.
   const R = (props) => <rect x="0" y="-20" width="60" height="140" {...props} />;
+  const { dentro, encima } = adornos(d.extras, t, id, contraste);
 
   return (
     <svg viewBox="0 -14 60 130" className="muestra-una" aria-hidden="true" {...pos}>
@@ -91,6 +216,10 @@ export function Una({ d, acento = false, ...pos }) {
         <linearGradient id={`ombre${id}`} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0.1" stopColor={color} stopOpacity="0" /><stop offset="0.8" stopColor="#F3D9CF" />
         </linearGradient>
+        <radialGradient id={`perla3d${id}`} cx="0.35" cy="0.3" r="0.75">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.95" /><stop offset="0.45" stopColor="#fff" stopOpacity="0.15" /><stop offset="1" stopColor="#6B5A60" stopOpacity="0.35" />
+        </radialGradient>
+        <filter id={`sombra${id}`} x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="0.8" stdDeviation="0.7" floodColor="#3A1F28" floodOpacity="0.45" /></filter>
         <pattern id={`gl${id}`} width="6" height="6" patternUnits="userSpaceOnUse">
           <circle cx="1.5" cy="1.5" r="0.8" fill="#fff" opacity="0.9" /><circle cx="4.5" cy="4" r="0.6" fill="#F3DCA8" opacity="0.9" />
         </pattern>
@@ -128,10 +257,12 @@ export function Una({ d, acento = false, ...pos }) {
         {acabado === 'Ojo de gato' && <R fill={`url(#gato${id})`} />}
         {acabado === 'Aurora' && <R fill={`url(#aurora${id})`} />}
         {acabado === 'Perlado' && <R fill={`url(#perla${id})`} />}
+        {dentro}
         <R fill={`url(#curva${id})`} opacity={acabado === 'Mate' ? 0.5 : 1} />
         {acabado !== 'Mate' && acabado !== 'Chrome' && <R fill={`url(#brillo${id})`} />}
       </g>
       <path d={contorno(d.forma, t)} fill="none" stroke="rgba(34,22,28,0.22)" strokeWidth="1" />
+      {encima}
     </svg>
   );
 }
@@ -153,7 +284,8 @@ export const datosUna = (diseno, i) => {
     tipo: e?.tipo,
     color: e?.nombre,
     acabado: u.acabado,
-    decoracion: u.decoracion
+    decoracion: u.decoracion,
+    extras: (diseno.extras || []).filter((x) => x.dedos?.includes(i))
   };
 };
 

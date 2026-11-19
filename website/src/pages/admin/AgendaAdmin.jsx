@@ -5,11 +5,19 @@ import { api } from '../../lib/api.js';
 import { dinero } from '../../config.js';
 import Foto from '../../components/Foto.jsx';
 import Modal from '../../components/Modal.jsx';
+import VentanaNoAsistio from '../../components/VentanaNoAsistio.jsx';
 import VerMas from '../../components/VerMas.jsx';
 import { TarjetaMensaje, Whats, fechaLarga, nombreMes, isoLocal } from './piezasPanel.jsx';
 
 const POR_PAGINA = 4;
-const ACCIONES = { pendiente: ['confirmar'], confirmada: ['completar'], completada: [], cancelada: [] };
+const ACCIONES = { pendiente: ['confirmar'], confirmada: ['completar'], completada: [], cancelada: [], no_asistio: [] };
+const NOMBRE_ESTADO = { pendiente: 'Por confirmar', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada', no_asistio: 'No llegó' };
+// Nombre: yaPasoLaHora
+// Descripción: Dice si ya pasó la hora de una cita (hora de Costa Rica).
+// Entrada: La cita.
+// Salida: Verdadero o falso.
+// Objetivo: Mostrar el botón "No llegó" solo cuando corresponde.
+const yaPasoLaHora = (cita) => new Date(`${cita.fecha}T${cita.hora}:00-06:00`).getTime() <= Date.now();
 const TEXTO_ACCION = { confirmar: 'Confirmar', completar: 'Marcar atendida' };
 const NIVEL = { libre: 'Libre', medio: 'Con citas', casi: 'Casi lleno', lleno: 'Lleno', cerrado: 'Cerrado' };
 const CABECERA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -77,7 +85,7 @@ function VentanaCancelar({ cita, especialistas, fecha, onCerrar, onListo }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (e) => setDatos({ ...datos, [k]: e.target.value });
+  const set = (k) => (evento) => setDatos({ ...datos, [k]: evento.target.value });
 
   // Nombre: confirmar
   // Descripción: Confirma la cancelación.
@@ -196,7 +204,7 @@ export default function AgendaAdmin() {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Pintar el calendario.
-  const cargarMes = () => api.admin.calendario(mes).then((r) => setDias(r.dias)).catch((e) => setError(e.message));
+  const cargarMes = () => api.admin.calendario(mes).then((respuesta) => setDias(respuesta.dias)).catch((e) => setError(e.message));
   // Nombre: cargarDia
   // Descripción: Carga las citas del día.
   // Entrada: Nada.
@@ -224,7 +232,7 @@ export default function AgendaAdmin() {
   // Entrada: Número y acción.
   // Salida: Nada.
   // Objetivo: Confirmar o completar.
-  const cambiar = async (id, accion) => { try { await api.admin.estadoCita(id, accion); recargar(); } catch (e) { setError(e.message); } };
+  const cambiar = async (id, accion) => { try { await api.admin.estadoCita(id, accion); recargar(); } catch (error) { setError(error.message); } };
   // Nombre: elegirDia
   // Descripción: Elige un día.
   // Entrada: La fecha.
@@ -233,7 +241,7 @@ export default function AgendaAdmin() {
   const elegirDia = (f) => { setFecha(f); setPagina(1); if (f.slice(0, 7) !== mes) setMes(f.slice(0, 7)); };
 
   const dia = dias.find((d) => d.fecha === fecha);
-  const ESTADOS_FILTRO = { activas: ['pendiente', 'confirmada'], completada: ['completada'], cancelada: ['cancelada'] };
+  const ESTADOS_FILTRO = { activas: ['pendiente', 'confirmada'], completada: ['completada'], cancelada: ['cancelada'], no_asistio: ['no_asistio'] };
   const visibles = citas.filter((c) => (!filtro || String(c.especialista_id) === filtro)
     && (!verEstado || ESTADOS_FILTRO[verEstado].includes(c.estado))
     && (!buscarClienta || `${c.cliente_nombre} ${c.cliente_telefono} ${c.servicio}`.toLowerCase().includes(buscarClienta.toLowerCase())));
@@ -270,15 +278,15 @@ export default function AgendaAdmin() {
           </ul>
           {citas.length > 0 && (
             <div className="filtros-admin filtros-admin--agenda">
-              <label className="filtros-admin__buscar"><span className="solo-lector">Buscar clienta</span><input type="search" value={buscarClienta} onChange={(e) => { setBuscarClienta(e.target.value); setPagina(1); }} placeholder="Buscar clienta o servicio" /></label>
+              <label className="filtros-admin__buscar"><span className="solo-lector">Buscar clienta</span><input type="search" value={buscarClienta} onChange={(evento) => { setBuscarClienta(evento.target.value); setPagina(1); }} placeholder="Buscar clienta o servicio" /></label>
               <label><span className="solo-lector">Especialista</span>
-                <select value={filtro} onChange={(e) => { setFiltro(e.target.value); setPagina(1); }}>
+                <select value={filtro} onChange={(evento) => { setFiltro(evento.target.value); setPagina(1); }}>
                   <option value="">Todas las especialistas ({citas.length})</option>
                   {especialistas.filter((e) => citas.some((c) => c.especialista_id === e.id)).map((e) => <option key={e.id} value={e.id}>{e.nombre} ({citas.filter((c) => c.especialista_id === e.id).length})</option>)}
                 </select>
               </label>
               <div className="barra-chips barra-chips--compacta" role="group" aria-label="Mostrar">
-                {[['', 'Todas'], ['activas', 'Por atender'], ['completada', 'Atendidas'], ['cancelada', 'Canceladas']].map(([k, t]) => (
+                {[['', 'Todas'], ['activas', 'Por atender'], ['completada', 'Atendidas'], ['cancelada', 'Canceladas'], ['no_asistio', 'No llegaron']].map(([k, t]) => (
                   <button key={k} type="button" className={`chip-filtro ${verEstado === k ? 'chip-filtro--activo' : ''}`} aria-pressed={verEstado === k} onClick={() => { setVerEstado(k); setPagina(1); }}>{t}</button>
                 ))}
               </div>
@@ -293,16 +301,18 @@ export default function AgendaAdmin() {
                 <li key={c.id} className={`cita-admin cita-admin--${c.estado}`} style={{ '--n': i }}>
                   <div className="cita-admin__hora"><strong>{c.hora}</strong><span>{c.duracion_min} min</span></div>
                   <div className="cita-admin__info">
-                    <p className="cita-admin__nombre">{c.cliente_nombre} <span className={`estado estado--${c.estado}`}>{{ pendiente: 'Por confirmar', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada' }[c.estado] || c.estado}</span></p>
+                    <p className="cita-admin__nombre">{c.cliente_nombre} <span className={`estado estado--${c.estado}`}>{NOMBRE_ESTADO[c.estado] || c.estado}</span></p>
                     <p>{c.servicio} · con <b>{c.especialista}</b></p>
                     <p className="tenue">{c.forma ? `${c.forma}, ${c.largo}, ${c.color}, ${c.acabado}` : 'Diseño: lo elige en el salón'} · {dinero(c.total)} (adelanto {dinero(c.anticipo)})</p>
                     {c.notas && <p className="cita-admin__nota">“{c.notas}”</p>}
                     {c.estado === 'cancelada' && c.motivo_cancelacion && <p className="cita-admin__motivo">Cancelada: {c.motivo_cancelacion}</p>}
+                    {c.estado === 'no_asistio' && <p className="cita-admin__motivo">No llegó · {c.decision_inasistencia === 'cobrada' ? `se cobró ${dinero(c.monto_cobrado)}` : `reprogramada (cita #${c.reprogramada_a})`}{c.decidido_por ? ` · decidió ${c.decidido_por}` : ''}</p>}
                   </div>
                   {c.foto_ref && <Foto archivo={c.foto_ref} alt="Diseño de referencia" className="cita-admin__foto" />}
                   <div className="cita-admin__acciones">
                     {ACCIONES[c.estado].map((a) => <button key={a} type="button" className="boton boton--chico" onClick={() => cambiar(c.id, a)}>{TEXTO_ACCION[a]}</button>)}
-                    {c.estado !== 'cancelada' && c.estado !== 'completada' && <button type="button" className="boton boton--chico boton--peligro" onClick={() => setVentana({ tipo: 'cancelar', cita: c })}>Cancelar</button>}
+                    {['pendiente', 'confirmada'].includes(c.estado) && yaPasoLaHora(c) && <button type="button" className="boton boton--chico boton--borde" onClick={() => setVentana({ tipo: 'no-asistio', cita: c })}>No llegó</button>}
+                    {['pendiente', 'confirmada'].includes(c.estado) && <button type="button" className="boton boton--chico boton--peligro" onClick={() => setVentana({ tipo: 'cancelar', cita: c })}>Cancelar</button>}
                     <button type="button" className="boton-whatsapp boton-whatsapp--chico" onClick={() => setVentana({ tipo: 'mensaje', cita: c })}><Whats /> Mensaje</button>
                   </div>
                 </li>
@@ -330,6 +340,7 @@ export default function AgendaAdmin() {
 
       {ventana?.tipo === 'cancelar' && <VentanaCancelar cita={ventana.cita} onCerrar={() => setVentana(null)} onListo={recargar} />}
       {ventana?.tipo === 'emergencia' && <VentanaCancelar fecha={fecha} especialistas={especialistas} onCerrar={() => setVentana(null)} onListo={recargar} />}
+      {ventana?.tipo === 'no-asistio' && <VentanaNoAsistio cita={ventana.cita} enviar={api.admin.noAsistio} onCerrar={() => setVentana(null)} onListo={recargar} />}
       {ventana?.tipo === 'mensaje' && <VentanaMensaje cita={ventana.cita} tipos={tipos} onCerrar={() => { setVentana(null); cargarHistorial(); }} />}
     </section>
   );

@@ -62,3 +62,48 @@ export function clasificarFoto(descripcion = '', etiquetas = []) {
   r.etiquetas = etiquetas.slice(0, 6).join(', ') || null;
   return r;
 }
+
+// ---------------------------------------------------------------------------
+// Descripción detallada en español (para que el diseñador encuentre fotos parecidas)
+const DETALLES = {
+  tecnica: [
+    ['francesa', /\b(french|francesa)\b/], ['baby boomer', /baby ?boomer/], ['ombré', /\b(ombre|ombré|gradient|degradad\w*)\b/], ['mármol', /\b(marble|marbled|m[aá]rmol)\b/],
+    ['líneas', /\b(lines?|stripes?|striped|l[ií]neas)\b/], ['puntos', /\b(dots?|polka|puntos|lunares)\b/], ['corazones', /\b(hearts?|corazon\w*)\b/],
+    ['flores', /\b(flowers?|floral|daisy|daisies|roses?|flores?)\b/], ['animal print', /\b(leopard|cheetah|zebra|animal print|cow print)\b/], ['aura', /\baura\b/],
+    ['abstracto', /\b(abstract|swirls?|waves?)\b/], ['navidad', /\b(christmas|xmas|navidad|snowflakes?)\b/]
+  ],
+  decoracion: [
+    ['perlas', /\b(pearls?|perlas?)\b/], ['pedrería', /\b(rhinestones?|crystals?|gems?|jewels?|diamonds?|bling|strass|pedrer[ií]a|cristales?)\b/],
+    ['stickers', /\b(stickers?|decals?)\b/], ['glitter', /\b(glitter|sparkl\w*|shimmer|brillantina|escarcha)\b/], ['cromo', /\b(chrome|mirror|metallic|cromo)\b/],
+    ['flores 3d', /\b(3d flowers?|3d|embossed)\b/], ['foil', /\b(foil|gold leaf|flakes?)\b/], ['charms', /\b(charms?|bows?|ribbons?)\b/],
+    ['mariposas', /\b(butterfl\w+|mariposas?)\b/], ['estrellas', /\b(stars?|estrellas?)\b/], ['ojo de gato', /\b(cat ?eye|ojo de gato)\b/]
+  ],
+  largo: [['cortas', /\b(short|cortas?)\b/], ['largas', /\b(long|largas?|extra long)\b/]],
+  ocasion: [['boda', /\b(wedding|bridal|boda|novia)\b/], ['verano', /\b(summer|verano|beach)\b/], ['otoño', /\b(autumn|fall|oto[nñ]o)\b/], ['fiesta', /\b(party|fiesta|new year)\b/], ['elegante', /\b(elegant|classy|minimal\w*|elegante)\b/]]
+};
+
+// Nombre: describirFoto
+// Descripción: Saca todos los detalles de una foto (colores, técnica, piedras, largo, ocasión) y escribe una descripción en español.
+// Entrada: El texto de la foto (título, descripción y etiquetas, en inglés o español).
+// Salida: { descripcion, etiquetas } en español.
+// Objetivo: Que cada foto tenga palabras claras para encontrarla por color, técnica o decoración.
+export function describirFoto(texto = '') {
+  const t = String(texto).toLowerCase();
+  const todos = (lista) => lista.filter(([, re]) => re.test(t)).map(([n]) => n);
+  const colores = todos(REGLAS.color).map((c) => c.toLowerCase());
+  const forma = buscar(REGLAS.forma, t);
+  const acabado = buscar(REGLAS.acabado, t);
+  const tecnicas = todos(DETALLES.tecnica);
+  const decoraciones = todos(DETALLES.decoracion);
+  const largo = buscar(DETALLES.largo, t);
+  const ocasion = todos(DETALLES.ocasion);
+  const pies = /\b(feet|foot|toe|toenails?|pedicure|pedicura|pies)\b/.test(t);
+  const partes = [`${pies ? 'Pedicure' : 'Uñas'}${forma ? ` ${forma.toLowerCase()}` : ''}${largo ? ` ${largo}` : ''}`];
+  if (colores.length) partes.push(`en ${colores.slice(0, 3).join(' y ')}`);
+  if (tecnicas.length) partes.push(`con ${tecnicas.join(', ')}`);
+  if (decoraciones.length) partes.push(`${tecnicas.length ? 'y' : 'con'} ${decoraciones.join(', ')}`);
+  if (acabado && acabado !== 'Brillante') partes.push(`acabado ${acabado.toLowerCase()}`);
+  if (ocasion.length) partes.push(`ideal para ${ocasion.join(' o ')}`);
+  const etiquetas = [...new Set([...colores, forma?.toLowerCase(), largo, acabado?.toLowerCase(), ...tecnicas, ...decoraciones, ...ocasion].filter(Boolean))];
+  return { descripcion: `${partes.join(' ')}.`, etiquetas };
+}

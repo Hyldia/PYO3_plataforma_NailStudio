@@ -50,7 +50,7 @@ export default function BuscadorEnVivo({ Lupa }) {
     // Entrada: El clic.
     // Salida: Nada.
     // Objetivo: No estorbar.
-    const fuera = (e) => { if (caja.current && !caja.current.contains(e.target)) setAbierto(false); };
+    const fuera = (evento) => { if (caja.current && !caja.current.contains(evento.target)) setAbierto(false); };
     document.addEventListener('pointerdown', fuera);
     return () => document.removeEventListener('pointerdown', fuera);
   }, []);
@@ -105,19 +105,19 @@ export default function BuscadorEnVivo({ Lupa }) {
   // Entrada: La tecla.
   // Salida: Nada.
   // Objetivo: Usar el buscador con teclado.
-  const teclas = (e) => {
+  const teclas = (evento) => {
     if (!abierto) setAbierto(true);
-    if (e.key === 'ArrowDown') { e.preventDefault(); setActivo((a) => Math.min(opciones.length - 1, a + 1)); }
-    if (e.key === 'ArrowUp') { e.preventDefault(); setActivo((a) => Math.max(-1, a - 1)); }
-    if (e.key === 'Escape') setAbierto(false);
+    if (evento.key === 'ArrowDown') { evento.preventDefault(); setActivo((a) => Math.min(opciones.length - 1, a + 1)); }
+    if (evento.key === 'ArrowUp') { evento.preventDefault(); setActivo((a) => Math.max(-1, a - 1)); }
+    if (evento.key === 'Escape') setAbierto(false);
   };
   // Nombre: enviar
   // Descripción: Busca al presionar Enter.
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Ver todos los resultados.
-  const enviar = (e) => {
-    e.preventDefault();
+  const enviar = (evento) => {
+    evento.preventDefault();
     if (activo >= 0 && opciones[activo]) return ir(opciones[activo].to);
     if (q) ir(`/buscar?q=${encodeURIComponent(q)}`);
   };
@@ -139,7 +139,7 @@ export default function BuscadorEnVivo({ Lupa }) {
       <form className="encabezado__buscador" role="search" onSubmit={enviar}>
         <label htmlFor="buscar-sitio" className="solo-lector">Buscar en el sitio</label>
         <input id="buscar-sitio" type="search" value={texto} autoComplete="off" placeholder="Busca: rubber base, pedicure, francesa…"
-               onChange={(e) => { setTexto(e.target.value); setAbierto(true); }} onFocus={() => setAbierto(true)} onKeyDown={teclas}
+               onChange={(evento) => { setTexto(evento.target.value); setAbierto(true); }} onFocus={() => setAbierto(true)} onKeyDown={teclas}
                role="combobox" aria-expanded={abierto} aria-controls="bv-lista" aria-autocomplete="list" aria-activedescendant={activo >= 0 && opciones[activo] ? `bv-${opciones[activo].clave}` : undefined} />
         <button type="submit" aria-label="Buscar"><Lupa /></button>
       </form>

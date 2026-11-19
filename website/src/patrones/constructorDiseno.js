@@ -23,7 +23,7 @@ export const OPCIONES = {
   forma: ['Almendra', 'Ovalada', 'Redonda', 'Cuadrada', 'Squoval', 'Coffin', 'Stiletto', 'Ballerina'],
   largo: ['Corto', 'Medio', 'Largo', 'Extra largo'],
   acabado: ['Brillante', 'Mate', 'Chrome', 'Glitter', 'Ojo de gato', 'Aurora', 'Perlado'],
-  decoracion: ['Ninguna', 'Francesa', 'Francesa de color', 'Baby boomer', 'Ombré', 'Mármol', 'Líneas', 'Puntos', 'Corazones', 'Flores a mano', 'Animal print', 'Foil dorado', 'Pedrería']
+  decoracion: ['Ninguna', 'Francesa', 'Francesa de color', 'Baby boomer', 'Ombré', 'Mármol', 'Líneas', 'Puntos', 'Corazones', 'Flores a mano', 'Animal print', 'Foil dorado', 'Pedrería', 'Aura']
 };
 
 // Para buscar fotos reales parecidas en la galería
@@ -36,7 +36,7 @@ export const PRECIO = {
   largo: { Corto: 0, Medio: 2000, Largo: 4000, 'Extra largo': 6000 },
   acabado: { Brillante: 0, Mate: 1000, Chrome: 3000, Glitter: 2000, 'Ojo de gato': 3000, Aurora: 3000, Perlado: 2000 },
   decoracion: { Ninguna: 0, Francesa: 2500, 'Francesa de color': 2500, 'Baby boomer': 3000, 'Ombré': 3000, 'Mármol': 3500, 'Líneas': 2000, Puntos: 1500,
-    Corazones: 2500, 'Flores a mano': 4500, 'Animal print': 3500, 'Foil dorado': 3000, 'Pedrería': 4000 },
+    Corazones: 2500, 'Flores a mano': 4500, 'Animal print': 3500, 'Foil dorado': 3000, 'Pedrería': 4000, Aura: 3000 },
   acento: 2500
 };
 
@@ -88,7 +88,8 @@ export function describir(d) {
   if (d.unas) {
     const nombres = [...new Set(d.unas.map((u) => esmalte(u.esmalte)?.nombre).filter(Boolean))];
     const extras = [...new Set(d.unas.flatMap((u) => [u.acabado !== 'Brillante' && u.acabado, u.decoracion !== 'Ninguna' && u.decoracion]).filter(Boolean))];
-    return [d.forma, d.largo.toLowerCase(), nombres.join(' + ').toLowerCase(), ...extras.map((x) => x.toLowerCase())].join(', ');
+    const pegados = (d.extras || []).map((x) => `${x.tipo.toLowerCase()} ${x.variante.toLowerCase()} (${x.dedos.length === 5 ? 'todas' : x.dedos.map((i) => ['pulgar', 'índice', 'medio', 'anular', 'meñique'][i]).join(', ')}, ${x.posicion.toLowerCase()})`);
+    return [d.forma, d.largo.toLowerCase(), nombres.join(' + ').toLowerCase(), ...extras.map((x) => x.toLowerCase()), ...pegados].join(', ');
   }
   const partes = [d.forma, d.largo.toLowerCase(), d.color.toLowerCase(), d.acabado.toLowerCase()];
   if (d.decoracion !== 'Ninguna') partes.push(d.decoracion.toLowerCase());

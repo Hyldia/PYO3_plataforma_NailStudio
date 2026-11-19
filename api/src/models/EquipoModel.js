@@ -11,7 +11,7 @@ export const EquipoModel = {
   // Objetivo: Llenar su agenda.
   citasDe: (especialistaId, desde, hasta) => getDb().prepare(`
     SELECT c.id, c.fecha, c.hora, c.estado, c.total, c.anticipo, c.notas, c.cliente_nombre, c.cliente_telefono,
-           s.nombre AS servicio, s.duracion_min, COALESCE(u.foto, CASE WHEN c.ejemplo = 1 THEN fc.foto END) AS foto_clienta, d.forma, d.largo, d.color, d.acabado, d.decoracion, f.archivo AS foto_ref,
+           s.nombre AS servicio, s.duracion_min, COALESCE(u.foto, CASE WHEN c.ejemplo = 1 THEN fc.foto END) AS foto_clienta, c.especialista_id, c.servicio_id, c.decision_inasistencia, c.monto_cobrado, d.forma, d.largo, d.color, d.acabado, d.decoracion, d.extras, f.archivo AS foto_ref,
            (SELECT COUNT(*) FROM citas c2 WHERE c2.cliente_telefono = c.cliente_telefono AND c2.especialista_id = c.especialista_id AND c2.estado = 'completada') AS visitas
     FROM citas c JOIN servicios s ON s.id = c.servicio_id LEFT JOIN usuarios u ON u.id = c.usuario_id
     LEFT JOIN fotos_clientas fc ON fc.telefono = c.cliente_telefono

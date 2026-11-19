@@ -4,6 +4,10 @@ import { ServicioModel } from './ServicioModel.js';
 import { ProductoModel } from './ProductoModel.js';
 
 const PRESSON = 'Press-on personalizado con tu diseño';
+// Palabras que pesan más al buscar fotos parecidas a un diseño
+const PALABRAS_DECORACION = ['perla', 'pedrer', 'cristal', 'sticker', 'glitter', 'cromo', 'aurora', 'flor', 'foil', 'charm', 'moño', 'mariposa', 'francesa', 'ombré', 'baby boomer',
+  'mármol', 'líneas', 'puntos', 'corazon', 'animal', 'aura', 'ojo de gato', 'terciopelo', 'perlado'];
+const PALABRAS_COLOR = ['rosa', 'roj', 'nude', 'blanc', 'negr', 'azul', 'verde', 'morad', 'lila', 'amarill', 'coral', 'naranja', 'café', 'dorad', 'platead', 'vino', 'metálic', 'neón', 'jelly'];
 
 export const CAMPOS_FILTRABLES = ['categoria', 'forma', 'color', 'acabado'];
 const ORDEN = {
@@ -71,6 +75,22 @@ export const FotoModel = {
   // Entrada: El número.
   // Salida: El diseño o nada.
   // Objetivo: Ver un diseño.
+  // Nombre: parecidas
+  // Descripción: Busca fotos reales que se parecen al diseño que arma la clienta.
+  // Entrada: Palabras del diseño (color, forma, técnica, decoraciones) y cuántas fotos.
+  // Salida: Las fotos ordenadas de la más parecida a la menos, con las palabras que coinciden.
+  // Objetivo: Mostrar cómo se ve el diseño en uñas de verdad.
+  parecidas(palabras = [], limite = 9) {
+    const claves = [...new Set(palabras.map((p) => String(p).trim().toLowerCase()).filter((p) => p.length > 2))].slice(0, 12);
+    const fotos = getDb().prepare("SELECT * FROM fotos WHERE categoria != 'Pedicure' OR categoria IS NULL").all();
+    const texto = (f) => `${f.titulo} ${f.descripcion || ''} ${f.etiquetas || ''} ${f.color || ''} ${f.forma || ''} ${f.acabado || ''}`.toLowerCase();
+    // Lo más importante para que la foto se parezca: las piedras y la técnica; después el color; al final la forma
+    const pesoDe = (palabra) => (PALABRAS_DECORACION.some((d) => palabra.startsWith(d)) ? 3 : PALABRAS_COLOR.some((c) => palabra.startsWith(c)) ? 2 : 1);
+    return fotos
+      .map((f) => { const t = texto(f); const coinciden = claves.filter((c) => t.includes(c)); return { ...f, coinciden, puntos: coinciden.reduce((suma, c) => suma + pesoDe(c), 0) }; })
+      .sort((a, b) => b.puntos - a.puntos || b.destacada - a.destacada || b.vistas - a.vistas)
+      .slice(0, Math.min(Number(limite) || 9, 24));
+  },
   buscarPorId: (id) => getDb().prepare('SELECT * FROM fotos WHERE id = ?').get(id),
 
   // Nombre: conPuesto

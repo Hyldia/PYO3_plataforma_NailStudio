@@ -141,7 +141,7 @@ export default function FinalizarCompra() {
     setErrores((x) => ({ ...x, nombre: e.nombre, telefono: e.telefono }));
     if (e.nombre || e.telefono) return;
     try { sesion.actualizarUsuario(await api.cuenta.actualizar({ nombre: cliente.nombre, telefono: cliente.telefono })); setEditando(false); }
-    catch (err) { setErrores((x) => ({ ...x, telefono: err.message })); }
+    catch (error) { setErrores((x) => ({ ...x, telefono: error.message })); }
   }
 
   // Nombre: validar
@@ -279,7 +279,7 @@ export default function FinalizarCompra() {
     <div className="campo">
       <label htmlFor={`fc-${id}`}>{etiqueta}</label>
       <input id={`fc-${id}`} value={cliente[id]} aria-invalid={Boolean(errores[id])} aria-describedby={errores[id] ? `fc-${id}-error` : undefined}
-             onChange={(e) => setCliente({ ...cliente, [id]: e.target.value })} {...props} />
+             onChange={(evento) => setCliente({ ...cliente, [id]: evento.target.value })} {...props} />
       {errores[id] && <p id={`fc-${id}-error`} className="error-campo">{errores[id]}</p>}
     </div>
   );
@@ -389,7 +389,7 @@ export default function FinalizarCompra() {
             {regalo.abierto && (
               <div className="campo">
                 <label htmlFor="fc-regalo">Mensaje para la tarjeta (lo escribimos a mano)</label>
-                <textarea id="fc-regalo" rows={3} maxLength={300} value={regalo.texto} onChange={(e) => setRegalo({ ...regalo, texto: e.target.value })} />
+                <textarea id="fc-regalo" rows={3} maxLength={300} value={regalo.texto} onChange={(evento) => setRegalo({ ...regalo, texto: evento.target.value })} />
               </div>
             )}
           </section>
@@ -415,7 +415,7 @@ export default function FinalizarCompra() {
                           <span className="logo-pago logo-pago--tarjeta" aria-hidden="true"><span /></span>
                           <input id="fc-numero" inputMode="numeric" autoComplete="cc-number" placeholder="Número de tarjeta" value={tarjeta.numero}
                                  aria-invalid={Boolean(errores.numero)} aria-describedby="fc-numero-error"
-                                 onChange={(e) => setTarjeta({ ...tarjeta, numero: formatoTarjeta(e.target.value) })} />
+                                 onChange={(evento) => setTarjeta({ ...tarjeta, numero: formatoTarjeta(evento.target.value) })} />
                           {marca(numero) && <span className="entrada-tarjeta__marca">{marca(numero)}</span>}
                           {luhn(numero) && <span className="entrada-tarjeta__ok" aria-label="Número válido">✓</span>}
                         </div>
@@ -425,11 +425,11 @@ export default function FinalizarCompra() {
                         <fieldset className="campo">
                           <legend>* Fecha de vencimiento</legend>
                           <div className="metodo__selects">
-                            <select aria-label="Mes" autoComplete="cc-exp-month" value={tarjeta.mes} aria-invalid={Boolean(errores.vence)} onChange={(e) => setTarjeta({ ...tarjeta, mes: e.target.value })}>
+                            <select aria-label="Mes" autoComplete="cc-exp-month" value={tarjeta.mes} aria-invalid={Boolean(errores.vence)} onChange={(evento) => setTarjeta({ ...tarjeta, mes: evento.target.value })}>
                               <option value="">Mes</option>
                               {Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{String(i + 1).padStart(2, '0')}</option>)}
                             </select>
-                            <select aria-label="Año" autoComplete="cc-exp-year" value={tarjeta.anio} aria-invalid={Boolean(errores.vence)} onChange={(e) => setTarjeta({ ...tarjeta, anio: e.target.value })}>
+                            <select aria-label="Año" autoComplete="cc-exp-year" value={tarjeta.anio} aria-invalid={Boolean(errores.vence)} onChange={(evento) => setTarjeta({ ...tarjeta, anio: evento.target.value })}>
                               <option value="">Año</option>
                               {Array.from({ length: 12 }, (_, i) => <option key={i} value={anioActual + i}>{anioActual + i}</option>)}
                             </select>
@@ -439,7 +439,7 @@ export default function FinalizarCompra() {
                         <div className="campo">
                           <label htmlFor="fc-cvv">* CVV</label>
                           <input id="fc-cvv" inputMode="numeric" autoComplete="cc-csc" placeholder="Código de 3 a 4 dígitos" maxLength={4} value={tarjeta.cvv}
-                                 aria-invalid={Boolean(errores.cvv)} onChange={(e) => setTarjeta({ ...tarjeta, cvv: soloNumeros(e.target.value) })} />
+                                 aria-invalid={Boolean(errores.cvv)} onChange={(evento) => setTarjeta({ ...tarjeta, cvv: soloNumeros(evento.target.value) })} />
                           {errores.cvv && <p className="error-campo"><Icono nombre="alerta" tam={15} /> {errores.cvv}</p>}
                         </div>
                       </div>
@@ -456,7 +456,7 @@ export default function FinalizarCompra() {
                       <div className="campo">
                         <label htmlFor="fc-comprobante">* Número de comprobante</label>
                         <input id="fc-comprobante" inputMode="numeric" value={comprobante} aria-invalid={Boolean(errores.comprobante)}
-                               onChange={(e) => setComprobante(soloNumeros(e.target.value))} />
+                               onChange={(evento) => setComprobante(soloNumeros(evento.target.value))} />
                         {errores.comprobante && <p className="error-campo"><Icono nombre="alerta" tam={15} /> {errores.comprobante}</p>}
                       </div>
                     </div>
@@ -474,10 +474,10 @@ export default function FinalizarCompra() {
 
         <aside className="resumen-pedido compra__resumen" aria-labelledby="t-resumen">
           <h2 id="t-resumen">Resumen del pedido</h2>
-          <form className="cupon-fila" onSubmit={(e) => { e.preventDefault(); aplicarCupon(); }}>
+          <form className="cupon-fila" onSubmit={(evento) => { evento.preventDefault(); aplicarCupon(); }}>
             <label htmlFor="fc-cupon" className="solo-lector">Código del cupón</label>
             <input id="fc-cupon" placeholder="Ingresa el código del cupón" value={cuponTexto} aria-invalid={Boolean(errores.cupon)}
-                   onChange={(e) => setCuponTexto(e.target.value.toUpperCase())} />
+                   onChange={(evento) => setCuponTexto(evento.target.value.toUpperCase())} />
             <button type="submit" className="chip-filtro chip-filtro--borde">Aplicar</button>
           </form>
           {errores.cupon && <p className="error-campo" role="alert">{errores.cupon}</p>}

@@ -6,6 +6,7 @@ import { cargarResenasEjemplo } from './resenasEjemplo.js';
 import { cargarComentariosEjemplo } from './comentariosEjemplo.js';
 import { cargarAgendaEjemplo } from './agendaEjemplo.js';
 import { cargarHistorialEjemplo } from './historialEjemplo.js';
+import { enriquecerFotos } from './enriquecerFotos.js';
 import { cargarEquipoEjemplo, cargarSolicitudesEjemplo } from './equipoEjemplo.js';
 import { cargarSeccionHombres } from './seccionHombres.js';
 import { ESPECIALISTAS, VERSION_ESPECIALISTAS } from './especialistasEjemplo.js';
@@ -35,7 +36,8 @@ export function seed({ force = false } = {}) {
     const pagos = cargarEquipoEjemplo(db);
     const solicitudes = cargarSolicitudesEjemplo(db);
     const hombres = cargarSeccionHombres(db);
-    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda || historial || pagos || solicitudes || hombres;
+    const descritas = enriquecerFotos(db) > 0;
+    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda || historial || pagos || solicitudes || hombres || descritas;
   }
 
   db.exec(`
@@ -59,6 +61,7 @@ export function seed({ force = false } = {}) {
   cargarEquipoEjemplo(db);
   cargarSolicitudesEjemplo(db);
   cargarSeccionHombres(db);
+  enriquecerFotos(db);
   db.exec('UPDATE citas SET ejemplo = 1');
   return true;
 }

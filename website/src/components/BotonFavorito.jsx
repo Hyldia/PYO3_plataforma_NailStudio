@@ -16,8 +16,8 @@ export default function BotonFavorito({ tipo, datos, nombre, clase = '' }) {
   // Entrada: El clic.
   // Salida: Nada.
   // Objetivo: Marcar favoritos.
-  const tocar = (e) => {
-    e.preventDefault(); e.stopPropagation();
+  const tocar = (evento) => {
+    evento.preventDefault(); evento.stopPropagation();
     if (!activo) setPop((n) => n + 1);
     fav.alternar(tipo, datos);
   };

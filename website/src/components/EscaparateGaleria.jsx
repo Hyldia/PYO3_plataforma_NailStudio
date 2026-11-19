@@ -17,7 +17,7 @@ export function HistoriasCategorias({ opciones, activas, onElegir }) {
   const [portadas, setPortadas] = useState({});
   useEffect(() => {
     if (!opciones.length) return;
-    Promise.all(opciones.map((o) => api.fotos({ categoria: [o.valor], orden: 'populares', limite: 1 }).then((r) => [o.valor, r.fotos[0]?.archivo]).catch(() => [o.valor, null])))
+    Promise.all(opciones.map((o) => api.fotos({ categoria: [o.valor], orden: 'populares', limite: 1 }).then((respuesta) => [o.valor, respuesta.fotos[0]?.archivo]).catch(() => [o.valor, null])))
       .then((p) => setPortadas(Object.fromEntries(p)));
   }, [opciones.length]);
   if (!opciones.length) return null;
@@ -58,7 +58,7 @@ export default function EscaparateGaleria({ total }) {
   const resumenes = [...useResumenes('foto').values()];
   const nOpiniones = resumenes.reduce((s, r) => s + r.total, 0);
   const promedio = nOpiniones ? (resumenes.reduce((s, r) => s + r.promedio * r.total, 0) / nOpiniones).toFixed(1) : null;
-  useEffect(() => { api.fotos({ orden: 'populares', limite: 14 }).then((r) => setTop(r.fotos)).catch(() => setTop([])); }, []);
+  useEffect(() => { api.fotos({ orden: 'populares', limite: 14 }).then((respuesta) => setTop(respuesta.fotos)).catch(() => setTop([])); }, []);
   if (top.length < 5) return <div className="inspira inspira--cargando" aria-hidden="true" />;
   const vistas = top.reduce((s, f) => s + (f.vistas || 0), 0);
   const cinta = top.slice(0, 6);

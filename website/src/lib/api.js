@@ -182,6 +182,12 @@ export const api = {
     // Salida: Pedidos y citas.
     // Objetivo: Ver compras.
     historial: () => pedir('/cuenta/historial'),
+    // Nombre: cancelarMiCita
+    // Descripción: La clienta cancela su cita (solo hasta 2 horas antes).
+    // Entrada: El número de cita.
+    // Salida: La cita cancelada.
+    // Objetivo: Liberar el espacio a tiempo.
+    cancelarMiCita: (id) => pedir(`/cuenta/citas/${id}/cancelar`, { method: 'POST', body: {} }),
     // Nombre: crearDireccion
     // Descripción: Crea una dirección.
     // Entrada: Los datos.
@@ -237,6 +243,12 @@ export const api = {
   // Salida: Las opciones.
   // Objetivo: Llenar filtros.
   filtrosFotos: () => pedir('/fotos/filtros'),
+  // Nombre: fotosParecidas
+  // Descripción: Pide fotos reales parecidas a un diseño.
+  // Entrada: Las palabras del diseño.
+  // Salida: La lista de fotos.
+  // Objetivo: Mostrar ejemplos reales en el diseñador.
+  fotosParecidas: (palabras, limite = 9) => pedir(`/fotos/parecidas${qs({ palabras: palabras.join(','), limite })}`),
   // Nombre: foto
   // Descripción: Pide un diseño.
   // Entrada: El número.
@@ -395,6 +407,12 @@ export const api = {
     // Salida: La cita y el aviso.
     // Objetivo: Cancelar.
     cancelarCita: (id, d) => pedir(`/equipo/citas/${id}/cancelar`, { method: 'POST', body: d, equipo: true }),
+    // Nombre: noAsistio
+    // Descripción: La especialista registra que su clienta no llegó (reprogramar o cobrar).
+    // Entrada: El número de cita y la decisión.
+    // Salida: La cita y el mensaje para la clienta.
+    // Objetivo: Decidir sobre citas perdidas.
+    noAsistio: (id, datos) => pedir(`/equipo/citas/${id}/no-asistio`, { method: 'POST', body: datos, equipo: true }),
     // Nombre: pedirLibre
     // Descripción: Pide un día libre.
     // Entrada: Fechas y motivo.
@@ -632,6 +650,18 @@ export const api = {
     // Salida: La cita y el aviso.
     // Objetivo: Cancelar.
     cancelarCita: (id, datos) => pedir(`/admin/citas/${id}/cancelar`, { method: 'POST', body: datos, admin: true }),
+    // Nombre: noAsistio
+    // Descripción: La dueña registra que la clienta no llegó (reprogramar o cobrar).
+    // Entrada: El número de cita y la decisión.
+    // Salida: La cita y el mensaje para la clienta.
+    // Objetivo: Decidir sobre citas perdidas.
+    noAsistio: (id, datos) => pedir(`/admin/citas/${id}/no-asistio`, { method: 'POST', body: datos, admin: true }),
+    // Nombre: cierreDelDia
+    // Descripción: Pide el reporte de cierre de un día.
+    // Entrada: La fecha (opcional; hoy si no se da).
+    // Salida: Ingresos, pago al equipo, ganancia, pérdidas y citas perdidas.
+    // Objetivo: El reporte de fin de día.
+    cierreDelDia: (fecha) => pedir(`/admin/reportes/cierre${qs({ fecha })}`, { admin: true }),
     // Nombre: emergencia
     // Descripción: Cancela las citas de un día.
     // Entrada: Fecha y motivo.

@@ -57,3 +57,44 @@ html.a11y-pausa .grafico__barra { animation: none; }
 .grafico__leyenda i, .grafico__tip-parte i, .grafico__punto { display: inline-block; width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
 .grafico__tip-parte { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; }
 .grafico__punto { margin-right: 8px; vertical-align: middle; }
+
+/* Cierre del día */
+.aviso-cierre { margin: 0 0 16px; padding: 12px 16px; border-radius: 14px; background: #FFF6E5; border: 1px solid #F2D49A; color: #6B4A0E; }
+.cierre__acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.cierre__dia { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0 18px; }
+.cierre__dia input { padding: 8px 12px; border-radius: 12px; border: 1px solid var(--linea); font: inherit; background: var(--blanco); }
+.cierre__dia strong { font-size: 1.05rem; }
+.cierre__flecha { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--linea); background: var(--blanco); font-size: 1.3rem; cursor: pointer; }
+.cierre__flecha:disabled { opacity: 0.4; cursor: default; }
+.cierre__cifras { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.cierre__cifra { display: flex; flex-direction: column; gap: 2px; padding: 16px 18px; border-radius: 16px; background: var(--papel); border: 1px solid var(--linea); border-top: 4px solid var(--apagado); }
+.cierre__cifra span { font-weight: 700; color: var(--gris); font-size: 0.88rem; }
+.cierre__cifra strong { font-family: var(--serif); font-size: 1.6rem; color: var(--tinta); }
+.cierre__cifra small { color: var(--gris); font-size: 0.8rem; }
+.cierre__cifra--ingreso { border-top-color: var(--serie-2); }
+.cierre__cifra--ganancia { border-top-color: var(--estado-bien); }
+.cierre__cifra--ganancia strong { color: var(--estado-bien); }
+.cierre__cifra--perdida { border-top-color: var(--estado-mal); }
+.cierre__cifra--perdida strong { color: var(--estado-mal); }
+.cierre__conteo { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.cierre__conteo li { display: flex; flex-direction: column; align-items: center; padding: 10px; border-radius: 14px; background: var(--superficie); border: 1px solid var(--rubor); text-align: center; }
+.cierre__conteo strong { font-size: 1.4rem; }
+.cierre__conteo span { font-size: 0.8rem; color: var(--gris); }
+.cierre__dos { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.cierre__caja { padding: 16px 18px; border-radius: 16px; background: var(--papel); border: 1px solid var(--linea); min-width: 0; }
+.cierre__caja h3 { margin: 0 0 10px; font-size: 1.05rem; }
+.cierre__tabla { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.cierre__tabla th, .cierre__tabla td { padding: 8px 6px; border-bottom: 1px solid var(--rubor); text-align: right; white-space: nowrap; }
+.cierre__tabla th:first-child, .cierre__tabla thead th:first-child { text-align: left; }
+.cierre__tabla thead th { color: var(--apagado); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.cierre__tabla small { color: var(--apagado); font-weight: 600; }
+.cierre__perdidas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cierre__perdida { display: grid; grid-template-columns: 72px 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--blanco); border-left: 4px solid var(--estado-mal); }
+.cierre__perdida--no_asistio { border-left-color: var(--estado-aviso); }
+.cierre__perdida small { display: block; color: var(--gris); }
+.cierre__hora { font-weight: 800; font-size: 0.85rem; }
+.cierre__valor { font-weight: 800; }
+@media (max-width: 900px) { .cierre__cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cierre__dos { grid-template-columns: 1fr; } .cierre__conteo { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .cierre__tabla { display: block; overflow-x: auto; } .cierre__perdida { grid-template-columns: 1fr auto; } .cierre__hora { grid-column: 1 / -1; } }
+@media print { .panel-menu, .encabezado, .pie, .cierre__acciones, .cierre__flecha, .aviso-cierre, .admin__arriba { display: none !important; } }
+.cierre__nota { margin: -4px 0 14px; }

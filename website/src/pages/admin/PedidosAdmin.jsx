@@ -55,17 +55,17 @@ function VentanaCompletar({ pedido, onCerrar, onListo }) {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Completar el pedido.
-  const guardar = async (e) => {
-    e.preventDefault();
-    try { await api.admin.estadoPedido(pedido.id, { estado: 'completado', retiradoPor, notas }); onListo(); onCerrar(); } catch (err) { setError(err.message); }
+  const guardar = async (evento) => {
+    evento.preventDefault();
+    try { await api.admin.estadoPedido(pedido.id, { estado: 'completado', retiradoPor, notas }); onListo(); onCerrar(); } catch (error) { setError(error.message); }
   };
   return (
     <Modal titulo={`Entregar el pedido #${pedido.id}`} onCerrar={onCerrar}>
       <form className="form-cancelar" onSubmit={guardar}>
         <p className="tenue">{pedido.detalle}</p>
         <p>Total: <strong>{dinero(pedido.total)}</strong> · {pedido.metodo_pago}</p>
-        <div className="campo"><label htmlFor="pc-quien">¿Quién lo retiró?</label><input id="pc-quien" value={retiradoPor} onChange={(e) => setRetiradoPor(e.target.value)} required /></div>
-        <div className="campo"><label htmlFor="pc-notas">Nota (opcional)</label><input id="pc-notas" value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Ej.: pagó en efectivo" /></div>
+        <div className="campo"><label htmlFor="pc-quien">¿Quién lo retiró?</label><input id="pc-quien" value={retiradoPor} onChange={(evento) => setRetiradoPor(evento.target.value)} required /></div>
+        <div className="campo"><label htmlFor="pc-notas">Nota (opcional)</label><input id="pc-notas" value={notas} onChange={(evento) => setNotas(evento.target.value)} placeholder="Ej.: pagó en efectivo" /></div>
         {error && <p role="alert" className="error">{error}</p>}
         <div className="botones"><button type="submit" className="boton">Marcar como retirado</button><button type="button" className="boton boton--contorno" onClick={onCerrar}>Volver</button></div>
       </form>
@@ -107,7 +107,7 @@ export default function PedidosAdmin() {
   // Entrada: El nombre del filtro.
   // Salida: Una función para el campo.
   // Objetivo: Filtrar pedidos.
-  const set = (k) => (e) => { setFiltros({ ...filtros, [k]: e.target.value }); setPagina(1); if (k === 'desde' || k === 'hasta') setRapido(''); };
+  const set = (k) => (evento) => { setFiltros({ ...filtros, [k]: evento.target.value }); setPagina(1); if (k === 'desde' || k === 'hasta') setRapido(''); };
   // Nombre: elegirRapido
   // Descripción: Elige un rango rápido.
   // Entrada: El tipo.
@@ -138,14 +138,14 @@ export default function PedidosAdmin() {
       const r = await api.admin.estadoPedido(p.id, { estado });
       cargar();
       if (r.mensaje) setVentana({ tipo: 'mensaje', pedido: r.pedido, mensaje: r.mensaje });
-    } catch (e) { setError(e.message); }
+    } catch (error) { setError(error.message); }
   }
   // Nombre: descargar
   // Descripción: Descarga los pedidos.
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Guardarlos en Excel.
-  const descargar = async () => { setBajando(true); try { await api.admin.descargarExcelPedidos(filtros); } catch (e) { setError(e.message); } setBajando(false); };
+  const descargar = async () => { setBajando(true); try { await api.admin.descargarExcelPedidos(filtros); } catch (error) { setError(error.message); } setBajando(false); };
   const hayFiltros = Object.values(filtros).some(Boolean);
 
   return (
@@ -171,7 +171,7 @@ export default function PedidosAdmin() {
             <button key={k} type="button" className={`chip-filtro ${rapido === k && (k || !filtros.desde) ? 'chip-filtro--activo' : ''}`} onClick={() => elegirRapido(k)}>{t}</button>
           ))}
         </div>
-        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar</span><input type="search" value={texto} onChange={(e) => { setTexto(e.target.value); setPagina(1); }} placeholder="Nombre, teléfono o N.º de pedido" /></label>
+        <label className="filtros-admin__buscar"><span className="solo-lector">Buscar</span><input type="search" value={texto} onChange={(evento) => { setTexto(evento.target.value); setPagina(1); }} placeholder="Nombre, teléfono o N.º de pedido" /></label>
         <label className="filtros-admin__fecha"><span>Desde</span><input type="date" value={filtros.desde} onChange={set('desde')} /></label>
         <label className="filtros-admin__fecha"><span>Hasta</span><input type="date" value={filtros.hasta} onChange={set('hasta')} /></label>
         <label><span className="solo-lector">Estado</span><select value={filtros.estado} onChange={set('estado')}><option value="">Todos los estados</option>{Object.entries(ESTADOS).map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></label>

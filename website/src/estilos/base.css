@@ -147,8 +147,6 @@ main { outline: none; min-height: 60vh; }
 
 .visita { display: grid !important; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: start !important; }
 .visita > div { display: flex; flex-direction: column; gap: 20px; align-items: flex-start; }
-.mapa { width: 100%; min-height: 340px; border: 0; border-radius: 4px; }
-.mapa--ancho { min-height: 380px; }
 @media (max-width: 860px) { .visita { grid-template-columns: 1fr; } }
 
 .horario { margin: 0; display: grid; gap: 6px; }
@@ -530,3 +528,13 @@ main { outline: none; min-height: 60vh; }
 .ayuda-form__enviar { display: inline-flex; justify-content: center; align-items: center; gap: 8px; background: #1F9D57; }
 .ayuda-form__enviar:hover { background: #17834A; }
 @media (max-width: 900px) { .ayuda-tarjetas, .ayuda-cuerpo { grid-template-columns: 1fr; } .ayuda-portada { grid-template-columns: 1fr; } .ayuda-estado { justify-self: start; order: -1; } }
+.historial__cancelar { display: block; margin-top: 4px; font-size: 0.85rem; }
+.historial__aviso { grid-template-columns: 1fr !important; color: var(--vino); font-weight: 700; }
+
+/* Portada de Ayuda más pequeña: menos alto, título y botones más compactos */
+.vitrina.ayuda-portada { min-height: 0; padding: clamp(20px, 2.6vw, 32px) clamp(20px, 3vw, 40px); gap: 12px; }
+.vitrina.ayuda-portada h1 { font-size: clamp(1.6rem, 2.6vw, 2.2rem); }
+.vitrina.ayuda-portada .vitrina__texto > p:not(.vitrina__ante) { font-size: 0.95rem; margin: 0; }
+.vitrina.ayuda-portada .vitrina__texto { gap: 10px; }
+.vitrina.ayuda-portada .ayuda-portada__botones .vitrina__boton, .vitrina.ayuda-portada .ayuda-portada__secundario { min-height: 42px; padding: 0 18px; font-size: 0.92rem; }
+.vitrina.ayuda-portada .vitrina__burbujas { display: none; }

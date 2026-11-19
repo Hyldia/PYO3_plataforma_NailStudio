@@ -9,6 +9,7 @@ r.use(soloEquipo);
 r.get('/yo', portal.yo);
 r.post('/salir', portal.salir);
 r.post('/citas/:id/cancelar', portal.cancelar);
+r.post('/citas/:id/no-asistio', portal.noAsistio);
 r.post('/solicitudes', portal.pedirLibre);
 r.delete('/solicitudes/:id', portal.quitarSolicitud);
 export default r;

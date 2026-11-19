@@ -71,7 +71,7 @@ export default function CuponSorpresa() {
 
   useEffect(() => {
     api.cupones().then(setCupones).catch(() => {});
-    api.servicios().then((r) => setCombos(new Set((r.servicios || r).filter((s) => s.es_combo).map((s) => s.id)))).catch(() => {});
+    api.servicios().then((respuesta) => setCombos(new Set((respuesta.servicios || respuesta).filter((s) => s.es_combo).map((s) => s.id)))).catch(() => {});
   }, []);
 
   // Muestra un cupón si se puede (no en el panel, no encima de otra ventana, máximo dos por visita)

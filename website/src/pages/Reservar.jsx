@@ -215,9 +215,9 @@ export default function Reservar() {
       // Objetivo: Guardarla en el carrito.
       const base = (s, e, hora, extra) => ({
         id: `cita-${s.id}`, nombre: s.nombre, precio: precio(s) + (extra.recargo || 0), precio_anterior: s.precio_oferta != null ? s.precio + (extra.recargo || 0) : null,
-        imagen: extra.imagen || s.imagen, servicioId: s.id, especialistaId: e.id, especialistaNombre: e.nombre,
+        servicioId: s.id, especialistaId: e.id, especialistaNombre: e.nombre,
         fecha: sel.fecha, fechaTexto: CORTA.format(deISO(sel.fecha)), hora, duracion_min: s.duracion_min, ...extra,
-        imagen: extra.imagen || s.imagen
+        imagen: extra.imagen || s.imagen // va al final para que la foto del servicio no se pierda si extra no trae foto
       });
       const citas = [base(servicio, especialista, sel.hora, {
         recargo, disenoId, fotoRefId: reserva.fotoRef?.id || null, disenoTexto, imagen: reserva.fotoRef?.archivo, notas
@@ -228,8 +228,8 @@ export default function Reservar() {
       carrito.agregarCitas(citas);
       reiniciar();
       irA('/carrito');
-    } catch (e) {
-      setError(e.message);
+    } catch (error) {
+      setError(error.message);
       setAgregando(false);
     }
   }
@@ -466,7 +466,7 @@ export default function Reservar() {
                   </div>
                   <div className="campo">
                     <label htmlFor="r-notas">Notas para tu especialista <span className="tenue">(opcional)</span></label>
-                    <textarea id="r-notas" rows="2" maxLength="500" value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Alergias, una uña quebrada, o cualquier detalle que debamos saber." />
+                    <textarea id="r-notas" rows="2" maxLength="500" value={notas} onChange={(evento) => setNotas(evento.target.value)} placeholder="Alergias, una uña quebrada, o cualquier detalle que debamos saber." />
                   </div>
                 </section>
 
@@ -485,7 +485,7 @@ export default function Reservar() {
                       </div>
                       <div className="campo">
                         <label htmlFor="a-nombre">Nombre de tu acompañante</label>
-                        <input id="a-nombre" value={acompana.nombre} maxLength={60} onChange={(e) => setAcompana({ ...acompana, nombre: e.target.value })} placeholder="Por ejemplo, Ana" />
+                        <input id="a-nombre" value={acompana.nombre} maxLength={60} onChange={(evento) => setAcompana({ ...acompana, nombre: evento.target.value })} placeholder="Por ejemplo, Ana" />
                       </div>
                       <fieldset className="campo">
                         <legend>Su servicio</legend>
@@ -587,7 +587,7 @@ export default function Reservar() {
               <button type="submit" form="form-reserva" className="resumen-pedido__boton resumen-cita__boton" disabled={!puedeSeguir || agregando}>
                 <strong>{textoBoton}</strong>
               </button>
-              <p className="tenue resumen-cita__nota">Pagas en el carrito, junto con tus productos.</p>
+              <p className="tenue resumen-cita__nota">Pagas en el carrito, junto con tus productos. Puedes cancelar o cambiar tu cita hasta 2 horas antes.</p>
             </div>
           </aside>
         </div>

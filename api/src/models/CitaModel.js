@@ -6,6 +6,15 @@ import { EspecialistaModel } from './EspecialistaModel.js';
 
 export const HORARIOS = ['09:00', '10:00', '11:00', '12:00', '13:30', '14:30', '15:30', '16:30', '17:30'];
 export const PORCENTAJE_ADELANTO = 0.3;
+// Las clientas (y las especialistas) solo pueden cancelar hasta 2 horas antes de la cita
+export const HORAS_MINIMAS_PARA_CANCELAR = 2;
+
+// Nombre: minutosParaLaCita
+// Descripción: Calcula cuántos minutos faltan para una cita (hora de Costa Rica).
+// Entrada: La fecha (AAAA-MM-DD) y la hora (HH:MM) de la cita.
+// Salida: Los minutos que faltan (negativo si ya pasó).
+// Objetivo: Aplicar la regla de cancelar con 2 horas de anticipación.
+export const minutosParaLaCita = (fecha, hora) => (new Date(`${fecha}T${hora}:00-06:00`).getTime() - Date.now()) / 60000;
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
 const SELECT = `
@@ -192,6 +201,17 @@ export const CitaModel = {
   // Entrada: La cita y el estado.
   // Salida: La cita actualizada.
   // Objetivo: Seguir el avance de la cita.
+  // Nombre: registrarInasistencia
+  // Descripción: Guarda que la clienta no llegó y qué se decidió.
+  // Entrada: El número de cita y { decision, montoCobrado, reprogramadaA, decididoPor }.
+  // Salida: La cita actualizada.
+  // Objetivo: Llevar el control de citas perdidas y cobros.
+  registrarInasistencia(id, { decision, montoCobrado = 0, reprogramadaA = null, decididoPor = '' }) {
+    getDb().prepare(`UPDATE citas SET estado = 'no_asistio', decision_inasistencia = ?, monto_cobrado = ?, reprogramada_a = ?, decidido_por = ? WHERE id = ?`)
+      .run(decision, montoCobrado, reprogramadaA, decididoPor, id);
+    return this.buscarPorId(id);
+  },
+
   cambiarEstado(id, estado) {
     getDb().prepare('UPDATE citas SET estado = ? WHERE id = ?').run(estado, id);
     return this.buscarPorId(id);

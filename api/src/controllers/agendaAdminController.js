@@ -4,6 +4,7 @@ import { CitaModel } from '../models/CitaModel.js';
 import { MensajeModel } from '../models/MensajeModel.js';
 import { TIPOS_MENSAJE } from '../patrones/plantillaMensajes.js';
 import { cancelarCita, mensajeDeCita, revisarCancelacion } from '../servicios/citaServicio.js';
+import { registrarNoAsistio } from '../servicios/inasistenciaServicio.js';
 
 const MES = /^\d{4}-\d{2}$/;
 
@@ -42,6 +43,15 @@ export const agendaAdminController = {
   // Entrada: La fecha y el motivo.
   // Salida: Cuántas citas se cancelaron y sus avisos.
   // Objetivo: Avisar rápido a todas las clientas del día.
+  // Nombre: noAsistio
+  // Descripción: La dueña marca que la clienta no llegó y decide si se reprograma o se cobra.
+  // Entrada: El número de cita y { decision, fecha, hora, monto }.
+  // Salida: La cita, la nueva (si se reprogramó) y el mensaje de WhatsApp.
+  // Objetivo: Controlar las citas perdidas.
+  noAsistio(req, res) {
+    try { res.json(registrarNoAsistio(CitaModel.buscarPorId(req.params.id), { ...req.body, quien: 'la dueña' })); } catch (e) { res.status(e.codigo || 400).json({ error: e.message }); }
+  },
+
   emergencia(req, res) {
     const { fecha, especialistaId, motivo, tipo = 'cancelacion', nota } = req.body;
     if (!CitaModel.esFechaValida(fecha)) return res.status(400).json({ error: 'Elige el día.' });

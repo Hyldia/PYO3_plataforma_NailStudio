@@ -273,3 +273,5 @@ html.a11y-oscuro .libres-cal__dia--pendiente { background: #3A2F12; border-color
 .portal-dias { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); overflow: visible; }
 .portal-dias .portal-dia { width: 100%; }
 @media (max-width: 1100px) { .portal-dias { display: flex; overflow-x: auto; } .portal-dias .portal-dia { width: 82px; } }
+.portal-cita__nota-corta { font-size: 0.78rem; color: var(--apagado); max-width: 160px; text-align: right; }
+.portal-cita__estado--no_asistio { background: #FDECEC; color: var(--error); }

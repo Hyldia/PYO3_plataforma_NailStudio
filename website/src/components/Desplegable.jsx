@@ -20,13 +20,13 @@ export default function Desplegable({ etiqueta, activo = false, children, alinea
     // Entrada: El clic.
     // Salida: Nada.
     // Objetivo: No estorbar.
-    const fuera = (e) => { if (!caja.current?.contains(e.target)) setAbierto(false); };
+    const fuera = (evento) => { if (!caja.current?.contains(evento.target)) setAbierto(false); };
     // Nombre: tecla
     // Descripción: Cierra el menú con Escape.
     // Entrada: La tecla.
     // Salida: Nada.
     // Objetivo: Usar con teclado.
-    const tecla = (e) => { if (e.key === 'Escape') { setAbierto(false); boton.current?.focus(); } };
+    const tecla = (evento) => { if (evento.key === 'Escape') { setAbierto(false); boton.current?.focus(); } };
     document.addEventListener('mousedown', fuera);
     document.addEventListener('keydown', tecla);
     return () => { document.removeEventListener('mousedown', fuera); document.removeEventListener('keydown', tecla); };

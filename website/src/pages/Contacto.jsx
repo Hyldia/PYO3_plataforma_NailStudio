@@ -17,7 +17,8 @@ const ICONOS = {
 
 const PREGUNTAS = [
   ['¿Cómo reservo una cita?', <>Entra a <Link to="/reservar" className="enlace">Reservar</Link>, elige el servicio, la especialista, el día y la hora. Te llega la confirmación al instante.</>],
-  ['¿Puedo cambiar o cancelar mi cita?', 'Sí. Escríbenos por WhatsApp con al menos 24 horas de anticipación y te ayudamos a moverla a otro día.'],
+  ['¿Puedo cambiar o cancelar mi cita?', 'Sí, hasta 2 horas antes de tu cita: desde «Mi cuenta» o por WhatsApp al 8532 6297. Tu adelanto queda a tu favor para la nueva cita.'],
+  ['¿Qué pasa si no llego a mi cita?', 'Te escribimos por WhatsApp. Según el caso, la dueña o tu especialista te la reprograma o se cobra la cita (normalmente el adelanto).'],
   ['¿Qué formas de pago aceptan?', 'SINPE Móvil, tarjeta de débito o crédito, y efectivo en el salón.'],
   ['¿Cómo recojo lo que compro en la tienda?', 'Los productos se retiran gratis en el salón. Te avisamos cuando tu pedido esté listo.'],
   ['¿Qué es un press-on?', 'Son uñas hechas a tu medida con el diseño que elijas, listas para ponértelas en casa. Las encuentras en la Galería.'],
@@ -55,8 +56,8 @@ export default function Contacto() {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Escribir al salón.
-  const enviar = (e) => {
-    e.preventDefault();
+  const enviar = (evento) => {
+    evento.preventDefault();
     window.open(enlaceWhatsApp(`Hola, soy ${msj.nombre}. Les escribo por: ${msj.tema}. ${msj.mensaje}`), '_blank', 'noopener');
   };
   const mapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SALON.direccion)}`;
@@ -92,9 +93,10 @@ export default function Contacto() {
         </li>
         <li className="ayuda-tarjeta">
           <span className="ayuda-tarjeta__icono">{ICONOS.telefono}</span>
-          <h2>Teléfono y correo</h2>
+          <h2>Teléfono y WhatsApp</h2>
           <p><a className="enlace" href={`tel:${SALON.telefono.replace(/\s/g, '')}`}>{SALON.telefono}</a></p>
-          <p><a className="enlace" href={`mailto:${SALON.correo}`}>{SALON.correo}</a></p>
+          <p><a className="enlace" href={enlaceWhatsApp('Hola, quisiera información.')} target="_blank" rel="noreferrer">Escríbenos por WhatsApp</a></p>
+          <p className="tenue">Recibimos mensajes a cualquier hora; te respondemos en horario del salón.</p>
         </li>
       </ul>
 
@@ -120,12 +122,11 @@ export default function Contacto() {
               </label>
             ))}
           </fieldset>
-          <div className="campo"><label htmlFor="c-nombre">Tu nombre</label><input id="c-nombre" required autoComplete="name" placeholder="Ej.: María" value={msj.nombre} onChange={(e) => setMsj({ ...msj, nombre: e.target.value })} /></div>
-          <div className="campo"><label htmlFor="c-msj">Mensaje</label><textarea id="c-msj" rows="4" required placeholder="Cuéntanos en qué te ayudamos…" value={msj.mensaje} onChange={(e) => setMsj({ ...msj, mensaje: e.target.value })} /></div>
+          <div className="campo"><label htmlFor="c-nombre">Tu nombre</label><input id="c-nombre" required autoComplete="name" placeholder="Ej.: María" value={msj.nombre} onChange={(evento) => setMsj({ ...msj, nombre: evento.target.value })} /></div>
+          <div className="campo"><label htmlFor="c-msj">Mensaje</label><textarea id="c-msj" rows="4" required placeholder="Cuéntanos en qué te ayudamos…" value={msj.mensaje} onChange={(evento) => setMsj({ ...msj, mensaje: evento.target.value })} /></div>
           <button type="submit" className="boton ayuda-form__enviar">{ICONOS.whatsapp} Enviar por WhatsApp</button>
         </form>
       </div>
-      {SALON.mapaEmbed && <iframe className="mapa mapa--ancho" title={`Mapa de ubicación de ${SALON.nombre}`} src={SALON.mapaEmbed} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />}
     </div>
   );
 }
