@@ -13,7 +13,6 @@ import Decoracion from '../components/Decoracion.jsx';
 const CATEGORIAS = [
   { nombre: 'Esmaltes y geles', tipo: 'frasco-gel', color: '#E0245E', to: '/tienda?categoria=Esmaltes y geles' },
   { nombre: 'Rubber base', tipo: 'frasco-gel', color: '#F2C8CF', to: '/tienda?q=rubber', clave: 'rubber' },
-  { nombre: 'Lámparas', tipo: 'lampara', color: '#fff', to: '/tienda?categoria=Equipos' },
   { nombre: 'Herramientas', tipo: 'alicate', color: '#C0C4C8', to: '/tienda?categoria=Herramientas' },
   { nombre: 'Limas', tipo: 'lima', color: '#1E1A1C', to: '/tienda?categoria=Limas y pulidores' },
   { nombre: 'Cuidado de manos', tipo: 'crema', color: '#F2D4CB', to: '/tienda?categoria=Cuidado de manos' },
@@ -21,8 +20,6 @@ const CATEGORIAS = [
   { nombre: 'Manicure pro', tipo: 'caja', color: '#D9B79A', to: '/tienda?categoria=Manicure profesional' },
   { nombre: 'Aceites', tipo: 'gotero', color: '#E8B65C', to: '/tienda?q=aceite', clave: 'aceite' },
   { nombre: 'Decoración', tipo: 'tarro', color: '#D4AF37', to: '/tienda?categoria=Decoración' },
-  { nombre: 'Press-on', tipo: 'tips', color: '#E9A3BC', to: '/tienda?categoria=Tips y press-on' },
-  { nombre: 'Kits', tipo: 'kit', color: '#8C1D4B', to: '/tienda?categoria=Kits' }
 ];
 
 const Flecha = () => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>;
@@ -55,8 +52,8 @@ export default function Inicio() {
   const [ofertas, setOfertas] = useState([]);
   const [portadas, setPortadas] = useState({});
   const [vendidosTodos, setVendidos] = useState([]);
-  const [verVendidos, setVerVendidos] = useState(20);
-  const vendidos = vendidosTodos.slice(0, verVendidos);
+  const [paginaVendidos, setPaginaVendidos] = useState(1);
+  const vendidos = vendidosTodos.slice((paginaVendidos - 1) * 20, paginaVendidos * 20);
   const [servicios, setServicios] = useState([]);
   const [fotos, setFotos] = useState([]);
   const [aviso, setAviso] = useState('');
@@ -144,23 +141,12 @@ export default function Inicio() {
 
       {/* Franja de confianza */}
       <div className="contenedor">
-        <section className="confianza" aria-label={`Por qué elegir ${SALON.nombre}`}>
-          <p className="confianza__titulo">
-            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4z" /></svg>
-            ¿Por qué elegir {SALON.nombre}?
-          </p>
-          <ul className="confianza__lista">
-            <li>Productos profesionales</li>
-            <li>Pago seguro con SINPE o tarjeta</li>
-            <li>Retiro gratis en el salón</li>
-            <li>Especialistas certificadas</li>
-          </ul>
-          <p className="confianza__recordatorio">
-            <span aria-hidden="true">🔔</span>
-            <span>Recordatorio de seguridad: solo confirmamos citas y pedidos desde nuestro WhatsApp oficial ({SALON.telefono}). Nunca te pediremos claves ni códigos por mensaje.</span>
-            <Link to="/contacto">Ver <Flecha /></Link>
-          </p>
-        </section>
+        <ul className="confianza__lista">
+          <li>Pago seguro</li>
+          <li>Retiro en salón</li>
+          <li>Productos profesionales</li>
+          <li>Especialistas certificadas</li>
+        </ul>
       </div>
 
       {/* Ofertas relámpago + servicios en oferta, lado a lado en computadora */}
@@ -229,7 +215,17 @@ export default function Inicio() {
         <ul className="productos-rejilla productos-rejilla--grande">
           {vendidos.map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
         </ul>
-        <VerMas vistos={vendidos.length} total={vendidosTodos.length} cosa="productos" onClick={() => setVerVendidos((n) => n + 20)} />
+        <VerMas pagina={paginaVendidos} paginas={Math.ceil(vendidosTodos.length / 20)}
+                onCambiar={(n) => {
+                  setPaginaVendidos(n);
+                  requestAnimationFrame(() => {
+                    const titulo = document.querySelector('#t-vendidos');
+                    const encabezado = document.querySelector('.encabezado');
+                    const margen = encabezado?.offsetHeight || 76;
+                    const posicion = titulo ? titulo.getBoundingClientRect().top + window.scrollY - margen : 0;
+                    window.scrollTo({ top: Math.max(0, posicion), behavior: 'smooth' });
+                  });
+                }} />
       </section>
 
       {/* Galería */}

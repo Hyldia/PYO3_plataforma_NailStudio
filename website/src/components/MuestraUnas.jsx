@@ -11,16 +11,17 @@ export const TONOS_PIEL = [
 ];
 
 function contorno(forma, t) {
-  const base = 'V100 C52 112 8 112 8 100Z';
+  const base = 'V100 C52 112 42 116 30 116 C18 116 8 112 8 100Z';
   switch (forma) {
-    case 'Almendra': return `M8 100 V${t + 30} C8 ${t + 12} 22 ${t} 30 ${t - 6} C38 ${t} 52 ${t + 12} 52 ${t + 30} ${base}`;
-    case 'Cuadrada': return `M8 100 V${t + 4} Q8 ${t} 12 ${t} H48 Q52 ${t} 52 ${t + 4} ${base}`;
-    case 'Squoval': return `M8 100 V${t + 10} Q8 ${t} 18 ${t} H42 Q52 ${t} 52 ${t + 10} ${base}`;
-    case 'Redonda': return `M8 100 V${t + 18} C8 ${t + 2} 52 ${t + 2} 52 ${t + 18} ${base}`;
-    case 'Coffin': return `M8 100 V${t + 30} L18 ${t} H42 L52 ${t + 30} ${base}`;
-    case 'Ballerina': return `M8 100 V${t + 34} C8 ${t + 22} 18 ${t + 6} 22 ${t} H38 C42 ${t + 6} 52 ${t + 22} 52 ${t + 34} ${base}`;
-    case 'Stiletto': return `M8 100 V${t + 36} C8 ${t + 20} 26 ${t + 4} 30 ${t - 12} C34 ${t + 4} 52 ${t + 20} 52 ${t + 36} ${base}`;
-    default: return `M8 100 V${t + 22} C8 ${t - 4} 52 ${t - 4} 52 ${t + 22} ${base}`;
+    case 'Almendra': return `M8 100 V${t + 34} C8 ${t + 18} 20 ${t + 7} 30 ${t + 2} C40 ${t + 7} 52 ${t + 18} 52 ${t + 34} ${base}`;
+    case 'Ovalada': return `M8 100 V${t + 22} C8 ${t + 4} 20 ${t - 2} 30 ${t - 2} C40 ${t - 2} 52 ${t + 4} 52 ${t + 22} ${base}`;
+    case 'Cuadrada': return `M8 100 V${t + 8} Q8 ${t + 3} 13 ${t + 3} H47 Q52 ${t + 3} 52 ${t + 8} ${base}`;
+    case 'Squoval': return `M8 100 V${t + 12} Q8 ${t + 3} 17 ${t + 3} H43 Q52 ${t + 3} 52 ${t + 12} ${base}`;
+    case 'Redonda': return `M8 100 V${t + 20} C8 ${t + 4} 52 ${t + 4} 52 ${t + 20} ${base}`;
+    case 'Coffin': return `M8 100 V${t + 30} Q8 ${t + 20} 16 ${t + 8} L20 ${t + 5} H40 L44 ${t + 8} Q52 ${t + 20} 52 ${t + 30} ${base}`;
+    case 'Ballerina': return `M8 100 V${t + 32} C8 ${t + 20} 17 ${t + 8} 21 ${t + 4} H39 C43 ${t + 8} 52 ${t + 20} 52 ${t + 32} ${base}`;
+    case 'Stiletto': return `M8 100 V${t + 36} C8 ${t + 22} 23 ${t + 8} 30 ${t} C37 ${t + 8} 52 ${t + 22} 52 ${t + 36} ${base}`;
+    default: return `M8 100 V${t + 22} C8 ${t + 2} 52 ${t + 2} 52 ${t + 22} ${base}`;
   }
 }
 
@@ -120,7 +121,15 @@ export const datosUna = (diseno, i) => {
   const u = diseno.unas?.[i];
   if (!u) return diseno;
   const e = esmalte(u.esmalte);
-  return { forma: diseno.forma, largo: diseno.largo, hex: e?.hex, tipo: e?.tipo, color: e?.nombre, acabado: u.acabado, decoracion: u.decoracion };
+  return {
+    forma: u.forma || diseno.forma,
+    largo: u.largo || diseno.largo,
+    hex: e?.hex,
+    tipo: e?.tipo,
+    color: e?.nombre,
+    acabado: u.acabado,
+    decoracion: u.decoracion
+  };
 };
 
 export default function MuestraUnas({ diseno }) {

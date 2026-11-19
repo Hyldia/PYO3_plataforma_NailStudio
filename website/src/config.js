@@ -6,7 +6,7 @@ export const SALON = {
   telefono: '+506 0000 0000',
   whatsapp: '50600000000',          // solo números, con código de país
   correo: 'hola@naile.cr',
-  direccion: '[Dirección del local], Cartago, Costa Rica',
+  direccion: 'Limón, Costa Rica, frente a Correos de Costa Rica',
   // Google Maps → Compartir → Insertar un mapa → copia solo la URL del src
   mapaEmbed: '',
   horario: [

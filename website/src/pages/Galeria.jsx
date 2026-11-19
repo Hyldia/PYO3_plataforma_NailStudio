@@ -52,7 +52,7 @@ export default function Galeria() {
     setCargando(true);
     const filtros = Object.fromEntries(CAMPOS.map((c) => [c.clave, lista(c.clave)]));
     api.fotos({ ...filtros, q: params.get('q') || '', orden, limite: POR_PAGINA, pagina })
-      .then((r) => { setResultado((prev) => ({ total: r.total, fotos: pagina === 1 ? r.fotos : [...prev.fotos, ...r.fotos] })); setError(''); })
+      .then((r) => { setResultado({ total: r.total, fotos: r.fotos }); setError(''); })
       .catch((e) => setError(e.message))
       .finally(() => setCargando(false));
   }, [params, pagina]);
@@ -118,7 +118,17 @@ export default function Galeria() {
         {resultado.fotos.map((f, i) => <TarjetaDiseno key={f.id} foto={f} indice={i} />)}
         {cargando && pagina > 1 && <Fantasmas n={Math.min(POR_PAGINA, resultado.total - resultado.fotos.length)} />}
       </ul>
-      <VerMas vistos={resultado.fotos.length} total={resultado.total} cargando={cargando} cosa="diseños" texto="Ver más diseños" onClick={() => setPagina(pagina + 1)} />
+      <VerMas pagina={pagina} paginas={Math.ceil(resultado.total / POR_PAGINA)} cargando={cargando}
+              onCambiar={(n) => {
+                setPagina(n);
+                requestAnimationFrame(() => {
+                  const rejilla = document.querySelector('.disenos-rejilla');
+                  const encabezado = document.querySelector('.encabezado');
+                  const margen = encabezado?.offsetHeight || 76;
+                  const posicion = rejilla ? rejilla.getBoundingClientRect().top + window.scrollY - margen : 0;
+                  window.scrollTo({ top: Math.max(0, posicion), behavior: 'smooth' });
+                });
+              }} />
     </div>
   );
 }

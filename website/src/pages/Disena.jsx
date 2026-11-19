@@ -81,7 +81,8 @@ export default function Disena() {
   // Con "Todas" el cambio va a las cinco uñas; con "Una por una", solo a la uña elegida
   const cambiarUna = (campo, valor) => setDiseno((d) => {
     const unas = d.unas.map((u, i) => (modo === 'todas' || i === dedo ? { ...u, [campo]: valor } : u));
-    return new DisenoBuilder({ ...d, unas, color: esmalte(unas[1].esmalte).nombre, acabado: unas[1].acabado, decoracion: unas[1].decoracion }).build();
+    const generales = campo === 'forma' ? { forma: valor } : campo === 'largo' ? { largo: valor } : {};
+    return new DisenoBuilder({ ...d, ...generales, unas, color: esmalte(unas[1].esmalte).nombre, acabado: unas[1].acabado, decoracion: unas[1].decoracion }).build();
   });
   const elegirDedo = (i) => { setDedo(i); setModo('una'); setVista('mano'); };
 
@@ -117,7 +118,7 @@ export default function Disena() {
   const moverVista = (paso) => { const i = vistas.findIndex((v) => v.id === vista); setVista(vistas[(i + paso + vistas.length) % vistas.length].id); };
 
   const Opcion = ({ campo, valor, precio, una = false }) => {
-    const elegido = una ? actual[campo] === valor : diseno[campo] === valor;
+    const elegido = una ? (actual[campo] || diseno[campo]) === valor : diseno[campo] === valor;
     return (
       <button type="button" className="tile" aria-pressed={elegido} onClick={() => (una ? cambiarUna(campo, valor) : general(campo, valor))}>
         <span className="tile__una"><Una d={{ ...datosUna(diseno, dedo), [campo]: valor }} /></span>
@@ -147,11 +148,11 @@ export default function Disena() {
           </section>
           <section className="estudio-panel" aria-labelledby="t-forma">
             <h2 id="t-forma">Forma de uñas</h2>
-            <div className="tiles tiles--4">{OPCIONES_DISENO.forma.map((f) => <Opcion key={f} campo="forma" valor={f} />)}</div>
+            <div className="tiles tiles--4">{OPCIONES_DISENO.forma.map((f) => <Opcion key={f} campo="forma" valor={f} una />)}</div>
           </section>
           <section className="estudio-panel" aria-labelledby="t-largo">
             <h2 id="t-largo">Largo</h2>
-            <div className="tiles tiles--4">{OPCIONES_DISENO.largo.map((l) => <Opcion key={l} campo="largo" valor={l} precio={PRECIO_DISENO.largo[l]} />)}</div>
+            <div className="tiles tiles--4">{OPCIONES_DISENO.largo.map((l) => <Opcion key={l} campo="largo" valor={l} precio={PRECIO_DISENO.largo[l]} una />)}</div>
           </section>
         </div>
 

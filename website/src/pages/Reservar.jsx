@@ -10,6 +10,7 @@ import Foto from '../components/Foto.jsx';
 import MuestraUnas from '../components/MuestraUnas.jsx';
 import Decoracion from '../components/Decoracion.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
+import VerMas from '../components/VerMas.jsx';
 
 const DIA = new Intl.DateTimeFormat('es-CR', { weekday: 'short' });
 const MES = new Intl.DateTimeFormat('es-CR', { month: 'short' });
@@ -57,6 +58,8 @@ export default function Reservar() {
   const [horarios, setHorarios] = useState([]);
   const [agenda, setAgenda] = useState([]);
   const [categoria, setCategoria] = useState('Todos');
+  const [paginaServicios, setPaginaServicios] = useState(1);
+  const POR_PAGINA_SERVICIOS = 9;
   const dias = useMemo(proximosDias, []);
   const [sel, setSel] = useState({ servicioId: Number(params.get('servicio')) || null, especialistaId: null, fecha: aISO(dias[0]), hora: null });
   const [notas, setNotas] = useState(reserva.diseno?.notas || '');
@@ -90,6 +93,7 @@ export default function Reservar() {
 
   const categorias = useMemo(() => ['Todos', ...new Set(servicios.map((s) => s.categoria))], [servicios]);
   const visibles = categoria === 'Todos' ? servicios : servicios.filter((s) => s.categoria === categoria);
+  const serviciosPagina = visibles.slice((paginaServicios - 1) * POR_PAGINA_SERVICIOS, paginaServicios * POR_PAGINA_SERVICIOS);
   const servicio = servicios.find((s) => s.id === sel.servicioId);
   const especialista = especialistas.find((e) => e.id === sel.especialistaId);
   const indiceEsp = especialistas.findIndex((e) => e.id === sel.especialistaId);
@@ -229,13 +233,13 @@ export default function Reservar() {
                   <legend className="grupo__titulo">¿Qué te quieres hacer?</legend>
                   <div className="barra-chips barra-chips--quieta" role="group" aria-label="Filtrar por tipo">
                     {categorias.map((c) => (
-                      <button key={c} type="button" className={`chip-filtro ${categoria === c ? 'chip-filtro--activo' : ''}`} aria-pressed={categoria === c} onClick={() => setCategoria(c)}>
+                      <button key={c} type="button" className={`chip-filtro ${categoria === c ? 'chip-filtro--activo' : ''}`} aria-pressed={categoria === c} onClick={() => { setCategoria(c); setPaginaServicios(1); }}>
                         {c} <span className="chip-filtro__n">{c === 'Todos' ? servicios.length : servicios.filter((s) => s.categoria === c).length}</span>
                       </button>
                     ))}
                   </div>
                   <div className="servicios-elegir">
-                    {visibles.map((s, n) => {
+                    {serviciosPagina.map((s, n) => {
                       const desc = s.precio_oferta != null ? Math.round((1 - s.precio_oferta / s.precio) * 100) : 0;
                       return (
                         <label key={s.id} className="servicio-elegir" style={{ '--retraso': `${Math.min(n, 12) * 40}ms` }}>
@@ -259,6 +263,11 @@ export default function Reservar() {
                       );
                     })}
                   </div>
+                  <VerMas pagina={paginaServicios} paginas={Math.ceil(visibles.length / POR_PAGINA_SERVICIOS)}
+                          onCambiar={(n) => {
+                            setPaginaServicios(n);
+                            requestAnimationFrame(() => document.querySelector('.servicios-elegir')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+                          }} />
                 </fieldset>
 
                 <fieldset className="grupo" ref={refEspecialistas}>

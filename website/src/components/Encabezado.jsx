@@ -70,7 +70,6 @@ export default function Encabezado() {
 
   return (
     <>
-      <BarraAnuncios />
       <header className="encabezado">
         <div className="contenedor encabezado__fila">
           <Link to="/" className="encabezado__logo" aria-label={`${SALON.nombre}, ir al inicio`}><Logo claro /></Link>
