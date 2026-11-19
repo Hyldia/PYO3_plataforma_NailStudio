@@ -1,7 +1,7 @@
 // Pedidos de la tienda: filtros por fecha, nombre, estado y pago; estados con aviso por WhatsApp; descarga en Excel.
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../lib/api.js';
-import { SALON, dinero } from '../../config.js';
+import { dinero } from '../../config.js';
 import Modal from '../../components/Modal.jsx';
 import VerMas from '../../components/VerMas.jsx';
 import { TarjetaMensaje, isoLocal } from './piezasPanel.jsx';
@@ -19,12 +19,12 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'o
 // Salida: La fecha bonita.
 // Objetivo: Leer fácil.
 function fechaPedido(texto = '') {
-  const [f, h = ''] = String(texto).replace('T', ' ').split(' ');
-  const [a, m, d] = f.split('-').map(Number);
-  if (!d) return texto;
-  const [hh, mm] = h.split(':').map(Number);
+  const [fechaTexto, horaTexto = ''] = String(texto).replace('T', ' ').split(' ');
+  const [anio, numeroMes, numeroDia] = fechaTexto.split('-').map(Number);
+  if (!numeroDia) return texto;
+  const [hh, mm] = horaTexto.split(':').map(Number);
   const hora = Number.isFinite(hh) ? ` · ${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a. m.' : 'p. m.'}` : '';
-  return `${d} ${MESES[m - 1]} ${a}${hora}`;
+  return `${numeroDia} ${MESES[numeroMes - 1]} ${anio}${hora}`;
 }
 
 // Nombre: rango
@@ -34,9 +34,9 @@ function fechaPedido(texto = '') {
 // Objetivo: Filtrar rápido.
 function rango(tipo) {
   const hoy = new Date();
-  const d = new Date(hoy);
+  const fecha = new Date(hoy);
   if (tipo === 'hoy') return { desde: isoLocal(hoy), hasta: isoLocal(hoy) };
-  if (tipo === 'semana') { d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return { desde: isoLocal(d), hasta: isoLocal(hoy) }; }
+  if (tipo === 'semana') { fecha.setDate(fecha.getDate() - ((fecha.getDay() + 6) % 7)); return { desde: isoLocal(fecha), hasta: isoLocal(hoy) }; }
   if (tipo === 'mes') return { desde: `${isoLocal(hoy).slice(0, 7)}-01`, hasta: isoLocal(hoy) };
   return { desde: '', hasta: '' };
 }
@@ -94,10 +94,10 @@ export default function PedidosAdmin() {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Mostrar la lista.
-  const cargar = () => api.admin.pedidos(filtros).then(setPedidos).catch((e) => setError(e.message));
+  const cargar = () => api.admin.pedidos(filtros).then(setPedidos).catch((fallo) => setError(fallo.message));
   useEffect(() => { cargar(); }, [filtros]);
-  useEffect(() => { api.admin.pedidos().then((l) => setPagos([...new Set(l.map((p) => p.metodo_pago))])).catch(() => {}); }, []);
-  useEffect(() => { const t = setTimeout(() => setFiltros((f) => ({ ...f, q: texto })), 300); return () => clearTimeout(t); }, [texto]);
+  useEffect(() => { api.admin.pedidos().then((pedidos) => setPagos([...new Set(pedidos.map((pedido) => pedido.metodo_pago))])).catch(() => {}); }, []);
+  useEffect(() => { const temporizador = setTimeout(() => setFiltros((anteriores) => ({ ...anteriores, q: texto })), 300); return () => clearTimeout(temporizador); }, [texto]);
   const paginas = Math.ceil(pedidos.length / POR_PAGINA);
   const pedidosPagina = pedidos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
   useEffect(() => { if (pagina > paginas) setPagina(Math.max(paginas, 1)); }, [pagina, paginas]);
@@ -107,13 +107,13 @@ export default function PedidosAdmin() {
   // Entrada: El nombre del filtro.
   // Salida: Una función para el campo.
   // Objetivo: Filtrar pedidos.
-  const set = (k) => (evento) => { setFiltros({ ...filtros, [k]: evento.target.value }); setPagina(1); if (k === 'desde' || k === 'hasta') setRapido(''); };
+  const set = (campo) => (evento) => { setFiltros({ ...filtros, [campo]: evento.target.value }); setPagina(1); if (campo === 'desde' || campo === 'hasta') setRapido(''); };
   // Nombre: elegirRapido
   // Descripción: Elige un rango rápido.
   // Entrada: El tipo.
   // Salida: Nada.
   // Objetivo: Filtrar rápido.
-  const elegirRapido = (t) => { setRapido(t); setFiltros({ ...filtros, ...rango(t) }); setPagina(1); };
+  const elegirRapido = (texto) => { setRapido(texto); setFiltros({ ...filtros, ...rango(texto) }); setPagina(1); };
   // Nombre: limpiar
   // Descripción: Quita los filtros.
   // Entrada: Nada.
@@ -122,8 +122,8 @@ export default function PedidosAdmin() {
   const limpiar = () => { setTexto(''); setRapido(''); setFiltros({ desde: '', hasta: '', q: '', estado: '', pago: '' }); setPagina(1); };
 
   const resumen = useMemo(() => {
-    const validos = pedidos.filter((p) => p.estado !== 'cancelado');
-    return { total: validos.reduce((s, p) => s + p.total, 0), porRetirar: pedidos.filter((p) => ['recibido', 'listo'].includes(p.estado)).length, completados: pedidos.filter((p) => p.estado === 'completado').length };
+    const validos = pedidos.filter((pedido) => pedido.estado !== 'cancelado');
+    return { total: validos.reduce((suma, valido) => suma + valido.total, 0), porRetirar: pedidos.filter((pedido) => ['recibido', 'listo'].includes(pedido.estado)).length, completados: pedidos.filter((pedido) => pedido.estado === 'completado').length };
   }, [pedidos]);
 
   // Nombre: cambiar
@@ -131,13 +131,13 @@ export default function PedidosAdmin() {
   // Entrada: El pedido y el estado.
   // Salida: Nada.
   // Objetivo: Seguir su avance.
-  async function cambiar(p, estado) {
-    if (estado === 'completado') return setVentana({ tipo: 'completar', pedido: p });
-    if (estado === 'cancelado' && !window.confirm(`¿Cancelar el pedido #${p.id}? El stock vuelve a la tienda.`)) return;
+  async function cambiar(producto, estado) {
+    if (estado === 'completado') return setVentana({ tipo: 'completar', pedido: producto });
+    if (estado === 'cancelado' && !window.confirm(`¿Cancelar el pedido #${producto.id}? El stock vuelve a la tienda.`)) return;
     try {
-      const r = await api.admin.estadoPedido(p.id, { estado });
+      const respuesta = await api.admin.estadoPedido(producto.id, { estado });
       cargar();
-      if (r.mensaje) setVentana({ tipo: 'mensaje', pedido: r.pedido, mensaje: r.mensaje });
+      if (respuesta.mensaje) setVentana({ tipo: 'mensaje', pedido: respuesta.pedido, mensaje: respuesta.mensaje });
     } catch (error) { setError(error.message); }
   }
   // Nombre: descargar
@@ -174,62 +174,62 @@ export default function PedidosAdmin() {
         <label className="filtros-admin__buscar"><span className="solo-lector">Buscar</span><input type="search" value={texto} onChange={(evento) => { setTexto(evento.target.value); setPagina(1); }} placeholder="Nombre, teléfono o N.º de pedido" /></label>
         <label className="filtros-admin__fecha"><span>Desde</span><input type="date" value={filtros.desde} onChange={set('desde')} /></label>
         <label className="filtros-admin__fecha"><span>Hasta</span><input type="date" value={filtros.hasta} onChange={set('hasta')} /></label>
-        <label><span className="solo-lector">Estado</span><select value={filtros.estado} onChange={set('estado')}><option value="">Todos los estados</option>{Object.entries(ESTADOS).map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></label>
-        <label><span className="solo-lector">Forma de pago</span><select value={filtros.pago} onChange={set('pago')}><option value="">Todas las formas de pago</option>{pagos.map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label><span className="solo-lector">Estado</span><select value={filtros.estado} onChange={set('estado')}><option value="">Todos los estados</option>{Object.entries(ESTADOS).map(([clave, valor]) => <option key={clave} value={clave}>{valor}</option>)}</select></label>
+        <label><span className="solo-lector">Forma de pago</span><select value={filtros.pago} onChange={set('pago')}><option value="">Todas las formas de pago</option>{pagos.map((pago) => <option key={pago}>{pago}</option>)}</select></label>
         {hayFiltros && <button type="button" className="enlace enlace--boton" onClick={limpiar}>Quitar filtros</button>}
       </div>
       {error && <p role="alert" className="error">{error}</p>}
 
       {pedidos.length === 0 ? <p className="tenue">No hay pedidos con esos filtros.</p> : (
         <ul className="pedidos-lista">
-          {pedidosPagina.map((p, n) => {
+          {pedidosPagina.map((pedido, numero) => {
             const pasos = ['recibido', 'listo', 'completado'];
-            const paso = pasos.indexOf(p.estado);
-            const siguientes = p.estado === 'completado' ? [] : (SIGUIENTE[p.estado] || []).filter((e) => e === 'listo' || e === 'completado');
+            const paso = pasos.indexOf(pedido.estado);
+            const siguientes = pedido.estado === 'completado' ? [] : (SIGUIENTE[pedido.estado] || []).filter((estado) => estado === 'listo' || estado === 'completado');
             return (
-              <li key={p.id} className={`pedido-card pedido-card--${p.estado}`} style={{ '--n': n % 20 }}>
+              <li key={pedido.id} className={`pedido-card pedido-card--${pedido.estado}`} style={{ '--n': numero % 20 }}>
                 <header className="pedido-card__cabeza">
-                  <div className="pedido-card__numero"><strong>Pedido #{p.id}</strong><span>{fechaPedido(p.fecha_local || p.creado_en)}</span></div>
-                  <span className={`estado-pedido estado-pedido--${p.estado}`}>{ESTADOS[p.estado] || p.estado}</span>
-                  <div className="pedido-card__total"><strong>{dinero(p.total)}</strong><span>{p.metodo_pago}</span></div>
+                  <div className="pedido-card__numero"><strong>Pedido #{pedido.id}</strong><span>{fechaPedido(pedido.fecha_local || pedido.creado_en)}</span></div>
+                  <span className={`estado-pedido estado-pedido--${pedido.estado}`}>{ESTADOS[pedido.estado] || pedido.estado}</span>
+                  <div className="pedido-card__total"><strong>{dinero(pedido.total)}</strong><span>{pedido.metodo_pago}</span></div>
                 </header>
 
                 <div className="pedido-card__cuerpo">
                   <div>
                     <p className="pedido-card__etiqueta">Clienta</p>
-                    <p className="pedido-card__clienta">{p.cliente_nombre}</p>
-                    <a className="pedido-card__tel" href={`tel:${String(p.cliente_telefono).replace(/\s/g, '')}`}>{p.cliente_telefono}</a>
+                    <p className="pedido-card__clienta">{pedido.cliente_nombre}</p>
+                    <a className="pedido-card__tel" href={`tel:${String(pedido.cliente_telefono).replace(/\s/g, '')}`}>{pedido.cliente_telefono}</a>
                   </div>
                   <div>
                     <p className="pedido-card__etiqueta">Productos</p>
-                    <ul className="pedido-card__productos">{String(p.detalle || '').split(/, (?=\d+ ×)/).map((x, k) => { const [cant, ...resto] = x.split(' × '); return <li key={k}><b>{cant}</b><span>{resto.join(' × ') || x}</span></li>; })}</ul>
-                    {(p.cupon_codigo || p.citas > 0) && (
+                    <ul className="pedido-card__productos">{String(pedido.detalle || '').split(/, (?=\d+ ×)/).map((parte, campo) => { const [cant, ...resto] = parte.split(' × '); return <li key={campo}><b>{cant}</b><span>{resto.join(' × ') || parte}</span></li>; })}</ul>
+                    {(pedido.cupon_codigo || pedido.citas > 0) && (
                       <p className="pedido-card__extras">
-                        {p.cupon_codigo && <span className="chip-cupon">Cupón {p.cupon_codigo} −{dinero(p.descuento)}</span>}
-                        {p.citas > 0 && <span className="chip-cupon chip-cupon--cita">+ {p.citas} {p.citas === 1 ? 'cita' : 'citas'}</span>}
+                        {pedido.cupon_codigo && <span className="chip-cupon">Cupón {pedido.cupon_codigo} −{dinero(pedido.descuento)}</span>}
+                        {pedido.citas > 0 && <span className="chip-cupon chip-cupon--cita">+ {pedido.citas} {pedido.citas === 1 ? 'cita' : 'citas'}</span>}
                       </p>
                     )}
                   </div>
                   <div>
                     <p className="pedido-card__etiqueta">Entrega</p>
-                    <p>{p.entrega === 'envio' ? <>Envío a domicilio ({dinero(p.costo_envio)})</> : 'La retira en el salón'}</p>
-                    {p.entrega === 'envio' && <p className="tenue">{p.direccion}</p>}
-                    {p.estado === 'completado' && <p className="tenue">Retiró {p.retirado_por || 'la clienta'}{p.completado_en ? ` · ${fechaPedido(p.completado_en)}` : ''}</p>}
-                    {p.notas_admin && <p className="tenue">“{p.notas_admin}”</p>}
+                    <p>{pedido.entrega === 'envio' ? <>Envío a domicilio ({dinero(pedido.costo_envio)})</> : 'La retira en el salón'}</p>
+                    {pedido.entrega === 'envio' && <p className="tenue">{pedido.direccion}</p>}
+                    {pedido.estado === 'completado' && <p className="tenue">Retiró {pedido.retirado_por || 'la clienta'}{pedido.completado_en ? ` · ${fechaPedido(pedido.completado_en)}` : ''}</p>}
+                    {pedido.notas_admin && <p className="tenue">“{pedido.notas_admin}”</p>}
                   </div>
                 </div>
 
                 <footer className="pedido-card__pie">
-                  {p.estado === 'cancelado' ? <p className="pedido-card__cancelado">Pedido cancelado</p> : (
+                  {pedido.estado === 'cancelado' ? <p className="pedido-card__cancelado">Pedido cancelado</p> : (
                     <ol className="pedido-pasos" aria-label="Avance del pedido">
-                      {['Recibido', 'Listo para retirar', 'Entregado'].map((t, k) => <li key={t} className={k <= paso ? 'hecho' : ''} aria-current={k === paso ? 'step' : undefined}><span>{k < paso ? '✓' : k + 1}</span>{t}</li>)}
+                      {['Recibido', 'Listo para retirar', 'Entregado'].map((etapa, campo) => <li key={etapa} className={campo <= paso ? 'hecho' : ''} aria-current={campo === paso ? 'step' : undefined}><span>{campo < paso ? '✓' : campo + 1}</span>{etapa}</li>)}
                     </ol>
                   )}
                   <div className="pedido-card__acciones">
-                    {(SIGUIENTE[p.estado] || []).includes('cancelado') && <button type="button" className="enlace enlace--boton enlace--chico pedido-card__cancelar" onClick={() => cambiar(p, 'cancelado')}>Cancelar pedido</button>}
-                    {p.estado === 'completado' && <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => cambiar(p, 'listo')}>Deshacer entrega</button>}
-                    {(SIGUIENTE[p.estado] || []).includes('recibido') && <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => cambiar(p, 'recibido')}>Volver a recibido</button>}
-                    {siguientes.map((e) => <button key={e} type="button" className={`boton boton--chico ${e === 'listo' && siguientes.length > 1 ? 'boton--contorno' : ''}`} onClick={() => cambiar(p, e)}>{TEXTO[e]}</button>)}
+                    {(SIGUIENTE[pedido.estado] || []).includes('cancelado') && <button type="button" className="enlace enlace--boton enlace--chico pedido-card__cancelar" onClick={() => cambiar(pedido, 'cancelado')}>Cancelar pedido</button>}
+                    {pedido.estado === 'completado' && <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => cambiar(pedido, 'listo')}>Deshacer entrega</button>}
+                    {(SIGUIENTE[pedido.estado] || []).includes('recibido') && <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => cambiar(pedido, 'recibido')}>Volver a recibido</button>}
+                    {siguientes.map((siguiente) => <button key={siguiente} type="button" className={`boton boton--chico ${siguiente === 'listo' && siguientes.length > 1 ? 'boton--contorno' : ''}`} onClick={() => cambiar(pedido, siguiente)}>{TEXTO[siguiente]}</button>)}
                   </div>
                 </footer>
               </li>
@@ -237,7 +237,7 @@ export default function PedidosAdmin() {
           })}
         </ul>
       )}
-      <VerMas pagina={pagina} paginas={paginas} onCambiar={(n) => { setPagina(n); document.getElementById('t-ped')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
+      <VerMas pagina={pagina} paginas={paginas} onCambiar={(numero) => { setPagina(numero); document.getElementById('t-ped')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
 
       {ventana?.tipo === 'completar' && <VentanaCompletar pedido={ventana.pedido} onCerrar={() => setVentana(null)} onListo={cargar} />}
       {ventana?.tipo === 'mensaje' && (

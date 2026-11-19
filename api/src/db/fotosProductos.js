@@ -27,10 +27,10 @@ async function revisarRotas(db) {
   const quitar = db.prepare('UPDATE productos SET imagen = NULL, imagen_autor = NULL, imagen_autor_url = NULL WHERE id = ?');
   let rotas = 0;
   for (let i = 0; i < conFoto.length; i += 10) {
-    await Promise.all(conFoto.slice(i, i + 10).map(async (p) => {
+    await Promise.all(conFoto.slice(i, i + 10).map(async (producto) => {
       try {
-        const r = await fetch(p.imagen, { method: 'HEAD' });
-        if (!r.ok) { quitar.run(p.id); rotas++; }
+        const respuesta = await fetch(producto.imagen, { method: 'HEAD' });
+        if (!respuesta.ok) { quitar.run(producto.id); rotas++; }
       } catch { /* sin internet: no se toca */ }
     }));
     process.stdout.write(`\rRevisando fotos: ${Math.min(i + 10, conFoto.length)} de ${conFoto.length}…`);
@@ -105,7 +105,7 @@ function puntajeColor(nombre, foto) {
   const texto = descripcion(foto);
   const regla = COLORES.find(([re]) => re.test(nombre));
   if (!regla) return 0;
-  return regla[1].some((w) => texto.includes(w)) ? 2 : 0;
+  return regla[1].some((palabra) => texto.includes(palabra)) ? 2 : 0;
 }
 
 // Nombre: main
@@ -120,37 +120,37 @@ async function main() {
   if (!productos.length) { console.log('Todos los productos ya tienen foto. Usa --todas para cambiarlas.'); return; }
 
   // Fotos ya usadas en la tienda, para no repetir la misma en varios productos
-  const usadas = new Set(db.prepare("SELECT imagen FROM productos WHERE imagen LIKE 'http%'").all().map((p) => p.imagen.split('?')[0]));
+  const usadas = new Set(db.prepare("SELECT imagen FROM productos WHERE imagen LIKE 'http%'").all().map((fila) => fila.imagen.split('?')[0]));
   const guardar = db.prepare('UPDATE productos SET imagen = ?, imagen_autor = ?, imagen_autor_url = ? WHERE id = ?');
 
   let asignados = 0;
   let consultas = 0;
   try {
     for (const grupo of GRUPOS) {
-      const lista = productos.filter((p) => !p.hecho && grupo.re.test(p.nombre));
+      const lista = productos.filter((producto) => !producto.hecho && grupo.re.test(producto.nombre));
       if (!lista.length) continue;
 
       const pool = [];
-      for (const q of grupo.busquedas) {
+      for (const busqueda of grupo.busquedas) {
         for (let page = 1; page <= (grupo.paginas || 1); page++) {
-          const { results } = await buscarUnsplash(CLAVE, q, page);
+          const { results } = await buscarUnsplash(CLAVE, busqueda, page);
           consultas++;
-          results.forEach((f) => { if (!pool.some((x) => x.id === f.id)) pool.push(f); });
+          results.forEach((resultado) => { if (!pool.some((foto) => foto.id === resultado.id)) pool.push(resultado); });
         }
       }
       if (!pool.length) continue;
 
-      for (const p of lista) {
+      for (const elemento of lista) {
         // Prefiere una foto no usada y, si es esmalte, del color del producto
         const candidatas = pool
-          .map((f) => ({ f, puntos: puntajeColor(p.nombre, f) + (usadas.has(urlFotoUnsplash(f).split('?')[0]) ? -5 : 0) }))
+          .map((foto) => ({ f: foto, puntos: puntajeColor(elemento.nombre, foto) + (usadas.has(urlFotoUnsplash(foto).split('?')[0]) ? -5 : 0) }))
           .sort((a, b) => b.puntos - a.puntos);
         const elegida = candidatas[0].f;
         const url = urlFotoUnsplash(elegida);
-        const a = autorUnsplash(elegida);
-        guardar.run(url, a.autor, a.autor_url, p.id);
+        const autor = autorUnsplash(elegida);
+        guardar.run(url, autor.autor, autor.autor_url, elemento.id);
         usadas.add(url.split('?')[0]);
-        p.hecho = true;
+        elemento.hecho = true;
         asignados++;
       }
       process.stdout.write(`\r${asignados} de ${productos.length} productos con foto (${consultas} consultas)…`);
@@ -159,9 +159,9 @@ async function main() {
     const servicios = db.prepare('SELECT id, nombre, categoria FROM servicios WHERE imagen IS NULL').all();
     if (servicios.length) {
       const pool = [];
-      for (const q of ['man manicure', 'men nail care', 'pedicure spa']) {
-        const { results } = await buscarUnsplash(CLAVE, q, 1);
-        results.forEach((f) => { if (!pool.some((x) => x.id === f.id)) pool.push(f); });
+      for (const termino of ['man manicure', 'men nail care', 'pedicure spa']) {
+        const { results } = await buscarUnsplash(CLAVE, termino, 1);
+        results.forEach((resultado) => { if (!pool.some((foto) => foto.id === resultado.id)) pool.push(resultado); });
       }
       const ponerServicio = db.prepare('UPDATE servicios SET imagen = ? WHERE id = ?');
       servicios.forEach((sv, i) => { if (pool[i]) ponerServicio.run(urlFotoUnsplash(pool[i]), sv.id); });
@@ -174,4 +174,4 @@ async function main() {
   }
 }
 
-if (process.argv[1]?.endsWith('fotosProductos.js')) main().catch((e) => { console.error(`\n${e.message}`); process.exit(1); });
+if (process.argv[1]?.endsWith('fotosProductos.js')) main().catch((fallo) => { console.error(`\n${fallo.message}`); process.exit(1); });

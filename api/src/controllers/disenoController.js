@@ -16,10 +16,10 @@ export const disenoController = {
   // Salida: El diseño guardado con su precio.
   // Objetivo: Poder reservarlo o comprarlo.
   crear(req, res) {
-    const b = req.body;
+    const cuerpo = req.body;
     const diseno = new DisenoBuilder()
-      .forma(b.forma).largo(b.largo).color(b.color).acabado(b.acabado)
-      .decoracion(OPCIONES.decoraciones.includes(b.decoracion) ? b.decoracion : 'Ninguna').acento(b.acento).notas(b.notas).referencia(b.fotoRefId).unas(b.unas).extras(b.extras)
+      .forma(cuerpo.forma).largo(cuerpo.largo).color(cuerpo.color).acabado(cuerpo.acabado)
+      .decoracion(OPCIONES.decoraciones.includes(cuerpo.decoracion) ? cuerpo.decoracion : 'Ninguna').acento(cuerpo.acento).notas(cuerpo.notas).referencia(cuerpo.fotoRefId).unas(cuerpo.unas).extras(cuerpo.extras)
       .build();
     res.status(201).json(DisenoModel.crear(diseno));
   }

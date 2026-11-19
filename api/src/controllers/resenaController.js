@@ -24,7 +24,7 @@ export const resenaController = {
     const error = ResenaModel.validar(req.body);
     if (error) return res.status(400).json({ error });
     const { nombre, estrellas, comentario, pedido, telefono } = req.body;
-    const r = ResenaModel.crear(id, { nombre: String(nombre).trim().slice(0, 60), estrellas: Number(estrellas), comentario: String(comentario).trim(), pedido, telefono });
-    res.status(201).json(r);
+    const resena = ResenaModel.crear(id, { nombre: String(nombre).trim().slice(0, 60), estrellas: Number(estrellas), comentario: String(comentario).trim(), pedido, telefono });
+    res.status(201).json(resena);
   }
 };

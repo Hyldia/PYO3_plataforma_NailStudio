@@ -1,3 +1,4 @@
+// Encabezado del sitio: logo, menú, buscador, cuenta y carrito (en el celular el menú se abre con ☰).
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Logo from './Logo.jsx';
@@ -67,11 +68,11 @@ export default function Encabezado() {
 
           <nav id="menu-principal" className={`menu ${menu ? 'menu--abierto' : ''}`} aria-label="Principal">
             <ul>
-              {ENLACES.map((e) => (
-                <li key={e.to}>
-                  {e.to.includes('?')
-                    ? <Link to={e.to}>{e.icono && <Icono d={ICONOS[e.icono]} relleno={e.icono === 'rayo'} />}{e.texto}</Link>
-                    : <NavLink to={e.to} end>{e.texto}</NavLink>}
+              {ENLACES.map((enlaz) => (
+                <li key={enlaz.to}>
+                  {enlaz.to.includes('?')
+                    ? <Link to={enlaz.to}>{enlaz.icono && <Icono d={ICONOS[enlaz.icono]} relleno={enlaz.icono === 'rayo'} />}{enlaz.texto}</Link>
+                    : <NavLink to={enlaz.to} end>{enlaz.texto}</NavLink>}
                 </li>
               ))}
               <li className="menu__solo-movil"><NavLink to="/contacto">Contacto</NavLink></li>

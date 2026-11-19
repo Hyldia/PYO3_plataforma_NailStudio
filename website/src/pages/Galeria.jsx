@@ -1,3 +1,4 @@
+// Galería de diseños: filtros (tipo, forma, color, acabado), orden, buscador y páginas de 20 diseños.
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -27,12 +28,11 @@ export default function Galeria() {
   useTitulo('Galería');
   const [params, setParams] = useSearchParams();
   const [texto, setTexto] = useState(params.get('q') || '');
-  const q = useDebounce(texto);
+  const busqueda = useDebounce(texto);
   const [opciones, setOpciones] = useState({});
   const [resultado, setResultado] = useState({ total: 0, fotos: [] });
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
-  const [presson, setPresson] = useState(null);
   const [pagina, setPagina] = useState(1);
 
   // Nombre: lista
@@ -42,7 +42,7 @@ export default function Galeria() {
   // Objetivo: Filtrar diseños.
   const lista = (clave) => (params.get(clave) || '').split(',').filter(Boolean);
   const orden = params.get('orden') || 'recientes';
-  const activos = CAMPOS.flatMap((c) => lista(c.clave).map((v) => ({ clave: c.clave, valor: v })));
+  const activos = CAMPOS.flatMap((campo) => lista(campo.clave).map((valor) => ({ clave: campo.clave, valor: valor })));
 
   // Nombre: fijar
   // Descripción: Cambia un filtro.
@@ -50,32 +50,30 @@ export default function Galeria() {
   // Salida: Nada.
   // Objetivo: Filtrar diseños.
   const fijar = (clave, valor) => {
-    const p = new URLSearchParams(params);
-    if (!valor || (Array.isArray(valor) && !valor.length)) p.delete(clave);
-    else p.set(clave, Array.isArray(valor) ? valor.join(',') : valor);
+    const parametros = new URLSearchParams(params);
+    if (!valor || (Array.isArray(valor) && !valor.length)) parametros.delete(clave);
+    else parametros.set(clave, Array.isArray(valor) ? valor.join(',') : valor);
     setPagina(1);
-    setParams(p, { replace: true });
+    setParams(parametros, { replace: true });
   };
   // Nombre: alternar
   // Descripción: Marca o desmarca un filtro.
   // Entrada: El filtro y el valor.
   // Salida: Nada.
   // Objetivo: Filtrar diseños.
-  const alternar = (clave, valor) => fijar(clave, lista(clave).includes(valor) ? lista(clave).filter((v) => v !== valor) : [...lista(clave), valor]);
+  const alternar = (clave, valor) => fijar(clave, lista(clave).includes(valor) ? lista(clave).filter((valorActual) => valorActual !== valor) : [...lista(clave), valor]);
 
   useEffect(() => {
     api.filtrosFotos().then(setOpciones).catch(() => {});
-    // Precio del press-on, para el botón de carrito de cada diseño
-    api.productos({ q: 'Press-on personalizado' }).then((l) => setPresson(l.find((p) => p.nombre.startsWith('Press-on personalizado')) || null)).catch(() => {});
   }, []);
-  useEffect(() => { fijar('q', q.trim()); }, [q]);
+  useEffect(() => { fijar('q', busqueda.trim()); }, [busqueda]);
 
   useEffect(() => {
     setCargando(true);
-    const filtros = Object.fromEntries(CAMPOS.map((c) => [c.clave, lista(c.clave)]));
+    const filtros = Object.fromEntries(CAMPOS.map((campo) => [campo.clave, lista(campo.clave)]));
     api.fotos({ ...filtros, q: params.get('q') || '', orden, limite: POR_PAGINA, pagina })
       .then((respuesta) => { setResultado({ total: respuesta.total, fotos: respuesta.fotos }); setError(''); })
-      .catch((e) => setError(e.message))
+      .catch((fallo) => setError(fallo.message))
       .finally(() => setCargando(false));
   }, [params, pagina, POR_PAGINA]);
 
@@ -105,20 +103,20 @@ export default function Galeria() {
         <Desplegable etiqueta={<span>Ordenar por: <b>{ORDENES[orden]}</b></span>}>
           {(cerrar) => (
             <div className="desplegable__opciones" role="radiogroup" aria-label="Ordenar por">
-              {Object.entries(ORDENES).map(([k, t]) => (
-                <label key={k} className="casilla"><input type="radio" name="orden-galeria" checked={orden === k} onChange={() => { fijar('orden', k === 'recientes' ? '' : k); cerrar(); }} /><span>{t}</span></label>
+              {Object.entries(ORDENES).map(([clave, valor]) => (
+                <label key={clave} className="casilla"><input type="radio" name="orden-galeria" checked={orden === clave} onChange={() => { fijar('orden', clave === 'recientes' ? '' : clave); cerrar(); }} /><span>{valor}</span></label>
               ))}
             </div>
           )}
         </Desplegable>
-        {CAMPOS.map((c) => (opciones[c.clave]?.length ? (
-          <Desplegable key={c.clave} etiqueta={`${c.titulo}${lista(c.clave).length ? ` (${lista(c.clave).length})` : ''}`} activo={lista(c.clave).length > 0}>
+        {CAMPOS.map((campo) => (opciones[campo.clave]?.length ? (
+          <Desplegable key={campo.clave} etiqueta={`${campo.titulo}${lista(campo.clave).length ? ` (${lista(campo.clave).length})` : ''}`} activo={lista(campo.clave).length > 0}>
             <fieldset className="desplegable__opciones">
-              <legend className="solo-lector">{c.titulo}</legend>
-              {opciones[c.clave].map((o) => (
-                <label key={o.valor} className="casilla">
-                  <input type="checkbox" checked={lista(c.clave).includes(o.valor)} onChange={() => alternar(c.clave, o.valor)} />
-                  <span>{o.valor}</span><span className="casilla__cantidad">{o.cantidad}</span>
+              <legend className="solo-lector">{campo.titulo}</legend>
+              {opciones[campo.clave].map((opcion) => (
+                <label key={opcion.valor} className="casilla">
+                  <input type="checkbox" checked={lista(campo.clave).includes(opcion.valor)} onChange={() => alternar(campo.clave, opcion.valor)} />
+                  <span>{opcion.valor}</span><span className="casilla__cantidad">{opcion.cantidad}</span>
                 </label>
               ))}
             </fieldset>
@@ -138,12 +136,12 @@ export default function Galeria() {
       )}
 
       <ul ref={rejilla} className="disenos-rejilla">
-        {resultado.fotos.map((f, i) => <TarjetaDiseno key={f.id} foto={f} indice={i} />)}
+        {resultado.fotos.map((foto, i) => <TarjetaDiseno key={foto.id} foto={foto} indice={i} />)}
         {cargando && pagina > 1 && <Fantasmas n={Math.min(POR_PAGINA, resultado.total - resultado.fotos.length)} />}
       </ul>
       <VerMas pagina={pagina} paginas={Math.ceil(resultado.total / POR_PAGINA)} cargando={cargando}
-              onCambiar={(n) => {
-                setPagina(n);
+              onCambiar={(numero) => {
+                setPagina(numero);
                 requestAnimationFrame(() => {
                   const rejilla = document.querySelector('.disenos-rejilla');
                   const encabezado = document.querySelector('.encabezado');

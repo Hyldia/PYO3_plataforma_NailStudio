@@ -1,3 +1,4 @@
+// Panel de la dueña: pide la contraseña y muestra las pestañas (agenda, equipo, tienda, números, cierre del día…).
 import { useEffect, useState } from 'react';
 import { api, sesionAdmin } from '../lib/api.js';
 import { useTitulo, usePorPagina } from '../lib/hooks.js';
@@ -40,9 +41,9 @@ function Entrar({ onEntrar }) {
   const entrar = async (evento) => {
     evento.preventDefault();
     try {
-      const r = await api.admin.entrar(clave);
-      sesionAdmin.guardar(r.token);
-      onEntrar(r.contrasenaInicial);
+      const respuesta = await api.admin.entrar(clave);
+      sesionAdmin.guardar(respuesta.token);
+      onEntrar(respuesta.contrasenaInicial);
     } catch (error) { setError(error.message); }
   };
   return (
@@ -71,7 +72,7 @@ const Elegir = ({ id, etiqueta, opciones, valor, onCambio, vacio = true }) => (
     <label htmlFor={id}>{etiqueta}</label>
     <select id={id} value={valor || ''} onChange={(evento) => onCambio(evento.target.value)}>
       {vacio && <option value="">Sin especificar</option>}
-      {opciones.map((o) => <option key={o}>{o}</option>)}
+      {opciones.map((opcion) => <option key={opcion}>{opcion}</option>)}
     </select>
   </div>
 );
@@ -104,9 +105,9 @@ function Galeria() {
   const cargar = async () => {
     const todas = [];
     for (let pagina = 1; pagina < 30; pagina++) {
-      const r = await api.fotos({ limite: 100, pagina });
-      todas.push(...r.fotos);
-      if (r.fotos.length < 100) break;
+      const respuesta = await api.fotos({ limite: 100, pagina });
+      todas.push(...respuesta.fotos);
+      if (respuesta.fotos.length < 100) break;
     }
     setFotos(todas);
   };
@@ -117,15 +118,15 @@ function Galeria() {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Agregar a la galería.
-  async function subir(e) {
-    e.preventDefault();
+  async function subir(evento) {
+    evento.preventDefault();
     if (!archivos.length) return setEstado({ subiendo: false, mensaje: '', error: 'Elige al menos una imagen.' });
     setEstado({ subiendo: true, mensaje: '', error: '' });
     try {
       for (const [i, archivo] of archivos.entries()) {
         const fd = new FormData();
         fd.append('imagen', archivo);
-        Object.entries(datos).forEach(([k, v]) => fd.append(k, k === 'titulo' && archivos.length > 1 ? `${v || 'Diseño'} ${i + 1}` : v));
+        Object.entries(datos).forEach(([clave, valor]) => fd.append(clave, clave === 'titulo' && archivos.length > 1 ? `${valor || 'Diseño'} ${i + 1}` : valor));
         await api.admin.subirFoto(fd);
       }
       setEstado({ subiendo: false, mensaje: `${archivos.length} ${archivos.length === 1 ? 'foto subida' : 'fotos subidas'}.`, error: '' });
@@ -138,8 +139,8 @@ function Galeria() {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Editar la galería.
-  async function guardarEdicion(e) {
-    e.preventDefault();
+  async function guardarEdicion(evento) {
+    evento.preventDefault();
     await api.admin.editarFoto(editando.id, editando);
     if (nuevaFoto) await api.admin.cambiarFotoDiseno(editando.id, formData(nuevaFoto));
     setEditando(null); setNuevaFoto(null); cargar();
@@ -150,9 +151,9 @@ function Galeria() {
   // Entrada: El diseño.
   // Salida: Nada.
   // Objetivo: Quitar de la galería.
-  async function borrar(f) {
-    if (!window.confirm(`¿Borrar la foto «${f.titulo}»? No se puede deshacer.`)) return;
-    await api.admin.borrarFoto(f.id); cargar();
+  async function borrar(foto) {
+    if (!window.confirm(`¿Borrar la foto «${foto.titulo}»? No se puede deshacer.`)) return;
+    await api.admin.borrarFoto(foto.id); cargar();
   }
 
   // Nombre: camposFoto
@@ -160,26 +161,26 @@ function Galeria() {
   // Entrada: Datos, función y prefijo.
   // Salida: Los campos.
   // Objetivo: Repetir el formulario.
-  const camposFoto = (d, set, prefijo) => (
+  const camposFoto = (datos, set, prefijo) => (
     <>
-      <div className="campo"><label htmlFor={`${prefijo}-titulo`}>Título</label><input id={`${prefijo}-titulo`} value={d.titulo} onChange={(evento) => set({ ...d, titulo: evento.target.value })} placeholder="Ej.: Francesa almendra con brillo" /></div>
+      <div className="campo"><label htmlFor={`${prefijo}-titulo`}>Título</label><input id={`${prefijo}-titulo`} value={datos.titulo} onChange={(evento) => set({ ...datos, titulo: evento.target.value })} placeholder="Ej.: Francesa almendra con brillo" /></div>
       <div className="campos-cuatro">
-        <Elegir id={`${prefijo}-cat`} etiqueta="Servicio" opciones={CATEGORIAS} valor={d.categoria} vacio={false} onCambio={(v) => set({ ...d, categoria: v })} />
-        <Elegir id={`${prefijo}-forma`} etiqueta="Forma" opciones={FORMAS} valor={d.forma} onCambio={(v) => set({ ...d, forma: v })} />
-        <Elegir id={`${prefijo}-color`} etiqueta="Color" opciones={COLORES} valor={d.color} onCambio={(v) => set({ ...d, color: v })} />
-        <Elegir id={`${prefijo}-acab`} etiqueta="Acabado" opciones={ACABADOS} valor={d.acabado} onCambio={(v) => set({ ...d, acabado: v })} />
+        <Elegir id={`${prefijo}-cat`} etiqueta="Servicio" opciones={CATEGORIAS} valor={datos.categoria} vacio={false} onCambio={(valor) => set({ ...datos, categoria: valor })} />
+        <Elegir id={`${prefijo}-forma`} etiqueta="Forma" opciones={FORMAS} valor={datos.forma} onCambio={(valor) => set({ ...datos, forma: valor })} />
+        <Elegir id={`${prefijo}-color`} etiqueta="Color" opciones={COLORES} valor={datos.color} onCambio={(valor) => set({ ...datos, color: valor })} />
+        <Elegir id={`${prefijo}-acab`} etiqueta="Acabado" opciones={ACABADOS} valor={datos.acabado} onCambio={(valor) => set({ ...datos, acabado: valor })} />
       </div>
       <div className="campo campo--precio">
         <label htmlFor={`${prefijo}-precio`}>Precio de este diseño (₡) <span className="tenue">(opcional: cualquier monto; vacío = precio normal del servicio)</span></label>
-        <input id={`${prefijo}-precio`} type="number" min="0" step="any" inputMode="numeric" value={d.precio ?? ''} onChange={(evento) => set({ ...d, precio: evento.target.value })} placeholder="Ej.: 18500" />
+        <input id={`${prefijo}-precio`} type="number" min="0" step="any" inputMode="numeric" value={datos.precio ?? ''} onChange={(evento) => set({ ...datos, precio: evento.target.value })} placeholder="Ej.: 18500" />
       </div>
-      <div className="campo"><label htmlFor={`${prefijo}-desc`}>Descripción <span className="tenue">(se lee en voz alta para personas ciegas)</span></label><input id={`${prefijo}-desc`} value={d.descripcion || ''} onChange={(evento) => set({ ...d, descripcion: evento.target.value })} placeholder="Ej.: Uñas largas almendradas, base nude con punta blanca" /></div>
-      <div className="campo"><label htmlFor={`${prefijo}-tags`}>Palabras clave para el buscador</label><input id={`${prefijo}-tags`} value={d.etiquetas || ''} onChange={(evento) => set({ ...d, etiquetas: evento.target.value })} placeholder="boda, elegante, verano" /></div>
-      <label className="casilla"><input type="checkbox" checked={!!d.destacada} onChange={(evento) => set({ ...d, destacada: evento.target.checked })} /><span>Destacar (aparece primero y en la portada)</span></label>
+      <div className="campo"><label htmlFor={`${prefijo}-desc`}>Descripción <span className="tenue">(se lee en voz alta para personas ciegas)</span></label><input id={`${prefijo}-desc`} value={datos.descripcion || ''} onChange={(evento) => set({ ...datos, descripcion: evento.target.value })} placeholder="Ej.: Uñas largas almendradas, base nude con punta blanca" /></div>
+      <div className="campo"><label htmlFor={`${prefijo}-tags`}>Palabras clave para el buscador</label><input id={`${prefijo}-tags`} value={datos.etiquetas || ''} onChange={(evento) => set({ ...datos, etiquetas: evento.target.value })} placeholder="boda, elegante, verano" /></div>
+      <label className="casilla"><input type="checkbox" checked={!!datos.destacada} onChange={(evento) => set({ ...datos, destacada: evento.target.checked })} /><span>Destacar (aparece primero y en la portada)</span></label>
     </>
   );
 
-  const lista = fotos.filter((f) => (!cat || f.categoria === cat) && (!buscar || [f.titulo, f.color, f.forma, f.acabado, f.descripcion].join(' ').toLowerCase().includes(buscar.toLowerCase())));
+  const lista = fotos.filter((foto) => (!cat || foto.categoria === cat) && (!buscar || [foto.titulo, foto.color, foto.forma, foto.acabado, foto.descripcion].join(' ').toLowerCase().includes(buscar.toLowerCase())));
   const paginas = Math.ceil(lista.length / POR_PAGINA_GALERIA);
   const fotosPagina = lista.slice((pagina - 1) * POR_PAGINA_GALERIA, pagina * POR_PAGINA_GALERIA);
   useEffect(() => { if (pagina > paginas) setPagina(Math.max(paginas, 1)); }, [pagina, paginas]);
@@ -196,7 +197,7 @@ function Galeria() {
           <p className="tenue">Así se verá en la galería:</p>
           <div className="editar-foto__tarjeta">
             <p><strong>{editando.titulo || 'Sin título'}</strong></p>
-            <p className="editar-foto__chips">{[editando.categoria, editando.forma, editando.color, editando.acabado].filter(Boolean).map((x) => <span key={x}>{x}</span>)}</p>
+            <p className="editar-foto__chips">{[editando.categoria, editando.forma, editando.color, editando.acabado].filter(Boolean).map((dato) => <span key={dato}>{dato}</span>)}</p>
             {editando.destacada && <span className="tarjeta-diseno__marca editar-foto__dest">Destacado</span>}
           </div>
         </div>
@@ -235,29 +236,29 @@ function Galeria() {
 
       <div className="filtros-admin">
         <label className="filtros-admin__buscar"><span className="solo-lector">Buscar diseño</span><input type="search" value={buscar} onChange={(evento) => { setBuscar(evento.target.value); setPagina(1); }} placeholder="Buscar por título, color o forma" /></label>
-        <label><span className="solo-lector">Servicio</span><select value={cat} onChange={(evento) => { setCat(evento.target.value); setPagina(1); }}><option value="">Todos los servicios</option>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></label>
+        <label><span className="solo-lector">Servicio</span><select value={cat} onChange={(evento) => { setCat(evento.target.value); setPagina(1); }}><option value="">Todos los servicios</option>{CATEGORIAS.map((categoria) => <option key={categoria}>{categoria}</option>)}</select></label>
       </div>
       <p className="tenue">{lista.length} diseños</p>
       <ul ref={rejilla} className="admin-tarjetas">
-        {fotosPagina.map((f, i) => (
-          <li key={f.id} className="admin-tarjeta" style={{ '--n': i % 24 }}>
+        {fotosPagina.map((foto, i) => (
+          <li key={foto.id} className="admin-tarjeta" style={{ '--n': i % 24 }}>
             <div className="admin-tarjeta__foto">
-              <Foto archivo={f.archivo} alt={f.titulo} />
-              {f.destacada ? <span className="admin-tarjeta__sello admin-tarjeta__sello--oro">Destacado</span> : null}
+              <Foto archivo={foto.archivo} alt={foto.titulo} />
+              {foto.destacada ? <span className="admin-tarjeta__sello admin-tarjeta__sello--oro">Destacado</span> : null}
             </div>
             <div className="admin-tarjeta__info">
-              <p className="admin-tarjeta__nombre">{f.titulo}</p>
-              <p className="editar-foto__chips">{[f.categoria, f.forma, f.color, f.acabado].filter(Boolean).map((x) => <span key={x}>{x}</span>)}</p>
-              <p className="tenue">{f.precio ? <strong className="galeria-admin__precio">{dinero(f.precio)}</strong> : 'Precio del servicio'} · {f.vistas} vistas</p>
+              <p className="admin-tarjeta__nombre">{foto.titulo}</p>
+              <p className="editar-foto__chips">{[foto.categoria, foto.forma, foto.color, foto.acabado].filter(Boolean).map((dato) => <span key={dato}>{dato}</span>)}</p>
+              <p className="tenue">{foto.precio ? <strong className="galeria-admin__precio">{dinero(foto.precio)}</strong> : 'Precio del servicio'} · {foto.vistas} vistas</p>
             </div>
             <div className="admin-tarjeta__botones">
-              <button type="button" className="boton boton--chico" onClick={() => setEditando({ ...f, destacada: !!f.destacada, precio: f.precio ?? '' })}>Editar<span className="solo-lector"> {f.titulo}</span></button>
-              <button type="button" className="boton boton--chico boton--peligro" onClick={() => borrar(f)}>Borrar<span className="solo-lector"> {f.titulo}</span></button>
+              <button type="button" className="boton boton--chico" onClick={() => setEditando({ ...foto, destacada: !!foto.destacada, precio: foto.precio ?? '' })}>Editar<span className="solo-lector"> {foto.titulo}</span></button>
+              <button type="button" className="boton boton--chico boton--peligro" onClick={() => borrar(foto)}>Borrar<span className="solo-lector"> {foto.titulo}</span></button>
             </div>
           </li>
         ))}
       </ul>
-      <VerMas pagina={pagina} paginas={paginas} onCambiar={(n) => { setPagina(n); document.getElementById('t-galeria-admin')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
+      <VerMas pagina={pagina} paginas={paginas} onCambiar={(numero) => { setPagina(numero); document.getElementById('t-galeria-admin')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
     </section>
   );
 }
@@ -316,7 +317,7 @@ export default function Admin() {
       <div className="admin__cabeza">
         <h1>Panel del salón</h1>
         <div className="admin__arriba">
-          <Campanita seccion={seccion} onIr={(s) => { setSeccion(s); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+          <Campanita seccion={seccion} onIr={(seccionElegida) => { setSeccion(seccionElegida); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
           <button type="button" className="enlace enlace--boton" onClick={salir}>Salir</button>
         </div>
       </div>

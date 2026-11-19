@@ -41,7 +41,7 @@ export default function CierreDia() {
 
   useEffect(() => {
     setReporte(null);
-    api.admin.cierreDelDia(fecha).then((datos) => { setReporte(datos); setError(''); }).catch((e) => setError(e.message));
+    api.admin.cierreDelDia(fecha).then((datos) => { setReporte(datos); setError(''); }).catch((fallo) => setError(fallo.message));
   }, [fecha]);
 
   // Nombre: moverDia

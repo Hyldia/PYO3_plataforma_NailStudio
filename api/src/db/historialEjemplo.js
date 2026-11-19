@@ -19,19 +19,19 @@ export function cargarHistorialEjemplo(db) {
   if (hecho || !db.prepare("SELECT valor FROM ajustes WHERE clave = 'datos_ejemplo'").get()) return false;
   if (!db.prepare('SELECT COUNT(*) AS n FROM citas').get().n) return false; // ya limpiaron los datos de ejemplo
 
-  let s = 7331;
+  let estado = 7331;
   // Nombre: r
   // Descripción: Da un número al azar (siempre la misma serie).
   // Entrada: Nada.
   // Salida: Un número entre 0 y 1.
   // Objetivo: Crear datos de ejemplo iguales cada vez.
-  const r = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  const aleatorio = () => ((estado = (estado * 1664525 + 1013904223) % 4294967296) / 4294967296);
   // Nombre: elegir
   // Descripción: Elige un elemento al azar de una lista.
   // Entrada: La lista.
   // Salida: Un elemento.
   // Objetivo: Variar los datos de ejemplo.
-  const elegir = (l) => l[Math.floor(r() * l.length)];
+  const elegir = (lista) => lista[Math.floor(aleatorio() * lista.length)];
   const servicios = db.prepare('SELECT * FROM servicios WHERE activo = 1').all();
   const especialistas = EspecialistaModel.listar();
   if (!servicios.length || !especialistas.length) return false;
@@ -40,25 +40,25 @@ export function cargarHistorialEjemplo(db) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`);
 
   db.transaction(() => {
-    const d = new Date(); d.setHours(12, 0, 0, 0);
+    const dia = new Date(); dia.setHours(12, 0, 0, 0);
     for (let i = 1; i <= 60; i++) {
-      d.setDate(d.getDate() - 1);
-      if (d.getDay() === 0) continue; // domingo cerrado
-      const fecha = iso(d);
-      const usadas = new Set(ocupadas.all(fecha).map((x) => x.k));
+      dia.setDate(dia.getDate() - 1);
+      if (dia.getDay() === 0) continue; // domingo cerrado
+      const fecha = iso(dia);
+      const usadas = new Set(ocupadas.all(fecha).map((fila) => fila.k));
       const libres = especialistas
-        .filter((e) => !AusenciaModel.tieneAusencia(e.id, fecha))
-        .flatMap((e) => CitaModel.horasDe(e, fecha).filter((h) => !usadas.has(`${e.id}|${h}`)).map((h) => [e, h]));
-      const total = especialistas.reduce((n, e) => n + CitaModel.horasDe(e, fecha).length, 0);
+        .filter((especialista) => !AusenciaModel.tieneAusencia(especialista.id, fecha))
+        .flatMap((especialista) => CitaModel.horasDe(especialista, fecha).filter((hora) => !usadas.has(`${especialista.id}|${hora}`)).map((hora) => [especialista, hora]));
+      const total = especialistas.reduce((suma, especialista) => suma + CitaModel.horasDe(especialista, fecha).length, 0);
       // Viernes y sábados más llenos, igual que la agenda de muestra
-      const meta = [5, 6].includes(d.getDay()) ? 0.8 + r() * 0.15 : 0.6 + r() * 0.25;
+      const meta = [5, 6].includes(dia.getDay()) ? 0.8 + aleatorio() * 0.15 : 0.6 + aleatorio() * 0.25;
       const faltan = Math.max(0, Math.round(total * meta) - usadas.size);
-      libres.sort(() => r() - 0.5).slice(0, faltan).forEach(([e, hora]) => {
+      libres.sort(() => aleatorio() - 0.5).slice(0, faltan).forEach(([e, hora]) => {
         const sv = elegir(servicios);
         const precio = sv.precio_oferta ?? sv.precio;
         const metodo = elegir(['SINPE Móvil', 'SINPE Móvil', 'Tarjeta', 'Pago en el salón']);
-        ins.run(sv.id, e.id, `${elegir(NOMBRES)} ${elegir(APELLIDOS)} ${elegir(APELLIDOS)}`, `${elegir(['6', '7', '8'])}${100 + Math.floor(r() * 900)} ${1000 + Math.floor(r() * 9000)}`,
-          fecha, hora, r() < 0.06 ? 'cancelada' : 'completada', precio, metodo === 'Pago en el salón' ? 0 : Math.round(precio * PORCENTAJE_ADELANTO), metodo);
+        ins.run(sv.id, e.id, `${elegir(NOMBRES)} ${elegir(APELLIDOS)} ${elegir(APELLIDOS)}`, `${elegir(['6', '7', '8'])}${100 + Math.floor(aleatorio() * 900)} ${1000 + Math.floor(aleatorio() * 9000)}`,
+          fecha, hora, aleatorio() < 0.06 ? 'cancelada' : 'completada', precio, metodo === 'Pago en el salón' ? 0 : Math.round(precio * PORCENTAJE_ADELANTO), metodo);
       });
     }
     db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('historial_ejemplo', '1') ON CONFLICT(clave) DO UPDATE SET valor = '1'").run();

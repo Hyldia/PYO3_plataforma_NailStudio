@@ -37,10 +37,10 @@ export function getDb() {
 // Salida: Nada.
 // Objetivo: Agregar tablas y columnas sin perder datos.
 function migrar(db) {
-  const columnas = db.prepare('PRAGMA table_info(fotos)').all().map((c) => c.name);
+  const columnas = db.prepare('PRAGMA table_info(fotos)').all().map((fila) => fila.name);
   if (!columnas.includes('autor')) db.exec('ALTER TABLE fotos ADD COLUMN autor TEXT');
   if (!columnas.includes('autor_url')) db.exec('ALTER TABLE fotos ADD COLUMN autor_url TEXT');
-  const colProd = db.prepare('PRAGMA table_info(productos)').all().map((c) => c.name);
+  const colProd = db.prepare('PRAGMA table_info(productos)').all().map((fila) => fila.name);
   if (!colProd.includes('color')) db.exec('ALTER TABLE productos ADD COLUMN color TEXT');
   if (!colProd.includes('tipo')) db.exec('ALTER TABLE productos ADD COLUMN tipo TEXT');
   if (!colProd.includes('imagen_autor')) db.exec('ALTER TABLE productos ADD COLUMN imagen_autor TEXT');
@@ -50,7 +50,7 @@ function migrar(db) {
   // Salida: Nada.
   // Objetivo: Actualizar sin errores.
   const agregar = (tabla, col, tipo) => {
-    if (!db.prepare(`PRAGMA table_info(${tabla})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${tabla} ADD COLUMN ${col} ${tipo}`);
+    if (!db.prepare(`PRAGMA table_info(${tabla})`).all().some((fila) => fila.name === col)) db.exec(`ALTER TABLE ${tabla} ADD COLUMN ${col} ${tipo}`);
   };
   [['precio_oferta', 'REAL'], ['incluye', 'TEXT'], ['etiqueta', 'TEXT'], ['imagen', 'TEXT'],
    ['es_combo', 'INTEGER NOT NULL DEFAULT 0'], ['destacado', 'INTEGER NOT NULL DEFAULT 0']].forEach(([c, t]) => agregar('servicios', c, t));
@@ -79,7 +79,7 @@ function migrar(db) {
    ['salario_base', 'REAL NOT NULL DEFAULT 0'], ['usuario', 'TEXT'], ['contrasena_hash', 'TEXT']].forEach(([c, t]) => agregar('especialistas', c, t));
   agregar('fotos', 'precio', 'REAL');
   // Citas de muestra: se marcan para que solo ellas usen fotos de muestra de clientas
-  if (!db.prepare('PRAGMA table_info(citas)').all().some((c) => c.name === 'ejemplo')) {
+  if (!db.prepare('PRAGMA table_info(citas)').all().some((fila) => fila.name === 'ejemplo')) {
     db.exec('ALTER TABLE citas ADD COLUMN ejemplo INTEGER NOT NULL DEFAULT 0');
     if (db.prepare("SELECT 1 FROM ajustes WHERE clave = 'datos_ejemplo'").get()) db.exec('UPDATE citas SET ejemplo = 1');
   }

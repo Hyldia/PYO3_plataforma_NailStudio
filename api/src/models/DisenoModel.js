@@ -13,11 +13,11 @@ export const DisenoModel = {
   // Entrada: El diseño.
   // Salida: El diseño guardado.
   // Objetivo: Reservarlo después.
-  crear(d) {
-    const r = getDb().prepare(`
+  crear(datos) {
+    const resultado = getDb().prepare(`
       INSERT INTO disenos (forma, largo, color, acabado, decoracion, acento, notas, foto_ref_id, precio, unas, extras)
       VALUES (@forma, @largo, @color, @acabado, @decoracion, @acento, @notas, @fotoRefId, @precio, @unas, @extras)
-    `).run({ ...d, acento: d.acento ? 1 : 0, notas: d.notas || null, fotoRefId: d.fotoRefId || null, unas: d.unas ? JSON.stringify(d.unas) : null, extras: d.extras?.length ? JSON.stringify(d.extras) : null });
-    return this.buscarPorId(r.lastInsertRowid);
+    `).run({ ...datos, acento: datos.acento ? 1 : 0, notas: datos.notas || null, fotoRefId: datos.fotoRefId || null, unas: datos.unas ? JSON.stringify(datos.unas) : null, extras: datos.extras?.length ? JSON.stringify(datos.extras) : null });
+    return this.buscarPorId(resultado.lastInsertRowid);
   }
 };

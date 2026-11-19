@@ -11,7 +11,7 @@ import { fechaLarga, isoLocal } from './piezasPanel.jsx';
 // Entrada: La fecha.
 // Salida: Los días.
 // Objetivo: Avisar el próximo pago.
-const diasFaltan = (f) => Math.round((new Date(`${f}T12:00:00`) - new Date(`${isoLocal(new Date())}T12:00:00`)) / 86400000);
+const diasFaltan = (fecha) => Math.round((new Date(`${fecha}T12:00:00`) - new Date(`${isoLocal(new Date())}T12:00:00`)) / 86400000);
 const TIPO = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Incapacidad', permiso: 'Permiso' };
 
 // Nombre: PagosEquipo
@@ -31,16 +31,16 @@ export default function PagosEquipo() {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Mostrar la tabla.
-  const cargar = () => api.admin.nomina(periodo).then((respuesta) => { setDatos(respuesta); setError(''); }).catch((e) => setError(e.message));
+  const cargar = () => api.admin.nomina(periodo).then((respuesta) => { setDatos(respuesta); setError(''); }).catch((fallo) => setError(fallo.message));
   useEffect(() => { cargar(); }, [periodo]);
 
-  const p = datos?.periodo;
+  const periodoActual = datos?.periodo;
   const totales = useMemo(() => (datos ? {
-    pagar: datos.equipo.reduce((s, e) => s + e.total, 0),
-    pagado: datos.equipo.filter((e) => e.pagado).reduce((s, e) => s + e.total, 0),
-    vendido: datos.equipo.reduce((s, e) => s + e.vendido, 0),
-    pendientes: datos.equipo.filter((e) => !e.pagado && e.total > 0).length,
-    porMarcar: datos.equipo.reduce((s, e) => s + e.porMarcar, 0)
+    pagar: datos.equipo.reduce((suma, especialista) => suma + especialista.total, 0),
+    pagado: datos.equipo.filter((especialista) => especialista.pagado).reduce((suma, especialista) => suma + especialista.total, 0),
+    vendido: datos.equipo.reduce((suma, especialista) => suma + especialista.vendido, 0),
+    pendientes: datos.equipo.filter((especialista) => !especialista.pagado && especialista.total > 0).length,
+    porMarcar: datos.equipo.reduce((suma, especialista) => suma + especialista.porMarcar, 0)
   } : null), [datos]);
 
   // Nombre: marcarAtendidas
@@ -49,9 +49,9 @@ export default function PagosEquipo() {
   // Salida: Nada.
   // Objetivo: Que cuenten para el pago.
   const marcarAtendidas = async (e = null) => {
-    const n = e ? e.porMarcar : totales.porMarcar;
-    if (!window.confirm(`¿Marcar como atendidas ${n} ${n === 1 ? 'cita' : 'citas'} de días que ya pasaron${e ? ` de ${e.nombre}` : ''}? Hazlo solo si de verdad se atendieron.`)) return;
-    try { await api.admin.marcarAtendidas({ desde: p.desde, hasta: p.hasta, especialistaId: e?.id }); cargar(); } catch (error) { setError(error.message); }
+    const porMarcar = e ? e.porMarcar : totales.porMarcar;
+    if (!window.confirm(`¿Marcar como atendidas ${porMarcar} ${porMarcar === 1 ? 'cita' : 'citas'} de días que ya pasaron${e ? ` de ${e.nombre}` : ''}? Hazlo solo si de verdad se atendieron.`)) return;
+    try { await api.admin.marcarAtendidas({ desde: periodoActual.desde, hasta: periodoActual.hasta, especialistaId: e?.id }); cargar(); } catch (error) { setError(error.message); }
   };
 
   // Nombre: pagar
@@ -59,27 +59,27 @@ export default function PagosEquipo() {
   // Entrada: La especialista.
   // Salida: Nada.
   // Objetivo: Registrar.
-  const pagar = async (e) => {
-    try { await api.admin.marcarPagado(e.id, { desde: p.desde, hasta: p.hasta }); cargar(); } catch (error) { setError(error.message); }
+  const pagar = async (especialista) => {
+    try { await api.admin.marcarPagado(especialista.id, { desde: periodoActual.desde, hasta: periodoActual.hasta }); cargar(); } catch (error) { setError(error.message); }
   };
   // Nombre: deshacer
   // Descripción: Deshace un pago.
   // Entrada: La especialista.
   // Salida: Nada.
   // Objetivo: Corregir.
-  const deshacer = async (e) => {
-    if (!window.confirm(`¿Quitar la marca de pagado a ${e.nombre}?`)) return;
-    try { await api.admin.quitarPagado(e.id, { desde: p.desde, hasta: p.hasta }); cargar(); } catch (error) { setError(error.message); }
+  const deshacer = async (especialista) => {
+    if (!window.confirm(`¿Quitar la marca de pagado a ${especialista.nombre}?`)) return;
+    try { await api.admin.quitarPagado(especialista.id, { desde: periodoActual.desde, hasta: periodoActual.hasta }); cargar(); } catch (error) { setError(error.message); }
   };
   // Nombre: descargar
   // Descripción: Descarga la planilla.
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Guardarla en Excel.
-  const descargar = async () => { setBajando(true); try { await api.admin.descargarNomina({ desde: p.desde, hasta: p.hasta }); } catch (error) { setError(error.message); } setBajando(false); };
-  const esActual = p && datos.actual.desde === p.desde && datos.actual.hasta === p.hasta;
-  const esAnterior = p && datos.anterior.desde === p.desde && datos.anterior.hasta === p.hasta;
-  const faltan = p ? diasFaltan(p.diaPago) : 0;
+  const descargar = async () => { setBajando(true); try { await api.admin.descargarNomina({ desde: periodoActual.desde, hasta: periodoActual.hasta }); } catch (error) { setError(error.message); } setBajando(false); };
+  const esActual = periodoActual && datos.actual.desde === periodoActual.desde && datos.actual.hasta === periodoActual.hasta;
+  const esAnterior = periodoActual && datos.anterior.desde === periodoActual.desde && datos.anterior.hasta === periodoActual.hasta;
+  const faltan = periodoActual ? diasFaltan(periodoActual.diaPago) : 0;
 
   return (
     <section aria-labelledby="t-nom" className="seccion-admin">
@@ -98,8 +98,8 @@ export default function PagosEquipo() {
               <button type="button" className={`chip-filtro ${esActual ? 'chip-filtro--activo' : ''}`} onClick={() => setPeriodo({ desde: datos.actual.desde, hasta: datos.actual.hasta })}>Esta quincena</button>
               <button type="button" className={`chip-filtro ${esAnterior ? 'chip-filtro--activo' : ''}`} onClick={() => setPeriodo({ desde: datos.anterior.desde, hasta: datos.anterior.hasta })}>Quincena pasada</button>
             </div>
-            <label className="filtros-admin__fecha"><span>Desde</span><input type="date" value={p.desde} onChange={(evento) => setPeriodo({ desde: evento.target.value, hasta: p.hasta })} /></label>
-            <label className="filtros-admin__fecha"><span>Hasta</span><input type="date" value={p.hasta} onChange={(evento) => setPeriodo({ desde: p.desde, hasta: evento.target.value })} /></label>
+            <label className="filtros-admin__fecha"><span>Desde</span><input type="date" value={periodoActual.desde} onChange={(evento) => setPeriodo({ desde: evento.target.value, hasta: periodoActual.hasta })} /></label>
+            <label className="filtros-admin__fecha"><span>Hasta</span><input type="date" value={periodoActual.hasta} onChange={(evento) => setPeriodo({ desde: periodoActual.desde, hasta: evento.target.value })} /></label>
           </div>
 
           <div className="nomina-resumen">
@@ -109,7 +109,7 @@ export default function PagosEquipo() {
               </span>
               <div>
                 <p className="tenue">Día de pago</p>
-                <p className="nomina-resumen__fecha">{fechaLarga(p.diaPago)}</p>
+                <p className="nomina-resumen__fecha">{fechaLarga(periodoActual.diaPago)}</p>
                 <p className={`nomina-resumen__faltan ${faltan < 0 ? 'nomina-resumen__faltan--paso' : faltan <= 2 ? 'nomina-resumen__faltan--pronto' : ''}`}>
                   {faltan > 1 ? `Faltan ${faltan} días` : faltan === 1 ? 'Es mañana' : faltan === 0 ? 'Es hoy' : 'Ya pasó'}
                 </p>
@@ -122,7 +122,7 @@ export default function PagosEquipo() {
               <li><strong>{dinero(totales.vendido)}</strong>vendido por el equipo</li>
             </ul>
           </div>
-          <p className="tenue">Del {fechaLarga(p.desde)} al {fechaLarga(p.hasta)}. Solo cuentan las citas marcadas como <b>atendidas</b>.</p>
+          <p className="tenue">Del {fechaLarga(periodoActual.desde)} al {fechaLarga(periodoActual.hasta)}. Solo cuentan las citas marcadas como <b>atendidas</b>.</p>
           {totales.porMarcar > 0 && (
             <div className="nomina-aviso" role="status">
               <span className="nomina-aviso__icono" aria-hidden="true">!</span>
@@ -152,23 +152,23 @@ export default function PagosEquipo() {
             <span role="columnheader" className="nomina-num">Se le paga</span>
             <span role="columnheader">Estado</span>
           </div>
-          {datos.equipo.map((e, i) => {
-            const abiertaFila = abierta === e.id;
+          {datos.equipo.map((especialista, i) => {
+            const abiertaFila = abierta === especialista.id;
             return (
-              <div key={e.id} className={`nomina-grupo ${e.pagado ? 'nomina-grupo--pagada' : ''} ${abiertaFila ? 'nomina-grupo--abierta' : ''}`} style={{ '--n': i }} role="rowgroup">
+              <div key={especialista.id} className={`nomina-grupo ${especialista.pagado ? 'nomina-grupo--pagada' : ''} ${abiertaFila ? 'nomina-grupo--abierta' : ''}`} style={{ '--n': i }} role="rowgroup">
                 <div className="nomina-fila" role="row">
                   <span role="cell" className="nomina-persona">
-                    <span className="nomina-tarjeta__foto">{e.foto ? <Foto archivo={e.foto} alt="" /> : <span aria-hidden="true">{e.nombre[0]}</span>}</span>
-                    <span><b>{e.nombre}</b><small>{e.estacion || 'Sin estación'} · {e.esquema_pago === 'base_comision' ? `Base + ${e.comision} %` : `${e.comision} % de comisión`}</small></span>
+                    <span className="nomina-tarjeta__foto">{especialista.foto ? <Foto archivo={especialista.foto} alt="" /> : <span aria-hidden="true">{especialista.nombre[0]}</span>}</span>
+                    <span><b>{especialista.nombre}</b><small>{especialista.estacion || 'Sin estación'} · {especialista.esquema_pago === 'base_comision' ? `Base + ${especialista.comision} %` : `${especialista.comision} % de comisión`}</small></span>
                   </span>
-                  <span role="cell" className="nomina-num" data-titulo="Citas atendidas">{e.citas}{e.porMarcar > 0 && <small className="nomina-falta">+{e.porMarcar} sin marcar</small>}</span>
-                  <span role="cell" className="nomina-num" data-titulo="Cobró a clientas">{dinero(e.vendido)}</span>
-                  <span role="cell" className="nomina-num nomina-total" data-titulo="Se le paga">{dinero(e.total)}</span>
+                  <span role="cell" className="nomina-num" data-titulo="Citas atendidas">{especialista.citas}{especialista.porMarcar > 0 && <small className="nomina-falta">+{especialista.porMarcar} sin marcar</small>}</span>
+                  <span role="cell" className="nomina-num" data-titulo="Cobró a clientas">{dinero(especialista.vendido)}</span>
+                  <span role="cell" className="nomina-num nomina-total" data-titulo="Se le paga">{dinero(especialista.total)}</span>
                   <span role="cell" className="nomina-estado">
-                    {e.pagado
+                    {especialista.pagado
                       ? <span className="nomina-tarjeta__sello">✓ Pagado</span>
-                      : <button type="button" className="boton boton--chico" disabled={e.total <= 0} onClick={() => pagar(e)}>Marcar pagado</button>}
-                    <button type="button" className="nomina-ver" aria-expanded={abiertaFila} onClick={() => setAbierta(abiertaFila ? null : e.id)}>
+                      : <button type="button" className="boton boton--chico" disabled={especialista.total <= 0} onClick={() => pagar(especialista)}>Marcar pagado</button>}
+                    <button type="button" className="nomina-ver" aria-expanded={abiertaFila} onClick={() => setAbierta(abiertaFila ? null : especialista.id)}>
                       {abiertaFila ? 'Cerrar' : 'Detalle'}
                       <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
                     </button>
@@ -178,21 +178,21 @@ export default function PagosEquipo() {
                   <div className="nomina-detalle" role="row">
                     <div role="cell">
                       <p className="nomina-detalle__cuenta">
-                        Atendió <b>{e.citas} {e.citas === 1 ? 'cita' : 'citas'}</b> y les cobró <b>{dinero(e.vendido)}</b> a las clientas.<br />
-                        {e.base > 0 ? <>Se le paga la base de <b>{dinero(e.base)}</b> + el {e.comision} % de lo cobrado (<b>{dinero(e.porComision)}</b>) = <b>{dinero(e.total)}</b>.</>
-                          : <>Se le paga el {e.comision} % de lo cobrado: <b>{dinero(e.total)}</b>.</>}
+                        Atendió <b>{especialista.citas} {especialista.citas === 1 ? 'cita' : 'citas'}</b> y les cobró <b>{dinero(especialista.vendido)}</b> a las clientas.<br />
+                        {especialista.base > 0 ? <>Se le paga la base de <b>{dinero(especialista.base)}</b> + el {especialista.comision} % de lo cobrado (<b>{dinero(especialista.porComision)}</b>) = <b>{dinero(especialista.total)}</b>.</>
+                          : <>Se le paga el {especialista.comision} % de lo cobrado: <b>{dinero(especialista.total)}</b>.</>}
                       </p>
-                      {e.porMarcar > 0 && (
-                        <p className="nomina-tarjeta__falta">Tiene {e.porMarcar} {e.porMarcar === 1 ? 'cita de un día pasado que no se marcó' : 'citas de días pasados que no se marcaron'} como atendidas (no se pagan).
-                          <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => marcarAtendidas(e)}>Marcarlas atendidas</button></p>
+                      {especialista.porMarcar > 0 && (
+                        <p className="nomina-tarjeta__falta">Tiene {especialista.porMarcar} {especialista.porMarcar === 1 ? 'cita de un día pasado que no se marcó' : 'citas de días pasados que no se marcaron'} como atendidas (no se pagan).
+                          <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => marcarAtendidas(especialista)}>Marcarlas atendidas</button></p>
                       )}
-                      {e.pagado && <p className="tenue">Se marcó como pagado el {String(e.pagado.pagado_en).slice(0, 10)}. <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => deshacer(e)}>Deshacer</button></p>}
+                      {especialista.pagado && <p className="tenue">Se marcó como pagado el {String(especialista.pagado.pagado_en).slice(0, 10)}. <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => deshacer(especialista)}>Deshacer</button></p>}
                     </div>
                     <ul className="nomina-detalle__dias" role="cell">
-                      <li><b>{e.diasProgramados}</b>días que le tocaba trabajar</li>
-                      <li><b>{e.diasTrabajados}</b>días que tuvo citas</li>
-                      <li><b>{e.diasLibres}</b>días libres por horario</li>
-                      <li><b>{e.ausencias}</b>ausencias{e.detalleAusencias.length > 0 && <small>{e.detalleAusencias.map((a) => `${fechaLarga(a.fecha)} (${(TIPO[a.tipo] || a.tipo).toLowerCase()})`).join(', ')}</small>}</li>
+                      <li><b>{especialista.diasProgramados}</b>días que le tocaba trabajar</li>
+                      <li><b>{especialista.diasTrabajados}</b>días que tuvo citas</li>
+                      <li><b>{especialista.diasLibres}</b>días libres por horario</li>
+                      <li><b>{especialista.ausencias}</b>ausencias{especialista.detalleAusencias.length > 0 && <small>{especialista.detalleAusencias.map((ausencia) => `${fechaLarga(ausencia.fecha)} (${(TIPO[ausencia.tipo] || ausencia.tipo).toLowerCase()})`).join(', ')}</small>}</li>
                     </ul>
                   </div>
                 )}
@@ -201,7 +201,7 @@ export default function PagosEquipo() {
           })}
           <div className="nomina-fila nomina-fila--total" role="row">
             <span role="cell"><b>Total del equipo</b></span>
-            <span role="cell" className="nomina-num" data-titulo="Citas atendidas">{datos.equipo.reduce((s, e) => s + e.citas, 0)}</span>
+            <span role="cell" className="nomina-num" data-titulo="Citas atendidas">{datos.equipo.reduce((suma, especialista) => suma + especialista.citas, 0)}</span>
             <span role="cell" className="nomina-num" data-titulo="Cobró a clientas">{dinero(totales.vendido)}</span>
             <span role="cell" className="nomina-num nomina-total" data-titulo="Se le paga">{dinero(totales.pagar)}</span>
             <span role="cell" />

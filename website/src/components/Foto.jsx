@@ -1,3 +1,4 @@
+// Foto con respaldo: si la imagen no carga, se muestra un fondo suave en su lugar.
 import { useState } from 'react';
 import { urlFoto } from '../config.js';
 

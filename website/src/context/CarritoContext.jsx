@@ -17,35 +17,35 @@ function reducer(items, accion) {
       const { producto, opciones = {} } = accion;
       const clave = `${producto.id}|${opciones.detalle || ''}`;
       const cantidad = Math.max(1, Number(opciones.cantidad) || 1);
-      const existe = items.find((i) => i.clave === clave);
+      const existe = items.find((item) => item.clave === clave);
       // Lo que es para una sola persona (un press-on con un diseño) no se suma: se queda en 1
-      if (existe) return items.map((i) => (i.clave === clave ? { ...i, cantidad: i.unico ? 1 : i.cantidad + cantidad } : i));
+      if (existe) return items.map((item) => (item.clave === clave ? { ...item, cantidad: item.unico ? 1 : item.cantidad + cantidad } : item));
       return [...items, { ...producto, ...opciones, imagen: opciones.imagen ?? producto.imagen, clave, productoId: producto.id, cantidad, seleccionado: true }];
     }
     case 'agregarCitas':
       // Cada cita es una persona con un diseño: cantidad 1, nunca se suman
-      return [...items, ...accion.citas.map((c, n) => ({ ...c, tipo: 'cita', clave: `cita|${Date.now()}|${n}`, cantidad: 1, unico: true, seleccionado: true }))];
+      return [...items, ...accion.citas.map((cita, numero) => ({ ...cita, tipo: 'cita', clave: `cita|${Date.now()}|${numero}`, cantidad: 1, unico: true, seleccionado: true }))];
     case 'cambiar':
       return items
-        .map((i) => {
-          if (i.clave !== accion.clave) return i;
-          const nueva = accion.fijar ?? i.cantidad + accion.delta;
-          return { ...i, cantidad: i.unico ? Math.min(1, nueva) : nueva };
+        .map((item) => {
+          if (item.clave !== accion.clave) return item;
+          const nueva = accion.fijar ?? item.cantidad + accion.delta;
+          return { ...item, cantidad: item.unico ? Math.min(1, nueva) : nueva };
         })
-        .filter((i) => i.cantidad > 0);
+        .filter((item) => item.cantidad > 0);
     case 'seleccionar':
-      return items.map((i) => (accion.clave === undefined || i.clave === accion.clave ? { ...i, seleccionado: accion.valor } : i));
+      return items.map((item) => (accion.clave === undefined || item.clave === accion.clave ? { ...item, seleccionado: accion.valor } : item));
     case 'quitar':
-      return items.filter((i) => i.clave !== accion.clave);
+      return items.filter((item) => item.clave !== accion.clave);
     case 'quitarSeleccionados':
-      return items.filter((i) => i.seleccionado === false || i.stock === 0);
+      return items.filter((item) => item.seleccionado === false || item.stock === 0);
     case 'refrescar': {
       // Stock y precio actuales desde el servidor (lo guardado en el navegador puede estar viejo)
-      const porId = new Map(accion.productos.map((p) => [p.id, p]));
-      return items.map((i) => {
-        if (i.tipo === 'cita') return i;
-        const p = porId.get(i.productoId ?? i.id);
-        return p ? { ...i, stock: p.stock, precio: p.precio, precio_anterior: p.precio_anterior } : i;
+      const porId = new Map(accion.productos.map((producto) => [producto.id, producto]));
+      return items.map((item) => {
+        if (item.tipo === 'cita') return item;
+        const productoGuardado = porId.get(item.productoId ?? item.id);
+        return productoGuardado ? { ...item, stock: productoGuardado.stock, precio: productoGuardado.precio, precio_anterior: productoGuardado.precio_anterior } : item;
       });
     }
     case 'vaciar':
@@ -63,7 +63,7 @@ function reducer(items, accion) {
 function cargar() {
   try {
     // Carritos guardados con la versión anterior no tenían "clave"
-    return (JSON.parse(localStorage.getItem(CLAVE)) || []).map((i) => ({ productoId: i.id, clave: `${i.id}|`, seleccionado: true, ...i }));
+    return (JSON.parse(localStorage.getItem(CLAVE)) || []).map((item) => ({ productoId: item.id, clave: `${item.id}|`, seleccionado: true, ...item }));
   } catch { return []; }
 }
 
@@ -83,7 +83,7 @@ export function CarritoProvider({ children }) {
   const [ultimo, setUltimo] = useState(null);
 
   const valor = useMemo(() => {
-    const elegidos = items.filter((i) => i.seleccionado !== false && i.stock !== 0);
+    const elegidos = items.filter((item) => item.seleccionado !== false && item.stock !== 0);
     return {
     // Nombre: abrir
     // Descripción: Abre el carrito.
@@ -96,12 +96,12 @@ export function CarritoProvider({ children }) {
     // Salida: Nada.
     // Objetivo: Ocultarlo.
     items, elegidos, abierto, abrir: () => setAbierto(true), cerrar: () => setAbierto(false),
-    cantidad: items.reduce((s, i) => s + i.cantidad, 0),
-    total: items.reduce((s, i) => s + i.cantidad * i.precio, 0),
+    cantidad: items.reduce((suma, item) => suma + item.cantidad, 0),
+    total: items.reduce((suma, item) => suma + item.cantidad * item.precio, 0),
     // Lo que se va a pedir: solo los artículos marcados (como en las tiendas grandes)
-    cantidadElegida: elegidos.reduce((s, i) => s + i.cantidad, 0),
-    totalElegido: elegidos.reduce((s, i) => s + i.cantidad * i.precio, 0),
-    totalSinDescuento: elegidos.reduce((s, i) => s + i.cantidad * (i.precio_anterior || i.precio), 0),
+    cantidadElegida: elegidos.reduce((suma, elegido) => suma + elegido.cantidad, 0),
+    totalElegido: elegidos.reduce((suma, elegido) => suma + elegido.cantidad * elegido.precio, 0),
+    totalSinDescuento: elegidos.reduce((suma, elegido) => suma + elegido.cantidad * (elegido.precio_anterior || elegido.precio), 0),
     ultimo,
     // Nombre: agregar
     // Descripción: Agrega algo al carrito.
@@ -163,8 +163,8 @@ export function CarritoProvider({ children }) {
       dispatch({ tipo: 'agregarCitas', citas });
       setUltimo({ nombre: citas.length > 1 ? `${citas.length} citas` : `Cita: ${citas[0].nombre}`, detalle: `${citas[0].fechaTexto}, ${citas[0].hora}`, marca: Date.now() });
     },
-    productosElegidos: elegidos.filter((i) => i.tipo !== 'cita'),
-    citasElegidas: elegidos.filter((i) => i.tipo === 'cita'),
+    productosElegidos: elegidos.filter((elegido) => elegido.tipo !== 'cita'),
+    citasElegidas: elegidos.filter((elegido) => elegido.tipo === 'cita'),
     // Nombre: vaciar
     // Descripción: Vacía el carrito.
     // Entrada: Nada.

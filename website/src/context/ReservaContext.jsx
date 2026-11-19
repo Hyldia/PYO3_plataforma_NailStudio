@@ -16,7 +16,7 @@ export function ReservaProvider({ children }) {
   // Entrada: Los cambios.
   // Salida: Nada.
   // Objetivo: Ir armando la cita.
-  const actualizar = (cambios) => setReserva((r) => ({ ...r, ...cambios }));
+  const actualizar = (cambios) => setReserva((anterior) => ({ ...anterior, ...cambios }));
   // Nombre: reiniciar
   // Descripción: Borra la reserva en curso.
   // Entrada: Nada.

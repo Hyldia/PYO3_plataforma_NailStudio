@@ -9,13 +9,13 @@ import { api } from '../../lib/api.js';
 // Salida: El nivel.
 // Objetivo: Ayudar a elegir una buena.
 function nivel(clave) {
-  let n = 0;
-  if (clave.length >= 8) n++;
-  if (clave.length >= 12) n++;
-  if (/\d/.test(clave) && /[a-z]/i.test(clave)) n++;
-  if (/[A-Z]/.test(clave) && /[a-z]/.test(clave)) n++;
-  if (/[^a-z0-9]/i.test(clave)) n++;
-  return Math.min(4, n);
+  let cantidad = 0;
+  if (clave.length >= 8) cantidad++;
+  if (clave.length >= 12) cantidad++;
+  if (/\d/.test(clave) && /[a-z]/i.test(clave)) cantidad++;
+  if (/[A-Z]/.test(clave) && /[a-z]/.test(clave)) cantidad++;
+  if (/[^a-z0-9]/i.test(clave)) cantidad++;
+  return Math.min(4, cantidad);
 }
 const NIVELES = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Muy segura'];
 
@@ -25,7 +25,7 @@ const NIVELES = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Muy segura'];
 // Salida: El formulario.
 // Objetivo: Cambiar la contraseña.
 export default function ContrasenaAdmin({ onCambiada }) {
-  const [d, setD] = useState({ actual: '', nueva: '', confirmar: '' });
+  const [datos, setDatos] = useState({ actual: '', nueva: '', confirmar: '' });
   const [ver, setVer] = useState(false);
   const [estado, setEstado] = useState({ guardando: false, error: '', ok: '' });
   // Nombre: set
@@ -33,30 +33,30 @@ export default function ContrasenaAdmin({ onCambiada }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
-  const fuerza = nivel(d.nueva);
+  const set = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value });
+  const fuerza = nivel(datos.nueva);
 
   // Nombre: guardar
   // Descripción: Guarda la contraseña nueva.
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Cambiarla.
-  async function guardar(e) {
-    e.preventDefault();
+  async function guardar(evento) {
+    evento.preventDefault();
     setEstado({ guardando: true, error: '', ok: '' });
     try {
-      await api.admin.cambiarContrasena(d);
-      setD({ actual: '', nueva: '', confirmar: '' });
+      await api.admin.cambiarContrasena(datos);
+      setDatos({ actual: '', nueva: '', confirmar: '' });
       setEstado({ guardando: false, error: '', ok: 'Listo: la contraseña se cambió. Las demás sesiones abiertas se cerraron.' });
       onCambiada?.();
     } catch (err) { setEstado({ guardando: false, error: err.message, ok: '' }); }
   }
 
   const reglas = [
-    ['Al menos 8 caracteres', d.nueva.length >= 8],
-    ['Tiene letras', /[a-záéíóúñ]/i.test(d.nueva)],
-    ['Tiene números', /\d/.test(d.nueva)],
-    ['Las dos nuevas son iguales', d.confirmar !== '' && d.confirmar === d.nueva]
+    ['Al menos 8 caracteres', datos.nueva.length >= 8],
+    ['Tiene letras', /[a-záéíóúñ]/i.test(datos.nueva)],
+    ['Tiene números', /\d/.test(datos.nueva)],
+    ['Las dos nuevas son iguales', datos.confirmar !== '' && datos.confirmar === datos.nueva]
   ];
   // Nombre: ojo
   // Descripción: Dibuja el botón de ver contraseña.
@@ -87,18 +87,18 @@ export default function ContrasenaAdmin({ onCambiada }) {
         </div>
         <form className="clave-tarjeta__form" onSubmit={guardar}>
           <div className="campo"><label htmlFor="ca-actual">Contraseña actual</label>
-            <div className="clave-campo"><input id="ca-actual" type={ver ? 'text' : 'password'} autoComplete="current-password" value={d.actual} onChange={set('actual')} required />{ojo()}</div></div>
+            <div className="clave-campo"><input id="ca-actual" type={ver ? 'text' : 'password'} autoComplete="current-password" value={datos.actual} onChange={set('actual')} required />{ojo()}</div></div>
           <div className="campo"><label htmlFor="ca-nueva">Contraseña nueva</label>
-            <div className="clave-campo"><input id="ca-nueva" type={ver ? 'text' : 'password'} autoComplete="new-password" value={d.nueva} onChange={set('nueva')} required aria-describedby="ca-fuerza" />{ojo()}</div>
-            <div className={`fuerza fuerza--${d.nueva ? fuerza : 0}`} id="ca-fuerza" aria-live="polite">
-              <span className="fuerza__barra" aria-hidden="true"><i style={{ width: d.nueva ? undefined : 0 }} /></span>
-              <span>{d.nueva ? NIVELES[fuerza] : 'Escribe la nueva'}</span>
+            <div className="clave-campo"><input id="ca-nueva" type={ver ? 'text' : 'password'} autoComplete="new-password" value={datos.nueva} onChange={set('nueva')} required aria-describedby="ca-fuerza" />{ojo()}</div>
+            <div className={`fuerza fuerza--${datos.nueva ? fuerza : 0}`} id="ca-fuerza" aria-live="polite">
+              <span className="fuerza__barra" aria-hidden="true"><i style={{ width: datos.nueva ? undefined : 0 }} /></span>
+              <span>{datos.nueva ? NIVELES[fuerza] : 'Escribe la nueva'}</span>
             </div>
           </div>
           <div className="campo"><label htmlFor="ca-confirmar">Repite la contraseña nueva</label>
-            <div className="clave-campo"><input id="ca-confirmar" type={ver ? 'text' : 'password'} autoComplete="new-password" value={d.confirmar} onChange={set('confirmar')} required
-                   aria-invalid={d.confirmar && d.confirmar !== d.nueva ? 'true' : undefined} />{ojo()}</div>
-            {d.confirmar && d.confirmar !== d.nueva && <p className="error-campo">No coincide con la contraseña nueva.</p>}
+            <div className="clave-campo"><input id="ca-confirmar" type={ver ? 'text' : 'password'} autoComplete="new-password" value={datos.confirmar} onChange={set('confirmar')} required
+                   aria-invalid={datos.confirmar && datos.confirmar !== datos.nueva ? 'true' : undefined} />{ojo()}</div>
+            {datos.confirmar && datos.confirmar !== datos.nueva && <p className="error-campo">No coincide con la contraseña nueva.</p>}
           </div>
           {estado.error && <p role="alert" className="error">{estado.error}</p>}
           {estado.ok && <p role="status" className="aviso-ok">{estado.ok}</p>}

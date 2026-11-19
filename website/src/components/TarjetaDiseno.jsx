@@ -1,3 +1,4 @@
+// Tarjeta de un diseño de la Galería: foto, nombre y botón de favorito.
 import { Link, useNavigate } from 'react-router-dom';
 import { useReserva } from '../context/ReservaContext.jsx';
 import { useVistaRapida } from '../context/VistaRapidaContext.jsx';
@@ -13,7 +14,7 @@ import { useResumenes } from '../lib/resumenesOpiniones.js';
 // Entrada: El número.
 // Salida: El texto.
 // Objetivo: Leer fácil.
-export const miles = (n) => (n >= 1000 ? `${(n / 1000).toLocaleString('es-CR', { maximumFractionDigits: 1 })} mil` : String(n));
+export const miles = (numero) => (numero >= 1000 ? `${(numero / 1000).toLocaleString('es-CR', { maximumFractionDigits: 1 })} mil` : String(numero));
 // Porcentaje de opiniones positivas de ejemplo, siempre el mismo para cada foto
 // Nombre: positivo
 // Descripción: Da un porcentaje de "les gustó".
@@ -31,12 +32,12 @@ export const positivo = (id) => 90 + ((id * 7) % 10);
 export function useAgregarPresson() {
   const carrito = useCarrito();
   return (foto, { forma, largo = 'Medio', presson } = {}) => {
-    const p = presson || { id: foto.presson_id, precio: foto.precio_presson, precio_anterior: foto.presson_anterior };
-    if (!p?.id) return false;
-    const f = forma || foto.forma || 'Almendra';
+    const datosPresson = presson || { id: foto.presson_id, precio: foto.precio_presson, precio_anterior: foto.presson_anterior };
+    if (!datosPresson?.id) return false;
+    const formaElegida = forma || foto.forma || 'Almendra';
     carrito.agregar(
-      { id: p.id, nombre: `Press-on «${foto.titulo}»`, precio: p.precio, precio_anterior: p.precio_anterior, stock: p.stock ?? 20, tipo: 'tips', color: '#E9A3BC' },
-      { detalle: `Diseño #${foto.id}, ${f}, largo ${largo.toLowerCase()}`, imagen: foto.archivo, cantidad: 1, fotoId: foto.id, unico: true }
+      { id: datosPresson.id, nombre: `Press-on «${foto.titulo}»`, precio: datosPresson.precio, precio_anterior: datosPresson.precio_anterior, stock: datosPresson.stock ?? 20, tipo: 'tips', color: '#E9A3BC' },
+      { detalle: `Diseño #${foto.id}, ${formaElegida}, largo ${largo.toLowerCase()}`, imagen: foto.archivo, cantidad: 1, fotoId: foto.id, unico: true }
     );
     return true;
   };
@@ -75,7 +76,7 @@ export default function TarjetaDiseno({ foto, indice = 0 }) {
       <button type="button" className="boton-vista" onClick={() => vistaRapida({ tipo: 'diseno', id: foto.id })}>Vista previa<span className="solo-lector"> de {foto.titulo}</span></button>
       <div className="tarjeta-diseno__cuerpo">
         <Link to={`/galeria/${foto.id}`} className="tarjeta-diseno__titulo">{foto.titulo}</Link>
-        {datos.length > 0 && <p className="tarjeta-diseno__datos">{datos.map((d) => <span key={d}>{d}</span>)}</p>}
+        {datos.length > 0 && <p className="tarjeta-diseno__datos">{datos.map((dato) => <span key={dato}>{dato}</span>)}</p>}
         <p className="tarjeta-diseno__precio">
           {(foto.precio_salon ?? foto.precio_presson) != null && <><small>Desde</small> {dinero(foto.precio_salon ?? foto.precio_presson)}</>}
           {foto.vistas != null && <span className="tarjeta-diseno__vistas">{miles(foto.vistas)} vistas</span>}

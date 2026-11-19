@@ -10,7 +10,7 @@ export const servicioAdminController = {
   // Objetivo: Administrar la carta.
   listar(req, res) {
     const servicios = ServicioModel.listarTodos();
-    const categorias = [...new Set([...CATEGORIAS_SERVICIO, ...servicios.map((s) => s.categoria)])];
+    const categorias = [...new Set([...CATEGORIAS_SERVICIO, ...servicios.map((servicio) => servicio.categoria)])];
     res.json({ servicios, categorias });
   },
   // Nombre: crear
@@ -40,11 +40,11 @@ export const servicioAdminController = {
   // Salida: El servicio actualizado.
   // Objetivo: Mostrar fotos reales.
   cambiarImagen(req, res) {
-    const s = ServicioModel.buscarCualquiera(req.params.id);
-    if (!s || !req.file) return res.status(400).json({ error: 'Servicio o imagen no válidos.' });
-    borrarSubida(s.imagen);
-    ServicioModel.cambiarImagen(s.id, req.file.filename);
-    res.json(ServicioModel.buscarCualquiera(s.id));
+    const servicio = ServicioModel.buscarCualquiera(req.params.id);
+    if (!servicio || !req.file) return res.status(400).json({ error: 'Servicio o imagen no válidos.' });
+    borrarSubida(servicio.imagen);
+    ServicioModel.cambiarImagen(servicio.id, req.file.filename);
+    res.json(ServicioModel.buscarCualquiera(servicio.id));
   },
   // Nombre: eliminar
   // Descripción: Elimina un servicio.

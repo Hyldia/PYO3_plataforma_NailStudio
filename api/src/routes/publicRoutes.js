@@ -14,59 +14,57 @@ import { asistenteController } from '../controllers/asistenteController.js';
 import { cuentaController as cuenta } from '../controllers/cuentaController.js';
 import { conUsuario, soloUsuario } from '../middleware/usuario.js';
 
-const r = Router();
+const rutas = Router();
 
-r.get('/servicios', catalogoController.listarServicios);
-r.get('/especialistas', catalogoController.listarEspecialistas);
-r.get('/productos', catalogoController.listarProductos);
-r.get('/productos/categorias', catalogoController.listarCategoriasProductos);
-r.get('/productos/portadas', detalleController.portadas);
-r.get('/productos/circulos', detalleController.circulos);
-r.get('/productos/:id', detalleController.producto);
-r.get('/productos/:id/relacionados', detalleController.productosRelacionados);
-r.get('/productos/:id/resenas', resenaController.listar);
-r.post('/productos/:id/resenas', resenaController.crear);
-r.get('/comentarios/:tipo', comentarioController.resumenes);
-r.get('/comentarios/:tipo/:id', comentarioController.listar);
-r.post('/comentarios/:tipo/:id', comentarioController.crear);
-r.get('/asistente', asistenteController.ver);
-r.get('/ruleta', ruletaController.premios);
-r.post('/ruleta', ruletaController.girar);
+rutas.get('/servicios', catalogoController.listarServicios);
+rutas.get('/especialistas', catalogoController.listarEspecialistas);
+rutas.get('/productos', catalogoController.listarProductos);
+rutas.get('/productos/categorias', catalogoController.listarCategoriasProductos);
+rutas.get('/productos/portadas', detalleController.portadas);
+rutas.get('/productos/circulos', detalleController.circulos);
+rutas.get('/productos/:id', detalleController.producto);
+rutas.get('/productos/:id/relacionados', detalleController.productosRelacionados);
+rutas.get('/productos/:id/resenas', resenaController.listar);
+rutas.post('/productos/:id/resenas', resenaController.crear);
+rutas.get('/comentarios/:tipo', comentarioController.resumenes);
+rutas.get('/comentarios/:tipo/:id', comentarioController.listar);
+rutas.post('/comentarios/:tipo/:id', comentarioController.crear);
+rutas.get('/asistente', asistenteController.ver);
+rutas.get('/ruleta', ruletaController.premios);
+rutas.post('/ruleta', ruletaController.girar);
 
-r.get('/fotos', fotoController.buscar);
-r.get('/fotos/filtros', fotoController.opcionesDeFiltro);
-r.get('/fotos/parecidas', fotoController.parecidas);
-r.post('/fotos/:id/vista', fotoController.registrarVista);
-r.get('/fotos/:id', detalleController.foto);
-r.get('/fotos/:id/relacionados', detalleController.fotosRelacionadas);
+rutas.get('/fotos', fotoController.buscar);
+rutas.get('/fotos/filtros', fotoController.opcionesDeFiltro);
+rutas.get('/fotos/parecidas', fotoController.parecidas);
+rutas.post('/fotos/:id/vista', fotoController.registrarVista);
+rutas.get('/fotos/:id', detalleController.foto);
+rutas.get('/fotos/:id/relacionados', detalleController.fotosRelacionadas);
 
-r.get('/disenos/opciones', disenoController.opciones);
-r.post('/disenos', disenoController.crear);
+rutas.get('/disenos/opciones', disenoController.opciones);
+rutas.post('/disenos', disenoController.crear);
 
-r.get('/citas/disponibilidad', citaController.disponibilidad);
-r.get('/citas/libres', citaController.libres);
-r.get('/especialistas/:id/agenda', citaController.agenda);
-r.post('/citas', citaController.crear);
+rutas.get('/citas/disponibilidad', citaController.disponibilidad);
+rutas.get('/citas/libres', citaController.libres);
+rutas.get('/especialistas/:id/agenda', citaController.agenda);
 
-r.post('/pedidos/cotizar', pedidoController.cotizar);
-r.post('/pedidos', soloUsuario, pedidoController.crear);
+rutas.post('/pedidos/cotizar', pedidoController.cotizar);
+rutas.post('/pedidos', soloUsuario, pedidoController.crear);
 
 // Cuentas de clientas
-r.get('/auth/config', cuenta.config);
-r.post('/auth/registro', cuenta.registro);
-r.post('/auth/entrar', cuenta.entrar);
-r.post('/auth/:proveedor(google|facebook)', cuenta.entrar);
-r.post('/auth/salir', conUsuario, cuenta.salir);
-r.get('/cuenta', soloUsuario, cuenta.yo);
-r.put('/cuenta', soloUsuario, cuenta.actualizar);
-r.get('/cuenta/historial', soloUsuario, cuenta.historial);
-r.post('/cuenta/citas/:id/cancelar', soloUsuario, cuenta.cancelarMiCita);
-r.post('/cuenta/direcciones', soloUsuario, cuenta.crearDireccion);
-r.put('/cuenta/direcciones/:id', soloUsuario, cuenta.editarDireccion);
-r.post('/cuenta/direcciones/:id/principal', soloUsuario, cuenta.principal);
-r.delete('/cuenta/direcciones/:id', soloUsuario, cuenta.borrarDireccion);
+rutas.get('/auth/config', cuenta.config);
+rutas.post('/auth/registro', cuenta.registro);
+rutas.post('/auth/entrar', cuenta.entrar);
+rutas.post('/auth/:proveedor(google|facebook)', cuenta.entrar);
+rutas.post('/auth/salir', conUsuario, cuenta.salir);
+rutas.get('/cuenta', soloUsuario, cuenta.yo);
+rutas.put('/cuenta', soloUsuario, cuenta.actualizar);
+rutas.get('/cuenta/historial', soloUsuario, cuenta.historial);
+rutas.post('/cuenta/citas/:id/cancelar', soloUsuario, cuenta.cancelarMiCita);
+rutas.post('/cuenta/direcciones', soloUsuario, cuenta.crearDireccion);
+rutas.put('/cuenta/direcciones/:id', soloUsuario, cuenta.editarDireccion);
+rutas.post('/cuenta/direcciones/:id/principal', soloUsuario, cuenta.principal);
+rutas.delete('/cuenta/direcciones/:id', soloUsuario, cuenta.borrarDireccion);
 
-r.get('/cupones', cuponController.listar);
-r.get('/cupones/validar', cuponController.validar);
+rutas.get('/cupones', cuponController.listar);
 
-export default r;
+export default rutas;

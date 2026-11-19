@@ -26,9 +26,9 @@ function construirFiltro({ q, ...filtros }) {
   const params = {};
   for (const campo of CAMPOS_FILTRABLES) {
     // Cada filtro acepta varios valores separados por coma: ?color=Rosa,Nude
-    const valores = String(filtros[campo] || '').split(',').map((v) => v.trim()).filter(Boolean);
+    const valores = String(filtros[campo] || '').split(',').map((parte) => parte.trim()).filter(Boolean);
     if (valores.length) {
-      const nombres = valores.map((v, i) => { params[`${campo}${i}`] = v; return `@${campo}${i}`; });
+      const nombres = valores.map((valor, i) => { params[`${campo}${i}`] = valor; return `@${campo}${i}`; });
       where.push(`${campo} IN (${nombres.join(', ')})`);
     }
   }
@@ -70,27 +70,27 @@ export const FotoModel = {
     ]));
   },
 
-  // Nombre: buscarPorId
-  // Descripción: Busca un diseño.
-  // Entrada: El número.
-  // Salida: El diseño o nada.
-  // Objetivo: Ver un diseño.
   // Nombre: parecidas
   // Descripción: Busca fotos reales que se parecen al diseño que arma la clienta.
   // Entrada: Palabras del diseño (color, forma, técnica, decoraciones) y cuántas fotos.
   // Salida: Las fotos ordenadas de la más parecida a la menos, con las palabras que coinciden.
   // Objetivo: Mostrar cómo se ve el diseño en uñas de verdad.
   parecidas(palabras = [], limite = 9) {
-    const claves = [...new Set(palabras.map((p) => String(p).trim().toLowerCase()).filter((p) => p.length > 2))].slice(0, 12);
+    const claves = [...new Set(palabras.map((palabra) => String(palabra).trim().toLowerCase()).filter((palabra) => palabra.length > 2))].slice(0, 12);
     const fotos = getDb().prepare("SELECT * FROM fotos WHERE categoria != 'Pedicure' OR categoria IS NULL").all();
-    const texto = (f) => `${f.titulo} ${f.descripcion || ''} ${f.etiquetas || ''} ${f.color || ''} ${f.forma || ''} ${f.acabado || ''}`.toLowerCase();
+    const texto = (foto) => `${foto.titulo} ${foto.descripcion || ''} ${foto.etiquetas || ''} ${foto.color || ''} ${foto.forma || ''} ${foto.acabado || ''}`.toLowerCase();
     // Lo más importante para que la foto se parezca: las piedras y la técnica; después el color; al final la forma
-    const pesoDe = (palabra) => (PALABRAS_DECORACION.some((d) => palabra.startsWith(d)) ? 3 : PALABRAS_COLOR.some((c) => palabra.startsWith(c)) ? 2 : 1);
+    const pesoDe = (palabra) => (PALABRAS_DECORACION.some((decoracion) => palabra.startsWith(decoracion)) ? 3 : PALABRAS_COLOR.some((color) => palabra.startsWith(color)) ? 2 : 1);
     return fotos
-      .map((f) => { const t = texto(f); const coinciden = claves.filter((c) => t.includes(c)); return { ...f, coinciden, puntos: coinciden.reduce((suma, c) => suma + pesoDe(c), 0) }; })
+      .map((foto) => { const textoFoto = texto(foto); const coinciden = claves.filter((clave) => textoFoto.includes(clave)); return { ...foto, coinciden, puntos: coinciden.reduce((suma, coincidencia) => suma + pesoDe(coincidencia), 0) }; })
       .sort((a, b) => b.puntos - a.puntos || b.destacada - a.destacada || b.vistas - a.vistas)
       .slice(0, Math.min(Number(limite) || 9, 24));
   },
+  // Nombre: buscarPorId
+  // Descripción: Busca una foto por su número.
+  // Entrada: El número de la foto.
+  // Salida: La foto o nada.
+  // Objetivo: Abrir el detalle de un diseño.
   buscarPorId: (id) => getDb().prepare('SELECT * FROM fotos WHERE id = ?').get(id),
 
   // Nombre: conPuesto
@@ -107,13 +107,13 @@ export const FotoModel = {
   // Salida: Una lista.
   // Objetivo: Sugerir ideas.
   relacionados(id, limite = 10) {
-    const f = this.buscarPorId(id);
-    if (!f) return [];
+    const foto = this.buscarPorId(id);
+    if (!foto) return [];
     return getDb().prepare(`
       SELECT * FROM (SELECT f.*, RANK() OVER (PARTITION BY categoria ORDER BY vistas DESC) AS puesto FROM fotos f)
       WHERE id != @id
       ORDER BY (categoria = @categoria) * 3 + (color IS @color) * 2 + (forma IS @forma) * 2 + (acabado IS @acabado) DESC, vistas DESC
-      LIMIT @limite`).all({ id: f.id, categoria: f.categoria, color: f.color, forma: f.forma, acabado: f.acabado, limite: Math.min(Number(limite) || 10, 40) });
+      LIMIT @limite`).all({ id: foto.id, categoria: foto.categoria, color: foto.color, forma: foto.forma, acabado: foto.acabado, limite: Math.min(Number(limite) || 10, 40) });
   },
   // Nombre: sumarVista
   // Descripción: Suma una vista a un diseño.
@@ -128,11 +128,11 @@ export const FotoModel = {
   // Salida: El diseño.
   // Objetivo: Agregar a la galería.
   crear(f) {
-    const r = getDb().prepare(`
+    const resultado = getDb().prepare(`
       INSERT INTO fotos (archivo, titulo, descripcion, categoria, forma, color, acabado, etiquetas, destacada, precio)
       VALUES (@archivo, @titulo, @descripcion, @categoria, @forma, @color, @acabado, @etiquetas, @destacada, @precio)
     `).run(f);
-    return this.buscarPorId(r.lastInsertRowid);
+    return this.buscarPorId(resultado.lastInsertRowid);
   },
 
   // Nombre: actualizar
@@ -185,9 +185,9 @@ export const FotoModel = {
   // Objetivo: Que cada foto diga cuánto cuesta.
   conPrecios(fotos) {
     const presson = ProductoModel.buscarPorNombre(PRESSON);
-    return fotos.map((f) => {
-      const sv = ServicioModel.sugeridoParaDiseno(f);
-      return { ...f, servicio_id: sv?.id ?? null, precio_salon: f.precio ?? sv?.precio ?? null, precio_presson: presson?.precio ?? null, presson_anterior: presson?.precio_anterior ?? null };
+    return fotos.map((foto) => {
+      const sv = ServicioModel.sugeridoParaDiseno(foto);
+      return { ...foto, servicio_id: sv?.id ?? null, precio_salon: foto.precio ?? sv?.precio ?? null, precio_presson: presson?.precio ?? null, presson_anterior: presson?.precio_anterior ?? null };
     });
   },
 

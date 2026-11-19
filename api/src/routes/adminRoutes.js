@@ -14,83 +14,83 @@ import { accesoAdminController as acceso } from '../controllers/accesoAdminContr
 import { servicioAdminController as servicios } from '../controllers/servicioAdminController.js';
 import { equipoAdminController as equipo } from '../controllers/equipoAdminController.js';
 
-const r = Router();
+const rutas = Router();
 // Entrar es lo único que no pide sesión
-r.post('/entrar', acceso.entrar);
-r.use(soloAdmin);
+rutas.post('/entrar', acceso.entrar);
+rutas.use(soloAdmin);
 
-r.get('/verificar', acceso.verificar);
-r.post('/salir', acceso.salir);
-r.post('/contrasena', acceso.cambiarContrasena);
+rutas.get('/verificar', acceso.verificar);
+rutas.post('/salir', acceso.salir);
+rutas.post('/contrasena', acceso.cambiarContrasena);
 
-r.post('/fotos', subirImagen.single('imagen'), fotoController.subir);
-r.put('/fotos/:id', fotoController.editar);
-r.delete('/fotos/:id', fotoController.eliminar);
+rutas.post('/fotos', subirImagen.single('imagen'), fotoController.subir);
+rutas.put('/fotos/:id', fotoController.editar);
+rutas.delete('/fotos/:id', fotoController.eliminar);
 
-r.post('/productos/:id/imagen', subirImagen.single('imagen'), productoAdminController.cambiarImagen);
-r.post('/portadas/:clave', subirImagen.single('imagen'), productoAdminController.fotoPortada);
-r.delete('/portadas/:clave', productoAdminController.quitarFotoPortada);
-r.put('/circulos', productoAdminController.guardarCirculos);
-r.post('/especialistas/:id/foto', subirImagen.single('imagen'), especialistas.fotoEspecialista);
-r.post('/asistente/foto', subirImagen.single('imagen'), asistenteController.subirFoto);
-r.delete('/asistente/foto', asistenteController.quitarFoto);
-r.post('/fotos/:id/imagen', subirImagen.single('imagen'), fotoController.cambiarFotoDiseno);
+rutas.post('/productos/:id/imagen', subirImagen.single('imagen'), productoAdminController.cambiarImagen);
+rutas.post('/portadas/:clave', subirImagen.single('imagen'), productoAdminController.fotoPortada);
+rutas.delete('/portadas/:clave', productoAdminController.quitarFotoPortada);
+rutas.put('/circulos', productoAdminController.guardarCirculos);
+rutas.post('/especialistas/:id/foto', subirImagen.single('imagen'), especialistas.fotoEspecialista);
+rutas.post('/asistente/foto', subirImagen.single('imagen'), asistenteController.subirFoto);
+rutas.delete('/asistente/foto', asistenteController.quitarFoto);
+rutas.post('/fotos/:id/imagen', subirImagen.single('imagen'), fotoController.cambiarFotoDiseno);
 
 // Productos: listar, crear, editar y eliminar
-r.get('/productos', productoAdminController.productos);
-r.post('/productos', productoAdminController.crearProducto);
-r.put('/productos/:id', productoAdminController.editarProducto);
-r.delete('/productos/:id', productoAdminController.eliminarProducto);
+rutas.get('/productos', productoAdminController.productos);
+rutas.post('/productos', productoAdminController.crearProducto);
+rutas.put('/productos/:id', productoAdminController.editarProducto);
+rutas.delete('/productos/:id', productoAdminController.eliminarProducto);
 
 // Equipo
-r.get('/especialistas', especialistas.equipo);
-r.post('/especialistas', especialistas.crearEspecialista);
-r.put('/especialistas/:id', especialistas.editarEspecialista);
-r.delete('/especialistas/:id', especialistas.eliminarEspecialista);
+rutas.get('/especialistas', especialistas.equipo);
+rutas.post('/especialistas', especialistas.crearEspecialista);
+rutas.put('/especialistas/:id', especialistas.editarEspecialista);
+rutas.delete('/especialistas/:id', especialistas.eliminarEspecialista);
 
 // Servicios del salón
-r.get('/servicios', servicios.listar);
-r.post('/servicios', servicios.crear);
-r.put('/servicios/:id', servicios.editar);
-r.delete('/servicios/:id', servicios.eliminar);
-r.post('/servicios/:id/imagen', subirImagen.single('imagen'), servicios.cambiarImagen);
+rutas.get('/servicios', servicios.listar);
+rutas.post('/servicios', servicios.crear);
+rutas.put('/servicios/:id', servicios.editar);
+rutas.delete('/servicios/:id', servicios.eliminar);
+rutas.post('/servicios/:id/imagen', subirImagen.single('imagen'), servicios.cambiarImagen);
 
 // Equipo: estación y forma de pago, acceso al portal y días libres
-r.put('/especialistas/:id/pago', equipo.guardarConfig);
-r.put('/especialistas/:id/acceso', equipo.definirAcceso);
-r.delete('/especialistas/:id/acceso', equipo.quitarAcceso);
-r.get('/especialistas/:id/ausencias', equipo.ausencias);
-r.post('/especialistas/:id/ausencias', equipo.agregarAusencias);
-r.delete('/especialistas/:id/ausencias/:ausencia', equipo.borrarAusencia);
-r.get('/avisos', equipo.avisos);
-r.post('/solicitudes-libres/:id', equipo.resolverSolicitud);
+rutas.put('/especialistas/:id/pago', equipo.guardarConfig);
+rutas.put('/especialistas/:id/acceso', equipo.definirAcceso);
+rutas.delete('/especialistas/:id/acceso', equipo.quitarAcceso);
+rutas.get('/especialistas/:id/ausencias', equipo.ausencias);
+rutas.post('/especialistas/:id/ausencias', equipo.agregarAusencias);
+rutas.delete('/especialistas/:id/ausencias/:ausencia', equipo.borrarAusencia);
+rutas.get('/avisos', equipo.avisos);
+rutas.post('/solicitudes-libres/:id', equipo.resolverSolicitud);
 
 // Pagos del equipo por quincena y gráficas
-r.get('/nomina', equipo.nomina);
-r.get('/nomina/excel', equipo.nominaExcel);
-r.post('/nomina/atender-pasadas', equipo.marcarAtendidas);
-r.post('/nomina/:id/pagado', equipo.marcarPagado);
-r.delete('/nomina/:id/pagado', equipo.quitarPagado);
-r.get('/reportes', reportes.reportes);
-r.get('/reportes/cierre', reportes.cierre);
+rutas.get('/nomina', equipo.nomina);
+rutas.get('/nomina/excel', equipo.nominaExcel);
+rutas.post('/nomina/atender-pasadas', equipo.marcarAtendidas);
+rutas.post('/nomina/:id/pagado', equipo.marcarPagado);
+rutas.delete('/nomina/:id/pagado', equipo.quitarPagado);
+rutas.get('/reportes', reportes.reportes);
+rutas.get('/reportes/cierre', reportes.cierre);
 
 // Pedidos con filtros y estados
-r.get('/pedidos', pedidos.pedidos);
-r.get('/pedidos/excel', pedidos.pedidosExcel);
-r.patch('/pedidos/:id/estado', pedidos.estadoPedido);
+rutas.get('/pedidos', pedidos.pedidos);
+rutas.get('/pedidos/excel', pedidos.pedidosExcel);
+rutas.patch('/pedidos/:id/estado', pedidos.estadoPedido);
 
 // Agenda: calendario del mes, cancelaciones y avisos por WhatsApp
-r.get('/calendario', agenda.calendario);
-r.get('/mensajes/tipos', agenda.tiposMensaje);
-r.get('/mensajes', agenda.mensajes);
-r.post('/mensajes/:id/enviado', agenda.mensajeEnviado);
-r.post('/citas/emergencia', agenda.emergencia);
-r.post('/citas/:id/cancelar', agenda.cancelar);
-r.post('/citas/:id/no-asistio', agenda.noAsistio);
-r.post('/citas/:id/mensaje', agenda.mensaje);
+rutas.get('/calendario', agenda.calendario);
+rutas.get('/mensajes/tipos', agenda.tiposMensaje);
+rutas.get('/mensajes', agenda.mensajes);
+rutas.post('/mensajes/:id/enviado', agenda.mensajeEnviado);
+rutas.post('/citas/emergencia', agenda.emergencia);
+rutas.post('/citas/:id/cancelar', agenda.cancelar);
+rutas.post('/citas/:id/no-asistio', agenda.noAsistio);
+rutas.post('/citas/:id/mensaje', agenda.mensaje);
 
-r.get('/citas', citaController.listarDelDia);
-r.patch('/citas/:id/estado', citaController.cambiarEstado);
+rutas.get('/citas', citaController.listarDelDia);
+rutas.patch('/citas/:id/estado', citaController.cambiarEstado);
 
 
-export default r;
+export default rutas;

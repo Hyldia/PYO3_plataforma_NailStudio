@@ -27,7 +27,7 @@ export function UsuarioProvider({ children }) {
   // Objetivo: Tener datos al día.
   const recargar = () => api.cuenta.yo()
     .then((respuesta) => { setUsuario(respuesta.usuario); setDirecciones(respuesta.direcciones); })
-    .catch((e) => { if (e.status === 401) { sesionCliente.cerrar(); setUsuario(null); setDirecciones([]); } })
+    .catch((fallo) => { if (fallo.status === 401) { sesionCliente.cerrar(); setUsuario(null); setDirecciones([]); } })
     .finally(() => setCargando(false));
 
   useEffect(() => { if (sesionCliente.obtener()) recargar(); }, []);

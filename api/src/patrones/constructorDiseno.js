@@ -29,11 +29,11 @@ export class DisenoBuilder {
   // Salida: El constructor.
   // Objetivo: Armar un diseño paso a paso (Builder).
   constructor() {
-    this.d = { forma: 'Almendra', largo: 'Medio', color: 'Nude', acabado: 'Brillante', decoracion: 'Ninguna', acento: false, notas: null, fotoRefId: null };
+    this.diseno = { forma: 'Almendra', largo: 'Medio', color: 'Nude', acabado: 'Brillante', decoracion: 'Ninguna', acento: false, notas: null, fotoRefId: null };
   }
   #validar(campo, valor, lista) {
     if (!lista.includes(valor)) throw new Error(`Valor no válido para ${campo}: ${valor}`);
-    this.d[campo] = valor;
+    this.diseno[campo] = valor;
     return this;
   }
   // Nombre: notas
@@ -41,49 +41,49 @@ export class DisenoBuilder {
   // Entrada: El texto.
   // Salida: El constructor.
   // Objetivo: Guardar indicaciones.
-  notas(v) { this.d.notas = v ? String(v).slice(0, 500) : null; return this; }
+  notas(valor) { this.diseno.notas = valor ? String(valor).slice(0, 500) : null; return this; }
   // Nombre: referencia
   // Descripción: Agrega una foto de referencia.
   // Entrada: El número de la foto.
   // Salida: El constructor.
   // Objetivo: Copiar un diseño de la galería.
-  referencia(id) { this.d.fotoRefId = id ? Number(id) : null; return this; }
+  referencia(id) { this.diseno.fotoRefId = id ? Number(id) : null; return this; }
   // Nombre: forma
   // Descripción: Elige la forma de las uñas.
   // Entrada: La forma.
   // Salida: El constructor.
   // Objetivo: Armar el diseño.
-  forma(v) { return this.#validar('forma', v, OPCIONES.formas); }
+  forma(valor) { return this.#validar('forma', valor, OPCIONES.formas); }
   // Nombre: largo
   // Descripción: Elige el largo de las uñas.
   // Entrada: El largo.
   // Salida: El constructor.
   // Objetivo: Armar el diseño.
-  largo(v) { return this.#validar('largo', v, OPCIONES.largos); }
+  largo(valor) { return this.#validar('largo', valor, OPCIONES.largos); }
   // Nombre: color
   // Descripción: Elige el color.
   // Entrada: El color.
   // Salida: El constructor.
   // Objetivo: Armar el diseño.
-  color(v) { return this.#validar('color', v, [...OPCIONES.colores, ...ESMALTES.map((e) => e.nombre)]); }
+  color(valor) { return this.#validar('color', valor, [...OPCIONES.colores, ...ESMALTES.map((esmalte) => esmalte.nombre)]); }
   // Nombre: acabado
   // Descripción: Elige el acabado.
   // Entrada: El acabado.
   // Salida: El constructor.
   // Objetivo: Armar el diseño.
-  acabado(v) { return this.#validar('acabado', v, OPCIONES.acabados); }
+  acabado(valor) { return this.#validar('acabado', valor, OPCIONES.acabados); }
   // Nombre: decoracion
   // Descripción: Elige la decoración.
   // Entrada: La decoración.
   // Salida: El constructor.
   // Objetivo: Armar el diseño.
-  decoracion(v) { return this.#validar('decoracion', v, OPCIONES.decoraciones); }
+  decoracion(valor) { return this.#validar('decoracion', valor, OPCIONES.decoraciones); }
   // Nombre: acento
   // Descripción: Activa o quita la uña de acento.
   // Entrada: Sí o no.
   // Salida: El constructor.
   // Objetivo: Armar el diseño.
-  acento(v) { this.d.acento = Boolean(v); return this; }
+  acento(valor) { this.diseno.acento = Boolean(valor); return this; }
 
   // Diseño uña por uña: cinco uñas (pulgar a meñique) con su esmalte, acabado y decoración
   // Nombre: unas
@@ -94,34 +94,34 @@ export class DisenoBuilder {
   unas(lista) {
     if (!lista) return this;
     if (!Array.isArray(lista) || lista.length !== 5) throw new Error('El diseño debe traer las cinco uñas.');
-    this.d.unas = lista.map((u) => {
-      if (!esmalte(u.esmalte)) throw new Error(`Esmalte no válido: ${u.esmalte}`);
-      if (!OPCIONES_DISENO.acabado.includes(u.acabado)) throw new Error(`Acabado no válido: ${u.acabado}`);
-      if (!OPCIONES_DISENO.decoracion.includes(u.decoracion)) throw new Error(`Decoración no válida: ${u.decoracion}`);
-      return { esmalte: u.esmalte, acabado: u.acabado, decoracion: u.decoracion };
+    this.diseno.unas = lista.map((elemento) => {
+      if (!esmalte(elemento.esmalte)) throw new Error(`Esmalte no válido: ${elemento.esmalte}`);
+      if (!OPCIONES_DISENO.acabado.includes(elemento.acabado)) throw new Error(`Acabado no válido: ${elemento.acabado}`);
+      if (!OPCIONES_DISENO.decoracion.includes(elemento.decoracion)) throw new Error(`Decoración no válida: ${elemento.decoracion}`);
+      return { esmalte: elemento.esmalte, acabado: elemento.acabado, decoracion: elemento.decoracion };
     });
     // Para las columnas de siempre se guarda lo del índice
-    const i = this.d.unas[1];
-    this.d.color = esmalte(i.esmalte).nombre; this.d.acabado = i.acabado; this.d.decoracion = i.decoracion;
+    const dedoIndice = this.diseno.unas[1];
+    this.diseno.color = esmalte(dedoIndice.esmalte).nombre; this.diseno.acabado = dedoIndice.acabado; this.diseno.decoracion = dedoIndice.decoracion;
     return this;
   }
+
+  // Nombre: extras
+  // Descripción: Agrega perlas, cristales, stickers, polvos, flores 3D, etc.
+  // Entrada: La lista con tipo, variante, uñas y posición.
+  // Salida: El mismo constructor.
+  // Objetivo: Guardar dónde va cada decoración.
+  extras(lista) { this.diseno.extras = limpiarExtras(lista); return this; }
 
   // Nombre: build
   // Descripción: Termina y revisa el diseño.
   // Entrada: Nada.
   // Salida: El diseño listo.
   // Objetivo: Entregar un diseño completo.
-  // Nombre: extras
-  // Descripción: Agrega perlas, cristales, stickers, polvos, flores 3D, etc.
-  // Entrada: La lista con tipo, variante, uñas y posición.
-  // Salida: El mismo constructor.
-  // Objetivo: Guardar dónde va cada decoración.
-  extras(lista) { this.d.extras = limpiarExtras(lista); return this; }
-
   build() {
-    if (this.d.unas) return { ...this.d, precio: calcularDiseno(this.d).total };
-    const recargo = PRECIO.largo[this.d.largo] + PRECIO.acabado[this.d.acabado]
-      + PRECIO.decoracion[this.d.decoracion] + (this.d.acento ? PRECIO.acento : 0);
-    return { ...this.d, precio: recargo };
+    if (this.diseno.unas) return { ...this.diseno, precio: calcularDiseno(this.diseno).total };
+    const recargo = PRECIO.largo[this.diseno.largo] + PRECIO.acabado[this.diseno.acabado]
+      + PRECIO.decoracion[this.diseno.decoracion] + (this.diseno.acento ? PRECIO.acento : 0);
+    return { ...this.diseno, precio: recargo };
   }
 }

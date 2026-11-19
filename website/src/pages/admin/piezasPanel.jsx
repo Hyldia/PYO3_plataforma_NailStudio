@@ -10,19 +10,19 @@ const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', '
 // Entrada: La fecha.
 // Salida: El texto.
 // Objetivo: Leer fácil.
-export const fechaLarga = (f) => { const d = new Date(`${f}T12:00:00`); return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`; };
+export const fechaLarga = (f) => { const fecha = new Date(`${f}T12:00:00`); return `${DIAS[fecha.getDay()]} ${fecha.getDate()} de ${MESES[fecha.getMonth()]}`; };
 // Nombre: nombreMes
 // Descripción: Escribe el nombre del mes.
 // Entrada: El mes.
 // Salida: El texto.
 // Objetivo: Leer fácil.
-export const nombreMes = (mes) => { const [a, m] = mes.split('-').map(Number); return `${MESES[m - 1]} ${a}`; };
+export const nombreMes = (mes) => { const [anio, numeroMes] = mes.split('-').map(Number); return `${MESES[numeroMes - 1]} ${anio}`; };
 // Nombre: isoLocal
 // Descripción: Convierte una fecha a texto año-mes-día.
 // Entrada: La fecha.
 // Salida: El texto.
 // Objetivo: Trabajar con fechas.
-export const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+export const isoLocal = (fecha) => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
 
 // Nombre: Whats
 // Descripción: Dibuja el ícono de WhatsApp.
@@ -72,7 +72,7 @@ export function ZonaFotos({ archivos, onCambio, multiple = true, id = 'zona-foto
   // Entrada: La lista de archivos.
   // Salida: Nada.
   // Objetivo: No subir otros archivos.
-  const tomar = (lista) => onCambio([...lista].filter((f) => /^image\/(jpeg|png|webp)$/.test(f.type)).slice(0, multiple ? 20 : 1));
+  const tomar = (lista) => onCambio([...lista].filter((elemento) => /^image\/(jpeg|png|webp)$/.test(elemento.type)).slice(0, multiple ? 20 : 1));
   return (
     <div className={`zona-fotos ${encima ? 'zona-fotos--encima' : ''} ${archivos.length ? 'zona-fotos--llena' : ''}`}
          onDragOver={(evento) => { evento.preventDefault(); setEncima(true); }} onDragLeave={() => setEncima(false)}
@@ -88,10 +88,10 @@ export function ZonaFotos({ archivos, onCambio, multiple = true, id = 'zona-foto
         </label>
       ) : (
         <div className="zona-fotos__previas">
-          {archivos.map((f, i) => (
-            <figure key={`${f.name}-${i}`} style={{ '--n': i }}>
-              <img src={URL.createObjectURL(f)} alt="" />
-              <button type="button" onClick={() => onCambio(archivos.filter((_, k) => k !== i))} aria-label={`Quitar ${f.name}`}>×</button>
+          {archivos.map((archivo, i) => (
+            <figure key={`${archivo.name}-${i}`} style={{ '--n': i }}>
+              <img src={URL.createObjectURL(archivo)} alt="" />
+              <button type="button" onClick={() => onCambio(archivos.filter((_, campo) => campo !== i))} aria-label={`Quitar ${archivo.name}`}>×</button>
             </figure>
           ))}
           {multiple && <label htmlFor={id} className="zona-fotos__mas"><span aria-hidden="true">+</span>Agregar</label>}

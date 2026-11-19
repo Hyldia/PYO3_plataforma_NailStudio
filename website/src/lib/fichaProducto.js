@@ -31,18 +31,18 @@ const USO = {
 // Entrada: El producto.
 // Salida: Los datos de la ficha.
 // Objetivo: Mostrar detalles.
-export function fichaProducto(p) {
-  const contenido = p.descripcion?.match(CONTENIDO)?.[1];
+export function fichaProducto(producto) {
+  const contenido = producto.descripcion?.match(CONTENIDO)?.[1];
   const detalles = [
-    ['Marca', p.marca],
-    ['Categoría', p.categoria],
+    ['Marca', producto.marca],
+    ['Categoría', producto.categoria],
     contenido && ['Contenido', contenido],
-    ['Color o tono', p.variante || (p.tipo?.startsWith('frasco') || p.categoria === 'Esmaltes y geles' ? p.nombre.split(' ').slice(2).join(' ') : null)],
-    ['Uso', /pedicure|pies/i.test(`${p.nombre} ${p.categoria}`) ? 'Pies' : /Equipos|Manicure profesional/.test(p.categoria) ? 'Profesional (salón)' : 'Manos y uñas'],
-    ['Disponibilidad', p.stock === 0 ? 'Agotado' : p.stock < 10 ? `Quedan ${p.stock}` : 'En stock'],
+    ['Color o tono', producto.variante || (producto.tipo?.startsWith('frasco') || producto.categoria === 'Esmaltes y geles' ? producto.nombre.split(' ').slice(2).join(' ') : null)],
+    ['Uso', /pedicure|pies/i.test(`${producto.nombre} ${producto.categoria}`) ? 'Pies' : /Equipos|Manicure profesional/.test(producto.categoria) ? 'Profesional (salón)' : 'Manos y uñas'],
+    ['Disponibilidad', producto.stock === 0 ? 'Agotado' : producto.stock < 10 ? `Quedan ${producto.stock}` : 'En stock'],
     ['Entrega', 'Retiro en el salón']
-  ].filter((d) => d && d[1]);
-  return { detalles, uso: USO[p.tipo] || USO.caja };
+  ].filter((dato) => dato && dato[1]);
+  return { detalles, uso: USO[producto.tipo] || USO.caja };
 }
 
 // Nombre de la opción en las variantes: tono para los colores, opción para lo demás
@@ -51,4 +51,4 @@ export function fichaProducto(p) {
 // Entrada: El producto.
 // Salida: El texto.
 // Objetivo: Elegir variantes.
-export const etiquetaVariante = (p) => (/Esmaltes|Bases|Acrílico|Decoración/.test(p.categoria) ? 'Tono' : /Cuidado|Pedicure/.test(p.categoria) ? 'Aroma' : 'Opción');
+export const etiquetaVariante = (producto) => (/Esmaltes|Bases|Acrílico|Decoración/.test(producto.categoria) ? 'Tono' : /Cuidado|Pedicure/.test(producto.categoria) ? 'Aroma' : 'Opción');

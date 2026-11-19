@@ -25,11 +25,6 @@ export const AjustesModel = {
   // Objetivo: Volver a lo automático.
   borrar: (clave) => getDb().prepare('DELETE FROM ajustes WHERE clave = ?').run(clave),
 
-  // Nombre: conPrefijo
-  // Descripción: Lista los ajustes cuya clave empieza igual.
-  // Entrada: El inicio de la clave (por ejemplo «portada:»).
-  // Salida: Un objeto clave → valor (sin el prefijo).
-  // Objetivo: Leer todas las fotos de categorías de una vez.
   // Nombre: circulos
   // Descripción: Lee qué círculos de categorías están ocultos y cuáles se agregaron al Inicio.
   // Entrada: Nada.
@@ -46,14 +41,19 @@ export const AjustesModel = {
   // Salida: Lo guardado.
   // Objetivo: Agregar o quitar círculos sin tocar el código.
   guardarCirculos({ ocultos = [], inicioExtra = [] } = {}) {
-    const limpiar = (lista) => [...new Set((Array.isArray(lista) ? lista : []).map((n) => String(n).trim().slice(0, 60)).filter(Boolean))].slice(0, 40);
+    const limpiar = (lista) => [...new Set((Array.isArray(lista) ? lista : []).map((nombre) => String(nombre).trim().slice(0, 60)).filter(Boolean))].slice(0, 40);
     this.guardar('circulos_ocultos', JSON.stringify(limpiar(ocultos)));
     this.guardar('circulos_inicio_extra', JSON.stringify(limpiar(inicioExtra)));
     return this.circulos();
   },
 
+  // Nombre: conPrefijo
+  // Descripción: Lista los ajustes cuya clave empieza igual.
+  // Entrada: El inicio de la clave (por ejemplo «portada:»).
+  // Salida: Un objeto clave → valor (sin el prefijo).
+  // Objetivo: Leer todas las fotos de categorías de una vez.
   conPrefijo(prefijo) {
     const filas = getDb().prepare('SELECT clave, valor FROM ajustes WHERE clave LIKE ?').all(`${prefijo}%`);
-    return Object.fromEntries(filas.map((f) => [f.clave.slice(prefijo.length), f.valor]));
+    return Object.fromEntries(filas.map((fila) => [fila.clave.slice(prefijo.length), fila.valor]));
   }
 };

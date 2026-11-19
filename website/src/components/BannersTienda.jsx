@@ -28,7 +28,7 @@ export function PodioVendidos({ productos, categoria }) {
   const top = productos.slice(0, 3);
   if (top.length < 3) return null;
   const orden = [top[1], top[0], top[2]];
-  const total = productos.slice(0, 20).reduce((s, p) => s + (p.vendidos || 0), 0);
+  const total = productos.slice(0, 20).reduce((suma, producto) => suma + (producto.vendidos || 0), 0);
   return (
     <section className="podio" aria-labelledby="t-podio">
       <span className="podio__chispas" aria-hidden="true">{Array.from({ length: 14 }, (_, i) => <i key={i} style={{ '--i': i, '--y': `${10 + ((i * 37) % 70)}%` }} />)}</span>
@@ -36,21 +36,21 @@ export function PodioVendidos({ productos, categoria }) {
         <p className="podio__ante"><Rayo tam={16} /> Ranking en vivo</p>
         <h2 id="t-podio"><Link to={`/tienda/${top[0].id}`} className="enlace-titulo">Lo más vendido {categoria ? `en ${categoria}` : 'de AH Nails'}</Link></h2>
         <p>Lo que más compran nuestras clientas, actualizado con cada pedido.</p>
-        <p className="podio__total"><strong><Contador valor={total} formato={(n) => n.toLocaleString('es-CR')} /></strong> unidades vendidas del top 20</p>
+        <p className="podio__total"><strong><Contador valor={total} formato={(numero) => numero.toLocaleString('es-CR')} /></strong> unidades vendidas del top 20</p>
       </div>
       <ol className="podio__escalones">
-        {orden.map((p) => {
-          const puesto = top.indexOf(p) + 1;
+        {orden.map((producto) => {
+          const puesto = top.indexOf(producto) + 1;
           return (
-            <li key={p.id} className={`podio__lugar podio__lugar--${puesto}`}>
-              <Link to={`/tienda/${p.id}`} className="podio__producto">
+            <li key={producto.id} className={`podio__lugar podio__lugar--${puesto}`}>
+              <Link to={`/tienda/${producto.id}`} className="podio__producto">
                 {puesto === 1 && <span className="podio__corona"><Corona /></span>}
-                <span className="podio__foto"><ProductoImagen producto={p} /></span>
-                <span className="podio__nombre">{p.nombre}</span>
-                <span className="podio__precio">{dinero(p.precio)}</span>
+                <span className="podio__foto"><ProductoImagen producto={producto} /></span>
+                <span className="podio__nombre">{producto.nombre}</span>
+                <span className="podio__precio">{dinero(producto.precio)}</span>
               </Link>
-              <span className="podio__bloque" aria-hidden="true"><b>{puesto}</b><small>{p.vendidos.toLocaleString('es-CR')} vendidos</small></span>
-              <span className="solo-lector">Puesto {puesto}, {p.vendidos} vendidos</span>
+              <span className="podio__bloque" aria-hidden="true"><b>{puesto}</b><small>{producto.vendidos.toLocaleString('es-CR')} vendidos</small></span>
+              <span className="solo-lector">Puesto {puesto}, {producto.vendidos} vendidos</span>
             </li>
           );
         })}
@@ -65,14 +65,14 @@ export function PodioVendidos({ productos, categoria }) {
 // Salida: La franja.
 // Objetivo: Destacar las ofertas.
 export function BannerOfertas({ productos }) {
-  const conDescuento = productos.filter((p) => p.precio_anterior);
+  const conDescuento = productos.filter((producto) => producto.precio_anterior);
   if (!conDescuento.length) return null;
   // Nombre: pct
   // Descripción: Calcula el porcentaje de descuento.
   // Entrada: El producto.
   // Salida: El porcentaje.
   // Objetivo: Mostrar cuánto ahorra.
-  const pct = (p) => Math.round((1 - p.precio / p.precio_anterior) * 100);
+  const pct = (producto) => Math.round((1 - producto.precio / producto.precio_anterior) * 100);
   const maximo = Math.max(...conDescuento.map(pct));
   const cinta = conDescuento.slice(0, 12);
   return (
@@ -85,17 +85,17 @@ export function BannerOfertas({ productos }) {
             <p>{conDescuento.length} productos rebajados · solo por hoy</p>
           </div>
         </div>
-        <Link to={`/tienda/${conDescuento.find((p) => pct(p) === maximo).id}`} className="relampago__hasta" aria-label={`Ver el producto con ${maximo} % de descuento`}><small>hasta</small><strong>-{maximo}<span>%</span></strong></Link>
+        <Link to={`/tienda/${conDescuento.find((producto) => pct(producto) === maximo).id}`} className="relampago__hasta" aria-label={`Ver el producto con ${maximo} % de descuento`}><small>hasta</small><strong>-{maximo}<span>%</span></strong></Link>
         <div className="relampago__reloj"><CuentaRegresiva claro /></div>
       </div>
       <div className="relampago__cinta">
         <ul aria-label="Productos en oferta">
-          {[...cinta, ...cinta].map((p, i) => (
-            <li key={`${p.id}-${i}`} aria-hidden={i >= cinta.length || undefined}>
-              <Link to={`/tienda/${p.id}`} tabIndex={i >= cinta.length ? -1 : undefined}>
-                <span className="relampago__mini"><ProductoImagen producto={p} /></span>
-                <span><b>-{pct(p)} %</b>{dinero(p.precio)}</span>
-                <span className="solo-lector">{p.nombre}</span>
+          {[...cinta, ...cinta].map((producto, i) => (
+            <li key={`${producto.id}-${i}`} aria-hidden={i >= cinta.length || undefined}>
+              <Link to={`/tienda/${producto.id}`} tabIndex={i >= cinta.length ? -1 : undefined}>
+                <span className="relampago__mini"><ProductoImagen producto={producto} /></span>
+                <span><b>-{pct(producto)} %</b>{dinero(producto.precio)}</span>
+                <span className="solo-lector">{producto.nombre}</span>
               </Link>
             </li>
           ))}
@@ -115,14 +115,14 @@ export function BannerOfertas({ productos }) {
 // Objetivo: Presentar la categoría.
 export function PortadaCategoria({ titulo, productos }) {
   const muestra = [...productos].sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen)).slice(0, 4);
-  const enOferta = productos.filter((p) => p.precio_anterior).length;
-  const desde = productos.length ? Math.min(...productos.map((p) => p.precio)) : 0;
-  const vendidos = productos.reduce((s, p) => s + (p.vendidos || 0), 0);
+  const enOferta = productos.filter((producto) => producto.precio_anterior).length;
+  const desde = productos.length ? Math.min(...productos.map((producto) => producto.precio)) : 0;
+  const vendidos = productos.reduce((suma, producto) => suma + (producto.vendidos || 0), 0);
   const base = `/tienda?categoria=${encodeURIComponent(titulo)}`;
   return (
     <section className="vitrina vitrina--categoria" aria-labelledby="t-portada-cat">
       <Decoracion />
-      <span className="vitrina__burbujas" aria-hidden="true">{Array.from({ length: 8 }, (_, n) => <i key={n} style={{ '--n': n }} />)}</span>
+      <span className="vitrina__burbujas" aria-hidden="true">{Array.from({ length: 8 }, (_, numero) => <i key={numero} style={{ '--n': numero }} />)}</span>
       <div className="vitrina__texto">
         <p className="vitrina__ante">Tienda AH Nails · categoría</p>
         <h2 id="t-portada-cat" className="portada-cat__titulo">{titulo}</h2>
@@ -131,7 +131,7 @@ export function PortadaCategoria({ titulo, productos }) {
           <li><strong><Contador valor={productos.length} /></strong> productos</li>
           {desde > 0 && <li>desde <strong>{dinero(desde)}</strong></li>}
           {enOferta > 0 && <li><strong><Contador valor={enOferta} /></strong> en oferta</li>}
-          {vendidos > 0 && <li><strong><Contador valor={vendidos} formato={(n) => n.toLocaleString('es-CR')} /></strong> vendidos</li>}
+          {vendidos > 0 && <li><strong><Contador valor={vendidos} formato={(numero) => numero.toLocaleString('es-CR')} /></strong> vendidos</li>}
         </ul>
         <div className="portada-cat__botones">
           {enOferta > 0 && <Link to={`${base}&ofertas=1&orden=descuento`} className="vitrina__boton"><Rayo tam={16} /> Ver ofertas</Link>}
@@ -139,13 +139,13 @@ export function PortadaCategoria({ titulo, productos }) {
         </div>
       </div>
       <ul className="vitrina__productos portada-cat__productos">
-        {muestra.map((p, n) => (
-          <li key={p.id} style={{ '--n': n }}>
-            <Link to={`/tienda/${p.id}`} className="vitrina__producto">
-              <ProductoImagen producto={p} />
-              {p.precio_anterior && <span className="vitrina__pct">-{Math.round((1 - p.precio / p.precio_anterior) * 100)}%</span>}
-              <span className="vitrina__precio">{dinero(p.precio)}</span>
-              <span className="portada-cat__nombre">{p.nombre}</span>
+        {muestra.map((producto, numero) => (
+          <li key={producto.id} style={{ '--n': numero }}>
+            <Link to={`/tienda/${producto.id}`} className="vitrina__producto">
+              <ProductoImagen producto={producto} />
+              {producto.precio_anterior && <span className="vitrina__pct">-{Math.round((1 - producto.precio / producto.precio_anterior) * 100)}%</span>}
+              <span className="vitrina__precio">{dinero(producto.precio)}</span>
+              <span className="portada-cat__nombre">{producto.nombre}</span>
             </Link>
           </li>
         ))}

@@ -12,7 +12,7 @@ export const sesionAdmin = {
   // Entrada: El permiso.
   // Salida: Nada.
   // Objetivo: Seguir conectada.
-  guardar: (t) => sessionStorage.setItem(CLAVE_ADMIN, t),
+  guardar: (token) => sessionStorage.setItem(CLAVE_ADMIN, token),
   // Nombre: cerrar
   // Descripción: Borra la sesión del panel.
   // Entrada: Nada.
@@ -35,7 +35,7 @@ export const sesionCliente = {
   // Entrada: El permiso.
   // Salida: Nada.
   // Objetivo: Seguir conectada.
-  guardar: (t) => { try { localStorage.setItem(CLAVE_SESION, t); } catch { /* sin almacenamiento */ } },
+  guardar: (token) => { try { localStorage.setItem(CLAVE_SESION, token); } catch { /* sin almacenamiento */ } },
   // Nombre: cerrar
   // Descripción: Borra la sesión de la clienta.
   // Entrada: Nada.
@@ -58,7 +58,7 @@ export const sesionEquipo = {
   // Entrada: El permiso.
   // Salida: Nada.
   // Objetivo: Seguir conectada.
-  guardar: (t) => { try { sessionStorage.setItem(CLAVE_EQUIPO, t); } catch { /* sin almacenamiento */ } },
+  guardar: (token) => { try { sessionStorage.setItem(CLAVE_EQUIPO, token); } catch { /* sin almacenamiento */ } },
   // Nombre: cerrar
   // Descripción: Borra la sesión de la especialista.
   // Entrada: Nada.
@@ -73,11 +73,11 @@ export const sesionEquipo = {
 // Salida: Nada.
 // Objetivo: Bajar el Excel.
 async function bajarArchivo(ruta, nombre) {
-  const res = await fetch(`/api${ruta}`, { headers: { 'x-admin-token': sesionAdmin.obtener() } });
-  if (!res.ok) throw new Error('No se pudo generar el archivo.');
-  const url = URL.createObjectURL(await res.blob());
-  const a = Object.assign(document.createElement('a'), { href: url, download: nombre });
-  a.click(); URL.revokeObjectURL(url);
+  const respuesta = await fetch(`/api${ruta}`, { headers: { 'x-admin-token': sesionAdmin.obtener() } });
+  if (!respuesta.ok) throw new Error('No se pudo generar el archivo.');
+  const url = URL.createObjectURL(await respuesta.blob());
+  const enlace = Object.assign(document.createElement('a'), { href: url, download: nombre });
+  enlace.click(); URL.revokeObjectURL(url);
 }
 
 // Nombre: pedir
@@ -92,13 +92,13 @@ async function pedir(ruta, { body, admin, equipo, ...opciones } = {}) {
   if (body && !(body instanceof FormData)) headers['Content-Type'] = 'application/json';
   if (admin) headers['x-admin-token'] = sesionAdmin.obtener();
   if (equipo) headers['x-equipo-token'] = sesionEquipo.obtener();
-  const res = await fetch(`/api${ruta}`, {
+  const respuesta = await fetch(`/api${ruta}`, {
     ...opciones, headers,
     body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined
   });
-  if (res.status === 204) return null;
-  const datos = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(datos.error || 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.'), { status: res.status, requiereCuenta: datos.requiereCuenta });
+  if (respuesta.status === 204) return null;
+  const datos = await respuesta.json().catch(() => ({}));
+  if (!respuesta.ok) throw Object.assign(new Error(datos.error || 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.'), { status: respuesta.status, requiereCuenta: datos.requiereCuenta });
   return datos;
 }
 
@@ -108,7 +108,7 @@ async function pedir(ruta, { body, admin, equipo, ...opciones } = {}) {
 // Salida: El texto (?a=1).
 // Objetivo: Enviar búsquedas.
 const qs = (params) => {
-  const limpio = Object.entries(params).filter(([, v]) => v !== '' && v != null && !(Array.isArray(v) && !v.length));
+  const limpio = Object.entries(params).filter(([, valor]) => valor !== '' && valor != null && !(Array.isArray(valor) && !valor.length));
   return limpio.length ? `?${new URLSearchParams(limpio.map(([k, v]) => [k, Array.isArray(v) ? v.join(',') : v]))}` : '';
 };
 
@@ -137,13 +137,13 @@ export const api = {
     // Entrada: Los datos.
     // Salida: La sesión.
     // Objetivo: Registrarse.
-    registro: (d) => pedir('/auth/registro', { method: 'POST', body: d }),
+    registro: (datos) => pedir('/auth/registro', { method: 'POST', body: datos }),
     // Nombre: entrar
     // Descripción: Entra con correo.
     // Entrada: Correo y contraseña.
     // Salida: La sesión.
     // Objetivo: Iniciar sesión.
-    entrar: (d) => pedir('/auth/entrar', { method: 'POST', body: d }),
+    entrar: (datos) => pedir('/auth/entrar', { method: 'POST', body: datos }),
     // Nombre: google
     // Descripción: Entra con Google.
     // Entrada: El dato de Google.
@@ -175,7 +175,7 @@ export const api = {
     // Entrada: Los datos.
     // Salida: La clienta.
     // Objetivo: Editar perfil.
-    actualizar: (d) => pedir('/cuenta', { method: 'PUT', body: d }),
+    actualizar: (datos) => pedir('/cuenta', { method: 'PUT', body: datos }),
     // Nombre: historial
     // Descripción: Pide el historial.
     // Entrada: Nada.
@@ -193,13 +193,13 @@ export const api = {
     // Entrada: Los datos.
     // Salida: La dirección.
     // Objetivo: Guardar direcciones.
-    crearDireccion: (d) => pedir('/cuenta/direcciones', { method: 'POST', body: d }),
+    crearDireccion: (datos) => pedir('/cuenta/direcciones', { method: 'POST', body: datos }),
     // Nombre: editarDireccion
     // Descripción: Edita una dirección.
     // Entrada: Número y datos.
     // Salida: La dirección.
     // Objetivo: Corregirla.
-    editarDireccion: (id, d) => pedir(`/cuenta/direcciones/${id}`, { method: 'PUT', body: d }),
+    editarDireccion: (id, datos) => pedir(`/cuenta/direcciones/${id}`, { method: 'PUT', body: datos }),
     // Nombre: principal
     // Descripción: Marca la dirección principal.
     // Entrada: El número.
@@ -219,12 +219,6 @@ export const api = {
   // Salida: Los cupones.
   // Objetivo: Esconderlos como premios.
   cupones: () => pedir('/cupones'),
-  // Nombre: validarCupon
-  // Descripción: Revisa un cupón.
-  // Entrada: Código, servicio y recargo.
-  // Salida: El descuento.
-  // Objetivo: Aplicarlo.
-  validarCupon: (codigo, servicioId, recargo = 0) => pedir(`/cupones/validar${qs({ codigo, servicioId, recargo })}`),
   // Nombre: especialistas
   // Descripción: Pide las especialistas.
   // Entrada: Nada.
@@ -356,7 +350,7 @@ export const api = {
   // Entrada: El diseño.
   // Salida: El diseño guardado.
   // Objetivo: Reservarlo.
-  guardarDiseno: (d) => pedir('/disenos', { method: 'POST', body: d }),
+  guardarDiseno: (datos) => pedir('/disenos', { method: 'POST', body: datos }),
   // Nombre: agenda
   // Descripción: Pide la agenda de una especialista.
   // Entrada: Número y días.
@@ -375,12 +369,6 @@ export const api = {
   // Salida: Las horas.
   // Objetivo: Elegir hora.
   disponibilidad: (especialistaId, fecha) => pedir(`/citas/disponibilidad${qs({ especialistaId, fecha })}`),
-  // Nombre: crearCita
-  // Descripción: Crea una cita.
-  // Entrada: Los datos.
-  // Salida: La cita.
-  // Objetivo: Reservar.
-  crearCita: (datos) => pedir('/citas', { method: 'POST', body: datos }),
   // Nombre: cotizarPedido
   // Descripción: Calcula el total.
   // Entrada: El carrito.
@@ -400,7 +388,7 @@ export const api = {
     // Entrada: Usuario y contraseña.
     // Salida: La sesión.
     // Objetivo: Iniciar sesión.
-    entrar: (d) => pedir('/equipo/entrar', { method: 'POST', body: d }),
+    entrar: (datos) => pedir('/equipo/entrar', { method: 'POST', body: datos }),
     // Nombre: yo
     // Descripción: Pide los datos de la especialista.
     // Entrada: Nada.
@@ -412,7 +400,7 @@ export const api = {
     // Entrada: Número y motivo.
     // Salida: La cita y el aviso.
     // Objetivo: Cancelar.
-    cancelarCita: (id, d) => pedir(`/equipo/citas/${id}/cancelar`, { method: 'POST', body: d, equipo: true }),
+    cancelarCita: (id, datos) => pedir(`/equipo/citas/${id}/cancelar`, { method: 'POST', body: datos, equipo: true }),
     // Nombre: noAsistio
     // Descripción: La especialista registra que su clienta no llegó (reprogramar o cobrar).
     // Entrada: El número de cita y la decisión.
@@ -424,7 +412,7 @@ export const api = {
     // Entrada: Fechas y motivo.
     // Salida: La solicitud.
     // Objetivo: Pedir libres.
-    pedirLibre: (d) => pedir('/equipo/solicitudes', { method: 'POST', body: d, equipo: true }),
+    pedirLibre: (datos) => pedir('/equipo/solicitudes', { method: 'POST', body: datos, equipo: true }),
     // Nombre: quitarSolicitud
     // Descripción: Retira una solicitud.
     // Entrada: El número.
@@ -451,13 +439,13 @@ export const api = {
     // Entrada: Los datos.
     // Salida: El servicio.
     // Objetivo: Agregar.
-    crearServicio: (d) => pedir('/admin/servicios', { method: 'POST', body: d, admin: true }),
+    crearServicio: (datos) => pedir('/admin/servicios', { method: 'POST', body: datos, admin: true }),
     // Nombre: editarServicio
     // Descripción: Edita un servicio.
     // Entrada: Número y datos.
     // Salida: El servicio.
     // Objetivo: Cambiar.
-    editarServicio: (id, d) => pedir(`/admin/servicios/${id}`, { method: 'PUT', body: d, admin: true }),
+    editarServicio: (id, datos) => pedir(`/admin/servicios/${id}`, { method: 'PUT', body: datos, admin: true }),
     // Nombre: borrarServicio
     // Descripción: Borra un servicio.
     // Entrada: El número.
@@ -475,13 +463,13 @@ export const api = {
     // Entrada: Número y datos.
     // Salida: La especialista.
     // Objetivo: Calcular su pago.
-    pagoEspecialista: (id, d) => pedir(`/admin/especialistas/${id}/pago`, { method: 'PUT', body: d, admin: true }),
+    pagoEspecialista: (id, datos) => pedir(`/admin/especialistas/${id}/pago`, { method: 'PUT', body: datos, admin: true }),
     // Nombre: accesoEspecialista
     // Descripción: Crea el acceso de una especialista.
     // Entrada: Número y datos.
     // Salida: Nada.
     // Objetivo: Darle entrada.
-    accesoEspecialista: (id, d) => pedir(`/admin/especialistas/${id}/acceso`, { method: 'PUT', body: d, admin: true }),
+    accesoEspecialista: (id, datos) => pedir(`/admin/especialistas/${id}/acceso`, { method: 'PUT', body: datos, admin: true }),
     // Nombre: quitarAcceso
     // Descripción: Quita el acceso.
     // Entrada: El número.
@@ -499,7 +487,7 @@ export const api = {
     // Entrada: Número y fechas.
     // Salida: Las ausencias.
     // Objetivo: Registrar libres.
-    agregarAusencias: (id, d) => pedir(`/admin/especialistas/${id}/ausencias`, { method: 'POST', body: d, admin: true }),
+    agregarAusencias: (id, datos) => pedir(`/admin/especialistas/${id}/ausencias`, { method: 'POST', body: datos, admin: true }),
     // Nombre: borrarAusencia
     // Descripción: Borra un libre.
     // Entrada: Número y ausencia.
@@ -535,7 +523,7 @@ export const api = {
     // Entrada: Número y respuesta.
     // Salida: La solicitud.
     // Objetivo: Aprobar o rechazar.
-    resolverSolicitud: (id, d) => pedir(`/admin/solicitudes-libres/${id}`, { method: 'POST', body: d, admin: true }),
+    resolverSolicitud: (id, datos) => pedir(`/admin/solicitudes-libres/${id}`, { method: 'POST', body: datos, admin: true }),
     // Nombre: nomina
     // Descripción: Pide la planilla.
     // Entrada: El periodo.
@@ -547,7 +535,7 @@ export const api = {
     // Entrada: Los datos.
     // Salida: Cuántas.
     // Objetivo: Contarlas para el pago.
-    marcarAtendidas: (d) => pedir('/admin/nomina/atender-pasadas', { method: 'POST', body: d, admin: true }),
+    marcarAtendidas: (datos) => pedir('/admin/nomina/atender-pasadas', { method: 'POST', body: datos, admin: true }),
     // Nombre: marcarPagado
     // Descripción: Marca un pago como hecho.
     // Entrada: Número y periodo.
@@ -733,13 +721,13 @@ export const api = {
     // Entrada: Los datos.
     // Salida: El producto.
     // Objetivo: Agregar.
-    crearProducto: (d) => pedir('/admin/productos', { method: 'POST', body: d, admin: true }),
+    crearProducto: (datos) => pedir('/admin/productos', { method: 'POST', body: datos, admin: true }),
     // Nombre: editarProducto
     // Descripción: Edita un producto.
     // Entrada: Número y datos.
     // Salida: El producto.
     // Objetivo: Cambiar.
-    editarProducto: (id, d) => pedir(`/admin/productos/${id}`, { method: 'PUT', body: d, admin: true }),
+    editarProducto: (id, datos) => pedir(`/admin/productos/${id}`, { method: 'PUT', body: datos, admin: true }),
     // Nombre: borrarProducto
     // Descripción: Borra un producto.
     // Entrada: El número.
@@ -757,13 +745,13 @@ export const api = {
     // Entrada: Los datos.
     // Salida: La especialista.
     // Objetivo: Agregar.
-    crearEspecialista: (d) => pedir('/admin/especialistas', { method: 'POST', body: d, admin: true }),
+    crearEspecialista: (datos) => pedir('/admin/especialistas', { method: 'POST', body: datos, admin: true }),
     // Nombre: editarEspecialista
     // Descripción: Edita una especialista.
     // Entrada: Número y datos.
     // Salida: La especialista.
     // Objetivo: Cambiar.
-    editarEspecialista: (id, d) => pedir(`/admin/especialistas/${id}`, { method: 'PUT', body: d, admin: true }),
+    editarEspecialista: (id, datos) => pedir(`/admin/especialistas/${id}`, { method: 'PUT', body: datos, admin: true }),
     // Nombre: borrarEspecialista
     // Descripción: Borra una especialista.
     // Entrada: El número.
@@ -776,11 +764,11 @@ export const api = {
     // Salida: Nada.
     // Objetivo: Guardar los pedidos.
     async descargarExcelPedidos(filtros = {}) {
-      const res = await fetch(`/api/admin/pedidos/excel${qs(filtros)}`, { headers: { 'x-admin-token': sesionAdmin.obtener() } });
-      if (!res.ok) throw new Error('No se pudo generar el Excel.');
-      const url = URL.createObjectURL(await res.blob());
-      const a = Object.assign(document.createElement('a'), { href: url, download: `pedidos-${new Date().toISOString().slice(0, 10)}.xlsx` });
-      a.click(); URL.revokeObjectURL(url);
+      const respuesta = await fetch(`/api/admin/pedidos/excel${qs(filtros)}`, { headers: { 'x-admin-token': sesionAdmin.obtener() } });
+      if (!respuesta.ok) throw new Error('No se pudo generar el Excel.');
+      const url = URL.createObjectURL(await respuesta.blob());
+      const enlace = Object.assign(document.createElement('a'), { href: url, download: `pedidos-${new Date().toISOString().slice(0, 10)}.xlsx` });
+      enlace.click(); URL.revokeObjectURL(url);
     }
   }
 };

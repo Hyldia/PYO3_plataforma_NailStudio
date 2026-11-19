@@ -28,9 +28,9 @@ const PASO = 2 * 60000;    // luego espera 2 min, después 4, después 6…
 // Objetivo: Contar el tiempo en el sitio.
 const llegada = () => {
   try {
-    let t = Number(sessionStorage.getItem(LLEGADA));
-    if (!t) { t = Date.now(); sessionStorage.setItem(LLEGADA, String(t)); }
-    return t;
+    let llegadaGuardada = Number(sessionStorage.getItem(LLEGADA));
+    if (!llegadaGuardada) { llegadaGuardada = Date.now(); sessionStorage.setItem(LLEGADA, String(llegadaGuardada)); }
+    return llegadaGuardada;
   } catch { return Date.now(); }
 };
 // Nombre: vecesVista
@@ -51,7 +51,7 @@ const sumarVista = () => { try { sessionStorage.setItem(VECES, String(vecesVista
 // Entrada: El número de vez.
 // Salida: Los milisegundos.
 // Objetivo: 8 s, luego +2, +4, +6 min.
-const momento = (n) => PRIMERA + PASO * (n * (n + 1)) / 2;
+const momento = (numero) => PRIMERA + PASO * (numero * (numero + 1)) / 2;
 // Nombre: vecesSesion
 // Descripción: Cuenta los avisos de esta visita.
 // Entrada: Nada.
@@ -75,23 +75,23 @@ const leer = () => { try { return JSON.parse(localStorage.getItem(CLAVE)) || {};
 // Entrada: Los datos nuevos.
 // Salida: Nada.
 // Objetivo: Recordar el premio.
-const guardar = (v) => { try { localStorage.setItem(CLAVE, JSON.stringify({ ...leer(), ...v })); } catch { /* sin almacenamiento */ } };
+const guardar = (valor) => { try { localStorage.setItem(CLAVE, JSON.stringify({ ...leer(), ...valor })); } catch { /* sin almacenamiento */ } };
 // El último premio ganado (para ofrecerlo en el pago)
 // Nombre: premioGuardado
 // Descripción: Da el premio ganado si sigue vigente.
 // Entrada: Nada.
 // Salida: El premio o nada.
 // Objetivo: Mostrarlo de nuevo.
-export const premioGuardado = () => { const v = leer(); return v.premio && Date.now() - v.cuando < 7 * 86400000 ? v.premio : null; };
+export const premioGuardado = () => { const guardado = leer(); return guardado.premio && Date.now() - guardado.cuando < 7 * 86400000 ? guardado.premio : null; };
 
 // Nombre: punto
 // Descripción: Calcula un punto en el círculo.
 // Entrada: El ángulo y el radio.
 // Salida: La posición.
 // Objetivo: Dibujar la ruleta.
-function punto(angulo, r) {
-  const a = ((angulo - 90) * Math.PI) / 180;
-  return [200 + r * Math.cos(a), 200 + r * Math.sin(a)];
+function punto(angulo, respuesta) {
+  const radianes = ((angulo - 90) * Math.PI) / 180;
+  return [200 + respuesta * Math.cos(radianes), 200 + respuesta * Math.sin(radianes)];
 }
 
 // Nombre: Rueda
@@ -100,10 +100,10 @@ function punto(angulo, r) {
 // Salida: La rueda.
 // Objetivo: Ver la ruleta.
 function Rueda({ premios, giro, girando }) {
-  const n = premios.length;
-  const paso = 360 / n;
+  const cantidad = premios.length;
+  const paso = 360 / cantidad;
   return (
-    <svg viewBox="0 0 400 400" className="ruleta__rueda" role="img" aria-label={`Ruleta con ${n} premios: ${premios.join(', ')}`}>
+    <svg viewBox="0 0 400 400" className="ruleta__rueda" role="img" aria-label={`Ruleta con ${cantidad} premios: ${premios.join(', ')}`}>
       <defs>
         <radialGradient id="ruleta-brillo" cx="50%" cy="35%" r="65%"><stop offset="0" stopColor="#fff" stopOpacity=".35" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></radialGradient>
         <linearGradient id="ruleta-aro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#E8B04B" /><stop offset=".5" stopColor="#FFE7A3" /><stop offset="1" stopColor="#B7832A" /></linearGradient>
@@ -116,7 +116,7 @@ function Rueda({ premios, giro, girando }) {
         return <circle key={i} cx={x} cy={y} r="4.2" className={`ruleta__foco ${i % 2 ? 'ruleta__foco--b' : ''} ${girando ? 'ruleta__foco--rapido' : ''}`} />;
       })}
       <g className="ruleta__giro" style={{ transform: `rotate(${giro}deg)` }}>
-        {premios.map((t, i) => {
+        {premios.map((premio, i) => {
           const [x1, y1] = punto(i * paso, 176);
           const [x2, y2] = punto((i + 1) * paso, 176);
           const medio = i * paso + paso / 2;
@@ -124,8 +124,8 @@ function Rueda({ premios, giro, girando }) {
             <g key={i}>
               <path d={`M200 200 L${x1} ${y1} A176 176 0 0 1 ${x2} ${y2} Z`} fill={COLORES[i % COLORES.length]} stroke="#E8B04B" strokeWidth="1.5" />
               <g transform={`rotate(${medio} 200 200)`}>
-                <text x="200" y="70" textAnchor="middle" fill={TEXTO[i % TEXTO.length]} className="ruleta__texto">{t}</text>
-                <text x="200" y="92" textAnchor="middle" fill={TEXTO[i % TEXTO.length]} className="ruleta__sub">{t === 'Otra vez' ? 'gira de nuevo' : 'de descuento'}</text>
+                <text x="200" y="70" textAnchor="middle" fill={TEXTO[i % TEXTO.length]} className="ruleta__texto">{premio}</text>
+                <text x="200" y="92" textAnchor="middle" fill={TEXTO[i % TEXTO.length]} className="ruleta__sub">{premio === 'Otra vez' ? 'gira de nuevo' : 'de descuento'}</text>
               </g>
             </g>
           );
@@ -166,8 +166,8 @@ export default function Ruleta() {
   const [giro, setGiro] = useState(0);
   const [girando, setGirando] = useState(false);
   const [resultado, setResultado] = useState(() => {
-    const v = leer();
-    return v.premio && Date.now() - v.cuando < ESPERA ? v.premio : null;
+    const guardado = leer();
+    return guardado.premio && Date.now() - guardado.cuando < ESPERA ? guardado.premio : null;
   });
   const [error, setError] = useState('');
   const [copiado, setCopiado] = useState(false);
@@ -175,13 +175,13 @@ export default function Ruleta() {
   const temporizador = useRef(null);
   const carrito = useCarrito();
   const cantidadAntes = useRef(null);
-  const oculta = PAGINAS_SIN_RULETA.some((p) => pathname.startsWith(p));
+  const oculta = PAGINAS_SIN_RULETA.some((ruta) => pathname.startsWith(ruta));
   // Nombre: yaGiro
   // Descripción: Revisa si ya giró hace poco.
   // Entrada: Nada.
   // Salida: Sí o no.
   // Objetivo: No repetir el giro.
-  const yaGiro = () => { const v = leer(); return v.premio && Date.now() - v.cuando < ESPERA; };
+  const yaGiro = () => { const guardado = leer(); return guardado.premio && Date.now() - guardado.cuando < ESPERA; };
 
   // Saca el regalo a la vista unos segundos (máximo dos veces por visita y nunca encima de otra ventana)
   // Nombre: ofrecer
@@ -195,15 +195,15 @@ export default function Ruleta() {
   };
   useEffect(() => {
     if (!aviso) return undefined;
-    const t = setTimeout(() => setAviso(false), 14000);
-    return () => clearTimeout(t);
+    const espera = setTimeout(() => setAviso(false), 14000);
+    return () => clearTimeout(espera);
   }, [aviso]);
 
   // La primera vez que pone algo en el carrito en esta visita
   useEffect(() => {
-    const n = carrito.items.length;
-    if (cantidadAntes.current !== null && n > cantidadAntes.current) setTimeout(ofrecer, 1500);
-    cantidadAntes.current = n;
+    const cantidad = carrito.items.length;
+    if (cantidadAntes.current !== null && cantidad > cantidadAntes.current) setTimeout(ofrecer, 1500);
+    cantidadAntes.current = cantidad;
   }, [carrito.items.length]);
 
   useEffect(() => { api.ruleta().then(setPremios).catch(() => setPremios([])); }, []);
@@ -237,19 +237,19 @@ export default function Ruleta() {
   async function girar() {
     if (girando) return;
     setError(''); setCopiado(false);
-    let r;
-    try { r = await api.girarRuleta(); } catch (error) { setError(error.message); return; }
+    let respuesta;
+    try { respuesta = await api.girarRuleta(); } catch (error) { setError(error.message); return; }
     const paso = 360 / premios.length;
     const ajuste = (Math.random() - 0.5) * paso * 0.6;
     // Vueltas completas y luego el segmento ganador queda debajo del indicador de arriba
-    const destino = giro - (giro % 360) + 360 * 6 + (360 - (r.indice * paso + paso / 2)) + ajuste;
+    const destino = giro - (giro % 360) + 360 * 6 + (360 - (respuesta.indice * paso + paso / 2)) + ajuste;
     setResultado(null);
     setGirando(true);
     setGiro(destino);
     setTimeout(() => {
       setGirando(false);
-      setResultado(r);
-      if (r.codigo) guardar({ premio: r, cuando: Date.now(), vista: true });
+      setResultado(respuesta);
+      if (respuesta.codigo) guardar({ premio: respuesta, cuando: Date.now(), vista: true });
     }, 5600);
   }
 

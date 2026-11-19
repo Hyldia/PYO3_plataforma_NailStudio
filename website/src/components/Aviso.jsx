@@ -1,3 +1,4 @@
+// Aviso pequeño que aparece un momento (por ejemplo «Agregado al carrito»).
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCarrito } from '../context/CarritoContext.jsx';
@@ -18,8 +19,8 @@ export default function Aviso() {
   useEffect(() => {
     if (!ultimo) return undefined;
     setVisible(true);
-    const t = setTimeout(() => setVisible(false), 2800);
-    return () => clearTimeout(t);
+    const temporizador = setTimeout(() => setVisible(false), 2800);
+    return () => clearTimeout(temporizador);
   }, [ultimo?.marca]);
 
   return (

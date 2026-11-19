@@ -23,7 +23,7 @@ export const PedidoModel = {
   crear(cliente, lineas, metodoPago, extra = {}) {
     const db = getDb();
     const tx = db.transaction(() => {
-      const total = extra.total ?? lineas.reduce((s, l) => s + l.precio * l.cantidad, 0);
+      const total = extra.total ?? lineas.reduce((suma, linea) => suma + linea.precio * linea.cantidad, 0);
       const { lastInsertRowid: pedidoId } = db.prepare(`
         INSERT INTO pedidos (cliente_nombre, cliente_telefono, cliente_email, total, metodo_pago, cupon_codigo, descuento, notas, referencia_pago,
                              usuario_id, entrega, direccion, costo_envio)
@@ -34,9 +34,9 @@ export const PedidoModel = {
 
       const item = db.prepare('INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario, detalle) VALUES (?, ?, ?, ?, ?)');
       const descontar = db.prepare('UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?');
-      for (const l of lineas) {
-        if (descontar.run(l.cantidad, l.productoId, l.cantidad).changes === 0) throw new Error(`No hay stock suficiente de ${l.nombre}.`);
-        item.run(pedidoId, l.productoId, l.cantidad, l.precio, l.detalle || null);
+      for (const linea of lineas) {
+        if (descontar.run(linea.cantidad, linea.productoId, linea.cantidad).changes === 0) throw new Error(`No hay stock suficiente de ${linea.nombre}.`);
+        item.run(pedidoId, linea.productoId, linea.cantidad, linea.precio, linea.detalle || null);
       }
       return { id: pedidoId, total };
     });
@@ -51,12 +51,12 @@ export const PedidoModel = {
   // Objetivo: Atender pedidos.
   listarAdmin({ desde, hasta, q, estado, pago } = {}) {
     const where = [];
-    const p = {};
-    if (desde) { where.push("date(p.creado_en, 'localtime') >= @desde"); p.desde = desde; }
-    if (hasta) { where.push("date(p.creado_en, 'localtime') <= @hasta"); p.hasta = hasta; }
-    if (estado) { where.push('p.estado = @estado'); p.estado = estado; }
-    if (pago) { where.push('p.metodo_pago = @pago'); p.pago = pago; }
-    if (q && q.trim()) { where.push("(lower(p.cliente_nombre) LIKE @q OR p.cliente_telefono LIKE @q OR CAST(p.id AS TEXT) = @id)"); p.q = `%${q.trim().toLowerCase()}%`; p.id = q.trim().replace('#', ''); }
+    const parametros = {};
+    if (desde) { where.push("date(p.creado_en, 'localtime') >= @desde"); parametros.desde = desde; }
+    if (hasta) { where.push("date(p.creado_en, 'localtime') <= @hasta"); parametros.hasta = hasta; }
+    if (estado) { where.push('p.estado = @estado'); parametros.estado = estado; }
+    if (pago) { where.push('p.metodo_pago = @pago'); parametros.pago = pago; }
+    if (q && q.trim()) { where.push("(lower(p.cliente_nombre) LIKE @q OR p.cliente_telefono LIKE @q OR CAST(p.id AS TEXT) = @id)"); parametros.q = `%${q.trim().toLowerCase()}%`; parametros.id = q.trim().replace('#', ''); }
     return getDb().prepare(`
       SELECT p.*, datetime(p.creado_en, 'localtime') AS fecha_local,
         (SELECT GROUP_CONCAT(pi.cantidad || ' × ' || pr.nombre || COALESCE(' (' || pi.detalle || ')', ''), ', ')
@@ -64,7 +64,7 @@ export const PedidoModel = {
         (SELECT SUM(pi.cantidad) FROM pedido_items pi WHERE pi.pedido_id = p.id) AS unidades,
         (SELECT COUNT(*) FROM citas c WHERE c.pedido_id = p.id) AS citas
       FROM pedidos p ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      ORDER BY p.creado_en DESC, p.id DESC LIMIT 1000`).all(p);
+      ORDER BY p.creado_en DESC, p.id DESC LIMIT 1000`).all(parametros);
   },
   // Nombre: buscarPorId
   // Descripción: Busca un pedido.
@@ -90,16 +90,5 @@ export const PedidoModel = {
         .run({ id, estado, retiradoPor: retiradoPor || null, notas: notas ?? null });
     })();
     return this.buscarPorId(id);
-  },
-
-  // Nombre: listarRecientes
-  // Descripción: Lista los pedidos recientes.
-  // Entrada: Nada.
-  // Salida: Los pedidos.
-  // Objetivo: Ver lo último vendido.
-  listarRecientes: () => getDb().prepare(`
-    SELECT p.*, GROUP_CONCAT(pi.cantidad || ' × ' || pr.nombre || COALESCE(' (' || pi.detalle || ')', ''), ', ') AS detalle
-    FROM pedidos p JOIN pedido_items pi ON pi.pedido_id = p.id JOIN productos pr ON pr.id = pi.producto_id
-    GROUP BY p.id ORDER BY p.creado_en DESC LIMIT 50
-  `).all()
+  }
 };

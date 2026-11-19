@@ -49,13 +49,13 @@ const POR_TIPO = {
 // Salida: Funciones para elegir al azar.
 // Objetivo: Datos de ejemplo repetibles.
 function crearAzar(semilla) {
-  let s = semilla;
+  let estado = semilla;
   // Nombre: r
   // Descripción: Da un número al azar (siempre la misma serie).
   // Entrada: Nada.
   // Salida: Un número entre 0 y 1.
   // Objetivo: Crear datos de ejemplo iguales cada vez.
-  const r = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  const aleatorio = () => ((estado = (estado * 1664525 + 1013904223) % 4294967296) / 4294967296);
   // Nombre: entero
   // Descripción: Da un número entero al azar entre dos valores.
   // Entrada: El mínimo y el máximo.
@@ -66,7 +66,7 @@ function crearAzar(semilla) {
   // Entrada: La lista.
   // Salida: Un elemento.
   // Objetivo: Variar las reseñas.
-  return { r, entero: (a, b) => a + Math.floor(r() * (b - a + 1)), elegir: (l) => l[Math.floor(r() * l.length)] };
+  return { r: aleatorio, entero: (a, b) => a + Math.floor(aleatorio() * (b - a + 1)), elegir: (lista) => lista[Math.floor(aleatorio() * lista.length)] };
 }
 
 // Nombre: corto
@@ -74,7 +74,7 @@ function crearAzar(semilla) {
 // Entrada: El nombre completo.
 // Salida: El nombre corto.
 // Objetivo: Cuidar la privacidad en reseñas.
-const corto = (nombre) => { const [n, a] = nombre.split(' '); return a ? `${n} ${a[0]}.` : n; };
+const corto = (nombre) => { const [nombrePila, apellido] = nombre.split(' '); return apellido ? `${nombrePila} ${apellido[0]}.` : nombrePila; };
 // Nombre: fecha
 // Descripción: Da una fecha de hace unos días.
 // Entrada: Cuántos días atrás.
@@ -89,7 +89,7 @@ const fecha = (diasAtras) => new Date(Date.now() - diasAtras * 86400000).toISOSt
 // Objetivo: Que se vean opiniones al probar.
 export function cargarResenasEjemplo(db) {
   if (db.prepare("SELECT valor FROM ajustes WHERE clave = 'resenas_ejemplo'").get()) return false;
-  const az = crearAzar(20261114);
+  const generador = crearAzar(20261114);
   const ins = db.prepare(`INSERT INTO resenas (producto_id, pedido_id, nombre, estrellas, comentario, opcion, ejemplo, creada_en)
     VALUES (?, ?, ?, ?, ?, ?, 1, ?)`);
   // Primero las estrellas (la mayoría 5 y 4, como en una tienda que vende bien) y luego un comentario que les corresponda
@@ -100,10 +100,10 @@ export function cargarResenasEjemplo(db) {
   // Salida: El texto del comentario.
   // Objetivo: Que las reseñas suenen reales.
   const comentario = (tipo) => {
-    const x = az.r();
+    const x = generador.r();
     const estrellas = x < 0.64 ? 5 : x < 0.88 ? 4 : x < 0.96 ? 3 : x < 0.99 ? 2 : 1;
     const opciones = [...(POR_TIPO[tipo] || []), ...GENERALES, ...BAJAS].filter(([e]) => e === estrellas);
-    return opciones.length ? az.elegir(opciones) : az.elegir(BAJAS);
+    return opciones.length ? generador.elegir(opciones) : generador.elegir(BAJAS);
   };
 
   db.transaction(() => {
@@ -111,17 +111,17 @@ export function cargarResenasEjemplo(db) {
     const items = db.prepare(`SELECT i.pedido_id, i.producto_id, i.detalle, p.cliente_nombre, p.creado_en, pr.tipo
       FROM pedido_items i JOIN pedidos p ON p.id = i.pedido_id JOIN productos pr ON pr.id = i.producto_id`).all();
     items.forEach((it) => {
-      if (az.r() > 0.75) return;
+      if (generador.r() > 0.75) return;
       const [estrellas, texto] = comentario(it.tipo);
       ins.run(it.producto_id, it.pedido_id, corto(it.cliente_nombre), estrellas, texto, it.detalle, it.creado_en);
     });
     // 2. Más reseñas en los productos más vendidos
     const populares = db.prepare('SELECT id, tipo FROM productos ORDER BY vendidos DESC LIMIT 220').all();
-    populares.forEach((p) => {
-      const n = az.entero(1, 5);
-      for (let k = 0; k < n; k++) {
-        const [estrellas, texto] = comentario(p.tipo);
-        ins.run(p.id, null, `${az.elegir(NOMBRES)} ${az.elegir(INICIALES)}.`, estrellas, texto, null, fecha(az.entero(1, 120)));
+    populares.forEach((popular) => {
+      const cantidad = generador.entero(1, 5);
+      for (let k = 0; k < cantidad; k++) {
+        const [estrellas, texto] = comentario(popular.tipo);
+        ins.run(popular.id, null, `${generador.elegir(NOMBRES)} ${generador.elegir(INICIALES)}.`, estrellas, texto, null, fecha(generador.entero(1, 120)));
       }
     });
     db.exec(SQL_RESUMEN);

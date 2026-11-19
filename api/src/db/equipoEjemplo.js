@@ -10,7 +10,7 @@ import { quincenaAnterior, quincenaDe, hoyIso } from '../lib/fechas.js';
 // Entrada: La fecha y cuántos días.
 // Salida: La fecha nueva.
 // Objetivo: Calcular días libres de ejemplo.
-const sumar = (f, n) => { const d = new Date(`${f}T12:00:00`); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const sumar = (f, numero) => { const fecha = new Date(`${f}T12:00:00`); fecha.setDate(fecha.getDate() + numero); return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`; };
 
 // Nombre: cargarEquipoEjemplo
 // Descripción: Llena datos de ejemplo del equipo (libres y pagos).
@@ -32,16 +32,16 @@ export function cargarEquipoEjemplo(db) {
     // 2. Días libres de muestra
     const muestras = [[0, 9, 2, 'vacaciones', 'Vacaciones de fin de año'], [1, 4, 1, 'permiso', 'Cita médica'], [2, 12, 1, 'libre', ''], [3, 6, 1, 'libre', 'Cumpleaños'], [4, -5, 1, 'incapacidad', 'Gripe']];
     muestras.forEach(([i, desde, dias, tipo, motivo]) => {
-      const e = equipo[i];
-      if (!e) return;
+      const especialista = equipo[i];
+      if (!especialista) return;
       const ini = sumar(hoy, desde);
-      db.prepare('DELETE FROM citas WHERE especialista_id = ? AND fecha BETWEEN ? AND ?').run(e.id, ini, sumar(ini, dias - 1));
-      AusenciaModel.agregarAusencias(e.id, { desde: ini, hasta: sumar(ini, dias - 1), tipo, motivo });
+      db.prepare('DELETE FROM citas WHERE especialista_id = ? AND fecha BETWEEN ? AND ?').run(especialista.id, ini, sumar(ini, dias - 1));
+      AusenciaModel.agregarAusencias(especialista.id, { desde: ini, hasta: sumar(ini, dias - 1), tipo, motivo });
     });
 
     // 3. Las dos quincenas anteriores ya están pagadas
     const pasada = quincenaAnterior();
-    [quincenaDe(sumar(pasada.desde, -1)), pasada].forEach((p) => equipo.forEach((e) => NominaModel.registrarPago(e.id, p)));
+    [quincenaDe(sumar(pasada.desde, -1)), pasada].forEach((periodo) => equipo.forEach((especialista) => NominaModel.registrarPago(especialista.id, periodo)));
 
     db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('equipo_ejemplo', '1') ON CONFLICT(clave) DO UPDATE SET valor = '1'").run();
   })();

@@ -35,7 +35,7 @@ const TEMAS = ['Reservas', 'Un pedido', 'Precios', 'Otra cosa'];
 function abiertoAhora() {
   const ahora = new Date();
   const dia = ahora.getDay(); // 0 domingo
-  const fila = SALON.horario.find((h) => (dia === 0 ? /domingo/i.test(h.dias) : dia === 6 ? /s[áa]bado/i.test(h.dias) : /lunes/i.test(h.dias)));
+  const fila = SALON.horario.find((turno) => (dia === 0 ? /domingo/i.test(turno.dias) : dia === 6 ? /s[áa]bado/i.test(turno.dias) : /lunes/i.test(turno.dias)));
   const horas = [...String(fila?.horas || '').matchAll(/(\d{1,2}):(\d{2})\s*([ap])/gi)].map(([, h, m, ap]) => ((Number(h) % 12) + (ap.toLowerCase() === 'p' ? 12 : 0)) * 60 + Number(m));
   if (horas.length < 2) return false;
   const min = ahora.getHours() * 60 + ahora.getMinutes();
@@ -66,7 +66,7 @@ export default function Contacto() {
     <div className="contenedor pagina pagina--resultados ayuda">
       <Migas pasos={[['Ayuda y contacto']]} />
       <section className="vitrina vitrina--vendidos ayuda-portada" aria-labelledby="t-ayuda">
-        <span className="vitrina__burbujas" aria-hidden="true">{Array.from({ length: 8 }, (_, n) => <i key={n} style={{ '--n': n }} />)}</span>
+        <span className="vitrina__burbujas" aria-hidden="true">{Array.from({ length: 8 }, (_, numero) => <i key={numero} style={{ '--n': numero }} />)}</span>
         <div className="vitrina__texto">
           <p className="vitrina__ante">Centro de ayuda</p>
           <h1 id="t-ayuda">¿En qué te <em>ayudamos</em>?</h1>
@@ -89,7 +89,7 @@ export default function Contacto() {
         <li className="ayuda-tarjeta">
           <span className="ayuda-tarjeta__icono">{ICONOS.reloj}</span>
           <h2>Horario</h2>
-          <dl className="ayuda-horario">{SALON.horario.map((h) => (<div key={h.dias}><dt>{h.dias}</dt><dd>{h.horas}</dd></div>))}</dl>
+          <dl className="ayuda-horario">{SALON.horario.map((turno) => (<div key={turno.dias}><dt>{turno.dias}</dt><dd>{turno.horas}</dd></div>))}</dl>
         </li>
         <li className="ayuda-tarjeta">
           <span className="ayuda-tarjeta__icono">{ICONOS.telefono}</span>
@@ -116,9 +116,9 @@ export default function Contacto() {
           <p className="tenue">Tu mensaje se abre en WhatsApp para que lo envíes desde tu teléfono.</p>
           <fieldset className="ayuda-temas">
             <legend>¿Sobre qué nos escribes?</legend>
-            {TEMAS.map((t) => (
-              <label key={t} className={`ayuda-tema ${msj.tema === t ? 'ayuda-tema--activo' : ''}`}>
-                <input type="radio" name="tema" value={t} checked={msj.tema === t} onChange={() => setMsj({ ...msj, tema: t })} />{t}
+            {TEMAS.map((tema) => (
+              <label key={tema} className={`ayuda-tema ${msj.tema === tema ? 'ayuda-tema--activo' : ''}`}>
+                <input type="radio" name="tema" value={tema} checked={msj.tema === tema} onChange={() => setMsj({ ...msj, tema: tema })} />{tema}
               </label>
             ))}
           </fieldset>

@@ -5,6 +5,11 @@
 // Para agregar otra decisión (por ejemplo "perdonar") se crea otra clase sin tocar estas (Abierto/Cerrado de SOLID).
 import { CitaModel } from '../models/CitaModel.js';
 
+// Nombre: errorDecision
+// Descripción: Crea un error con su código HTTP.
+// Entrada: El mensaje y el código (400 si no se da).
+// Salida: El error listo para lanzar.
+// Objetivo: Que el controlador responda el código correcto.
 const errorDecision = (mensaje, codigo = 400) => Object.assign(new Error(mensaje), { codigo });
 
 class Reprogramar {

@@ -1,3 +1,4 @@
+// Subida de fotos (multer): solo acepta JPG, PNG o WEBP, les pone un nombre único y permite borrarlas.
 import multer from 'multer';
 import { extname, join } from 'node:path';
 import { unlink } from 'node:fs/promises';

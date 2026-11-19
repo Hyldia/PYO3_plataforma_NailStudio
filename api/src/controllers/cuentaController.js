@@ -25,12 +25,12 @@ export const cuentaController = {
   // Salida: La sesión abierta o un error.
   // Objetivo: Que la clienta se registre.
   registro(req, res) {
-    const d = { ...req.body, correo: String(req.body.correo || '').trim().toLowerCase() };
-    const error = UsuarioModel.validarRegistro(d);
+    const datos = { ...req.body, correo: String(req.body.correo || '').trim().toLowerCase() };
+    const error = UsuarioModel.validarRegistro(datos);
     if (error) return res.status(400).json({ error });
-    if (UsuarioModel.buscarPorCorreo(d.correo)) return res.status(409).json({ error: 'Ya hay una cuenta con ese correo. Entra con tu contraseña o con Google/Facebook.' });
-    const u = UsuarioModel.crear({ nombre: d.nombre, correo: d.correo, telefono: d.telefono.trim(), contrasenaHash: Contrasenas.crear(d.contrasena) });
-    res.status(201).json(sesion(u));
+    if (UsuarioModel.buscarPorCorreo(datos.correo)) return res.status(409).json({ error: 'Ya hay una cuenta con ese correo. Entra con tu contraseña o con Google/Facebook.' });
+    const usuario = UsuarioModel.crear({ nombre: datos.nombre, correo: datos.correo, telefono: datos.telefono.trim(), contrasenaHash: Contrasenas.crear(datos.contrasena) });
+    res.status(201).json(sesion(usuario));
   },
 
   // Una sola ruta para las tres formas de entrar (Strategy + Factory)
@@ -43,16 +43,16 @@ export const cuentaController = {
     try {
       const estrategia = crearEstrategia(req.params.proveedor || 'formulario');
       const datos = await estrategia.autenticar(req.body);
-      let u;
+      let usuario;
       if (datos.proveedor === 'formulario') {
-        u = UsuarioModel.buscarPorCorreo(datos.correo);
-        if (!u || !u.contrasena_hash || !Contrasenas.verificar(datos.contrasena, u.contrasena_hash)) {
-          return res.status(401).json({ error: u && !u.contrasena_hash ? `Esta cuenta se creó con ${u.proveedor === 'google' ? 'Google' : 'Facebook'}. Entra con ese botón.` : 'Correo o contraseña incorrectos.' });
+        usuario = UsuarioModel.buscarPorCorreo(datos.correo);
+        if (!usuario || !usuario.contrasena_hash || !Contrasenas.verificar(datos.contrasena, usuario.contrasena_hash)) {
+          return res.status(401).json({ error: usuario && !usuario.contrasena_hash ? `Esta cuenta se creó con ${usuario.proveedor === 'google' ? 'Google' : 'Facebook'}. Entra con ese botón.` : 'Correo o contraseña incorrectos.' });
         }
       } else {
-        u = UsuarioModel.desdeProveedor(datos);
+        usuario = UsuarioModel.desdeProveedor(datos);
       }
-      res.json(sesion(u));
+      res.json(sesion(usuario));
     } catch (error) { next(error); }
   },
 
@@ -80,11 +80,6 @@ export const cuentaController = {
     if (!/^[\d\s+-]{8,15}$/.test(telefono)) return res.status(400).json({ error: 'Escribe un teléfono de 8 dígitos.' });
     res.json(UsuarioModel.publico(UsuarioModel.actualizar(req.usuario.id, { nombre, telefono })));
   },
-  // Nombre: historial
-  // Descripción: Trae los pedidos y citas de la clienta.
-  // Entrada: Su sesión.
-  // Salida: Su historial.
-  // Objetivo: Que vea sus compras y citas.
   // Nombre: cancelarMiCita
   // Descripción: La clienta cancela su propia cita (solo hasta 2 horas antes).
   // Entrada: El número de cita y el motivo (opcional).
@@ -94,10 +89,15 @@ export const cuentaController = {
     const cita = CitaModel.buscarPorId(req.params.id);
     if (!cita || cita.usuario_id !== req.usuario.id) return res.status(404).json({ error: 'No encontramos esa cita en tu cuenta.' });
     const motivo = String(req.body?.motivo || 'Cancelada por la clienta').trim().slice(0, 160);
-    try { revisarCancelacion(cita, { motivo, soloFuturas: true, conAnticipacion: true }); } catch (e) { return res.status(e.codigo || 400).json({ error: e.message }); }
+    try { revisarCancelacion(cita, { motivo, soloFuturas: true, conAnticipacion: true }); } catch (fallo) { return res.status(fallo.codigo || 400).json({ error: fallo.message }); }
     res.json(cancelarCita(cita, { motivo, quien: 'la clienta' }).cita);
   },
 
+  // Nombre: historial
+  // Descripción: Junta los pedidos y las citas de la clienta.
+  // Entrada: La petición de la clienta con sesión.
+  // Salida: Sus pedidos y sus citas.
+  // Objetivo: Mostrar su historial en «Mi cuenta».
   historial: (req, res) => res.json({ pedidos: UsuarioModel.pedidos(req.usuario.id), citas: UsuarioModel.citas(req.usuario.id) }),
 
   // Nombre: crearDireccion

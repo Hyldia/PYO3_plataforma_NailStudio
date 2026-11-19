@@ -1,3 +1,4 @@
+// Página de inicio: portada, círculos de categorías, servicios, diseños destacados, tienda y reseñas.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -78,20 +79,20 @@ export default function Inicio() {
     api.fotos({ limite: 10, orden: 'populares' }).then((respuesta) => setFotos(respuesta.fotos)).catch(() => {});
   }, []);
 
-  const serviciosOferta = servicios.filter((s) => s.precio_oferta != null);
-  const combos = servicios.filter((s) => s.es_combo);
-  const paraHombres = servicios.filter((s) => s.categoria === 'Hombres');
+  const serviciosOferta = servicios.filter((servicio) => servicio.precio_oferta != null);
+  const combos = servicios.filter((servicio) => servicio.es_combo);
+  const paraHombres = servicios.filter((servicio) => servicio.categoria === 'Hombres');
   // Nombre: agregado
   // Descripción: Avisa que se agregó al carrito.
   // Entrada: El producto.
   // Salida: Nada.
   // Objetivo: Confirmar la acción.
-  const agregado = (p) => setAviso(`${p.nombre} se agregó al carrito.`);
-  const maxDescuento = Math.max(0, ...ofertas.map((p) => Math.round((1 - p.precio / p.precio_anterior) * 100)));
+  const agregado = (producto) => setAviso(`${producto.nombre} se agregó al carrito.`);
+  const maxDescuento = Math.max(0, ...ofertas.map((oferta) => Math.round((1 - oferta.precio / oferta.precio_anterior) * 100)));
   const campana = campanaActual();
   // En el banner, primero las ofertas que tienen foto real
-  const destacados = [...ofertas].filter((p) => p.stock > 0).sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen)).slice(0, 3);
-  const liquidacion = vendidosTodos.filter((p) => p.stock > 0 && p.stock < 10).slice(0, 3);
+  const destacados = [...ofertas].filter((oferta) => oferta.stock > 0).sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen)).slice(0, 3);
+  const liquidacion = vendidosTodos.filter((vendido) => vendido.stock > 0 && vendido.stock < 10).slice(0, 3);
 
   return (
     <>
@@ -122,13 +123,13 @@ export default function Inicio() {
           </Link>
           <div className="campana__lado">
             <ul className="campana__productos" aria-label="Ofertas destacadas">
-              {destacados.map((p) => (
-                <li key={p.id}>
-                  <Link to={`/tienda/${p.id}`} className="campana__producto">
-                    <span className="campana__etiqueta">-{Math.round((1 - p.precio / p.precio_anterior) * 100)}%</span>
-                    <ProductoImagen producto={p} />
-                    <span className="campana__precio">{dinero(p.precio)}</span>
-                    <span className="solo-lector">{p.nombre}, antes {dinero(p.precio_anterior)}</span>
+              {destacados.map((destacado) => (
+                <li key={destacado.id}>
+                  <Link to={`/tienda/${destacado.id}`} className="campana__producto">
+                    <span className="campana__etiqueta">-{Math.round((1 - destacado.precio / destacado.precio_anterior) * 100)}%</span>
+                    <ProductoImagen producto={destacado} />
+                    <span className="campana__precio">{dinero(destacado.precio)}</span>
+                    <span className="solo-lector">{destacado.nombre}, antes {dinero(destacado.precio_anterior)}</span>
                   </Link>
                 </li>
               ))}
@@ -142,16 +143,16 @@ export default function Inicio() {
       <section className="contenedor categorias" aria-labelledby="t-categorias">
         <h2 id="t-categorias" className="solo-lector">Compra por categoría</h2>
         <ul className="categorias__lista" style={{ '--circulos': circulos.length > 10 ? Math.ceil(circulos.length / 2) : circulos.length, '--circulos-movil': [5, 4, 3].find((columnas) => circulos.length % columnas === 0) || 5 }}>
-          {circulos.map((c, n) => (
-            <li key={c.nombre} className="categoria-circulo" style={{ '--n': n }}>
-              <Link to={c.to}>
+          {circulos.map((circulo, numero) => (
+            <li key={circulo.nombre} className="categoria-circulo" style={{ '--n': numero }}>
+              <Link to={circulo.to}>
                 <span className="categoria-circulo__aro" aria-hidden="true">
                   <span className="categoria-circulo__imagen">
                     {/* Foto real del producto más vendido de la categoría; el dibujo solo si aún no hay foto */}
-                    <ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color, imagen: portadas[claveCategoria(c)] || null }} />
+                    <ProductoImagen producto={{ nombre: '', tipo: circulo.tipo, color: circulo.color, imagen: portadas[claveCategoria(circulo)] || null }} />
                   </span>
                 </span>
-                <span className="categoria-circulo__nombre">{c.nombre}</span>
+                <span className="categoria-circulo__nombre">{circulo.nombre}</span>
               </Link>
             </li>
           ))}
@@ -169,7 +170,7 @@ export default function Inicio() {
             <Link to="/tienda?ofertas=1&orden=descuento" className="enlace-flecha">Por tiempo limitado <Flecha /></Link>
           </div>
           <ul className="productos-rejilla productos-rejilla--tres">
-            {ofertas.slice(3, 6).map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
+            {ofertas.slice(3, 6).map((oferta) => <TarjetaProducto key={oferta.id} p={oferta} onAgregar={agregado} />)}
           </ul>
         </section>
         <section className="bloque-ofertas" aria-labelledby="t-liquidacion">
@@ -181,7 +182,7 @@ export default function Inicio() {
             <Link to="/tienda?orden=vendidos&disponibles=1" className="enlace-flecha">Inventario limitado <Flecha /></Link>
           </div>
           <ul className="productos-rejilla productos-rejilla--tres">
-            {liquidacion.map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
+            {liquidacion.map((producto) => <TarjetaProducto key={producto.id} p={producto} onAgregar={agregado} />)}
           </ul>
         </section>
       </div>
@@ -197,7 +198,7 @@ export default function Inicio() {
             <Link to="/servicios?ofertas=1" className="enlace-flecha">Ver todos <Flecha /></Link>
           </div>
           <CarruselAuto className="inicio-carrusel" etiqueta="Servicios en oferta">
-            {serviciosOferta.map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
+            {serviciosOferta.map((servicio) => <TarjetaServicioMini key={servicio.id} s={servicio} />)}
           </CarruselAuto>
         </section>
       )}
@@ -216,7 +217,7 @@ export default function Inicio() {
             </div>
           </div>
           <CarruselAuto className="inicio-carrusel" etiqueta="Servicios para hombres">
-            {paraHombres.map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
+            {paraHombres.map((hombre) => <TarjetaServicioMini key={hombre.id} s={hombre} />)}
           </CarruselAuto>
         </section>
       )}
@@ -228,7 +229,7 @@ export default function Inicio() {
             <Link to="/servicios?categoria=Combos" className="enlace-flecha">Ver combos <Flecha /></Link>
           </div>
           <CarruselAuto className="inicio-carrusel" etiqueta="Combos">
-            {combos.map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
+            {combos.map((combo) => <TarjetaServicioMini key={combo.id} s={combo} />)}
           </CarruselAuto>
         </section>
       )}
@@ -240,11 +241,11 @@ export default function Inicio() {
           <Link to="/tienda?orden=vendidos" className="enlace-flecha">Ver la tienda <Flecha /></Link>
         </div>
         <ul ref={rejilla} className="productos-rejilla productos-rejilla--grande">
-          {vendidos.map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
+          {vendidos.map((vendido) => <TarjetaProducto key={vendido.id} p={vendido} onAgregar={agregado} />)}
         </ul>
         <VerMas pagina={paginaVendidos} paginas={Math.ceil(vendidosTodos.length / PRODUCTOS_POR_PAGINA)}
-                onCambiar={(n) => {
-                  setPaginaVendidos(n);
+                onCambiar={(numero) => {
+                  setPaginaVendidos(numero);
                   requestAnimationFrame(() => {
                     const titulo = document.querySelector('#t-vendidos');
                     const encabezado = document.querySelector('.encabezado');
@@ -263,11 +264,11 @@ export default function Inicio() {
             <Link to="/galeria" className="enlace-flecha">Ver galería <Flecha /></Link>
           </div>
           <CarruselAuto className="mosaico inicio-carrusel" etiqueta="Diseños favoritos">
-            {fotos.map((f, i) => (
-              <li key={f.id}>
-                <Link to={`/galeria/${f.id}`} className="mosaico__boton">
-                  <Foto archivo={f.archivo} alt={f.titulo} />
-                  <span className="mosaico__titulo">{f.titulo}</span>
+            {fotos.map((foto, i) => (
+              <li key={foto.id}>
+                <Link to={`/galeria/${foto.id}`} className="mosaico__boton">
+                  <Foto archivo={foto.archivo} alt={foto.titulo} />
+                  <span className="mosaico__titulo">{foto.titulo}</span>
                 </Link>
               </li>
             ))}

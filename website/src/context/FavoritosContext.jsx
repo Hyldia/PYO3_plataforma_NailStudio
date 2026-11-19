@@ -17,7 +17,7 @@ export const useFavoritos = () => useContext(Contexto);
 // Salida: La lista.
 // Objetivo: No perderlos.
 function leer() {
-  try { const v = JSON.parse(localStorage.getItem(CLAVE)); return Array.isArray(v) ? v : []; } catch { return []; }
+  try { const guardado = JSON.parse(localStorage.getItem(CLAVE)); return Array.isArray(guardado) ? guardado : []; } catch { return []; }
 }
 
 // Nombre: FavoritosProvider
@@ -42,7 +42,7 @@ export function FavoritosProvider({ children }) {
     // Entrada: Tipo y número.
     // Salida: Sí o no.
     // Objetivo: Pintar el corazón.
-    const tiene = (tipo, id) => items.some((i) => i.clave === clave(tipo, id));
+    const tiene = (tipo, id) => items.some((item) => item.clave === clave(tipo, id));
     return {
       items,
       ultimo,
@@ -54,10 +54,10 @@ export function FavoritosProvider({ children }) {
       // Salida: Nada.
       // Objetivo: Marcar favoritos.
       alternar(tipo, datos) {
-        const c = clave(tipo, datos.id);
-        setItems((lista) => (lista.some((i) => i.clave === c)
-          ? lista.filter((i) => i.clave !== c)
-          : [{ ...datos, tipo, clave: c, guardado: Date.now() }, ...lista]));
+        const claveFavorito = clave(tipo, datos.id);
+        setItems((lista) => (lista.some((elemento) => elemento.clave === claveFavorito)
+          ? lista.filter((elemento) => elemento.clave !== claveFavorito)
+          : [{ ...datos, tipo, clave: claveFavorito, guardado: Date.now() }, ...lista]));
         setUltimo(Date.now());
       },
       // Nombre: quitar
@@ -65,7 +65,7 @@ export function FavoritosProvider({ children }) {
       // Entrada: La clave.
       // Salida: Nada.
       // Objetivo: Sacarlo de la lista.
-      quitar: (c) => setItems((lista) => lista.filter((i) => i.clave !== c)),
+      quitar: (c) => setItems((lista) => lista.filter((elemento) => elemento.clave !== c)),
       // Nombre: vaciar
       // Descripción: Vacía los favoritos.
       // Entrada: Nada.

@@ -29,10 +29,10 @@ export default function CarruselAuto({ children, className = '', etiqueta }) {
       setDuracion(Math.max(20, ancho / VELOCIDAD));
     };
     medir();
-    const ro = new ResizeObserver(medir);
-    ro.observe(marco.current);
-    if (lista.current) ro.observe(lista.current);
-    return () => ro.disconnect();
+    const observador = new ResizeObserver(medir);
+    observador.observe(marco.current);
+    if (lista.current) observador.observe(lista.current);
+    return () => observador.disconnect();
   }, [children]);
 
   return (

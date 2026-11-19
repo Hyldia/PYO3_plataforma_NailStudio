@@ -16,17 +16,17 @@ const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 // Entrada: Los datos de la búsqueda.
 // Salida: Fecha de inicio y de fin.
 // Objetivo: Calcular pagos por periodo.
-const periodoDe = (q) => (FECHA.test(q.desde || '') && FECHA.test(q.hasta || '') && q.desde <= q.hasta
-  ? { ...quincenaDe(q.desde), desde: q.desde, hasta: q.hasta } : quincenaDe(FECHA.test(q.fecha || '') ? q.fecha : undefined));
+const periodoDe = (consulta) => (FECHA.test(consulta.desde || '') && FECHA.test(consulta.hasta || '') && consulta.desde <= consulta.hasta
+  ? { ...quincenaDe(consulta.desde), desde: consulta.desde, hasta: consulta.hasta } : quincenaDe(FECHA.test(consulta.fecha || '') ? consulta.fecha : undefined));
 // Nombre: existe
 // Descripción: Busca la especialista y avisa si no existe.
 // Entrada: La petición y la respuesta.
 // Salida: La especialista o nada.
 // Objetivo: Evitar errores con equipo inexistente.
 const existe = (req, res) => {
-  const e = EspecialistaModel.buscarPorId(req.params.id);
-  if (!e) res.status(404).json({ error: 'No existe esa especialista.' });
-  return e;
+  const especialista = EspecialistaModel.buscarPorId(req.params.id);
+  if (!especialista) res.status(404).json({ error: 'No existe esa especialista.' });
+  return especialista;
 };
 
 export const equipoAdminController = {
@@ -164,12 +164,12 @@ export const equipoAdminController = {
     hoja.getCell('A1').font = { bold: true, size: 14, color: { argb: 'FF8C1D4B' } };
     hoja.getRow(3).values = ['Especialista', 'Estación', 'Forma de pago', 'Comisión %', 'Citas atendidas', 'Vendido', 'Monto base', 'Por comisión', 'Total a pagar', 'Días programados', 'Días trabajados', 'Días libres', 'Ausencias', 'Pagado el'];
     hoja.columns = [26, 14, 18, 11, 14, 14, 13, 14, 15, 15, 14, 11, 11, 18].map((width) => ({ width }));
-    equipo.forEach((e) => hoja.addRow([e.nombre, e.estacion || '', e.esquema, e.comision, e.citas, e.vendido, e.base, e.porComision, e.total, e.diasProgramados, e.diasTrabajados, e.diasLibres, e.ausencias, e.pagado?.pagado_en || 'Pendiente']));
+    equipo.forEach((especialista) => hoja.addRow([especialista.nombre, especialista.estacion || '', especialista.esquema, especialista.comision, especialista.citas, especialista.vendido, especialista.base, especialista.porComision, especialista.total, especialista.diasProgramados, especialista.diasTrabajados, especialista.diasLibres, especialista.ausencias, especialista.pagado?.pagado_en || 'Pendiente']));
     const cabeza = hoja.getRow(3);
     cabeza.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     cabeza.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8C1D4B' } };
-    [6, 7, 8, 9].forEach((c) => { hoja.getColumn(c).numFmt = '"₡"#,##0'; });
-    const total = hoja.addRow(['TOTAL', '', '', '', equipo.reduce((s, e) => s + e.citas, 0), equipo.reduce((s, e) => s + e.vendido, 0), '', '', equipo.reduce((s, e) => s + e.total, 0)]);
+    [6, 7, 8, 9].forEach((columna) => { hoja.getColumn(columna).numFmt = '"₡"#,##0'; });
+    const total = hoja.addRow(['TOTAL', '', '', '', equipo.reduce((suma, especialista) => suma + especialista.citas, 0), equipo.reduce((suma, especialista) => suma + especialista.vendido, 0), '', '', equipo.reduce((suma, especialista) => suma + especialista.total, 0)]);
     total.font = { bold: true };
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="pagos-equipo-${periodo.desde}-al-${periodo.hasta}.xlsx"`);

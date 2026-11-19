@@ -17,7 +17,7 @@ const ESPERA = 5 * 60 * 1000;
 // Entrada: La fecha y cuántos días.
 // Salida: La fecha nueva.
 // Objetivo: Calcular rangos de fechas.
-const sumarDias = (f, n) => { const d = new Date(`${f}T12:00:00`); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const sumarDias = (f, numero) => { const fecha = new Date(`${f}T12:00:00`); fecha.setDate(fecha.getDate() + numero); return fecha.toISOString().slice(0, 10); };
 
 export const portalEquipoController = {
   // Nombre: entrar
@@ -27,12 +27,12 @@ export const portalEquipoController = {
   // Objetivo: Que vea solo lo suyo.
   entrar(req, res) {
     const ip = req.ip || 'x';
-    const f = fallos.get(ip);
-    if (f && f.n >= 5 && Date.now() - f.desde < ESPERA) return res.status(429).json({ error: 'Demasiados intentos. Espera 5 minutos y vuelve a intentarlo.' });
+    const fallo = fallos.get(ip);
+    if (fallo && fallo.n >= 5 && Date.now() - fallo.desde < ESPERA) return res.status(429).json({ error: 'Demasiados intentos. Espera 5 minutos y vuelve a intentarlo.' });
     const token = AccesoEquipoModel.entrar(req.body.usuario, req.body.contrasena);
     if (!token) {
-      const vigente = f && Date.now() - f.desde < ESPERA;
-      fallos.set(ip, { n: (vigente ? f.n : 0) + 1, desde: vigente ? f.desde : Date.now() });
+      const vigente = fallo && Date.now() - fallo.desde < ESPERA;
+      fallos.set(ip, { n: (vigente ? fallo.n : 0) + 1, desde: vigente ? fallo.desde : Date.now() });
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
     }
     fallos.delete(ip);
@@ -50,14 +50,9 @@ export const portalEquipoController = {
     if (!cita || cita.especialista_id !== req.especialista.id) return res.status(404).json({ error: 'No encontramos esa cita en tu agenda.' });
     const motivo = String(req.body.motivo || '').trim();
     const tipo = req.body.tipo === 'reprogramacion' ? 'reprogramacion' : 'cancelacion';
-    try { revisarCancelacion(cita, { motivo, tipo, soloFuturas: true, motivoObligatorio: true, conAnticipacion: true }); } catch (e) { return res.status(e.codigo || 400).json({ error: e.message }); }
+    try { revisarCancelacion(cita, { motivo, tipo, soloFuturas: true, motivoObligatorio: true, conAnticipacion: true }); } catch (fallo) { return res.status(fallo.codigo || 400).json({ error: fallo.message }); }
     res.json(cancelarCita(cita, { motivo: motivo.slice(0, 160), tipo, nota: String(req.body.nota || '').slice(0, 300), quien: req.especialista.nombre }));
   },
-  // Nombre: pedirLibre
-  // Descripción: Pide un día libre.
-  // Entrada: Las fechas y el motivo.
-  // Salida: La solicitud creada.
-  // Objetivo: Pedir libres a la dueña.
   // Nombre: noAsistio
   // Descripción: La especialista marca que su clienta no llegó y decide si se reprograma o se cobra.
   // Entrada: El número de cita y { decision, fecha, hora, monto }.
@@ -66,9 +61,14 @@ export const portalEquipoController = {
   noAsistio(req, res) {
     const cita = CitaModel.buscarPorId(req.params.id);
     if (!cita || cita.especialista_id !== req.especialista.id) return res.status(404).json({ error: 'No encontramos esa cita en tu agenda.' });
-    try { res.json(registrarNoAsistio(cita, { ...req.body, quien: req.especialista.nombre })); } catch (e) { res.status(e.codigo || 400).json({ error: e.message }); }
+    try { res.json(registrarNoAsistio(cita, { ...req.body, quien: req.especialista.nombre })); } catch (fallo) { res.status(fallo.codigo || 400).json({ error: fallo.message }); }
   },
 
+  // Nombre: pedirLibre
+  // Descripción: Pide un día libre.
+  // Entrada: Las fechas y el motivo.
+  // Salida: La solicitud creada.
+  // Objetivo: Pedir libres a la dueña.
   pedirLibre(req, res) { res.status(201).json(SolicitudLibreModel.pedirLibre(req.especialista.id, req.body)); },
   // Nombre: quitarSolicitud
   // Descripción: Retira una solicitud de día libre.
@@ -92,22 +92,22 @@ export const portalEquipoController = {
   // Salida: Sus citas, clientas, pago y libres.
   // Objetivo: Llenar su portal.
   yo(req, res) {
-    const e = req.especialista;
+    const especialista = req.especialista;
     const hoy = hoyIso();
     const quincena = quincenaDe();
     const anterior = quincenaAnterior();
     res.json({
-      perfil: { id: e.id, nombre: e.nombre, especialidad: e.especialidad, foto: e.foto, estacion: e.estacion, dias: e.dias, hora_inicio: e.hora_inicio, hora_fin: e.hora_fin, comision: e.comision, esquema: NominaModel.NOMBRES_ESQUEMA[e.esquema_pago] || 'Comisión' },
+      perfil: { id: especialista.id, nombre: especialista.nombre, especialidad: especialista.especialidad, foto: especialista.foto, estacion: especialista.estacion, dias: especialista.dias, hora_inicio: especialista.hora_inicio, hora_fin: especialista.hora_fin, comision: especialista.comision, esquema: NominaModel.NOMBRES_ESQUEMA[especialista.esquema_pago] || 'Comisión' },
       hoy,
-      proximas: EquipoModel.citasDe(e.id, hoy, sumarDias(hoy, 60)).filter((c) => c.estado !== 'cancelada'),
-      recientes: EquipoModel.citasDe(e.id, sumarDias(hoy, -30), sumarDias(hoy, -1)).reverse(),
-      clientas: EquipoModel.clientas(e.id),
-      ausencias: AusenciaModel.ausencias(e.id, hoy, sumarDias(hoy, 90)),
+      proximas: EquipoModel.citasDe(especialista.id, hoy, sumarDias(hoy, 60)).filter((cita) => cita.estado !== 'cancelada'),
+      recientes: EquipoModel.citasDe(especialista.id, sumarDias(hoy, -30), sumarDias(hoy, -1)).reverse(),
+      clientas: EquipoModel.clientas(especialista.id),
+      ausencias: AusenciaModel.ausencias(especialista.id, hoy, sumarDias(hoy, 90)),
       tipos: TIPOS_AUSENCIA,
-      quincena: { ...quincena, ...NominaModel.calcularPago(e, quincena) },
-      anterior: { ...anterior, ...NominaModel.calcularPago(e, anterior) },
-      pagos: NominaModel.historialPagos(e.id),
-      solicitudes: SolicitudLibreModel.solicitudesDe(e.id)
+      quincena: { ...quincena, ...NominaModel.calcularPago(especialista, quincena) },
+      anterior: { ...anterior, ...NominaModel.calcularPago(especialista, anterior) },
+      pagos: NominaModel.historialPagos(especialista.id),
+      solicitudes: SolicitudLibreModel.solicitudesDe(especialista.id)
     });
   }
 };

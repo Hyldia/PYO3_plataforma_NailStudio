@@ -34,7 +34,7 @@ export function cargarSeccionHombres(db) {
   const insProducto = db.prepare(`INSERT INTO productos (nombre, descripcion, categoria, marca, precio, precio_anterior, stock, color, tipo, calificacion, resenas, vendidos)
     VALUES (?, ?, 'Para hombres', 'AH Nails', ?, ?, ?, ?, ?, ?, ?, ?)`);
   db.transaction(() => {
-    SERVICIOS_HOMBRES.forEach((s) => { if (!servicio.get(s.nombre)) insServicio.run(s); });
+    SERVICIOS_HOMBRES.forEach((servicioActual) => { if (!servicio.get(servicioActual.nombre)) insServicio.run(servicioActual); });
     PRODUCTOS_HOMBRES.forEach(([nombre, desc, tipo, precio, color, antes], i) => {
       if (!producto.get(nombre)) insProducto.run(nombre, desc, precio, antes, 15 + i * 3, color, tipo, 4.3 + (i % 6) / 10, 4 + i * 2, 30 + i * 17);
     });

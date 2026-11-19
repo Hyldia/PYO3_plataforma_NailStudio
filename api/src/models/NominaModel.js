@@ -10,24 +10,24 @@ export const NominaModel = {
   // Entrada: La especialista y el periodo.
   // Salida: Detalle y total a pagar.
   // Objetivo: Pagar lo justo.
-  calcularPago(e, { desde, hasta }) {
+  calcularPago(especialista, { desde, hasta }) {
     const db = getDb();
     // Cuentan las citas atendidas y lo que se cobró de las citas a las que la clienta no llegó
     const citas = db.prepare(`SELECT fecha, CASE WHEN estado = 'completada' THEN total ELSE monto_cobrado END AS total FROM citas
-      WHERE especialista_id = ? AND fecha BETWEEN ? AND ? AND (estado = 'completada' OR (estado = 'no_asistio' AND monto_cobrado > 0))`).all(e.id, desde, hasta);
-    const vendido = citas.reduce((s, c) => s + c.total, 0);
-    const ausencias = AusenciaModel.ausencias(e.id, desde, hasta);
-    const fechasAusencia = new Set(ausencias.map((a) => a.fecha));
+      WHERE especialista_id = ? AND fecha BETWEEN ? AND ? AND (estado = 'completada' OR (estado = 'no_asistio' AND monto_cobrado > 0))`).all(especialista.id, desde, hasta);
+    const vendido = citas.reduce((suma, cita) => suma + cita.total, 0);
+    const ausencias = AusenciaModel.ausencias(especialista.id, desde, hasta);
+    const fechasAusencia = new Set(ausencias.map((ausencia) => ausencia.fecha));
     const dias = diasEntre(desde, hasta);
-    const programados = dias.filter((f) => trabajaPorHorario(e, f) && !fechasAusencia.has(f));
-    const libresPorHorario = dias.filter((f) => !trabajaPorHorario(e, f));
-    const trabajados = new Set(citas.map((c) => c.fecha)).size;
-    const esquema = crearEsquemaPago(e.esquema_pago);
-    const pago = esquema.calcular({ vendido, comision: e.comision, salarioBase: e.esquema_pago === 'base_comision' ? e.salario_base : 0 });
+    const programados = dias.filter((dia) => trabajaPorHorario(especialista, dia) && !fechasAusencia.has(dia));
+    const libresPorHorario = dias.filter((dia) => !trabajaPorHorario(especialista, dia));
+    const trabajados = new Set(citas.map((cita) => cita.fecha)).size;
+    const esquema = crearEsquemaPago(especialista.esquema_pago);
+    const pago = esquema.calcular({ vendido, comision: especialista.comision, salarioBase: especialista.esquema_pago === 'base_comision' ? especialista.salario_base : 0 });
     // Citas de días que ya pasaron y nadie marcó como atendidas (no cuentan para el pago)
     const porMarcar = db.prepare(`SELECT COUNT(*) AS n FROM citas WHERE especialista_id = ? AND estado IN ('pendiente', 'confirmada')
-      AND fecha BETWEEN ? AND ? AND fecha < ?`).get(e.id, desde, hasta, hoyIso()).n;
-    const pagado = db.prepare('SELECT * FROM pagos_equipo WHERE especialista_id = ? AND desde = ? AND hasta = ?').get(e.id, desde, hasta) || null;
+      AND fecha BETWEEN ? AND ? AND fecha < ?`).get(especialista.id, desde, hasta, hoyIso()).n;
+    const pagado = db.prepare('SELECT * FROM pagos_equipo WHERE especialista_id = ? AND desde = ? AND hasta = ?').get(especialista.id, desde, hasta) || null;
     return {
       citas: citas.length, vendido, ...pago, esquema: esquema.nombre,
       diasProgramados: programados.length, diasTrabajados: trabajados, diasLibres: libresPorHorario.length,
@@ -41,11 +41,11 @@ export const NominaModel = {
   // Objetivo: Hacer la planilla.
   nomina(periodo) {
     const lista = getDb().prepare('SELECT * FROM especialistas ORDER BY activa DESC, id').all();
-    return lista.map((e) => ({
-      id: e.id, nombre: e.nombre, especialidad: e.especialidad, foto: e.foto, estacion: e.estacion, activa: e.activa,
-      dias: e.dias, hora_inicio: e.hora_inicio, hora_fin: e.hora_fin, comision: e.comision, esquema_pago: e.esquema_pago, salario_base: e.salario_base,
-      ...this.calcularPago(e, periodo)
-    })).filter((x) => x.activa || x.citas > 0);
+    return lista.map((elemento) => ({
+      id: elemento.id, nombre: elemento.nombre, especialidad: elemento.especialidad, foto: elemento.foto, estacion: elemento.estacion, activa: elemento.activa,
+      dias: elemento.dias, hora_inicio: elemento.hora_inicio, hora_fin: elemento.hora_fin, comision: elemento.comision, esquema_pago: elemento.esquema_pago, salario_base: elemento.salario_base,
+      ...this.calcularPago(elemento, periodo)
+    })).filter((fila) => fila.activa || fila.citas > 0);
   },
   // Nombre: registrarPago
   // Descripción: Guarda que ya se pagó.
@@ -53,13 +53,13 @@ export const NominaModel = {
   // Salida: El pago guardado.
   // Objetivo: Llevar control de pagos.
   registrarPago(especialistaId, periodo) {
-    const e = getDb().prepare('SELECT * FROM especialistas WHERE id = ?').get(especialistaId);
-    if (!e) throw Object.assign(new Error('No encontramos a esa especialista.'), { status: 404 });
-    const c = this.calcularPago(e, periodo);
+    const especialista = getDb().prepare('SELECT * FROM especialistas WHERE id = ?').get(especialistaId);
+    if (!especialista) throw Object.assign(new Error('No encontramos a esa especialista.'), { status: 404 });
+    const calculo = this.calcularPago(especialista, periodo);
     getDb().prepare(`INSERT INTO pagos_equipo (especialista_id, desde, hasta, citas, vendido, monto) VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(especialista_id, desde, hasta) DO UPDATE SET citas = excluded.citas, vendido = excluded.vendido, monto = excluded.monto, pagado_en = datetime('now')`)
-      .run(e.id, periodo.desde, periodo.hasta, c.citas, c.vendido, c.total);
-    return this.calcularPago(e, periodo);
+      .run(especialista.id, periodo.desde, periodo.hasta, calculo.citas, calculo.vendido, calculo.total);
+    return this.calcularPago(especialista, periodo);
   },
   // Marca como atendidas las citas de días pasados (de una especialista o de todo el equipo)
   // Nombre: marcarPasadasAtendidas
@@ -89,11 +89,11 @@ export const NominaModel = {
   // Entrada: Los datos.
   // Salida: Un error o nada.
   // Objetivo: Evitar datos inválidos.
-  validarConfig(d) {
-    if (!['comision', 'base_comision'].includes(d.esquema_pago)) return 'Elige cómo se le paga.';
-    const c = Number(d.comision);
-    if (!(c >= 0 && c <= 100)) return 'La comisión debe estar entre 0 y 100 %.';
-    if (d.esquema_pago === 'base_comision' && !(Number(d.salario_base) > 0)) return 'Escribe el monto base por quincena.';
+  validarConfig(datos) {
+    if (!['comision', 'base_comision'].includes(datos.esquema_pago)) return 'Elige cómo se le paga.';
+    const porcentaje = Number(datos.comision);
+    if (!(porcentaje >= 0 && porcentaje <= 100)) return 'La comisión debe estar entre 0 y 100 %.';
+    if (datos.esquema_pago === 'base_comision' && !(Number(datos.salario_base) > 0)) return 'Escribe el monto base por quincena.';
     return null;
   },
   // Nombre: guardarConfig
@@ -101,12 +101,10 @@ export const NominaModel = {
   // Entrada: La especialista y los datos.
   // Salida: Nada.
   // Objetivo: Calcular su pago.
-  guardarConfig: (id, d) => getDb().prepare('UPDATE especialistas SET estacion = ?, esquema_pago = ?, comision = ?, salario_base = ? WHERE id = ?')
-    .run(String(d.estacion || '').trim().slice(0, 60) || null, d.esquema_pago, Number(d.comision), d.esquema_pago === 'base_comision' ? Number(d.salario_base) : 0, id),
+  guardarConfig: (id, datos) => getDb().prepare('UPDATE especialistas SET estacion = ?, esquema_pago = ?, comision = ?, salario_base = ? WHERE id = ?')
+    .run(String(datos.estacion || '').trim().slice(0, 60) || null, datos.esquema_pago, Number(datos.comision), datos.esquema_pago === 'base_comision' ? Number(datos.salario_base) : 0, id),
 
-  // ----- Acceso al portal del equipo -----
-  // Nombre: definirAcceso
-  // Descripción: Crea el usuario y contraseña de una especialista.
-  // Entrada: Usuario y contraseña.,
+
+  // Nombres para mostrar de cada forma de pago (comisión o base + comisión)
   NOMBRES_ESQUEMA
 };

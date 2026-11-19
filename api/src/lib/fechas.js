@@ -4,13 +4,14 @@
 // Entrada: La fecha.
 // Salida: El texto.
 // Objetivo: Trabajar con fechas.
-export const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+export const iso = (fecha) => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
 // Nombre: deIso
 // Descripción: Convierte un texto a fecha.
 // Entrada: El texto año-mes-día.
 // Salida: La fecha.
 // Objetivo: Trabajar con fechas.
-export const deIso = (f) => new Date(`${f}T12:00:00`);
+// Se usa el mediodía para que el cambio de zona horaria nunca mueva la fecha al día anterior
+export const deIso = (fecha) => new Date(`${fecha}T12:00:00`);
 // Nombre: hoyIso
 // Descripción: Da la fecha de hoy en texto.
 // Entrada: Nada.
@@ -26,15 +27,16 @@ export const hoyIso = () => iso(new Date());
 // Salida: Inicio y fin de la quincena.
 // Objetivo: Pagar al equipo cada 15 días.
 export function quincenaDe(fecha = hoyIso()) {
-  const d = deIso(fecha);
-  const a = d.getFullYear();
-  const m = d.getMonth();
-  const ultimo = new Date(a, m + 1, 0).getDate();
-  const primera = d.getDate() <= 15;
-  const desde = iso(new Date(a, m, primera ? 1 : 16));
-  const hasta = iso(new Date(a, m, primera ? 15 : ultimo));
+  const dia = deIso(fecha);
+  const anio = dia.getFullYear();
+  const mesIndice = dia.getMonth();
+  // El "día 0" del mes siguiente es el último día de este mes (28, 29, 30 o 31)
+  const ultimo = new Date(anio, mesIndice + 1, 0).getDate();
+  const primera = dia.getDate() <= 15;
+  const desde = iso(new Date(anio, mesIndice, primera ? 1 : 16));
+  const hasta = iso(new Date(anio, mesIndice, primera ? 15 : ultimo));
   const pago = deIso(hasta);
-  if (pago.getDay() === 0) pago.setDate(pago.getDate() - 1);
+  if (pago.getDay() === 0) pago.setDate(pago.getDate() - 1); // domingo → se paga el sábado
   return { desde, hasta, diaPago: iso(pago) };
 }
 // Nombre: quincenaAnterior
@@ -42,7 +44,8 @@ export function quincenaDe(fecha = hoyIso()) {
 // Entrada: La fecha.
 // Salida: Inicio y fin.
 // Objetivo: Ver el pago pasado.
-export const quincenaAnterior = (fecha = hoyIso()) => { const d = deIso(quincenaDe(fecha).desde); d.setDate(d.getDate() - 1); return quincenaDe(iso(d)); };
+// Un día antes del inicio de esta quincena siempre cae en la quincena anterior
+export const quincenaAnterior = (fecha = hoyIso()) => { const dia = deIso(quincenaDe(fecha).desde); dia.setDate(dia.getDate() - 1); return quincenaDe(iso(dia)); };
 
 // Nombre: diasEntre
 // Descripción: Lista los días entre dos fechas.
@@ -51,7 +54,7 @@ export const quincenaAnterior = (fecha = hoyIso()) => { const d = deIso(quincena
 // Objetivo: Contar días trabajados.
 export function diasEntre(desde, hasta) {
   const lista = [];
-  for (const d = deIso(desde); iso(d) <= hasta; d.setDate(d.getDate() + 1)) lista.push(iso(d));
+  for (const dia = deIso(desde); iso(dia) <= hasta; dia.setDate(dia.getDate() + 1)) lista.push(iso(dia));
   return lista;
 }
 // Nombre: trabajaPorHorario
@@ -59,4 +62,4 @@ export function diasEntre(desde, hasta) {
 // Entrada: La especialista y la fecha.
 // Salida: Sí o no.
 // Objetivo: Saber sus días de trabajo.
-export const trabajaPorHorario = (e, fecha) => String(e.dias || '').split(',').map(Number).includes(deIso(fecha).getDay() || 7);
+export const trabajaPorHorario = (especialista, fecha) => String(especialista.dias || '').split(',').map(Number).includes(deIso(fecha).getDay() || 7);

@@ -20,20 +20,20 @@ export const ProductoModel = {
   // Objetivo: Mostrar la tienda.
   buscar({ q, categoria, min, max, disponibles, ofertas, orden, limite, ids } = {}) {
     const where = ['oculto = 0'];
-    const p = {};
+    const parametros = {};
     // ids=1,2,3: el carrito pide el stock y precio actuales de lo que tiene guardado
     if (ids) {
-      const lista = String(ids).split(',').map(Number).filter((n) => n > 0).slice(0, 100);
+      const lista = String(ids).split(',').map(Number).filter((id) => id > 0).slice(0, 100);
       where.push(`id IN (${lista.length ? lista.join(',') : 0})`);
     }
-    if (categoria && categoria !== 'Todas') { where.push('categoria = @categoria'); p.categoria = categoria; }
-    if (q && q.trim()) { where.push('(lower(nombre) LIKE @q OR lower(descripcion) LIKE @q OR lower(marca) LIKE @q)'); p.q = `%${q.trim().toLowerCase()}%`; }
-    if (min) { where.push('precio >= @min'); p.min = Number(min); }
-    if (max) { where.push('precio <= @max'); p.max = Number(max); }
+    if (categoria && categoria !== 'Todas') { where.push('categoria = @categoria'); parametros.categoria = categoria; }
+    if (q && q.trim()) { where.push('(lower(nombre) LIKE @q OR lower(descripcion) LIKE @q OR lower(marca) LIKE @q)'); parametros.q = `%${q.trim().toLowerCase()}%`; }
+    if (min) { where.push('precio >= @min'); parametros.min = Number(min); }
+    if (max) { where.push('precio <= @max'); parametros.max = Number(max); }
     if (disponibles === '1') where.push('stock > 0');
     if (ofertas === '1') where.push('precio_anterior IS NOT NULL');
     const sql = `SELECT * FROM productos ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY ${ORDEN[orden] || ORDEN.relevancia}${Number(limite) > 0 ? ` LIMIT ${Math.min(Number(limite), 100)}` : ''}`;
-    return getDb().prepare(sql).all(p);
+    return getDb().prepare(sql).all(parametros);
   },
   // Nombre: categorias
   // Descripción: Cuenta productos por categoría.
@@ -61,10 +61,10 @@ export const ProductoModel = {
   // Salida: Una lista.
   // Objetivo: Sugerir compras.
   relacionados(id, limite = 12) {
-    const p = this.buscarPorId(id);
-    if (!p) return [];
+    const producto = this.buscarPorId(id);
+    if (!producto) return [];
     return getDb().prepare(`SELECT * FROM productos WHERE id != @id AND oculto = 0 AND categoria = @categoria
-      ORDER BY (tipo IS @tipo) DESC, vendidos DESC LIMIT @limite`).all({ id: p.id, categoria: p.categoria, tipo: p.tipo, limite: Math.min(Number(limite) || 12, 40) });
+      ORDER BY (tipo IS @tipo) DESC, vendidos DESC LIMIT @limite`).all({ id: producto.id, categoria: producto.categoria, tipo: producto.tipo, limite: Math.min(Number(limite) || 12, 40) });
   },
 
   // Variantes: el mismo producto en otros colores o tonos ("Esmalte gel Rojo", "Esmalte gel Nude"...)
@@ -74,17 +74,17 @@ export const ProductoModel = {
   // Salida: Las variantes.
   // Objetivo: Elegir color o tamaño.
   variantes(id) {
-    const p = this.buscarPorId(id);
-    if (!p) return [];
-    const prefijo = p.nombre.split(' ').slice(0, 2).join(' ');
+    const producto = this.buscarPorId(id);
+    if (!producto) return [];
+    const prefijo = producto.nombre.split(' ').slice(0, 2).join(' ');
     const lista = getDb().prepare(`SELECT id, nombre, color, imagen, tipo, precio, stock FROM productos
-      WHERE oculto = 0 AND categoria = ? AND tipo IS ? AND nombre LIKE ? ORDER BY id LIMIT 90`).all(p.categoria, p.tipo, `${prefijo} %`);
+      WHERE oculto = 0 AND categoria = ? AND tipo IS ? AND nombre LIKE ? ORDER BY id LIMIT 90`).all(producto.categoria, producto.tipo, `${prefijo} %`);
     if (lista.length < 2) return [];
     // La parte del nombre que comparten todas ("Aceite de cutícula") no se repite en cada opción
-    const palabras = lista.map((v) => v.nombre.split(' '));
+    const palabras = lista.map((elemento) => elemento.nombre.split(' '));
     let comun = 0;
-    while (palabras.every((w) => w.length > comun + 1 && w[comun] === palabras[0][comun])) comun++;
-    return lista.map((v, i) => ({ ...v, variante: palabras[i].slice(comun).join(' ') }));
+    while (palabras.every((palabra) => palabra.length > comun + 1 && palabra[comun] === palabras[0][comun])) comun++;
+    return lista.map((elemento, i) => ({ ...elemento, variante: palabras[i].slice(comun).join(' ') }));
   },
   // ----- Panel del salón -----
   // Nombre: validar
@@ -92,12 +92,12 @@ export const ProductoModel = {
   // Entrada: Los datos.
   // Salida: Un error o nada.
   // Objetivo: Evitar datos inválidos.
-  validar(d) {
-    if (!d.nombre || String(d.nombre).trim().length < 2) return 'Escribe el nombre del producto.';
-    if (!d.categoria) return 'Elige la categoría.';
-    if (!(Number(d.precio) > 0)) return 'El precio debe ser mayor que 0.';
-    if (d.precio_anterior && Number(d.precio_anterior) <= Number(d.precio)) return 'El precio anterior debe ser mayor que el precio actual (o déjalo vacío si no hay oferta).';
-    if (!(Number(d.stock) >= 0)) return 'El stock no puede ser negativo.';
+  validar(datos) {
+    if (!datos.nombre || String(datos.nombre).trim().length < 2) return 'Escribe el nombre del producto.';
+    if (!datos.categoria) return 'Elige la categoría.';
+    if (!(Number(datos.precio) > 0)) return 'El precio debe ser mayor que 0.';
+    if (datos.precio_anterior && Number(datos.precio_anterior) <= Number(datos.precio)) return 'El precio anterior debe ser mayor que el precio actual (o déjalo vacío si no hay oferta).';
+    if (!(Number(datos.stock) >= 0)) return 'El stock no puede ser negativo.';
     return null;
   },
   // Nombre: normalizar
@@ -105,30 +105,30 @@ export const ProductoModel = {
   // Entrada: Los datos.
   // Salida: Los datos limpios.
   // Objetivo: Guardar siempre igual.
-  normalizar: (d) => ({
-    nombre: String(d.nombre).trim().slice(0, 120), descripcion: d.descripcion ? String(d.descripcion).trim().slice(0, 500) : null,
-    categoria: String(d.categoria).trim(), marca: d.marca ? String(d.marca).trim().slice(0, 60) : null,
-    precio: Math.round(Number(d.precio)), precio_anterior: d.precio_anterior ? Math.round(Number(d.precio_anterior)) : null,
-    stock: Math.floor(Number(d.stock) || 0), color: d.color || null, tipo: d.tipo || null
+  normalizar: (datos) => ({
+    nombre: String(datos.nombre).trim().slice(0, 120), descripcion: datos.descripcion ? String(datos.descripcion).trim().slice(0, 500) : null,
+    categoria: String(datos.categoria).trim(), marca: datos.marca ? String(datos.marca).trim().slice(0, 60) : null,
+    precio: Math.round(Number(datos.precio)), precio_anterior: datos.precio_anterior ? Math.round(Number(datos.precio_anterior)) : null,
+    stock: Math.floor(Number(datos.stock) || 0), color: datos.color || null, tipo: datos.tipo || null
   }),
   // Nombre: crear
   // Descripción: Crea un producto.
   // Entrada: Los datos.
   // Salida: El producto.
   // Objetivo: Agregar a la tienda.
-  crear(d) {
-    const r = getDb().prepare(`INSERT INTO productos (nombre, descripcion, categoria, marca, precio, precio_anterior, stock, color, tipo)
-      VALUES (@nombre, @descripcion, @categoria, @marca, @precio, @precio_anterior, @stock, @color, @tipo)`).run(d);
-    return this.buscarPorId(r.lastInsertRowid);
+  crear(datos) {
+    const resultado = getDb().prepare(`INSERT INTO productos (nombre, descripcion, categoria, marca, precio, precio_anterior, stock, color, tipo)
+      VALUES (@nombre, @descripcion, @categoria, @marca, @precio, @precio_anterior, @stock, @color, @tipo)`).run(datos);
+    return this.buscarPorId(resultado.lastInsertRowid);
   },
   // Nombre: actualizar
   // Descripción: Actualiza un producto.
   // Entrada: El número y los datos.
   // Salida: El producto.
   // Objetivo: Editar la tienda.
-  actualizar(id, d) {
+  actualizar(id, datos) {
     getDb().prepare(`UPDATE productos SET nombre = @nombre, descripcion = @descripcion, categoria = @categoria, marca = @marca,
-      precio = @precio, precio_anterior = @precio_anterior, stock = @stock, color = COALESCE(@color, color), tipo = COALESCE(@tipo, tipo) WHERE id = @id`).run({ ...d, id });
+      precio = @precio, precio_anterior = @precio_anterior, stock = @stock, color = COALESCE(@color, color), tipo = COALESCE(@tipo, tipo) WHERE id = @id`).run({ ...datos, id });
     return this.buscarPorId(id);
   },
   // Si el producto ya está en pedidos, no se borra (se perdería el historial): se oculta de la tienda
@@ -156,7 +156,7 @@ export const ProductoModel = {
   // Entrada: El producto.
   // Salida: El puesto (1 = el más vendido).
   // Objetivo: Mostrar «#1 más vendido en …».
-  puestoEnCategoria: (p) => getDb().prepare('SELECT COUNT(*) + 1 AS n FROM productos WHERE categoria = ? AND vendidos > ?').get(p.categoria, p.vendidos).n,
+  puestoEnCategoria: (producto) => getDb().prepare('SELECT COUNT(*) + 1 AS n FROM productos WHERE categoria = ? AND vendidos > ?').get(producto.categoria, producto.vendidos).n,
 
   // Nombre: portadas
   // Descripción: Da una foto por categoría: la que eligió la dueña o la del más vendido con foto.

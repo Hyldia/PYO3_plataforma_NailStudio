@@ -1,3 +1,4 @@
+// Tarjeta de un producto de la Tienda: foto, nombre, precio y botón para agregar al carrito.
 import { Link } from 'react-router-dom';
 import { useVistaRapida } from '../context/VistaRapidaContext.jsx';
 import { dinero } from '../config.js';
@@ -9,7 +10,7 @@ import BotonFavorito from './BotonFavorito.jsx';
 // Entrada: El número.
 // Salida: El texto.
 // Objetivo: Leer fácil.
-const miles = (n) => (n >= 1000 ? `${(n / 1000).toLocaleString('es-CR', { maximumFractionDigits: 1 })} mil` : String(n));
+const miles = (numero) => (numero >= 1000 ? `${(numero / 1000).toLocaleString('es-CR', { maximumFractionDigits: 1 })} mil` : String(numero));
 
 // Nombre: Estrellas
 // Descripción: Muestra estrellas y cantidad de reseñas.

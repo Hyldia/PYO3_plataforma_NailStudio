@@ -30,7 +30,7 @@ export const AusenciaModel = {
     if (dias.length > 60) throw Object.assign(new Error('Elige un rango de máximo 60 días.'), { status: 400 });
     const ins = getDb().prepare(`INSERT INTO ausencias (especialista_id, fecha, tipo, motivo) VALUES (?, ?, ?, ?)
       ON CONFLICT(especialista_id, fecha) DO UPDATE SET tipo = excluded.tipo, motivo = excluded.motivo`);
-    getDb().transaction(() => dias.forEach((f) => ins.run(especialistaId, f, TIPOS_AUSENCIA[tipo] ? tipo : 'libre', String(motivo).slice(0, 120) || null)))();
+    getDb().transaction(() => dias.forEach((dia) => ins.run(especialistaId, dia, TIPOS_AUSENCIA[tipo] ? tipo : 'libre', String(motivo).slice(0, 120) || null)))();
     // Citas que ya estaban en esos días: hay que reprogramarlas
     return getDb().prepare(`SELECT COUNT(*) AS n FROM citas WHERE especialista_id = ? AND fecha BETWEEN ? AND ? AND estado IN ('pendiente', 'confirmada')`).get(especialistaId, desde, fin).n;
   },

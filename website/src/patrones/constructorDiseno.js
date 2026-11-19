@@ -26,12 +26,6 @@ export const OPCIONES = {
   decoracion: ['Ninguna', 'Francesa', 'Francesa de color', 'Baby boomer', 'Ombré', 'Mármol', 'Líneas', 'Puntos', 'Corazones', 'Flores a mano', 'Animal print', 'Foil dorado', 'Pedrería', 'Aura']
 };
 
-// Para buscar fotos reales parecidas en la galería
-export const BUSQUEDA_GALERIA = {
-  decoracion: { Francesa: 'francesa', 'Francesa de color': 'francesa', 'Baby boomer': 'degradado', 'Ombré': 'ombré', 'Mármol': 'mármol', Corazones: 'corazones',
-    'Flores a mano': 'flores', 'Animal print': 'leopardo', 'Pedrería': 'pedrería', 'Foil dorado': 'dorado', 'Líneas': 'líneas', Puntos: 'puntos' }
-};
-
 export const PRECIO = {
   largo: { Corto: 0, Medio: 2000, Largo: 4000, 'Extra largo': 6000 },
   acabado: { Brillante: 0, Mate: 1000, Chrome: 3000, Glitter: 2000, 'Ojo de gato': 3000, Aurora: 3000, Perlado: 2000 },
@@ -53,19 +47,13 @@ export class DisenoBuilder {
   // Entrada: El diseño base.
   // Salida: Nada.
   // Objetivo: Armar el diseño (Builder).
-  constructor(base = DISENO_INICIAL) { this.d = { ...base }; }
-  // Nombre: con
-  // Descripción: Cambia una parte del diseño.
-  // Entrada: El campo y el valor.
-  // Salida: El constructor.
-  // Objetivo: Armar el diseño.
-  con(campo, valor) { this.d[campo] = valor; return this; }
+  constructor(base = DISENO_INICIAL) { this.diseno = { ...base }; }
   // Nombre: build
   // Descripción: Termina el diseño con su precio.
   // Entrada: Nada.
   // Salida: El diseño.
   // Objetivo: Usarlo en la página.
-  build() { return { ...this.d, precio: calcularRecargo(this.d) }; }
+  build() { return { ...this.diseno, precio: calcularRecargo(this.diseno) }; }
 }
 
 // Nombre: calcularRecargo
@@ -73,10 +61,10 @@ export class DisenoBuilder {
 // Entrada: El diseño.
 // Salida: El monto.
 // Objetivo: Cobrar lo justo.
-export function calcularRecargo(d) {
-  if (d.unas) return calcularDiseno(d).total;
-  return PRECIO.largo[d.largo] + PRECIO.acabado[d.acabado]
-    + PRECIO.decoracion[d.decoracion] + (d.acento ? PRECIO.acento : 0);
+export function calcularRecargo(datos) {
+  if (datos.unas) return calcularDiseno(datos).total;
+  return PRECIO.largo[datos.largo] + PRECIO.acabado[datos.acabado]
+    + PRECIO.decoracion[datos.decoracion] + (datos.acento ? PRECIO.acento : 0);
 }
 
 // Nombre: describir
@@ -84,16 +72,16 @@ export function calcularRecargo(d) {
 // Entrada: El diseño.
 // Salida: El texto.
 // Objetivo: Mostrarlo en el carrito.
-export function describir(d) {
-  if (d.unas) {
-    const nombres = [...new Set(d.unas.map((u) => esmalte(u.esmalte)?.nombre).filter(Boolean))];
-    const extras = [...new Set(d.unas.flatMap((u) => [u.acabado !== 'Brillante' && u.acabado, u.decoracion !== 'Ninguna' && u.decoracion]).filter(Boolean))];
-    const pegados = (d.extras || []).map((x) => `${x.tipo.toLowerCase()} ${x.variante.toLowerCase()} (${x.dedos.length === 5 ? 'todas' : x.dedos.map((i) => ['pulgar', 'índice', 'medio', 'anular', 'meñique'][i]).join(', ')}, ${x.posicion.toLowerCase()})`);
-    return [d.forma, d.largo.toLowerCase(), nombres.join(' + ').toLowerCase(), ...extras.map((x) => x.toLowerCase()), ...pegados].join(', ');
+export function describir(datos) {
+  if (datos.unas) {
+    const nombres = [...new Set(datos.unas.map((una) => esmalte(una.esmalte)?.nombre).filter(Boolean))];
+    const extras = [...new Set(datos.unas.flatMap((una) => [una.acabado !== 'Brillante' && una.acabado, una.decoracion !== 'Ninguna' && una.decoracion]).filter(Boolean))];
+    const pegados = (datos.extras || []).map((extra) => `${extra.tipo.toLowerCase()} ${extra.variante.toLowerCase()} (${extra.dedos.length === 5 ? 'todas' : extra.dedos.map((dedo) => ['pulgar', 'índice', 'medio', 'anular', 'meñique'][dedo]).join(', ')}, ${extra.posicion.toLowerCase()})`);
+    return [datos.forma, datos.largo.toLowerCase(), nombres.join(' + ').toLowerCase(), ...extras.map((extra) => extra.toLowerCase()), ...pegados].join(', ');
   }
-  const partes = [d.forma, d.largo.toLowerCase(), d.color.toLowerCase(), d.acabado.toLowerCase()];
-  if (d.decoracion !== 'Ninguna') partes.push(d.decoracion.toLowerCase());
-  if (d.acento) partes.push('uña de acento');
+  const partes = [datos.forma, datos.largo.toLowerCase(), datos.color.toLowerCase(), datos.acabado.toLowerCase()];
+  if (datos.decoracion !== 'Ninguna') partes.push(datos.decoracion.toLowerCase());
+  if (datos.acento) partes.push('uña de acento');
   return partes.join(', ');
 }
 
@@ -102,11 +90,11 @@ export function describir(d) {
 // Entrada: El nombre.
 // Salida: El color.
 // Objetivo: Pintar las uñas.
-export const hexDe = (nombre) => (COLORES.find((c) => c.nombre === nombre) || ESMALTES.find((e) => e.nombre === nombre) || COLORES[0]).hex;
+export const hexDe = (nombre) => (COLORES.find((color) => color.nombre === nombre) || ESMALTES.find((esmalte) => esmalte.nombre === nombre) || COLORES[0]).hex;
 // Diseños guardados con nombres viejos siguen funcionando
 // Nombre: normalizar
 // Descripción: Completa un diseño con lo que falte.
 // Entrada: El diseño.
 // Salida: El diseño completo.
 // Objetivo: Evitar datos vacíos.
-export const normalizar = (d) => ({ ...DISENO_INICIAL, ...d, unas: Array.isArray(d.unas) && d.unas.length === 5 ? d.unas : DISENO_INICIAL.unas, forma: OPCIONES.forma.includes(d.forma) ? d.forma : 'Almendra', acabado: OPCIONES.acabado.includes(d.acabado) ? d.acabado : 'Brillante', decoracion: OPCIONES.decoracion.includes(d.decoracion) ? d.decoracion : 'Ninguna' });
+export const normalizar = (datos) => ({ ...DISENO_INICIAL, ...datos, unas: Array.isArray(datos.unas) && datos.unas.length === 5 ? datos.unas : DISENO_INICIAL.unas, forma: OPCIONES.forma.includes(datos.forma) ? datos.forma : 'Almendra', acabado: OPCIONES.acabado.includes(datos.acabado) ? datos.acabado : 'Brillante', decoracion: OPCIONES.decoracion.includes(datos.decoracion) ? datos.decoracion : 'Ninguna' });

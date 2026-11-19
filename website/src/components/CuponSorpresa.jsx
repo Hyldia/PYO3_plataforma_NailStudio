@@ -31,7 +31,7 @@ const enSesion = () => { try { return Number(sessionStorage.getItem(SESION)) || 
 // Objetivo: No repetirlo.
 function marcar(codigo) {
   try {
-    const v = vistos(); v[codigo] = Date.now(); localStorage.setItem(CLAVE, JSON.stringify(v));
+    const registro = vistos(); registro[codigo] = Date.now(); localStorage.setItem(CLAVE, JSON.stringify(registro));
     sessionStorage.setItem(SESION, String(enSesion() + 1));
   } catch { /* sin almacenamiento */ }
 }
@@ -40,7 +40,7 @@ function marcar(codigo) {
 // Entrada: El cupón.
 // Salida: Sí o no.
 // Objetivo: No repetirlo pronto.
-const disponible = (c) => !vistos()[c.codigo] || Date.now() - vistos()[c.codigo] > 3 * 86400000;
+const disponible = (cupon) => !vistos()[cupon.codigo] || Date.now() - vistos()[cupon.codigo] > 3 * 86400000;
 // Nombre: azar
 // Descripción: Elige uno al azar.
 // Entrada: La lista.
@@ -67,11 +67,11 @@ export default function CuponSorpresa() {
   const [cupon, setCupon] = useState(null);
   const [copiado, setCopiado] = useState(false);
   const antes = useRef(null);
-  const oculto = SIN_CUPON.some((p) => pathname.startsWith(p));
+  const oculto = SIN_CUPON.some((ruta) => pathname.startsWith(ruta));
 
   useEffect(() => {
     api.cupones().then(setCupones).catch(() => {});
-    api.servicios().then((respuesta) => setCombos(new Set((respuesta.servicios || respuesta).filter((s) => s.es_combo).map((s) => s.id)))).catch(() => {});
+    api.servicios().then((respuesta) => setCombos(new Set((respuesta.servicios || respuesta).filter((servicio) => servicio.es_combo).map((servicio) => servicio.id)))).catch(() => {});
   }, []);
 
   // Muestra un cupón si se puede (no en el panel, no encima de otra ventana, máximo dos por visita)
@@ -91,30 +91,30 @@ export default function CuponSorpresa() {
   // Un rato después de entrar, un cupón al azar
   useEffect(() => {
     if (!cupones.length || oculto) return undefined;
-    const t = setTimeout(() => mostrar(azar(cupones.filter((c) => !c.solo_combos && disponible(c)))), 40000 + Math.random() * 50000);
-    return () => clearTimeout(t);
+    const temporizador = setTimeout(() => mostrar(azar(cupones.filter((cupon) => !cupon.solo_combos && disponible(cupon)))), 40000 + Math.random() * 50000);
+    return () => clearTimeout(temporizador);
   }, [cupones, oculto]);
 
   // Según lo que se pone en el carrito
   useEffect(() => {
     const items = carrito.items;
     const previos = antes.current;
-    antes.current = items.map((i) => i.clave);
+    antes.current = items.map((item) => item.clave);
     if (!previos || !cupones.length) return;
-    const nuevos = items.filter((i) => !previos.includes(i.clave));
+    const nuevos = items.filter((item) => !previos.includes(item.clave));
     if (!nuevos.length) return;
-    if (nuevos.some((i) => i.tipo === 'cita' && combos.has(Number(i.servicioId)))) {
-      if (mostrar(azar(cupones.filter((c) => c.solo_combos && disponible(c))))) return;
+    if (nuevos.some((nuevo) => nuevo.tipo === 'cita' && combos.has(Number(nuevo.servicioId)))) {
+      if (mostrar(azar(cupones.filter((cupon) => cupon.solo_combos && disponible(cupon))))) return;
     }
     const total = carrito.totalElegido;
-    mostrar(azar(cupones.filter((c) => !c.solo_combos && c.minimo > 0 && total >= c.minimo && disponible(c))));
+    mostrar(azar(cupones.filter((cupon) => !cupon.solo_combos && cupon.minimo > 0 && total >= cupon.minimo && disponible(cupon))));
   }, [carrito.items, cupones, combos]);
 
   // Se va sola a los 25 segundos
   useEffect(() => {
     if (!cupon) return undefined;
-    const t = setTimeout(() => setCupon(null), 25000);
-    return () => clearTimeout(t);
+    const temporizador = setTimeout(() => setCupon(null), 25000);
+    return () => clearTimeout(temporizador);
   }, [cupon]);
 
   if (!cupon || oculto) return null;

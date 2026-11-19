@@ -1,3 +1,4 @@
+// Lista de servicios del salón con precio, duración y botón para reservar.
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -22,8 +23,8 @@ const Icono = {
 };
 
 const ORDENES = { relevancia: 'Recomendados', calificacion: 'Mejor calificados', descuento: 'Mayor descuento', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', rapidos: 'Más rápidos' };
-const PRECIOS = [['', 'Cualquier precio', () => true], ['15000', 'Hasta ₡15 000', (p) => p <= 15000], ['25000', '₡15 000 a ₡25 000', (p) => p > 15000 && p <= 25000], ['mas', 'Más de ₡25 000', (p) => p > 25000]];
-const DURACIONES = [['', 'Cualquier duración', () => true], ['1h', 'Hasta 1 hora', (m) => m <= 60], ['2h', '1 a 2 horas', (m) => m > 60 && m <= 120], ['mas', 'Más de 2 horas', (m) => m > 120]];
+const PRECIOS = [['', 'Cualquier precio', () => true], ['15000', 'Hasta ₡15 000', (precio) => precio <= 15000], ['25000', '₡15 000 a ₡25 000', (precio) => precio > 15000 && precio <= 25000], ['mas', 'Más de ₡25 000', (p) => p > 25000]];
+const DURACIONES = [['', 'Cualquier duración', () => true], ['1h', 'Hasta 1 hora', (minutos) => minutos <= 60], ['2h', '1 a 2 horas', (minutos) => minutos > 60 && minutos <= 120], ['mas', 'Más de 2 horas', (m) => m > 120]];
 
 // Nombre: duracion
 // Descripción: Escribe minutos como horas.
@@ -36,13 +37,13 @@ const duracion = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` 
 // Entrada: El servicio.
 // Salida: El monto.
 // Objetivo: Mostrar ahorro.
-const ahorro = (s) => (s.precio_oferta != null ? s.precio - s.precio_oferta : 0);
+const ahorro = (servicio) => (servicio.precio_oferta != null ? servicio.precio - servicio.precio_oferta : 0);
 // Nombre: porcentaje
 // Descripción: Calcula el porcentaje de descuento.
 // Entrada: El servicio.
 // Salida: El porcentaje.
 // Objetivo: Mostrar ahorro.
-const porcentaje = (s) => Math.round((ahorro(s) / s.precio) * 100);
+const porcentaje = (servicio) => Math.round((ahorro(servicio) / servicio.precio) * 100);
 
 // Nombre: Precio
 // Descripción: Muestra el precio con oferta.
@@ -92,7 +93,7 @@ function TarjetaServicio({ s, opinion, onOpiniones }) {
         <p className="servicio__descripcion">{s.descripcion}</p>
         {incluye.length > 0 && (
           <ul className="servicio__incluye" aria-label="Incluye">
-            {incluye.map((i) => <li key={i}>{Icono.check}{i}</li>)}
+            {incluye.map((detalle) => <li key={detalle}>{Icono.check}{detalle}</li>)}
           </ul>
         )}
         <div className="servicio__pie">
@@ -120,13 +121,13 @@ export default function Servicios() {
   const categoria = params.get('categoria') || 'Todos';
   const soloOfertas = params.get('ofertas') === '1';
   const orden = ORDENES[params.get('orden')] ? params.get('orden') : 'relevancia';
-  const precio = PRECIOS.find((r) => r[0] === (params.get('precio') || '')) || PRECIOS[0];
-  const tiempo = DURACIONES.find((r) => r[0] === (params.get('duracion') || '')) || DURACIONES[0];
+  const precio = PRECIOS.find((rango) => rango[0] === (params.get('precio') || '')) || PRECIOS[0];
+  const tiempo = DURACIONES.find((rango) => rango[0] === (params.get('duracion') || '')) || DURACIONES[0];
   const resumenes = useResumenes('servicio');
   const [opiniones, setOpiniones] = useState(null);
 
   useEffect(() => {
-    api.servicios().then(setServicios).catch((e) => setError(e.message));
+    api.servicios().then(setServicios).catch((fallo) => setError(fallo.message));
   }, []);
 
   // Nombre: fijar
@@ -134,7 +135,7 @@ export default function Servicios() {
   // Entrada: El filtro y el valor.
   // Salida: Nada.
   // Objetivo: Filtrar servicios.
-  const fijar = (k, v) => { const p = new URLSearchParams(params); v ? p.set(k, v) : p.delete(k); setParams(p, { replace: true }); };
+  const fijar = (campo, valor) => { const parametros = new URLSearchParams(params); valor ? parametros.set(campo, valor) : parametros.delete(campo); setParams(parametros, { replace: true }); };
   // Nombre: limpiar
   // Descripción: Quita los filtros.
   // Entrada: Nada.
@@ -143,15 +144,15 @@ export default function Servicios() {
   const limpiar = () => { setTexto(''); setParams({}, { replace: true }); };
   const hayFiltros = categoria !== 'Todos' || soloOfertas || orden !== 'relevancia' || precio !== PRECIOS[0] || tiempo !== DURACIONES[0] || texto;
 
-  const categorias = useMemo(() => ORDEN_CATEGORIAS.filter((c) => servicios.some((s) => s.categoria === c))
-    .concat([...new Set(servicios.map((s) => s.categoria))].filter((c) => !ORDEN_CATEGORIAS.includes(c))), [servicios]);
+  const categorias = useMemo(() => ORDEN_CATEGORIAS.filter((categoria) => servicios.some((servicio) => servicio.categoria === categoria))
+    .concat([...new Set(servicios.map((servicio) => servicio.categoria))].filter((categoria) => !ORDEN_CATEGORIAS.includes(categoria))), [servicios]);
 
   // Nombre: nota
   // Descripción: Da las estrellas de un servicio.
   // Entrada: El servicio.
   // Salida: El promedio.
   // Objetivo: Ordenar por calificación.
-  const nota = (s) => resumenes.get(s.id)?.promedio || 0;
+  const nota = (servicio) => resumenes.get(servicio.id)?.promedio || 0;
   const comparar = {
     // Nombre: relevancia
     // Descripción: Deja el orden normal.
@@ -190,16 +191,16 @@ export default function Servicios() {
     // Objetivo: Ver los más rápidos.
     rapidos: (a, b) => a.duracion_min - b.duracion_min
   }[orden];
-  const filtrados = servicios.filter((s) => (categoria === 'Todos' || s.categoria === categoria)
-    && (!soloOfertas || s.precio_oferta != null)
-    && precio[2](s.precio_oferta ?? s.precio) && tiempo[2](s.duracion_min)
-    && `${s.nombre} ${s.descripcion} ${s.incluye}`.toLowerCase().includes(texto.trim().toLowerCase()))
+  const filtrados = servicios.filter((servicio) => (categoria === 'Todos' || servicio.categoria === categoria)
+    && (!soloOfertas || servicio.precio_oferta != null)
+    && precio[2](servicio.precio_oferta ?? servicio.precio) && tiempo[2](servicio.duracion_min)
+    && `${servicio.nombre} ${servicio.descripcion} ${servicio.incluye}`.toLowerCase().includes(texto.trim().toLowerCase()))
     .sort(comparar);
 
-  const grupos = categorias.map((c) => [c, filtrados.filter((s) => s.categoria === c)]).filter(([, l]) => l.length);
-  const ofertas = servicios.filter((s) => s.precio_oferta != null);
+  const grupos = categorias.map((categoria) => [categoria, filtrados.filter((filtrado) => filtrado.categoria === categoria)]).filter(([, l]) => l.length);
+  const ofertas = servicios.filter((servicio) => servicio.precio_oferta != null);
   const mayorAhorro = Math.max(0, ...ofertas.map(porcentaje));
-  const comboMinimo = Math.min(...servicios.filter((s) => s.es_combo).map((s) => s.precio_oferta ?? s.precio));
+  const comboMinimo = Math.min(...servicios.filter((servicio) => servicio.es_combo).map((servicio) => servicio.precio_oferta ?? servicio.precio));
 
   return (
     <div className="servicios-pagina">
@@ -222,13 +223,13 @@ export default function Servicios() {
             </div>
           </div>
           <ul className="campana__productos servicios-campana__fotos" aria-label="Servicios en oferta">
-            {ofertas.slice(0, 3).map((s) => (
-              <li key={s.id}>
-                <Link to={`/reservar?servicio=${s.id}`} className="campana__producto">
-                  <span className="campana__etiqueta">-{porcentaje(s)}%</span>
-                  <Foto archivo={s.imagen} alt="" />
-                  <span className="servicios-campana__nombre">{s.nombre}</span>
-                  <span className="campana__precio">{dinero(s.precio_oferta)}</span>
+            {ofertas.slice(0, 3).map((oferta) => (
+              <li key={oferta.id}>
+                <Link to={`/reservar?servicio=${oferta.id}`} className="campana__producto">
+                  <span className="campana__etiqueta">-{porcentaje(oferta)}%</span>
+                  <Foto archivo={oferta.imagen} alt="" />
+                  <span className="servicios-campana__nombre">{oferta.nombre}</span>
+                  <span className="campana__precio">{dinero(oferta.precio_oferta)}</span>
                 </Link>
               </li>
             ))}
@@ -245,8 +246,8 @@ export default function Servicios() {
           <Desplegable etiqueta={<span>Ordenar por: <b>{ORDENES[orden]}</b></span>}>
             {(cerrar) => (
               <div className="desplegable__opciones" role="radiogroup" aria-label="Ordenar por">
-                {Object.entries(ORDENES).map(([k, t]) => (
-                  <label key={k} className="casilla"><input type="radio" name="orden-servicios" checked={orden === k} onChange={() => { fijar('orden', k === 'relevancia' ? '' : k); cerrar(); }} /><span>{t}</span></label>
+                {Object.entries(ORDENES).map(([clave, valor]) => (
+                  <label key={clave} className="casilla"><input type="radio" name="orden-servicios" checked={orden === clave} onChange={() => { fijar('orden', clave === 'relevancia' ? '' : clave); cerrar(); }} /><span>{valor}</span></label>
                 ))}
               </div>
             )}
@@ -255,10 +256,10 @@ export default function Servicios() {
             {(cerrar) => (
               <div className="desplegable__opciones" role="radiogroup" aria-label="Categoría">
                 <label className="casilla"><input type="radio" name="cat-servicios" checked={categoria === 'Todos'} onChange={() => { fijar('categoria', ''); cerrar(); }} /><span>Todas</span><span className="casilla__cantidad">{servicios.length}</span></label>
-                {categorias.map((c) => (
-                  <label key={c} className="casilla">
-                    <input type="radio" name="cat-servicios" checked={categoria === c} onChange={() => { fijar('categoria', c); cerrar(); }} />
-                    <span>{c}</span><span className="casilla__cantidad">{servicios.filter((s) => s.categoria === c).length}</span>
+                {categorias.map((categoriaActual) => (
+                  <label key={categoriaActual} className="casilla">
+                    <input type="radio" name="cat-servicios" checked={categoria === categoriaActual} onChange={() => { fijar('categoria', categoriaActual); cerrar(); }} />
+                    <span>{categoriaActual}</span><span className="casilla__cantidad">{servicios.filter((servicio) => servicio.categoria === categoriaActual).length}</span>
                   </label>
                 ))}
               </div>
@@ -267,8 +268,8 @@ export default function Servicios() {
           <Desplegable etiqueta={precio === PRECIOS[0] ? 'Precio' : precio[1]} activo={precio !== PRECIOS[0]}>
             {(cerrar) => (
               <div className="desplegable__opciones" role="radiogroup" aria-label="Precio">
-                {PRECIOS.map((r) => (
-                  <label key={r[1]} className="casilla"><input type="radio" name="precio-servicios" checked={precio === r} onChange={() => { fijar('precio', r[0]); cerrar(); }} /><span>{r[1]}</span></label>
+                {PRECIOS.map((rango) => (
+                  <label key={rango[1]} className="casilla"><input type="radio" name="precio-servicios" checked={precio === rango} onChange={() => { fijar('precio', rango[0]); cerrar(); }} /><span>{rango[1]}</span></label>
                 ))}
               </div>
             )}
@@ -276,8 +277,8 @@ export default function Servicios() {
           <Desplegable etiqueta={tiempo === DURACIONES[0] ? 'Duración' : tiempo[1]} activo={tiempo !== DURACIONES[0]}>
             {(cerrar) => (
               <div className="desplegable__opciones" role="radiogroup" aria-label="Duración">
-                {DURACIONES.map((r) => (
-                  <label key={r[1]} className="casilla"><input type="radio" name="duracion-servicios" checked={tiempo === r} onChange={() => { fijar('duracion', r[0]); cerrar(); }} /><span>{r[1]}</span></label>
+                {DURACIONES.map((rango) => (
+                  <label key={rango[1]} className="casilla"><input type="radio" name="duracion-servicios" checked={tiempo === rango} onChange={() => { fijar('duracion', rango[0]); cerrar(); }} /><span>{rango[1]}</span></label>
                 ))}
               </div>
             )}
@@ -305,14 +306,14 @@ export default function Servicios() {
             </div>
             <CarruselAuto key={`${categoria}-${soloOfertas}-${texto}-${orden}-${precio[0]}-${tiempo[0]}`} etiqueta={cat}
                           className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
-              {lista.map((s) => <TarjetaServicio key={s.id} s={s} opinion={resumenes.get(s.id)} onOpiniones={setOpiniones} />)}
+              {lista.map((elemento) => <TarjetaServicio key={elemento.id} s={elemento} opinion={resumenes.get(elemento.id)} onOpiniones={setOpiniones} />)}
             </CarruselAuto>
           </section>
         ))}
       </div>
 
       <section className="contenedor servicios-ayuda servicios-ayuda--foto">
-        <Foto archivo={servicios.find((x) => x.categoria === 'Manos')?.imagen} alt="" className="servicios-ayuda__foto" />
+        <Foto archivo={servicios.find((servicio) => servicio.categoria === 'Manos')?.imagen} alt="" className="servicios-ayuda__foto" />
         <div>
           <h2>¿No sabes cuál elegir?</h2>
           <p>Diseña tus uñas y te recomendamos el servicio, o escríbenos y te asesoramos sin compromiso.</p>

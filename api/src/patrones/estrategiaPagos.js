@@ -10,10 +10,10 @@
 // Objetivo: Evitar tarjetas mal escritas.
 export function luhnValido(numero) {
   let suma = 0;
-  [...numero].reverse().forEach((c, i) => {
-    let d = Number(c);
-    if (i % 2) { d *= 2; if (d > 9) d -= 9; }
-    suma += d;
+  [...numero].reverse().forEach((digitoActual, i) => {
+    let digito = Number(digitoActual);
+    if (i % 2) { digito *= 2; if (digito > 9) digito -= 9; }
+    suma += digito;
   });
   return suma % 10 === 0;
 }
@@ -22,7 +22,7 @@ export function luhnValido(numero) {
 // Entrada: El número.
 // Salida: Visa, Mastercard u otra.
 // Objetivo: Mostrar la marca.
-export const marcaTarjeta = (n) => (/^4/.test(n) ? 'Visa' : /^(5[1-5]|2[2-7])/.test(n) ? 'Mastercard' : /^3[47]/.test(n) ? 'American Express' : 'Tarjeta');
+export const marcaTarjeta = (numero) => (/^4/.test(numero) ? 'Visa' : /^(5[1-5]|2[2-7])/.test(numero) ? 'Mastercard' : /^3[47]/.test(numero) ? 'American Express' : 'Tarjeta');
 
 class PagoTarjeta {
   nombre = 'Tarjeta';

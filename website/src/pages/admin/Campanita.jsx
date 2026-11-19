@@ -12,7 +12,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'o
 // Entrada: La fecha.
 // Salida: El texto.
 // Objetivo: Avisos cortos.
-const corta = (f) => `${Number(f.slice(8))} ${MESES[Number(f.slice(5, 7)) - 1]}`;
+const corta = (fecha) => `${Number(fecha.slice(8))} ${MESES[Number(fecha.slice(5, 7)) - 1]}`;
 
 // Nombre: Campanita
 // Descripción: Muestra la campanita de avisos.
@@ -31,7 +31,7 @@ export default function Campanita({ seccion, onIr }) {
   // Objetivo: Tener avisos al día.
   const cargar = () => api.admin.avisos().then(setAvisos).catch(() => {});
 
-  useEffect(() => { cargar(); const t = setInterval(cargar, 60000); return () => clearInterval(t); }, []);
+  useEffect(() => { cargar(); const intervalo = setInterval(cargar, 60000); return () => clearInterval(intervalo); }, []);
   useEffect(() => { cargar(); }, [seccion]);
   useEffect(() => {
     // Nombre: fuera
@@ -62,8 +62,8 @@ export default function Campanita({ seccion, onIr }) {
     const respuesta = aprobar ? '' : window.prompt(`¿Quieres decirle algo a ${x.nombre}? (opcional)`, 'Ese día tenemos mucha agenda, ¿podemos buscar otro?');
     if (respuesta === null) return;
     try {
-      const r = await api.admin.resolverSolicitud(x.id, { aprobar, respuesta });
-      setMensaje(aprobar ? `Aprobado: ${x.nombre} no trabaja esos días.${r.citasAfectadas ? ` Tenía ${r.citasAfectadas} ${r.citasAfectadas === 1 ? 'cita' : 'citas'}; avísales desde Agenda.` : ''}` : `Le respondiste a ${x.nombre} que no.`);
+      const resultado = await api.admin.resolverSolicitud(x.id, { aprobar, respuesta });
+      setMensaje(aprobar ? `Aprobado: ${x.nombre} no trabaja esos días.${resultado.citasAfectadas ? ` Tenía ${resultado.citasAfectadas} ${resultado.citasAfectadas === 1 ? 'cita' : 'citas'}; avísales desde Agenda.` : ''}` : `Le respondiste a ${x.nombre} que no.`);
       cargar();
     } catch (error) { setMensaje(error.message); }
   };
@@ -91,16 +91,16 @@ export default function Campanita({ seccion, onIr }) {
             <div className="campanita__grupo">
               <p className="campanita__subtitulo">Días libres por responder</p>
               <ul>
-                {avisos.solicitudes.map((x) => (
-                  <li key={x.id} className="campanita__solicitud">
-                    <span className="campanita__foto">{x.foto ? <Foto archivo={x.foto} alt="" /> : x.nombre[0]}</span>
+                {avisos.solicitudes.map((solicitud) => (
+                  <li key={solicitud.id} className="campanita__solicitud">
+                    <span className="campanita__foto">{solicitud.foto ? <Foto archivo={solicitud.foto} alt="" /> : solicitud.nombre[0]}</span>
                     <div>
-                      <p><b>{x.nombre}</b> pide {TIPO[x.tipo] || x.tipo}</p>
-                      <p className="tenue">{x.desde === x.hasta ? fechaLarga(x.desde) : `${corta(x.desde)} al ${corta(x.hasta)}`}{x.citas ? ` · tiene ${x.citas} ${x.citas === 1 ? 'cita' : 'citas'}` : ''}</p>
-                      {x.motivo && <p className="campanita__motivo">«{x.motivo}»</p>}
+                      <p><b>{solicitud.nombre}</b> pide {TIPO[solicitud.tipo] || solicitud.tipo}</p>
+                      <p className="tenue">{solicitud.desde === solicitud.hasta ? fechaLarga(solicitud.desde) : `${corta(solicitud.desde)} al ${corta(solicitud.hasta)}`}{solicitud.citas ? ` · tiene ${solicitud.citas} ${solicitud.citas === 1 ? 'cita' : 'citas'}` : ''}</p>
+                      {solicitud.motivo && <p className="campanita__motivo">«{solicitud.motivo}»</p>}
                       <div className="campanita__botones">
-                        <button type="button" className="boton boton--chico" onClick={() => resolver(x, true)}>Aprobar</button>
-                        <button type="button" className="boton boton--chico boton--contorno" onClick={() => resolver(x, false)}>No aprobar</button>
+                        <button type="button" className="boton boton--chico" onClick={() => resolver(solicitud, true)}>Aprobar</button>
+                        <button type="button" className="boton boton--chico boton--contorno" onClick={() => resolver(solicitud, false)}>No aprobar</button>
                       </div>
                     </div>
                   </li>

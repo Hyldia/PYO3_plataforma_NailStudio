@@ -33,8 +33,17 @@ export const agendaAdminController = {
   // Objetivo: Que la dueña pueda cancelar citas.
   cancelar(req, res) {
     const cita = CitaModel.buscarPorId(req.params.id);
-    try { revisarCancelacion(cita, req.body); } catch (e) { return res.status(e.codigo || 400).json({ error: e.message }); }
+    try { revisarCancelacion(cita, req.body); } catch (fallo) { return res.status(fallo.codigo || 400).json({ error: fallo.message }); }
     res.json(cancelarCita(cita, req.body));
+  },
+
+  // Nombre: noAsistio
+  // Descripción: La dueña marca que la clienta no llegó y decide si se reprograma o se cobra.
+  // Entrada: El número de cita y { decision, fecha, hora, monto }.
+  // Salida: La cita, la nueva (si se reprogramó) y el mensaje de WhatsApp.
+  // Objetivo: Controlar las citas perdidas.
+  noAsistio(req, res) {
+    try { res.json(registrarNoAsistio(CitaModel.buscarPorId(req.params.id), { ...req.body, quien: 'la dueña' })); } catch (fallo) { res.status(fallo.codigo || 400).json({ error: fallo.message }); }
   },
 
   // Emergencia: cancela todas las citas activas de un día (o solo las de una especialista)
@@ -43,22 +52,13 @@ export const agendaAdminController = {
   // Entrada: La fecha y el motivo.
   // Salida: Cuántas citas se cancelaron y sus avisos.
   // Objetivo: Avisar rápido a todas las clientas del día.
-  // Nombre: noAsistio
-  // Descripción: La dueña marca que la clienta no llegó y decide si se reprograma o se cobra.
-  // Entrada: El número de cita y { decision, fecha, hora, monto }.
-  // Salida: La cita, la nueva (si se reprogramó) y el mensaje de WhatsApp.
-  // Objetivo: Controlar las citas perdidas.
-  noAsistio(req, res) {
-    try { res.json(registrarNoAsistio(CitaModel.buscarPorId(req.params.id), { ...req.body, quien: 'la dueña' })); } catch (e) { res.status(e.codigo || 400).json({ error: e.message }); }
-  },
-
   emergencia(req, res) {
     const { fecha, especialistaId, motivo, tipo = 'cancelacion', nota } = req.body;
     if (!CitaModel.esFechaValida(fecha)) return res.status(400).json({ error: 'Elige el día.' });
     if (!motivo || motivo.trim().length < 3) return res.status(400).json({ error: 'Escribe el motivo para avisarles a las clientas.' });
     const citas = CitaModel.activasDelDia(fecha, especialistaId ? Number(especialistaId) : null);
     if (!citas.length) return res.status(404).json({ error: 'No hay citas activas ese día.' });
-    res.json(citas.map((c) => cancelarCita(c, { motivo: motivo.trim(), tipo, nota })));
+    res.json(citas.map((cita) => cancelarCita(cita, { motivo: motivo.trim(), tipo, nota })));
   },
 
   // Nombre: mensaje
@@ -69,7 +69,7 @@ export const agendaAdminController = {
   mensaje(req, res) {
     const cita = CitaModel.buscarPorId(req.params.id);
     if (!cita) return res.status(404).json({ error: 'No encontramos esa cita.' });
-    try { res.json(mensajeDeCita(cita, req.body.tipo || 'recordatorio', req.body, Boolean(req.body.soloVista))); } catch (e) { res.status(400).json({ error: e.message }); }
+    try { res.json(mensajeDeCita(cita, req.body.tipo || 'recordatorio', req.body, Boolean(req.body.soloVista))); } catch (fallo) { res.status(400).json({ error: fallo.message }); }
   },
 
   // Nombre: mensajes

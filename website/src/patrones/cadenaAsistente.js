@@ -16,7 +16,7 @@ export const normalizar = (t = '') => t.toLowerCase().normalize('NFD').replace(/
 // Entrada: El texto y las palabras.
 // Salida: Sí o no.
 // Objetivo: Entender preguntas.
-const tiene = (texto, palabras) => palabras.some((p) => texto.includes(p));
+const tiene = (texto, palabras) => palabras.some((palabra) => texto.includes(palabra));
 
 class Manejador {
   siguiente = null;
@@ -55,13 +55,13 @@ const regla = (palabras, responder, extra = () => true) => new (class extends Ma
   // Entrada: La pregunta y datos.
   // Salida: Sí o no.
   // Objetivo: Elegir la respuesta.
-  entiende(t, ctx) { return tiene(t, palabras) && extra(t, ctx); }
+  entiende(texto, ctx) { return tiene(texto, palabras) && extra(texto, ctx); }
   // Nombre: responder
   // Descripción: Da la respuesta de la regla.
   // Entrada: La pregunta y datos.
   // Salida: La respuesta.
   // Objetivo: Contestar.
-  responder(t, ctx) { return responder(t, ctx); }
+  responder(texto, ctx) { return responder(texto, ctx); }
 })();
 
 // Nombre: horario
@@ -69,7 +69,7 @@ const regla = (palabras, responder, extra = () => true) => new (class extends Ma
 // Entrada: Nada.
 // Salida: El texto.
 // Objetivo: Responder horarios.
-const horario = () => SALON.horario.map((h) => `• ${h.dias}: ${h.horas}`).join('\n');
+const horario = () => SALON.horario.map((turno) => `• ${turno.dias}: ${turno.horas}`).join('\n');
 
 // Busca un servicio por nombre dentro de la pregunta ("cuanto cuesta el acrilico")
 // Nombre: servicioMencionado
@@ -77,29 +77,29 @@ const horario = () => SALON.horario.map((h) => `• ${h.dias}: ${h.horas}`).join
 // Entrada: La pregunta y los servicios.
 // Salida: El servicio o nada.
 // Objetivo: Responder precios.
-function servicioMencionado(t, servicios) {
+function servicioMencionado(texto, servicios) {
   // Se compara por raíces de las palabras ("acrilico" encuentra "Uñas acrílicas")
   // Nombre: raiz
   // Descripción: Saca la raíz de una palabra.
   // Entrada: La palabra.
   // Salida: La raíz.
   // Objetivo: Entender variaciones.
-  const raiz = (p) => p.slice(0, Math.min(6, p.length - 1));
+  const raiz = (palabra) => palabra.slice(0, Math.min(6, palabra.length - 1));
   const VACIAS = ['que', 'del', 'las', 'los', 'una', 'uno', 'por', 'con', 'para', 'cuanto', 'cuesta', 'precio', 'vale', 'unas'];
   // Nombre: util
   // Descripción: Revisa si una palabra sirve para buscar.
   // Entrada: La palabra.
   // Salida: Sí o no.
   // Objetivo: Ignorar palabras vacías.
-  const util = (p) => p.length >= 3 && !VACIAS.includes(p);
-  const raices = t.split(' ').filter(util).map(raiz);
+  const util = (palabra) => palabra.length >= 3 && !VACIAS.includes(palabra);
+  const raices = texto.split(' ').filter(util).map(raiz);
   let mejor = null;
   let puntos = 0;
-  servicios.forEach((s) => {
-    const palabras = normalizar(s.nombre).split(' ').filter(util);
-    const n = palabras.filter((p) => raices.includes(raiz(p))).length;
-    const total = n - 0.2 * (palabras.length - n); // prefiere el nombre más corto y exacto
-    if (n > 0 && total > puntos) { puntos = total; mejor = s; }
+  servicios.forEach((servicio) => {
+    const palabras = normalizar(servicio.nombre).split(' ').filter(util);
+    const coincidencias = palabras.filter((palabra) => raices.includes(raiz(palabra))).length;
+    const total = coincidencias - 0.2 * (palabras.length - coincidencias); // prefiere el nombre más corto y exacto
+    if (coincidencias > 0 && total > puntos) { puntos = total; mejor = servicio; }
   });
   return mejor;
 }
@@ -113,12 +113,12 @@ export function crearCadena() {
   const saludo = regla(['hola', 'buenas', 'buenos dias', 'buenas tardes', 'buenas noches', 'hey', 'saludos'], () => ({
     texto: `¡Hola! Qué gusto saludarte. Soy Sofi, la asistente virtual de ${SALON.nombre}. ¿En qué te ayudo hoy?`,
     opciones: ['Quiero reservar una cita', 'Precios de servicios', 'Horario y ubicación', 'Cómo pagar']
-  }), (t) => t.split(' ').length <= 4);
+  }), (texto) => texto.split(' ').length <= 4);
 
   const gracias = regla(['gracias', 'muchas gracias', 'mil gracias', 'genial', 'perfecto', 'excelente'], () => ({
     texto: '¡Con muchísimo gusto! Si te surge otra duda, aquí estoy.',
     opciones: ['Reservar una cita', 'Ver diseños']
-  }), (t) => t.split(' ').length <= 5);
+  }), (texto) => texto.split(' ').length <= 5);
 
   const humano = regla(['persona', 'humano', 'asesora', 'hablar con alguien', 'whatsapp', 'llamar', 'telefono', 'numero', 'contacto'], () => ({
     texto: `Claro, te paso con el equipo del salón. Puedes escribirnos por WhatsApp o llamarnos al ${SALON.telefono}. Respondemos en horario de atención.`,
@@ -146,16 +146,16 @@ export function crearCadena() {
     opciones: ['Precios de servicios', 'Quiénes son las especialistas']
   }));
 
-  const precio = regla(['precio', 'cuesta', 'cuanto', 'vale', 'costo', 'tarifa', 'cobran'], (t, ctx) => {
-    const s = servicioMencionado(t, ctx.servicios);
-    if (s) {
-      const oferta = s.precio_oferta != null;
+  const precio = regla(['precio', 'cuesta', 'cuanto', 'vale', 'costo', 'tarifa', 'cobran'], (texto, ctx) => {
+    const servicio = servicioMencionado(texto, ctx.servicios);
+    if (servicio) {
+      const oferta = servicio.precio_oferta != null;
       return {
-        texto: `${s.nombre}: ${oferta ? `${dinero(s.precio_oferta)} (antes ${dinero(s.precio)})` : dinero(s.precio)} · dura unos ${s.duracion_min} minutos.${s.descripcion ? `\n${s.descripcion}` : ''}`,
-        enlaces: [{ texto: `Reservar ${s.nombre}`, to: `/reservar?servicio=${s.id}` }]
+        texto: `${servicio.nombre}: ${oferta ? `${dinero(servicio.precio_oferta)} (antes ${dinero(servicio.precio)})` : dinero(servicio.precio)} · dura unos ${servicio.duracion_min} minutos.${servicio.descripcion ? `\n${servicio.descripcion}` : ''}`,
+        enlaces: [{ texto: `Reservar ${servicio.nombre}`, to: `/reservar?servicio=${servicio.id}` }]
       };
     }
-    const lista = ctx.servicios.slice(0, 8).map((x) => `• ${x.nombre}: ${dinero(x.precio_oferta ?? x.precio)}`).join('\n');
+    const lista = ctx.servicios.slice(0, 8).map((servicio) => `• ${servicio.nombre}: ${dinero(servicio.precio_oferta ?? servicio.precio)}`).join('\n');
     return {
       texto: lista ? `Estos son algunos de nuestros precios:\n${lista}\n\n¿Te interesa alguno en particular? Pregúntame por su nombre.` : 'Puedes ver todos los precios en la página de servicios.',
       enlaces: [{ texto: 'Ver todos los servicios', to: '/servicios' }]
@@ -172,8 +172,8 @@ export function crearCadena() {
     enlaces: [{ texto: 'Ir a la tienda', to: '/tienda' }, { texto: 'Mis direcciones', to: '/cuenta' }]
   }));
 
-  const cupones = regla(['cupon', 'descuento', 'promo', 'oferta', 'rebaja', 'codigo', 'ruleta', 'black friday'], (t, ctx) => {
-    const lista = ctx.cupones.slice(0, 4).map((c) => `• ${c.codigo}: ${c.descripcion}`).join('\n');
+  const cupones = regla(['cupon', 'descuento', 'promo', 'oferta', 'rebaja', 'codigo', 'ruleta', 'black friday'], (texto, ctx) => {
+    const lista = ctx.cupones.slice(0, 4).map((cupon) => `• ${cupon.codigo}: ${cupon.descripcion}`).join('\n');
     return {
       texto: `¡Sí hay!${lista ? `\n${lista}` : ''}\n\nTambién puedes girar la ruleta de premios (el regalito de la esquina) y ganar un cupón. Se aplican al finalizar la compra.`,
       enlaces: [{ texto: 'Ver ofertas', to: '/tienda?ofertas=1&orden=descuento' }]
@@ -185,9 +185,9 @@ export function crearCadena() {
     enlaces: [{ texto: 'Mi cuenta', to: '/cuenta' }]
   }));
 
-  const especialistas = regla(['especialista', 'manicurista', 'quien me atiende', 'quienes', 'equipo', 'chicas', 'profesional'], (t, ctx) => ({
+  const especialistas = regla(['especialista', 'manicurista', 'quien me atiende', 'quienes', 'equipo', 'chicas', 'profesional'], (texto, ctx) => ({
     texto: ctx.especialistas.length
-      ? `Nuestro equipo:\n${ctx.especialistas.slice(0, 10).map((e) => `• ${e.nombre}: ${e.especialidad}`).join('\n')}\n\nAl reservar puedes ver el horario libre de cada una.`
+      ? `Nuestro equipo:\n${ctx.especialistas.slice(0, 10).map((especialista) => `• ${especialista.nombre}: ${especialista.especialidad}`).join('\n')}\n\nAl reservar puedes ver el horario libre de cada una.`
       : 'Tenemos un equipo de especialistas certificadas. Al reservar ves a cada una con su horario.',
     enlaces: [{ texto: 'Reservar con mi favorita', to: '/reservar' }]
   }));
@@ -246,7 +246,7 @@ export function crearCadena() {
   // El orden importa: de lo más específico a lo más general
   const inicio = saludo;
   [gracias, humano, cancelar, diferencia, duracion, higiene, ninos, precio, cupones, pagos, envios, cuenta, especialistas, ubicacion, horarioM, reservar, disenos, tienda, respaldo]
-    .reduce((m, s) => m.enlazar(s), inicio);
+    .reduce((anterior, eslabon) => anterior.enlazar(eslabon), inicio);
   return inicio;
 }
 

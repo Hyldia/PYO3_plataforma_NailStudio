@@ -1,3 +1,4 @@
+// Tienda: círculos de categorías, filtros, orden, buscador y páginas de productos.
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -23,7 +24,7 @@ export default function Tienda() {
   useTitulo('Tienda');
   const [params, setParams] = useSearchParams();
   const [texto, setTexto] = useState(params.get('q') || '');
-  const q = useDebounce(texto);
+  const busqueda = useDebounce(texto);
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -42,19 +43,19 @@ export default function Tienda() {
   // Salida: Nada.
   // Objetivo: Filtrar productos.
   const fijar = (cambios) => {
-    const p = new URLSearchParams(params);
-    Object.entries(cambios).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)));
+    const parametros = new URLSearchParams(params);
+    Object.entries(cambios).forEach(([clave, valor]) => (valor ? parametros.set(clave, valor) : parametros.delete(clave)));
     setPagina(1);
-    setParams(p, { replace: true });
+    setParams(parametros, { replace: true });
   };
 
   useEffect(() => { api.categoriasProductos().then(setCategorias).catch(() => {}); }, []);
-  useEffect(() => { if ((params.get('q') || '') !== q.trim()) fijar({ q: q.trim() }); }, [q]);
+  useEffect(() => { if ((params.get('q') || '') !== busqueda.trim()) fijar({ q: busqueda.trim() }); }, [busqueda]);
   useEffect(() => {
     setCargando(true);
     api.productos(Object.fromEntries(params))
-      .then((p) => { setProductos(p); setError(''); setPagina(1); })
-      .catch((e) => setError(e.message))
+      .then((respuesta) => { setProductos(respuesta); setError(''); setPagina(1); })
+      .catch((fallo) => setError(fallo.message))
       .finally(() => setCargando(false));
   }, [params]);
 
@@ -73,7 +74,7 @@ export default function Tienda() {
   // Objetivo: Ver lo más vendido.
   const verVendidos = () => fijar({ orden: vendidos ? '' : 'vendidos', ofertas: '' });
   const titulo = categoria || (ofertas ? 'Ofertas' : vendidos ? 'Más vendidos' : 'Tienda');
-  const inicio = ![...params.keys()].filter((k) => k !== 'q').length; // escribir en el buscador no cambia la portada
+  const inicio = ![...params.keys()].filter((clave) => clave !== 'q').length; // escribir en el buscador no cambia la portada
 
   const barra = (
       <div className="barra-chips barra-filtros" role="group" aria-label="Filtros y orden">
@@ -89,8 +90,8 @@ export default function Tienda() {
         <Desplegable etiqueta={<span>Ordenar por: <b>{ORDENES[orden]}</b></span>}>
           {(cerrar) => (
             <div className="desplegable__opciones" role="radiogroup" aria-label="Ordenar por">
-              {Object.entries(ORDENES).map(([k, t]) => (
-                <label key={k} className="casilla"><input type="radio" name="orden-tienda" checked={orden === k} onChange={() => { fijar({ orden: k === 'relevancia' ? '' : k }); cerrar(); }} /><span>{t}</span></label>
+              {Object.entries(ORDENES).map(([clave, valor]) => (
+                <label key={clave} className="casilla"><input type="radio" name="orden-tienda" checked={orden === clave} onChange={() => { fijar({ orden: clave === 'relevancia' ? '' : clave }); cerrar(); }} /><span>{valor}</span></label>
               ))}
             </div>
           )}
@@ -99,10 +100,10 @@ export default function Tienda() {
           {(cerrar) => (
             <div className="desplegable__opciones" role="radiogroup" aria-label="Categoría">
               <label className="casilla"><input type="radio" name="cat-tienda" checked={!categoria} onChange={() => { fijar({ categoria: '' }); cerrar(); }} /><span>Todas</span></label>
-              {categorias.map((c) => (
-                <label key={c.valor} className="casilla">
-                  <input type="radio" name="cat-tienda" checked={categoria === c.valor} onChange={() => { fijar({ categoria: c.valor }); cerrar(); }} />
-                  <span>{c.valor}</span><span className="casilla__cantidad">{c.cantidad}</span>
+              {categorias.map((categoriaActual) => (
+                <label key={categoriaActual.valor} className="casilla">
+                  <input type="radio" name="cat-tienda" checked={categoria === categoriaActual.valor} onChange={() => { fijar({ categoria: categoriaActual.valor }); cerrar(); }} />
+                  <span>{categoriaActual.valor}</span><span className="casilla__cantidad">{categoriaActual.cantidad}</span>
                 </label>
               ))}
             </div>
@@ -111,8 +112,8 @@ export default function Tienda() {
         <Desplegable etiqueta={rango === RANGOS[0] ? 'Precio' : rango[2]} activo={rango !== RANGOS[0]}>
           {(cerrar) => (
             <div className="desplegable__opciones" role="radiogroup" aria-label="Precio">
-              {RANGOS.map((r) => (
-                <label key={r[2]} className="casilla"><input type="radio" name="precio-tienda" checked={rango === r} onChange={() => { fijar({ min: r[0], max: r[1] }); cerrar(); }} /><span>{r[2]}</span></label>
+              {RANGOS.map((rangoActual) => (
+                <label key={rangoActual[2]} className="casilla"><input type="radio" name="precio-tienda" checked={rango === rangoActual} onChange={() => { fijar({ min: rangoActual[0], max: rangoActual[1] }); cerrar(); }} /><span>{rangoActual[2]}</span></label>
               ))}
             </div>
           )}
@@ -143,18 +144,18 @@ export default function Tienda() {
           {barra}
         </>
       )}
-      {inicio && <h2 className="fila-titulo fila-titulo--todos">{q.trim() ? `Resultados de «${q.trim()}»` : 'Todos los productos'}</h2>}
+      {inicio && <h2 className="fila-titulo fila-titulo--todos">{busqueda.trim() ? `Resultados de «${busqueda.trim()}»` : 'Todos los productos'}</h2>}
       {error && <p role="alert" className="error">{error}</p>}
       {!cargando && productos.length === 0 && (
         <div className="vacio"><p>No hay productos con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>
       )}
       <ul ref={rejilla} className={`productos-rejilla productos-rejilla--grande ${ofertas ? 'productos-rejilla--ofertas' : ''}`} key={`${orden}-${ofertas}`}>
-        {productos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA).map((p, i) => <TarjetaProducto key={p.id} p={p} puesto={vendidos && (pagina - 1) * POR_PAGINA + i < 20 ? (pagina - 1) * POR_PAGINA + i + 1 : undefined} oferta={ofertas} />)}
+        {productos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA).map((producto, i) => <TarjetaProducto key={producto.id} p={producto} puesto={vendidos && (pagina - 1) * POR_PAGINA + i < 20 ? (pagina - 1) * POR_PAGINA + i + 1 : undefined} oferta={ofertas} />)}
         {cargando && <Fantasmas n={Math.min(POR_PAGINA, productos.length)} />}
       </ul>
       <VerMas pagina={pagina} paginas={Math.ceil(productos.length / POR_PAGINA)} cargando={cargando}
-              onCambiar={(n) => {
-                setPagina(n);
+              onCambiar={(numero) => {
+                setPagina(numero);
                 requestAnimationFrame(() => {
                   const rejilla = document.querySelector('.productos-rejilla');
                   const encabezado = document.querySelector('.encabezado');

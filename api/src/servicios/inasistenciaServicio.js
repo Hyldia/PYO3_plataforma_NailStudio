@@ -1,11 +1,16 @@
 // SERVICIO: cuando una clienta no llegó a su cita (Fabricación pura de GRASP).
 // Lo usan el panel de la dueña y el portal de la especialista, así las dos pantallas siguen la misma regla.
-import { CitaModel, minutosParaLaCita } from '../models/CitaModel.js';
+import { minutosParaLaCita } from '../models/CitaModel.js';
 import { aplicarAccion } from '../patrones/estadoCita.js';
 import { estrategiaInasistencia } from '../patrones/estrategiaInasistencia.js';
 import { mensajeDeCita } from './citaServicio.js';
 import { eventos } from '../patrones/observadorEventos.js';
 
+// Nombre: errorCita
+// Descripción: Crea un error con su código HTTP.
+// Entrada: El mensaje y el código (400 si no se da).
+// Salida: El error listo para lanzar.
+// Objetivo: Que el controlador responda el código correcto.
 const errorCita = (mensaje, codigo = 400) => Object.assign(new Error(mensaje), { codigo });
 
 // Nombre: registrarNoAsistio

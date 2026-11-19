@@ -1,7 +1,6 @@
 // MODELO: citas. Incluye las reglas de negocio de una reserva
 // (horarios del salón, validación de datos y cálculo del total y el adelanto).
 import { getDb } from '../db/conexion.js';
-import { calcularPrecio } from '../patrones/decoradorPrecio.js';
 import { EspecialistaModel } from './EspecialistaModel.js';
 
 export const HORARIOS = ['09:00', '10:00', '11:00', '12:00', '13:30', '14:30', '15:30', '16:30', '17:30'];
@@ -40,31 +39,6 @@ export const CitaModel = {
   // Objetivo: Evitar horas inválidas.
   esHoraValida: (hora) => HORARIOS.includes(hora),
 
-  // Devuelve un mensaje de error o null si los datos de la clienta están bien
-  // Nombre: validarCliente
-  // Descripción: Revisa los datos de la clienta.
-  // Entrada: Nombre, teléfono y correo.
-  // Salida: Un error o nada.
-  // Objetivo: No guardar citas incompletas.
-  validarCliente(cliente = {}) {
-    if (!cliente.nombre || cliente.nombre.trim().length < 2) return 'Escribe tu nombre.';
-    if (!/^[\d\s+-]{8,15}$/.test(cliente.telefono || '')) return 'Escribe un teléfono válido, por ejemplo 8888 8888.';
-    if (cliente.email && !/^\S+@\S+\.\S+$/.test(cliente.email)) return 'Revisa el correo electrónico.';
-    return null;
-  },
-
-  // Usa el patrón Decorator (patrones/decoradorPrecio.js): servicio → recargo de diseño → cupón
-  // Nombre: calcularMontos
-  // Descripción: Calcula el precio de una cita.
-  // Entrada: Servicio, recargo, pago y cupón.
-  // Salida: Subtotal, descuento y total.
-  // Objetivo: Cobrar lo justo.
-  calcularMontos(servicio, recargoDiseno, metodoPago, cupon = null) {
-    const { total, descuento, detalle } = calcularPrecio(servicio, recargoDiseno, cupon);
-    const anticipo = metodoPago === 'salon' ? 0 : Math.round(total * PORCENTAJE_ADELANTO);
-    return { total, descuento, anticipo, detalle };
-  },
-
   // Nombre: horasOcupadas
   // Descripción: Busca las horas ya ocupadas.
   // Entrada: La especialista y la fecha.
@@ -72,7 +46,7 @@ export const CitaModel = {
   // Objetivo: No reservar dos veces la misma hora.
   horasOcupadas: (especialistaId, fecha) => getDb().prepare(`
     SELECT hora FROM citas WHERE especialista_id = ? AND fecha = ? AND estado != 'cancelada'
-  `).all(especialistaId, fecha).map((f) => f.hora),
+  `).all(especialistaId, fecha).map((fila) => fila.hora),
 
   // Horas del salón dentro del horario de la especialista; vacío si ese día no trabaja
   // Nombre: horasDe
@@ -82,7 +56,7 @@ export const CitaModel = {
   // Objetivo: Saber cuándo atiende.
   horasDe(especialista, fecha) {
     if (!especialista || !EspecialistaModel.trabajaEl(especialista, fecha)) return [];
-    return HORARIOS.filter((h) => h >= especialista.hora_inicio && h <= especialista.hora_fin);
+    return HORARIOS.filter((horario) => horario >= especialista.hora_inicio && horario <= especialista.hora_fin);
   },
 
   // Nombre: disponibilidad
@@ -107,13 +81,13 @@ export const CitaModel = {
   // Objetivo: Ayudar a elegir fecha.
   agenda(especialistaId, dias = 10) {
     const lista = [];
-    const d = new Date();
+    const dia = new Date();
     while (lista.length < dias) {
-      d.setDate(d.getDate() + 1);
-      if (d.getDay() === 0) continue;
-      const fecha = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      dia.setDate(dia.getDate() + 1);
+      if (dia.getDay() === 0) continue;
+      const fecha = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
       const horas = this.disponibilidad(especialistaId, fecha);
-      lista.push({ fecha, trabaja: horas.length > 0, libres: horas.filter((h) => h.disponible).map((h) => h.hora) });
+      lista.push({ fecha, trabaja: horas.length > 0, libres: horas.filter((hora) => hora.disponible).map((hora) => hora.hora) });
     }
     return lista;
   },
@@ -125,7 +99,7 @@ export const CitaModel = {
   // Salida: Sí o no.
   // Objetivo: Evitar choques de citas.
   horaDisponible(especialistaId, fecha, hora) {
-    return this.disponibilidad(especialistaId, fecha).some((h) => h.hora === hora && h.disponible);
+    return this.disponibilidad(especialistaId, fecha).some((horaActual) => horaActual.hora === hora && horaActual.disponible);
   },
 
   // Nombre: buscarPorId
@@ -147,13 +121,13 @@ export const CitaModel = {
   // Salida: La cita guardada.
   // Objetivo: Reservar.
   crear(c) {
-    const r = getDb().prepare(`
+    const resultado = getDb().prepare(`
       INSERT INTO citas (servicio_id, especialista_id, diseno_id, foto_ref_id, cliente_nombre, cliente_telefono, cliente_email,
                          notas, fecha, hora, estado, total, anticipo, cupon_codigo, descuento, metodo_pago, pedido_id, usuario_id)
       VALUES (@servicioId, @especialistaId, @disenoId, @fotoRefId, @nombre, @telefono, @email,
               @notas, @fecha, @hora, @estado, @total, @anticipo, @cuponCodigo, @descuento, @metodoPago, @pedidoId, @usuarioId)
     `).run({ pedidoId: null, usuarioId: null, ...c });
-    return this.buscarPorId(r.lastInsertRowid);
+    return this.buscarPorId(resultado.lastInsertRowid);
   },
 
   // Calendario del panel: por cada día del mes, cuántas citas hay y cuántos espacios tiene el salón
@@ -163,22 +137,22 @@ export const CitaModel = {
   // Salida: Cuántas citas hay por día.
   // Objetivo: Pintar el calendario.
   resumenMes(mes) {
-    const [a, m] = mes.split('-').map(Number);
-    const dias = new Date(a, m, 0).getDate();
+    const [anio, numeroMes] = mes.split('-').map(Number);
+    const dias = new Date(anio, numeroMes, 0).getDate();
     const especialistas = EspecialistaModel.listar();
     const filas = getDb().prepare(`SELECT fecha, estado, COUNT(*) AS n FROM citas WHERE fecha LIKE ? GROUP BY fecha, estado`).all(`${mes}-%`);
     return Array.from({ length: dias }, (_, i) => {
       const fecha = `${mes}-${String(i + 1).padStart(2, '0')}`;
-      const capacidad = especialistas.reduce((s, e) => s + this.horasDe(e, fecha).length, 0);
-      const de = filas.filter((f) => f.fecha === fecha);
+      const capacidad = especialistas.reduce((suma, especialista) => suma + this.horasDe(especialista, fecha).length, 0);
+      const de = filas.filter((fila) => fila.fecha === fecha);
       // Nombre: n
       // Descripción: Cuenta citas con ciertos estados.
       // Entrada: Los estados.
       // Salida: La cantidad.
       // Objetivo: Hacer el resumen del mes.
-      const n = (est) => de.filter((f) => est.includes(f.estado)).reduce((s, f) => s + f.n, 0);
-      const ocupadas = n(['pendiente', 'confirmada', 'completada']);
-      return { fecha, capacidad, ocupadas, pendientes: n(['pendiente']), canceladas: n(['cancelada']), completadas: n(['completada']),
+      const contar = (est) => de.filter((fila) => est.includes(fila.estado)).reduce((suma, fila) => suma + fila.n, 0);
+      const ocupadas = contar(['pendiente', 'confirmada', 'completada']);
+      return { fecha, capacidad, ocupadas, pendientes: contar(['pendiente']), canceladas: contar(['cancelada']), completadas: contar(['completada']),
         nivel: !capacidad ? 'cerrado' : ocupadas >= capacidad ? 'lleno' : ocupadas / capacidad >= 0.6 ? 'casi' : ocupadas > 0 ? 'medio' : 'libre' };
     });
   },
@@ -196,11 +170,6 @@ export const CitaModel = {
   // Objetivo: Dejar registro del motivo.
   guardarMotivo: (id, motivo) => getDb().prepare('UPDATE citas SET motivo_cancelacion = ? WHERE id = ?').run(motivo, id),
 
-  // Nombre: cambiarEstado
-  // Descripción: Cambia el estado de una cita.
-  // Entrada: La cita y el estado.
-  // Salida: La cita actualizada.
-  // Objetivo: Seguir el avance de la cita.
   // Nombre: registrarInasistencia
   // Descripción: Guarda que la clienta no llegó y qué se decidió.
   // Entrada: El número de cita y { decision, montoCobrado, reprogramadaA, decididoPor }.
@@ -212,6 +181,11 @@ export const CitaModel = {
     return this.buscarPorId(id);
   },
 
+  // Nombre: cambiarEstado
+  // Descripción: Cambia el estado de una cita.
+  // Entrada: La cita y el estado.
+  // Salida: La cita actualizada.
+  // Objetivo: Seguir el avance de la cita.
   cambiarEstado(id, estado) {
     getDb().prepare('UPDATE citas SET estado = ? WHERE id = ?').run(estado, id);
     return this.buscarPorId(id);

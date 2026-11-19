@@ -1,3 +1,4 @@
+// Mano del diseñador: foto de una mano con las uñas dibujadas encima en su lugar.
 import { Una, datosUna } from './DibujoUnas.jsx';
 import { DEDOS } from '../lib/esmaltes.js';
 
@@ -33,13 +34,13 @@ export default function ManoFoto({ diseno, tono = TONOS_FOTO[1], seleccionada = 
     <div className="mano-foto">
       <img src="/img/mano.jpg" alt="" className="mano-foto__img" />
       {tono.color && <span className="mano-foto__tono" style={{ background: tono.color, mixBlendMode: tono.modo, opacity: tono.fuerza }} aria-hidden="true" />}
-      {UNAS.map((u, i) => {
-        const s = u.w / 44;
+      {UNAS.map((una, i) => {
+        const escala = una.w / 44;
         const estilo = {
-          left: `${((u.x - 30 * s) / ANCHO) * 100}%`,
-          top: `${((u.y - 120 * s) / ALTO) * 100}%`,
-          width: `${((60 * s) / ANCHO) * 100}%`,
-          transform: `rotate(${u.giro}deg)`
+          left: `${((una.x - 30 * escala) / ANCHO) * 100}%`,
+          top: `${((una.y - 120 * escala) / ALTO) * 100}%`,
+          width: `${((60 * escala) / ANCHO) * 100}%`,
+          transform: `rotate(${una.giro}deg)`
         };
         const contenido = <Una d={datosUna(diseno, i)} />;
         return onElegir ? (

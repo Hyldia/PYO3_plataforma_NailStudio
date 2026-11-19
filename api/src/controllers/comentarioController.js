@@ -22,8 +22,8 @@ export const comentarioController = {
   // Salida: Los comentarios.
   // Objetivo: Mostrar opiniones.
   listar(req, res) {
-    const r = revisar(req, res); if (!r) return;
-    res.json(ComentarioModel.listar(r.tipo, r.id, req.query.limite, req.query.filtro));
+    const revision = revisar(req, res); if (!revision) return;
+    res.json(ComentarioModel.listar(revision.tipo, revision.id, req.query.limite, req.query.filtro));
   },
   // Nombre: resumenes
   // Descripción: Da el promedio de estrellas de varios elementos.
@@ -40,9 +40,9 @@ export const comentarioController = {
   // Salida: El comentario creado.
   // Objetivo: Que las clientas opinen.
   crear(req, res) {
-    const r = revisar(req, res); if (!r) return;
+    const revision = revisar(req, res); if (!revision) return;
     const error = ResenaModel.validar(req.body);
     if (error) return res.status(400).json({ error });
-    res.status(201).json(ComentarioModel.crear(r.tipo, r.id, req.body));
+    res.status(201).json(ComentarioModel.crear(revision.tipo, revision.id, req.body));
   }
 };

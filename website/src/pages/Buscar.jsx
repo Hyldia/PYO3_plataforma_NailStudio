@@ -1,3 +1,4 @@
+// Página de resultados del buscador: diseños, productos y servicios que coinciden con lo escrito.
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -15,61 +16,61 @@ import Migas from '../components/Migas.jsx';
 // Objetivo: Encontrar de todo.
 export default function Buscar() {
   const [params] = useSearchParams();
-  const q = params.get('q') || '';
-  useTitulo(`Resultados para «${q}»`);
-  const [r, setR] = useState({ servicios: [], productos: [], fotos: [], cargando: true });
+  const busqueda = params.get('q') || '';
+  useTitulo(`Resultados para «${busqueda}»`);
+  const [resultados, setResultados] = useState({ servicios: [], productos: [], fotos: [], cargando: true });
 
   useEffect(() => {
-    setR((x) => ({ ...x, cargando: true }));
-    const t = q.toLowerCase();
-    Promise.all([api.servicios(), api.productos({ q }), api.fotos({ q, limite: 12 })])
-      .then(([s, p, f]) => setR({
-        servicios: s.filter((x) => `${x.nombre} ${x.descripcion} ${x.incluye} ${x.categoria}`.toLowerCase().includes(t)),
+    setResultados((anterior) => ({ ...anterior, cargando: true }));
+    const buscado = busqueda.toLowerCase();
+    Promise.all([api.servicios(), api.productos({ q: busqueda }), api.fotos({ q: busqueda, limite: 12 })])
+      .then(([s, p, f]) => setResultados({
+        servicios: s.filter((servicio) => `${servicio.nombre} ${servicio.descripcion} ${servicio.incluye} ${servicio.categoria}`.toLowerCase().includes(buscado)),
         productos: p, fotos: f.fotos, cargando: false
       }))
-      .catch(() => setR({ servicios: [], productos: [], fotos: [], cargando: false }));
-  }, [q]);
+      .catch(() => setResultados({ servicios: [], productos: [], fotos: [], cargando: false }));
+  }, [busqueda]);
 
-  const total = r.servicios.length + r.productos.length + r.fotos.length;
+  const total = resultados.servicios.length + resultados.productos.length + resultados.fotos.length;
   return (
     <div className="contenedor pagina">
       <Migas pasos={[['Resultados de búsqueda']]} />
       <header className="pagina__cabeza">
-        <h1>Resultados para «{q}»</h1>
-        <p className="tenue" aria-live="polite">{r.cargando ? 'Buscando…' : `${total} resultados`}</p>
+        <h1>Resultados para «{busqueda}»</h1>
+        <p className="tenue" aria-live="polite">{resultados.cargando ? 'Buscando…' : `${total} resultados`}</p>
       </header>
-      {!r.cargando && total === 0 && (
+      {!resultados.cargando && total === 0 && (
         <div className="vacio"><p>No encontramos nada con esa palabra. Prueba con «gel», «pedicure» o «lima».</p><Link to="/tienda" className="boton boton--contorno">Ver la tienda</Link></div>
       )}
-      {r.servicios.length > 0 && (
+      {resultados.servicios.length > 0 && (
         <section aria-labelledby="b-serv" className="resultado-bloque">
-          <h2 id="b-serv">Servicios ({r.servicios.length})</h2>
+          <h2 id="b-serv">Servicios ({resultados.servicios.length})</h2>
           <ul className="servicios-lista">
-            {r.servicios.map((s) => (
-              <li key={s.id}>
-                <div><h3>{s.nombre}</h3><p className="tenue">{s.descripcion}</p></div>
+            {resultados.servicios.map((servicio) => (
+              <li key={servicio.id}>
+                <div><h3>{servicio.nombre}</h3><p className="tenue">{servicio.descripcion}</p></div>
                 <div className="servicios-lista__accion">
-                  <p className="servicios-lista__precio">{dinero(s.precio_oferta ?? s.precio)}<span className="tenue">{s.duracion_min} min</span></p>
-                  <Link to={`/reservar?servicio=${s.id}`} className="boton boton--chico">Reservar</Link>
+                  <p className="servicios-lista__precio">{dinero(servicio.precio_oferta ?? servicio.precio)}<span className="tenue">{servicio.duracion_min} min</span></p>
+                  <Link to={`/reservar?servicio=${servicio.id}`} className="boton boton--chico">Reservar</Link>
                 </div>
               </li>
             ))}
           </ul>
         </section>
       )}
-      {r.productos.length > 0 && (
+      {resultados.productos.length > 0 && (
         <section aria-labelledby="b-prod" className="resultado-bloque">
-          <h2 id="b-prod">Productos ({r.productos.length})</h2>
-          <ul className="productos-rejilla">{r.productos.slice(0, 24).map((p) => <TarjetaProducto key={p.id} p={p} />)}</ul>
-          {r.productos.length > 24 && <Link to={`/tienda?q=${encodeURIComponent(q)}`} className="enlace">Ver los {r.productos.length} productos en la tienda</Link>}
+          <h2 id="b-prod">Productos ({resultados.productos.length})</h2>
+          <ul className="productos-rejilla">{resultados.productos.slice(0, 24).map((producto) => <TarjetaProducto key={producto.id} p={producto} />)}</ul>
+          {resultados.productos.length > 24 && <Link to={`/tienda?q=${encodeURIComponent(busqueda)}`} className="enlace">Ver los {resultados.productos.length} productos en la tienda</Link>}
         </section>
       )}
-      {r.fotos.length > 0 && (
+      {resultados.fotos.length > 0 && (
         <section aria-labelledby="b-fotos" className="resultado-bloque">
           <h2 id="b-fotos">Diseños en la galería</h2>
           <ul className="mosaico">
-            {r.fotos.map((f) => (
-              <li key={f.id}><Link to={`/galeria?q=${encodeURIComponent(q)}`} className="mosaico__boton"><Foto archivo={f.archivo} alt={f.titulo} /><span className="mosaico__titulo">{f.titulo}</span></Link></li>
+            {resultados.fotos.map((foto) => (
+              <li key={foto.id}><Link to={`/galeria?q=${encodeURIComponent(busqueda)}`} className="mosaico__boton"><Foto archivo={foto.archivo} alt={foto.titulo} /><span className="mosaico__titulo">{foto.titulo}</span></Link></li>
             ))}
           </ul>
         </section>

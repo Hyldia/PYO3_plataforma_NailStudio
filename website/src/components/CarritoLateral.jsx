@@ -1,3 +1,4 @@
+// Panel del carrito que se abre al costado con los productos, el total y el botón para pagar.
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCarrito } from '../context/CarritoContext.jsx';
@@ -17,7 +18,7 @@ export const abrirCarritoLateral = () => window.dispatchEvent(new Event('carrito
 // Entrada: El artículo.
 // Salida: La dirección.
 // Objetivo: Volver a verlo.
-export const enlaceArticulo = (i) => (i.tipo === 'cita' ? (i.fotoRefId ? `/galeria/${i.fotoRefId}` : '/servicios') : i.fotoId ? `/galeria/${i.fotoId}` : `/tienda/${i.productoId ?? i.id}`);
+export const enlaceArticulo = (item) => (item.tipo === 'cita' ? (item.fotoRefId ? `/galeria/${item.fotoRefId}` : '/servicios') : item.fotoId ? `/galeria/${item.fotoId}` : `/tienda/${item.productoId ?? item.id}`);
 
 // Nombre: CarritoLateral
 // Descripción: Muestra el carrito lateral.
@@ -35,7 +36,7 @@ export default function CarritoLateral() {
     // Entrada: Nada.
     // Salida: Nada.
     // Objetivo: Mostrar u ocultar.
-    const alternar = () => setAbierto((a) => !a);
+    const alternar = () => setAbierto((anterior) => !anterior);
     window.addEventListener('carrito:alternar', alternar);
     return () => window.removeEventListener('carrito:alternar', alternar);
   }, []);
@@ -67,8 +68,8 @@ export default function CarritoLateral() {
       </>
     );
   }
-  const pocos = carrito.elegidos.filter((i) => i.stock > 0 && i.stock < 10).length;
-  const todos = carrito.items.every((i) => i.seleccionado !== false);
+  const pocos = carrito.elegidos.filter((elegido) => elegido.stock > 0 && elegido.stock < 10).length;
+  const todos = carrito.items.every((item) => item.seleccionado !== false);
 
   return (
     <>
@@ -92,25 +93,25 @@ export default function CarritoLateral() {
           Seleccionar todo ({carrito.items.length})
         </label>
         <ul className="carrito-lateral__lista">
-          {carrito.items.map((i) => (
-            <li key={i.clave}>
+          {carrito.items.map((item) => (
+            <li key={item.clave}>
               <div className="carrito-lateral__foto">
-                <Link to={enlaceArticulo(i)} tabIndex={-1} aria-hidden="true"><ProductoImagen producto={i} /></Link>
-                <input type="checkbox" className="marca carrito-lateral__marca" checked={i.seleccionado !== false}
-                       onChange={(evento) => carrito.seleccionar(i.clave, evento.target.checked)} aria-label={`Incluir ${i.nombre} en el pedido`} />
-                {i.stock > 0 && i.stock < 10 && <span>Casi agotado</span>}
-                {i.stock === 0 && <span>Agotado</span>}
+                <Link to={enlaceArticulo(item)} tabIndex={-1} aria-hidden="true"><ProductoImagen producto={item} /></Link>
+                <input type="checkbox" className="marca carrito-lateral__marca" checked={item.seleccionado !== false}
+                       onChange={(evento) => carrito.seleccionar(item.clave, evento.target.checked)} aria-label={`Incluir ${item.nombre} en el pedido`} />
+                {item.stock > 0 && item.stock < 10 && <span>Casi agotado</span>}
+                {item.stock === 0 && <span>Agotado</span>}
               </div>
-              <p className="carrito-lateral__precio">{dinero(i.precio)}</p>
-              {i.tipo === 'cita' && <p className="carrito-lateral__cita">{i.fechaTexto}, {i.hora}</p>}
-              {i.unico ? (
-                <button type="button" className="carrito-lateral__quitar" onClick={() => carrito.quitar(i.clave)}>Quitar</button>
+              <p className="carrito-lateral__precio">{dinero(item.precio)}</p>
+              {item.tipo === 'cita' && <p className="carrito-lateral__cita">{item.fechaTexto}, {item.hora}</p>}
+              {item.unico ? (
+                <button type="button" className="carrito-lateral__quitar" onClick={() => carrito.quitar(item.clave)}>Quitar</button>
               ) : (
                 <>
-                  <label className="solo-lector" htmlFor={`cant-${i.clave}`}>Cantidad de {i.nombre}</label>
-                  <select id={`cant-${i.clave}`} value={i.cantidad} onChange={(evento) => carrito.fijar(i.clave, evento.target.value)}>
+                  <label className="solo-lector" htmlFor={`cant-${item.clave}`}>Cantidad de {item.nombre}</label>
+                  <select id={`cant-${item.clave}`} value={item.cantidad} onChange={(evento) => carrito.fijar(item.clave, evento.target.value)}>
                     <option value="0">Quitar</option>
-                    {Array.from({ length: Math.max(10, i.cantidad) }, (_, n) => <option key={n + 1} value={n + 1}>{n + 1}</option>)}
+                    {Array.from({ length: Math.max(10, item.cantidad) }, (_, numero) => <option key={numero + 1} value={numero + 1}>{numero + 1}</option>)}
                   </select>
                 </>
               )}

@@ -1,3 +1,4 @@
+// Ventana que se abre encima de la página; se cierra con la X, con Escape o tocando afuera.
 import { useEffect, useRef } from 'react';
 
 // Ventana emergente accesible con <dialog>: cierra con Escape, con la X o tocando afuera
@@ -9,8 +10,8 @@ import { useEffect, useRef } from 'react';
 export default function Modal({ titulo, onCerrar, children, ancho = false, ocultarTitulo = false }) {
   const ref = useRef(null);
   useEffect(() => {
-    const d = ref.current;
-    if (!d.open) d.showModal();
+    const dialogo = ref.current;
+    if (!dialogo.open) dialogo.showModal();
     document.body.classList.add('con-modal');
     return () => document.body.classList.remove('con-modal');
   }, []);

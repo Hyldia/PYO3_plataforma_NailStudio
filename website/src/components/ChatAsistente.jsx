@@ -19,7 +19,7 @@ export function usarFotoAsistente() {
   const [foto, setFoto] = useState(fotoSubida);
   useEffect(() => {
     oyentes.add(setFoto);
-    if (fotoSubida === undefined) api.asistente().then((respuesta) => { fotoSubida = respuesta.foto ? urlFoto(respuesta.foto) : null; oyentes.forEach((f) => f(fotoSubida)); }).catch(() => { fotoSubida = null; });
+    if (fotoSubida === undefined) api.asistente().then((respuesta) => { fotoSubida = respuesta.foto ? urlFoto(respuesta.foto) : null; oyentes.forEach((oyente) => oyente(fotoSubida)); }).catch(() => { fotoSubida = null; });
     return () => oyentes.delete(setFoto);
   }, []);
   return foto;
@@ -29,7 +29,7 @@ export function usarFotoAsistente() {
 // Entrada: La foto.
 // Salida: Nada.
 // Objetivo: Actualizarla en todo el sitio.
-export const avisarFotoAsistente = (foto) => { fotoSubida = foto ? urlFoto(foto) : null; oyentes.forEach((f) => f(fotoSubida)); };
+export const avisarFotoAsistente = (foto) => { fotoSubida = foto ? urlFoto(foto) : null; oyentes.forEach((oyente) => oyente(fotoSubida)); };
 
 const CLAVE = 'ahnails-chat';
 // Nombre: leer
@@ -123,16 +123,16 @@ function Burbuja({ m, onOpcion }) {
         <p>{m.texto}</p>
         {m.enlaces?.length > 0 && (
           <div className="chat__enlaces">
-            {m.enlaces.map((e) => (e.to
-              ? <Link key={e.texto} to={e.to} className="chat__enlace">{e.texto} ›</Link>
-              : <a key={e.texto} href={e.href} target="_blank" rel="noreferrer" className="chat__enlace chat__enlace--wa">{e.texto} ›</a>))}
+            {m.enlaces.map((enlaz) => (enlaz.to
+              ? <Link key={enlaz.texto} to={enlaz.to} className="chat__enlace">{enlaz.texto} ›</Link>
+              : <a key={enlaz.texto} href={enlaz.href} target="_blank" rel="noreferrer" className="chat__enlace chat__enlace--wa">{enlaz.texto} ›</a>))}
           </div>
         )}
         <span className="chat__hora">{m.hora}{m.de === 'yo' && ' ✓✓'}</span>
       </div>
       {m.opciones?.length > 0 && (
         <div className="chat__opciones">
-          {m.opciones.map((o) => <button key={o} type="button" onClick={() => onOpcion(o)}>{o}</button>)}
+          {m.opciones.map((opcion) => <button key={opcion} type="button" onClick={() => onOpcion(opcion)}>{opcion}</button>)}
         </div>
       )}
     </li>
@@ -156,20 +156,20 @@ export default function ChatAsistente() {
   const [escribiendo, setEscribiendo] = useState(false);
   const [saludo, setSaludo] = useState(false);
   const [noLeidos, setNoLeidos] = useState(1);
-  const ctx = useRef({ servicios: [], cupones: [], especialistas: [] });
+  const datosChat = useRef({ servicios: [], cupones: [], especialistas: [] });
   const lista = useRef(null);
   const entrada = useRef(null);
   const cadena = useMemo(() => crearCadena(), []);
   const subida = usarFotoAsistente();
 
   useEffect(() => {
-    api.servicios().then((respuesta) => { ctx.current.servicios = respuesta.servicios || respuesta; }).catch(() => {});
-    api.cupones().then((respuesta) => { ctx.current.cupones = respuesta; }).catch(() => {});
-    api.especialistas().then((respuesta) => { ctx.current.especialistas = respuesta; }).catch(() => {});
+    api.servicios().then((respuesta) => { datosChat.current.servicios = respuesta.servicios || respuesta; }).catch(() => {});
+    api.cupones().then((respuesta) => { datosChat.current.cupones = respuesta; }).catch(() => {});
+    api.especialistas().then((respuesta) => { datosChat.current.especialistas = respuesta; }).catch(() => {});
     // Saludo flotante una vez por visita
-    const t = setTimeout(() => setSaludo(true), 4000);
+    const temporizador = setTimeout(() => setSaludo(true), 4000);
     const t2 = setTimeout(() => setSaludo(false), 14000);
-    return () => { clearTimeout(t); clearTimeout(t2); };
+    return () => { clearTimeout(temporizador); clearTimeout(t2); };
   }, []);
   useEffect(() => { guardar(mensajes); lista.current?.scrollTo({ top: lista.current.scrollHeight, behavior: 'smooth' }); }, [mensajes, escribiendo]);
   useEffect(() => { if (abierto) { setNoLeidos(0); setSaludo(false); setTimeout(() => entrada.current?.focus(), 250); } }, [abierto]);
@@ -180,18 +180,18 @@ export default function ChatAsistente() {
   // Salida: Nada.
   // Objetivo: Recibir respuesta.
   async function enviar(pregunta) {
-    const q = String(pregunta || '').trim();
-    if (!q || escribiendo) return;
+    const consulta = String(pregunta || '').trim();
+    if (!consulta || escribiendo) return;
     setTexto('');
-    setMensajes((m) => [...m.map((x) => ({ ...x, opciones: undefined })), { de: 'yo', texto: q, hora: hora() }]);
+    setMensajes((anterior) => [...anterior.map((mensaje) => ({ ...mensaje, opciones: undefined })), { de: 'yo', texto: consulta, hora: hora() }]);
     setEscribiendo(true);
-    const respuesta = await cadena.atender(normalizar(q), ctx.current);
+    const respuesta = await cadena.atender(normalizar(consulta), datosChat.current);
     // Pausa como si escribiera (más larga si la respuesta es larga)
     const espera = Math.min(2200, 650 + respuesta.texto.length * 9);
     setTimeout(() => {
       setEscribiendo(false);
-      setMensajes((m) => [...m, { de: 'sofi', hora: hora(), ...respuesta }]);
-      if (!abierto) setNoLeidos((n) => n + 1);
+      setMensajes((anterior) => [...anterior, { de: 'sofi', hora: hora(), ...respuesta }]);
+      if (!abierto) setNoLeidos((anterior) => anterior + 1);
     }, espera);
   }
 
@@ -217,7 +217,7 @@ export default function ChatAsistente() {
             <button type="button" className="chat__icono" onClick={() => setAbierto(false)} aria-label="Cerrar el chat">×</button>
           </header>
           <ol className="chat__lista" ref={lista} aria-live="polite">
-            {mensajes.map((m, i) => <Burbuja key={i} m={m} onOpcion={enviar} />)}
+            {mensajes.map((mensaje, i) => <Burbuja key={i} m={mensaje} onOpcion={enviar} />)}
             {escribiendo && (
               <li className="chat__msj chat__msj--sofi">
                 <span className="chat__mini"><AvatarSofi tam={28} /></span>

@@ -1,3 +1,4 @@
+// Botón de corazón para guardar o quitar un diseño o producto de favoritos.
 import { useState } from 'react';
 import { useFavoritos } from '../context/FavoritosContext.jsx';
 
@@ -8,9 +9,9 @@ import { useFavoritos } from '../context/FavoritosContext.jsx';
 // Salida: El botón.
 // Objetivo: Guardar lo que gusta.
 export default function BotonFavorito({ tipo, datos, nombre, clase = '' }) {
-  const fav = useFavoritos();
+  const favoritos = useFavoritos();
   const [pop, setPop] = useState(0);
-  const activo = fav.tiene(tipo, datos.id);
+  const activo = favoritos.tiene(tipo, datos.id);
   // Nombre: tocar
   // Descripción: Guarda o quita de favoritos.
   // Entrada: El clic.
@@ -18,8 +19,8 @@ export default function BotonFavorito({ tipo, datos, nombre, clase = '' }) {
   // Objetivo: Marcar favoritos.
   const tocar = (evento) => {
     evento.preventDefault(); evento.stopPropagation();
-    if (!activo) setPop((n) => n + 1);
-    fav.alternar(tipo, datos);
+    if (!activo) setPop((anterior) => anterior + 1);
+    favoritos.alternar(tipo, datos);
   };
   return (
     <button type="button" className={`corazon ${activo ? 'corazon--activo' : ''} ${clase}`} onClick={tocar} aria-pressed={activo}

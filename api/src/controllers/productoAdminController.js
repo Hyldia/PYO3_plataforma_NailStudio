@@ -40,10 +40,10 @@ export const productoAdminController = {
   // Salida: Nada.
   // Objetivo: Quitar productos que ya no se venden.
   eliminarProducto(req, res) {
-    const p = ProductoModel.buscarPorId(req.params.id);
-    if (!p) return res.status(404).json({ error: 'No existe ese producto.' });
-    const resultado = ProductoModel.eliminar(p.id);
-    if (resultado === 'borrado') borrarSubida(p.imagen);
+    const producto = ProductoModel.buscarPorId(req.params.id);
+    if (!producto) return res.status(404).json({ error: 'No existe ese producto.' });
+    const resultado = ProductoModel.eliminar(producto.id);
+    if (resultado === 'borrado') borrarSubida(producto.imagen);
     res.json({ resultado });
   },
 

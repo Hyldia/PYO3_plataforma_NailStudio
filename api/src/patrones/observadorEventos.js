@@ -12,9 +12,9 @@ export const eventos = new EventEmitter();
 // Salida: La fecha y hora nueva.
 // Objetivo: Programar recordatorios.
 function restarHoras(fecha, hora, horas) {
-  const d = new Date(`${fecha}T${hora}:00`);
-  d.setHours(d.getHours() - horas);
-  return d.toISOString();
+  const dia = new Date(`${fecha}T${hora}:00`);
+  dia.setHours(dia.getHours() - horas);
+  return dia.toISOString();
 }
 
 eventos.on('cita:creada', ({ cita, recordatorios }) => {

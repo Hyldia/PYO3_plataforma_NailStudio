@@ -24,19 +24,19 @@ async function main() {
   if (!lista.length) { console.log('Todas las especialistas ya tienen foto. Usa --todas para cambiarlas.'); return; }
 
   const pool = [];
-  for (const q of BUSQUEDAS) {
+  for (const busqueda of BUSQUEDAS) {
     if (pool.length >= lista.length * 2) break;
-    const { results = [] } = await buscarUnsplash(CLAVE, q, 1);
-    results.forEach((f) => { if (!pool.some((x) => x.id === f.id)) pool.push(f); });
+    const { results = [] } = await buscarUnsplash(CLAVE, busqueda, 1);
+    results.forEach((resultado) => { if (!pool.some((foto) => foto.id === resultado.id)) pool.push(resultado); });
   }
   const guardar = db.prepare('UPDATE especialistas SET foto = ?, foto_autor = ?, foto_autor_url = ? WHERE id = ?');
-  lista.forEach((e, i) => {
-    const f = pool[i];
-    if (!f) return;
-    const a = autorUnsplash(f);
-    guardar.run(urlFotoUnsplash(f), a.autor, a.autor_url, e.id);
+  lista.forEach((elemento, i) => {
+    const foto = pool[i];
+    if (!foto) return;
+    const autor = autorUnsplash(foto);
+    guardar.run(urlFotoUnsplash(foto), autor.autor, autor.autor_url, elemento.id);
   });
   console.log(`Listo: ${Math.min(lista.length, pool.length)} especialistas con foto.`);
 }
 
-main().catch((e) => { console.error(e.message); process.exit(1); });
+main().catch((fallo) => { console.error(fallo.message); process.exit(1); });

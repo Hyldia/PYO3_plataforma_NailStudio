@@ -8,9 +8,9 @@ export const MensajeModel = {
   // Salida: El mensaje.
   // Objetivo: Llevar registro de avisos.
   registrar({ citaId = null, pedidoId = null, cliente, telefono, tipo, texto, enlace }) {
-    const r = getDb().prepare(`INSERT INTO mensajes (cita_id, pedido_id, cliente, telefono, tipo, texto, enlace) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    const resultado = getDb().prepare(`INSERT INTO mensajes (cita_id, pedido_id, cliente, telefono, tipo, texto, enlace) VALUES (?, ?, ?, ?, ?, ?, ?)`)
       .run(citaId, pedidoId, cliente, telefono, tipo, texto, enlace);
-    return getDb().prepare('SELECT * FROM mensajes WHERE id = ?').get(r.lastInsertRowid);
+    return getDb().prepare('SELECT * FROM mensajes WHERE id = ?').get(resultado.lastInsertRowid);
   },
   // Nombre: listar
   // Descripción: Lista los mensajes.

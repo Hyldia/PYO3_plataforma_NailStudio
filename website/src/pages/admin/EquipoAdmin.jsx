@@ -23,8 +23,8 @@ function FotoAsistente({ onAviso }) {
   // Salida: Nada.
   // Objetivo: Cambiarla.
   const subir = async (archivo) => {
-    try { const r = await api.admin.fotoAsistente(formData(archivo)); avisarFotoAsistente(r.foto); onAviso({ texto: 'Listo: la foto nueva ya sale en el chat.' }); }
-    catch (e) { onAviso({ texto: e.message, error: true }); }
+    try { const respuesta = await api.admin.fotoAsistente(formData(archivo)); avisarFotoAsistente(respuesta.foto); onAviso({ texto: 'Listo: la foto nueva ya sale en el chat.' }); }
+    catch (fallo) { onAviso({ texto: fallo.message, error: true }); }
   };
   // Nombre: quitar
   // Descripción: Quita la foto.
@@ -33,7 +33,7 @@ function FotoAsistente({ onAviso }) {
   // Objetivo: Volver al dibujo.
   const quitar = async () => {
     try { await api.admin.quitarFotoAsistente(); avisarFotoAsistente(null); onAviso({ texto: 'Se quitó la foto subida; el chat vuelve a la foto de config.js.' }); }
-    catch (e) { onAviso({ texto: e.message, error: true }); }
+    catch (fallo) { onAviso({ texto: fallo.message, error: true }); }
   };
   return (
     <div className="asistente-admin">
@@ -66,7 +66,7 @@ const textoDias = (dias = '') => DIAS_SEMANA.filter(([k]) => dias.split(',').inc
 // Objetivo: Editar sus datos.
 export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
   const nueva = !persona.id;
-  const [d, setD] = useState({ ...VACIA, ...persona, bio: persona.bio ?? '', experiencia: persona.experiencia ?? '' });
+  const [datos, setDatos] = useState({ ...VACIA, ...persona, bio: persona.bio ?? '', experiencia: persona.experiencia ?? '' });
   const [archivo, setArchivo] = useState([]);
   const [estado, setEstado] = useState({ guardando: false, error: '' });
   // Nombre: set
@@ -74,28 +74,28 @@ export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
-  const dias = d.dias.split(',').filter(Boolean);
+  const set = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value });
+  const dias = datos.dias.split(',').filter(Boolean);
   // Nombre: alternarDia
   // Descripción: Marca o desmarca un día de trabajo.
   // Entrada: El día.
   // Salida: Nada.
   // Objetivo: Elegir sus días.
-  const alternarDia = (k) => setD({ ...d, dias: (dias.includes(k) ? dias.filter((x) => x !== k) : [...dias, k]).sort().join(',') });
+  const alternarDia = (campo) => setDatos({ ...datos, dias: (dias.includes(campo) ? dias.filter((dia) => dia !== campo) : [...dias, campo]).sort().join(',') });
 
   // Nombre: guardar
   // Descripción: Guarda la especialista.
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Crear o editar.
-  async function guardar(e) {
-    e.preventDefault();
+  async function guardar(evento) {
+    evento.preventDefault();
     setEstado({ guardando: true, error: '' });
     try {
-      const r = nueva ? await api.admin.crearEspecialista(d) : await api.admin.editarEspecialista(d.id, d);
-      const conFoto = archivo[0] ? await api.admin.fotoEspecialista(r.id, formData(archivo[0])) : null;
-      onGuardado(nueva ? `${r.nombre} se agregó al equipo.` : 'Cambios guardados.');
-      if (embebido) { if (conFoto?.foto) setD((x) => ({ ...x, foto: conFoto.foto })); setArchivo([]); setEstado({ guardando: false, error: '', ok: 'Cambios guardados.' }); } else onCerrar();
+      const guardada = nueva ? await api.admin.crearEspecialista(datos) : await api.admin.editarEspecialista(datos.id, datos);
+      const conFoto = archivo[0] ? await api.admin.fotoEspecialista(guardada.id, formData(archivo[0])) : null;
+      onGuardado(nueva ? `${guardada.nombre} se agregó al equipo.` : 'Cambios guardados.');
+      if (embebido) { if (conFoto?.foto) setDatos((anterior) => ({ ...anterior, foto: conFoto.foto })); setArchivo([]); setEstado({ guardando: false, error: '', ok: 'Cambios guardados.' }); } else onCerrar();
     } catch (err) { setEstado({ guardando: false, error: err.message }); }
   }
 
@@ -103,26 +103,26 @@ export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
   const formulario = (
       <form className="editor-admin" onSubmit={guardar}>
         <div className="editor-admin__previa">
-          {(previa || d.foto) && (
+          {(previa || datos.foto) && (
             <div className="editor-admin__foto editor-admin__foto--persona">
-              {previa ? <img src={previa} alt="" /> : <Foto archivo={d.foto} alt="" />}
+              {previa ? <img src={previa} alt="" /> : <Foto archivo={datos.foto} alt="" />}
             </div>
           )}
-          {nueva || !d.foto ? <ZonaFotos archivos={archivo} onCambio={setArchivo} multiple={false} id="e-foto" texto="Foto de la especialista" />
-            : <BotonFoto texto={archivo[0] ? 'Elegir otra foto' : 'Cambiar foto'} onArchivo={(f) => setArchivo([f])} />}
+          {nueva || !datos.foto ? <ZonaFotos archivos={archivo} onCambio={setArchivo} multiple={false} id="e-foto" texto="Foto de la especialista" />
+            : <BotonFoto texto={archivo[0] ? 'Elegir otra foto' : 'Cambiar foto'} onArchivo={(archivo) => setArchivo([archivo])} />}
           <div className="editor-admin__tarjeta">
-            <p className="editor-admin__nombre">{d.nombre || 'Nombre'}</p>
-            <p className="tenue">{d.especialidad || 'Especialidad'}</p>
-            <p className="tenue">{textoDias(d.dias)} · {d.hora_inicio}–{d.hora_fin}</p>
+            <p className="editor-admin__nombre">{datos.nombre || 'Nombre'}</p>
+            <p className="tenue">{datos.especialidad || 'Especialidad'}</p>
+            <p className="tenue">{textoDias(datos.dias)} · {datos.hora_inicio}–{datos.hora_fin}</p>
           </div>
         </div>
         <div className="editor-admin__campos">
           <div className="campos-dos">
-            <div className="campo"><label htmlFor="e-nombre">Nombre</label><input id="e-nombre" value={d.nombre} onChange={set('nombre')} required /></div>
-            <div className="campo"><label htmlFor="e-exp">Años de experiencia</label><input id="e-exp" type="number" min="0" max="50" value={d.experiencia} onChange={set('experiencia')} /></div>
+            <div className="campo"><label htmlFor="e-nombre">Nombre</label><input id="e-nombre" value={datos.nombre} onChange={set('nombre')} required /></div>
+            <div className="campo"><label htmlFor="e-exp">Años de experiencia</label><input id="e-exp" type="number" min="0" max="50" value={datos.experiencia} onChange={set('experiencia')} /></div>
           </div>
-          <div className="campo"><label htmlFor="e-esp">Especialidad</label><input id="e-esp" value={d.especialidad} onChange={set('especialidad')} placeholder="Ej.: Nail art y diseños a mano" required /></div>
-          <div className="campo"><label htmlFor="e-bio">Presentación <span className="tenue">(la ven las clientas al reservar)</span></label><textarea id="e-bio" rows="3" value={d.bio} onChange={set('bio')} /></div>
+          <div className="campo"><label htmlFor="e-esp">Especialidad</label><input id="e-esp" value={datos.especialidad} onChange={set('especialidad')} placeholder="Ej.: Nail art y diseños a mano" required /></div>
+          <div className="campo"><label htmlFor="e-bio">Presentación <span className="tenue">(la ven las clientas al reservar)</span></label><textarea id="e-bio" rows="3" value={datos.bio} onChange={set('bio')} /></div>
           <fieldset className="grupo">
             <legend className="grupo__titulo grupo__titulo--chico">Días de trabajo</legend>
             <div className="dias-chips">
@@ -132,10 +132,10 @@ export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
             </div>
           </fieldset>
           <div className="campos-dos">
-            <div className="campo"><label htmlFor="e-ini">Entra a las</label><select id="e-ini" value={d.hora_inicio} onChange={set('hora_inicio')}>{HORAS.map((h) => <option key={h}>{h}</option>)}</select></div>
-            <div className="campo"><label htmlFor="e-fin">Última cita a las</label><select id="e-fin" value={d.hora_fin} onChange={set('hora_fin')}>{HORAS.map((h) => <option key={h}>{h}</option>)}</select></div>
+            <div className="campo"><label htmlFor="e-ini">Entra a las</label><select id="e-ini" value={datos.hora_inicio} onChange={set('hora_inicio')}>{HORAS.map((hora) => <option key={hora}>{hora}</option>)}</select></div>
+            <div className="campo"><label htmlFor="e-fin">Última cita a las</label><select id="e-fin" value={datos.hora_fin} onChange={set('hora_fin')}>{HORAS.map((hora) => <option key={hora}>{hora}</option>)}</select></div>
           </div>
-          <label className="casilla"><input type="checkbox" checked={Boolean(Number(d.activa))} onChange={(evento) => setD({ ...d, activa: evento.target.checked ? 1 : 0 })} /><span>Activa (aparece al reservar)</span></label>
+          <label className="casilla"><input type="checkbox" checked={Boolean(Number(datos.activa))} onChange={(evento) => setDatos({ ...datos, activa: evento.target.checked ? 1 : 0 })} /><span>Activa (aparece al reservar)</span></label>
           {estado.error && <p role="alert" className="error">{estado.error}</p>}
           {estado.ok && <p role="status" className="aviso-ok">{estado.ok}</p>}
           <div className="botones">
@@ -166,7 +166,7 @@ export default function EquipoAdmin() {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Mostrar la lista.
-  const cargar = () => api.admin.equipo().then(setLista).catch((e) => setAviso({ texto: e.message, error: true }));
+  const cargar = () => api.admin.equipo().then(setLista).catch((fallo) => setAviso({ texto: fallo.message, error: true }));
   useEffect(() => { cargar(); }, []);
   const paginas = Math.ceil(lista.length / POR_PAGINA);
   const equipoVisible = lista.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
@@ -179,11 +179,11 @@ export default function EquipoAdmin() {
   // Entrada: La especialista.
   // Salida: Nada.
   // Objetivo: Sacarla del equipo.
-  const quitar = async (e) => {
-    if (!window.confirm(`¿Quitar a ${e.nombre} del equipo?`)) return;
+  const quitar = async (especialista) => {
+    if (!window.confirm(`¿Quitar a ${especialista.nombre} del equipo?`)) return;
     try {
-      const r = await api.admin.borrarEspecialista(e.id);
-      setAviso({ texto: r.resultado === 'desactivada' ? `${e.nombre} tiene citas en el historial: quedó desactivada (ya no aparece al reservar).` : `${e.nombre} se quitó del equipo.` });
+      const respuesta = await api.admin.borrarEspecialista(especialista.id);
+      setAviso({ texto: respuesta.resultado === 'desactivada' ? `${especialista.nombre} tiene citas en el historial: quedó desactivada (ya no aparece al reservar).` : `${especialista.nombre} se quitó del equipo.` });
       cargar();
     } catch (err) { setAviso({ texto: err.message, error: true }); }
   };
@@ -197,47 +197,47 @@ export default function EquipoAdmin() {
 
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <ul ref={rejilla} className="admin-tarjetas admin-tarjetas--equipo">
-        {equipoVisible.map((e, i) => (
-          <li key={e.id} className={`admin-tarjeta ${e.activa ? '' : 'admin-tarjeta--inactiva'}`} style={{ '--n': i }}>
+        {equipoVisible.map((especialista, i) => (
+          <li key={especialista.id} className={`admin-tarjeta ${especialista.activa ? '' : 'admin-tarjeta--inactiva'}`} style={{ '--n': i }}>
             <div className="admin-tarjeta__foto admin-tarjeta__foto--persona">
-              {e.foto ? <Foto archivo={e.foto} alt={e.nombre} /> : <div className="admin-foto__inicial" aria-hidden="true">{e.nombre[0]}</div>}
-              <span className={`admin-tarjeta__sello ${e.activa ? 'admin-tarjeta__sello--verde' : ''}`}>{e.activa ? 'Activa' : 'Inactiva'}</span>
+              {especialista.foto ? <Foto archivo={especialista.foto} alt={especialista.nombre} /> : <div className="admin-foto__inicial" aria-hidden="true">{especialista.nombre[0]}</div>}
+              <span className={`admin-tarjeta__sello ${especialista.activa ? 'admin-tarjeta__sello--verde' : ''}`}>{especialista.activa ? 'Activa' : 'Inactiva'}</span>
             </div>
             <div className="admin-tarjeta__info">
-              <p className="admin-tarjeta__nombre">{e.nombre}{e.experiencia ? <span className="tenue"> · {e.experiencia} años</span> : null}</p>
-              <p className="tenue">{e.especialidad}</p>
-              <p className="dias-mini">{DIAS_SEMANA.map(([k, t]) => <span key={k} className={(e.dias || '').split(',').includes(k) ? 'si' : ''}>{t[0]}</span>)}</p>
-              <p className="tenue">{e.hora_inicio} – {e.hora_fin} · {e.citas} citas</p>
+              <p className="admin-tarjeta__nombre">{especialista.nombre}{especialista.experiencia ? <span className="tenue"> · {especialista.experiencia} años</span> : null}</p>
+              <p className="tenue">{especialista.especialidad}</p>
+              <p className="dias-mini">{DIAS_SEMANA.map(([k, t]) => <span key={k} className={(especialista.dias || '').split(',').includes(k) ? 'si' : ''}>{t[0]}</span>)}</p>
+              <p className="tenue">{especialista.hora_inicio} – {especialista.hora_fin} · {especialista.citas} citas</p>
               <p className="equipo-admin__datos">
-                <span>{e.estacion || 'Sin estación'}</span>
-                <span>{e.esquema_pago === 'base_comision' ? 'Base + ' : ''}{e.comision} %</span>
-                {e.ausencias_proximas > 0 && <span className="equipo-admin__libres">{e.ausencias_proximas} {e.ausencias_proximas === 1 ? 'día libre' : 'días libres'}</span>}
-                <span className={e.tiene_acceso ? 'equipo-admin__acceso' : 'equipo-admin__sin'}>{e.tiene_acceso ? `Usuario: ${e.usuario}` : 'Sin usuario'}</span>
+                <span>{especialista.estacion || 'Sin estación'}</span>
+                <span>{especialista.esquema_pago === 'base_comision' ? 'Base + ' : ''}{especialista.comision} %</span>
+                {especialista.ausencias_proximas > 0 && <span className="equipo-admin__libres">{especialista.ausencias_proximas} {especialista.ausencias_proximas === 1 ? 'día libre' : 'días libres'}</span>}
+                <span className={especialista.tiene_acceso ? 'equipo-admin__acceso' : 'equipo-admin__sin'}>{especialista.tiene_acceso ? `Usuario: ${especialista.usuario}` : 'Sin usuario'}</span>
               </p>
             </div>
             <div className="admin-tarjeta__botones equipo-admin__botones">
-              <button type="button" className="boton boton--chico equipo-admin__ficha" onClick={() => setAjustes({ id: e.id, inicio: 'datos' })}>
+              <button type="button" className="boton boton--chico equipo-admin__ficha" onClick={() => setAjustes({ id: especialista.id, inicio: 'datos' })}>
                 <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13 7 4 4" /></svg>
-                Abrir ficha<span className="solo-lector"> de {e.nombre}</span>
+                Abrir ficha<span className="solo-lector"> de {especialista.nombre}</span>
               </button>
-              <button type="button" className="enlace enlace--boton enlace--chico equipo-admin__quitar" onClick={() => quitar(e)}>Quitar del equipo<span className="solo-lector">: {e.nombre}</span></button>
+              <button type="button" className="enlace enlace--boton enlace--chico equipo-admin__quitar" onClick={() => quitar(especialista)}>Quitar del equipo<span className="solo-lector">: {especialista.nombre}</span></button>
             </div>
           </li>
         ))}
       </ul>
-      <VerMas pagina={pagina} paginas={paginas} onCambiar={(n) => {
-        setPagina(n);
+      <VerMas pagina={pagina} paginas={paginas} onCambiar={(numero) => {
+        setPagina(numero);
         requestAnimationFrame(() => document.getElementById('t-equipo')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
       }} />
       <details className="ajuste-chat">
         <summary><span><b>Foto de Sofi, la asistente del chat</b><small>La que ven las clientas en el botón del chat</small></span></summary>
         <FotoAsistente onAviso={setAviso} />
       </details>
-      {ajustes && lista.find((x) => x.id === ajustes.id) && (
-        <AjustesEspecialista persona={lista.find((x) => x.id === ajustes.id)} inicio={ajustes.inicio} onCerrar={() => setAjustes(null)} onGuardado={cargar}
-          datos={<Editor key={ajustes.id} persona={lista.find((x) => x.id === ajustes.id)} embebido onCerrar={() => setAjustes(null)} onGuardado={(t) => { setAviso({ texto: t }); cargar(); }} />} />
+      {ajustes && lista.find((elemento) => elemento.id === ajustes.id) && (
+        <AjustesEspecialista persona={lista.find((elemento) => elemento.id === ajustes.id)} inicio={ajustes.inicio} onCerrar={() => setAjustes(null)} onGuardado={cargar}
+          datos={<Editor key={ajustes.id} persona={lista.find((elemento) => elemento.id === ajustes.id)} embebido onCerrar={() => setAjustes(null)} onGuardado={(texto) => { setAviso({ texto: texto }); cargar(); }} />} />
       )}
-      {editando && <Editor persona={editando} onCerrar={() => setEditando(null)} onGuardado={(t) => { setAviso({ texto: t }); cargar(); }} />}
+      {editando && <Editor persona={editando} onCerrar={() => setEditando(null)} onGuardado={(texto) => { setAviso({ texto: texto }); cargar(); }} />}
     </section>
   );
 }

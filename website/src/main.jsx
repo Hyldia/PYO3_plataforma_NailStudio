@@ -1,3 +1,4 @@
+// Punto de entrada del sitio: carga las letras y estilos y envuelve la app con los datos compartidos (carrito, reserva, cuenta, favoritos).
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

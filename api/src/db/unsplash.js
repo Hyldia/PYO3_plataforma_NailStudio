@@ -22,13 +22,13 @@ export function claveUnsplash() {
 // Objetivo: Conseguir fotos reales.
 export async function buscarUnsplash(clave, query, page = 1, perPage = 30) {
   const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}&content_filter=high`;
-  const res = await fetch(url, { headers: { Authorization: `Client-ID ${clave}`, 'Accept-Version': 'v1' } });
-  if (res.status === 401) throw new Error('La clave de Unsplash no es válida.');
-  if (res.status === 403) throw new Error('Se alcanzó el límite de Unsplash (50 consultas por hora). Espera una hora y vuelve a correr el comando: sigue donde quedó.');
-  if (!res.ok) throw new Error(`Unsplash respondió ${res.status}.`);
-  const datos = await res.json();
+  const respuesta = await fetch(url, { headers: { Authorization: `Client-ID ${clave}`, 'Accept-Version': 'v1' } });
+  if (respuesta.status === 401) throw new Error('La clave de Unsplash no es válida.');
+  if (respuesta.status === 403) throw new Error('Se alcanzó el límite de Unsplash (50 consultas por hora). Espera una hora y vuelve a correr el comando: sigue donde quedó.');
+  if (!respuesta.ok) throw new Error(`Unsplash respondió ${respuesta.status}.`);
+  const datos = await respuesta.json();
   // Solo fotos gratuitas
-  datos.results = (datos.results || []).filter((f) => !f.premium && !f.plus);
+  datos.results = (datos.results || []).filter((foto) => !foto.premium && !foto.plus);
   return datos;
 }
 
@@ -37,7 +37,7 @@ export async function buscarUnsplash(clave, query, page = 1, perPage = 30) {
 // Entrada: La foto.
 // Salida: El enlace con tamaño ajustado.
 // Objetivo: Que las fotos carguen rápido.
-export const urlFotoUnsplash = (f) => `${f.urls.raw.split('?')[0]}?auto=format&fit=crop&w=1000&q=70`;
+export const urlFotoUnsplash = (foto) => `${foto.urls.raw.split('?')[0]}?auto=format&fit=crop&w=1000&q=70`;
 // Nombre: autorUnsplash
 // Descripción: Arma los datos del autor de una foto.
 // Entrada: La foto.

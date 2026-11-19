@@ -17,9 +17,9 @@ export const EspecialistaModel = {
   // Entrada: Nada.
   // Salida: La lista.
   // Objetivo: Administrar el equipo.
-  listarTodas: () => getDb().prepare(`${SELECT} ORDER BY e.activa DESC, e.id`).all().map((e) => ({
-    ...e, tiene_acceso: Boolean(e.usuario),
-    ausencias_proximas: getDb().prepare("SELECT COUNT(*) AS n FROM ausencias WHERE especialista_id = ? AND fecha >= date('now', 'localtime')").get(e.id).n
+  listarTodas: () => getDb().prepare(`${SELECT} ORDER BY e.activa DESC, e.id`).all().map((fila) => ({
+    ...fila, tiene_acceso: Boolean(fila.usuario),
+    ausencias_proximas: getDb().prepare("SELECT COUNT(*) AS n FROM ausencias WHERE especialista_id = ? AND fecha >= date('now', 'localtime')").get(fila.id).n
   })),
   // Nombre: buscarPorId
   // Descripción: Busca una especialista.
@@ -33,13 +33,13 @@ export const EspecialistaModel = {
   // Entrada: Los datos.
   // Salida: Un error o nada.
   // Objetivo: Evitar datos inválidos.
-  validar(d) {
-    if (!d.nombre || String(d.nombre).trim().length < 2) return 'Escribe el nombre.';
-    if (!d.especialidad || String(d.especialidad).trim().length < 3) return 'Escribe la especialidad.';
-    const dias = String(d.dias || '').split(',').filter(Boolean);
-    if (!dias.length || dias.some((x) => !/^[1-7]$/.test(x))) return 'Elige al menos un día de trabajo.';
-    if (!/^\d{2}:\d{2}$/.test(d.hora_inicio || '') || !/^\d{2}:\d{2}$/.test(d.hora_fin || '')) return 'Revisa las horas de entrada y salida.';
-    if (d.hora_inicio >= d.hora_fin) return 'La hora de salida debe ser después de la de entrada.';
+  validar(datos) {
+    if (!datos.nombre || String(datos.nombre).trim().length < 2) return 'Escribe el nombre.';
+    if (!datos.especialidad || String(datos.especialidad).trim().length < 3) return 'Escribe la especialidad.';
+    const dias = String(datos.dias || '').split(',').filter(Boolean);
+    if (!dias.length || dias.some((dia) => !/^[1-7]$/.test(dia))) return 'Elige al menos un día de trabajo.';
+    if (!/^\d{2}:\d{2}$/.test(datos.hora_inicio || '') || !/^\d{2}:\d{2}$/.test(datos.hora_fin || '')) return 'Revisa las horas de entrada y salida.';
+    if (datos.hora_inicio >= datos.hora_fin) return 'La hora de salida debe ser después de la de entrada.';
     return null;
   },
   // Nombre: normalizar
@@ -47,30 +47,30 @@ export const EspecialistaModel = {
   // Entrada: Los datos.
   // Salida: Los datos limpios.
   // Objetivo: Guardar siempre igual.
-  normalizar: (d) => ({
-    nombre: String(d.nombre).trim().slice(0, 60), especialidad: String(d.especialidad).trim().slice(0, 80),
-    bio: d.bio ? String(d.bio).trim().slice(0, 300) : null, experiencia: d.experiencia === '' || d.experiencia == null ? null : Math.max(0, Math.floor(Number(d.experiencia))),
-    dias: [...new Set(String(d.dias).split(',').filter(Boolean))].sort().join(','), hora_inicio: d.hora_inicio, hora_fin: d.hora_fin,
-    activa: d.activa === false || d.activa === 0 || d.activa === '0' ? 0 : 1
+  normalizar: (datos) => ({
+    nombre: String(datos.nombre).trim().slice(0, 60), especialidad: String(datos.especialidad).trim().slice(0, 80),
+    bio: datos.bio ? String(datos.bio).trim().slice(0, 300) : null, experiencia: datos.experiencia === '' || datos.experiencia == null ? null : Math.max(0, Math.floor(Number(datos.experiencia))),
+    dias: [...new Set(String(datos.dias).split(',').filter(Boolean))].sort().join(','), hora_inicio: datos.hora_inicio, hora_fin: datos.hora_fin,
+    activa: datos.activa === false || datos.activa === 0 || datos.activa === '0' ? 0 : 1
   }),
   // Nombre: crear
   // Descripción: Crea una especialista.
   // Entrada: Los datos.
   // Salida: La especialista.
   // Objetivo: Sumar al equipo.
-  crear(d) {
-    const r = getDb().prepare(`INSERT INTO especialistas (nombre, especialidad, bio, experiencia, dias, hora_inicio, hora_fin, activa, esquema_pago, comision)
-      VALUES (@nombre, @especialidad, @bio, @experiencia, @dias, @hora_inicio, @hora_fin, @activa, 'comision', 65)`).run(d);
-    return this.buscarPorId(r.lastInsertRowid);
+  crear(datos) {
+    const resultado = getDb().prepare(`INSERT INTO especialistas (nombre, especialidad, bio, experiencia, dias, hora_inicio, hora_fin, activa, esquema_pago, comision)
+      VALUES (@nombre, @especialidad, @bio, @experiencia, @dias, @hora_inicio, @hora_fin, @activa, 'comision', 65)`).run(datos);
+    return this.buscarPorId(resultado.lastInsertRowid);
   },
   // Nombre: actualizar
   // Descripción: Actualiza una especialista.
   // Entrada: El número y los datos.
   // Salida: La especialista.
   // Objetivo: Editar el equipo.
-  actualizar(id, d) {
+  actualizar(id, datos) {
     getDb().prepare(`UPDATE especialistas SET nombre = @nombre, especialidad = @especialidad, bio = @bio, experiencia = @experiencia,
-      dias = @dias, hora_inicio = @hora_inicio, hora_fin = @hora_fin, activa = @activa WHERE id = @id`).run({ ...d, id });
+      dias = @dias, hora_inicio = @hora_inicio, hora_fin = @hora_fin, activa = @activa WHERE id = @id`).run({ ...datos, id });
     return this.buscarPorId(id);
   },
   // Nombre: citasFuturas

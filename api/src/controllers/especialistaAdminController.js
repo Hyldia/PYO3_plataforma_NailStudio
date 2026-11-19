@@ -39,12 +39,12 @@ export const especialistaAdminController = {
   // Salida: Nada.
   // Objetivo: Sacar a quien ya no trabaja.
   eliminarEspecialista(req, res) {
-    const e = EspecialistaModel.buscarPorId(req.params.id);
-    if (!e) return res.status(404).json({ error: 'No existe esa especialista.' });
-    const futuras = EspecialistaModel.citasFuturas(e.id);
-    if (futuras) return res.status(409).json({ error: `${e.nombre} tiene ${futuras} ${futuras === 1 ? 'cita pendiente' : 'citas pendientes'}. Cancélalas o reasígnalas primero (puedes usar «Emergencia» en la agenda).` });
-    const resultado = EspecialistaModel.eliminar(e.id);
-    if (resultado === 'borrada') borrarSubida(e.foto);
+    const especialista = EspecialistaModel.buscarPorId(req.params.id);
+    if (!especialista) return res.status(404).json({ error: 'No existe esa especialista.' });
+    const futuras = EspecialistaModel.citasFuturas(especialista.id);
+    if (futuras) return res.status(409).json({ error: `${especialista.nombre} tiene ${futuras} ${futuras === 1 ? 'cita pendiente' : 'citas pendientes'}. Cancélalas o reasígnalas primero (puedes usar «Emergencia» en la agenda).` });
+    const resultado = EspecialistaModel.eliminar(especialista.id);
+    if (resultado === 'borrada') borrarSubida(especialista.foto);
     res.json({ resultado });
   },
 
@@ -55,10 +55,10 @@ export const especialistaAdminController = {
   // Salida: La especialista actualizada.
   // Objetivo: Poner su cara en el sitio.
   fotoEspecialista(req, res) {
-    const e = EspecialistaModel.buscarPorId(req.params.id);
-    if (!e || !req.file) return res.status(400).json({ error: 'Especialista o imagen no válidas.' });
-    borrarSubida(e.foto);
-    EspecialistaModel.cambiarFoto(e.id, req.file.filename);
-    res.json(EspecialistaModel.buscarPorId(e.id));
+    const especialista = EspecialistaModel.buscarPorId(req.params.id);
+    if (!especialista || !req.file) return res.status(400).json({ error: 'Especialista o imagen no válidas.' });
+    borrarSubida(especialista.foto);
+    EspecialistaModel.cambiarFoto(especialista.id, req.file.filename);
+    res.json(EspecialistaModel.buscarPorId(especialista.id));
   }
 };

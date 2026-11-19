@@ -22,7 +22,7 @@ const insertar = db.prepare(`
   INSERT INTO fotos (archivo, titulo, descripcion, categoria, forma, color, acabado, etiquetas)
   VALUES (@archivo, @titulo, @descripcion, @categoria, @forma, @color, @acabado, @etiquetas)`);
 
-let n = 0;
+let cantidad = 0;
 for (const nombre of readdirSync(carpeta)) {
   const ruta = join(carpeta, nombre);
   const ext = extname(nombre).toLowerCase();
@@ -31,11 +31,11 @@ for (const nombre of readdirSync(carpeta)) {
   if (yaImportada.get(`%${marca}%`)) continue;
 
   const texto = basename(nombre, ext).replace(/[_-]+/g, ' ');
-  const c = clasificarFoto(texto);
+  const clasificacion = clasificarFoto(texto);
   const destino = `${randomUUID()}${ext === '.jpeg' ? '.jpg' : ext}`;
   copyFileSync(ruta, join(UPLOADS_DIR, destino));
   const titulo = texto.charAt(0).toUpperCase() + texto.slice(1);
-  insertar.run({ archivo: destino, titulo, descripcion: titulo, categoria: c.categoria, forma: c.forma, color: c.color, acabado: c.acabado, etiquetas: `${texto}, ${marca}` });
-  n++;
+  insertar.run({ archivo: destino, titulo, descripcion: titulo, categoria: clasificacion.categoria, forma: clasificacion.forma, color: clasificacion.color, acabado: clasificacion.acabado, etiquetas: `${texto}, ${marca}` });
+  cantidad++;
 }
-console.log(`Listo: ${n} fotos importadas desde ${carpeta}.`);
+console.log(`Listo: ${cantidad} fotos importadas desde ${carpeta}.`);

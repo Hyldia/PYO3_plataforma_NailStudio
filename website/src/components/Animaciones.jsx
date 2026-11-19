@@ -1,3 +1,4 @@
+// Animaciones al bajar por la página: las piezas aparecen suavemente cuando entran a la pantalla.
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -60,14 +61,14 @@ export default function Animaciones() {
 
     const main = document.getElementById('contenido');
     preparar(main);
-    const cambios = new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && preparar(n.parentElement || n))));
+    const cambios = new MutationObserver((ms) => ms.forEach((cambio) => cambio.addedNodes.forEach((nodo) => nodo.nodeType === 1 && preparar(nodo.parentElement || nodo))));
     cambios.observe(main, { childList: true, subtree: true });
 
     // Red de seguridad: lo que esté en pantalla y siga escondido se muestra igual
     const reloj = setInterval(() => {
       document.querySelectorAll('.aparece:not(.aparece--visible)').forEach((el) => {
-        const r = el.getBoundingClientRect();
-        if (r.top < innerHeight && r.bottom > 0) mostrar(el);
+        const caja = el.getBoundingClientRect();
+        if (caja.top < innerHeight && caja.bottom > 0) mostrar(el);
       });
     }, 1500);
 

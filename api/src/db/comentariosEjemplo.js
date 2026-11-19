@@ -28,13 +28,13 @@ const TEXTOS = {
 // Salida: Funciones para elegir al azar.
 // Objetivo: Datos de ejemplo repetibles.
 function azar(semilla) {
-  let s = semilla;
+  let estado = semilla;
   // Nombre: r
   // Descripción: Da un número al azar (siempre la misma serie).
   // Entrada: Nada.
   // Salida: Un número entre 0 y 1.
   // Objetivo: Crear datos de ejemplo iguales cada vez.
-  const r = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  const aleatorio = () => ((estado = (estado * 1664525 + 1013904223) % 4294967296) / 4294967296);
   // Nombre: elegir
   // Descripción: Elige un elemento al azar de una lista.
   // Entrada: La lista.
@@ -45,7 +45,7 @@ function azar(semilla) {
   // Entrada: El mínimo y el máximo.
   // Salida: Un número.
   // Objetivo: Variar los datos de ejemplo.
-  return { r, elegir: (l) => l[Math.floor(r() * l.length)], entero: (a, b) => a + Math.floor(r() * (b - a + 1)) };
+  return { r: aleatorio, elegir: (lista) => lista[Math.floor(aleatorio() * lista.length)], entero: (a, b) => a + Math.floor(aleatorio() * (b - a + 1)) };
 }
 // Nombre: fecha
 // Descripción: Da una fecha de hace unos días.
@@ -64,24 +64,24 @@ export function cargarComentariosEjemplo(db) {
   const cupon = db.prepare(`INSERT OR IGNORE INTO cupones (codigo, descripcion, tipo, valor, minimo, vence, solo_combos, publico)
     VALUES (@codigo, @descripcion, @tipo, @valor, @minimo, @vence, 0, 0)`);
   const vence = `${new Date().getFullYear() + 1}-12-31`;
-  CUPONES_RULETA.forEach((c) => cupon.run({ ...c, vence }));
+  CUPONES_RULETA.forEach((cuponActual) => cupon.run({ ...cuponActual, vence }));
 
   if (db.prepare("SELECT valor FROM ajustes WHERE clave = 'comentarios_ejemplo'").get()) return false;
-  const az = azar(1115);
+  const generador = azar(1115);
   const ins = db.prepare('INSERT INTO comentarios (tipo, ref_id, nombre, estrellas, comentario, ejemplo, creada_en) VALUES (?, ?, ?, ?, ?, 1, ?)');
   // Nombre: estrellas
   // Descripción: Elige cuántas estrellas da un comentario.
   // Entrada: Nada.
   // Salida: De 1 a 5 estrellas.
   // Objetivo: Que haya más buenas que malas.
-  const estrellas = () => { const x = az.r(); return x < 0.5 ? 5 : x < 0.72 ? 4 : x < 0.86 ? 3 : x < 0.95 ? 2 : 1; };
+  const estrellas = () => { const x = generador.r(); return x < 0.5 ? 5 : x < 0.72 ? 4 : x < 0.86 ? 3 : x < 0.95 ? 2 : 1; };
   db.transaction(() => {
     [['foto', 'fotos', 2, 6], ['servicio', 'servicios', 4, 10]].forEach(([tipo, tabla, min, max]) => {
       db.prepare(`SELECT id FROM ${tabla}`).all().forEach(({ id }) => {
-        const n = az.entero(min, max);
-        for (let k = 0; k < n; k++) {
-          const e = estrellas();
-          ins.run(tipo, id, az.elegir(NOMBRES), e, az.elegir(TEXTOS[tipo][e]), fecha(az.entero(1, 150)));
+        const cantidad = generador.entero(min, max);
+        for (let k = 0; k < cantidad; k++) {
+          const estrellasDadas = estrellas();
+          ins.run(tipo, id, generador.elegir(NOMBRES), estrellasDadas, generador.elegir(TEXTOS[tipo][estrellasDadas]), fecha(generador.entero(1, 150)));
         }
       });
     });

@@ -19,9 +19,9 @@ const errorCita = (mensaje, codigo = 400) => Object.assign(new Error(mensaje), {
 // Salida: El mensaje con su enlace.
 // Objetivo: Avisar a la clienta (Factory + Template Method + Observer).
 export function mensajeDeCita(cita, tipo, extra = {}, soloVista = false) {
-  const m = prepararMensaje(tipo, { ...cita, ...extra }, cita.cliente_telefono);
-  if (!soloVista) eventos.emit('mensaje:preparado', { citaId: cita.id, cliente: cita.cliente_nombre, ...m });
-  return m;
+  const mensaje = prepararMensaje(tipo, { ...cita, ...extra }, cita.cliente_telefono);
+  if (!soloVista) eventos.emit('mensaje:preparado', { citaId: cita.id, cliente: cita.cliente_nombre, ...mensaje });
+  return mensaje;
 }
 
 // Nombre: revisarCancelacion

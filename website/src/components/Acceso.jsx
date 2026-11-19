@@ -11,8 +11,8 @@ let configPromesa = null;
 // Objetivo: Usar el botón de Google.
 const cargarScript = (src, id) => new Promise((ok, mal) => {
   if (document.getElementById(id)) return ok();
-  const s = Object.assign(document.createElement('script'), { src, id, async: true, defer: true, onload: ok, onerror: mal });
-  document.head.appendChild(s);
+  const script = Object.assign(document.createElement('script'), { src, id, async: true, defer: true, onload: ok, onerror: mal });
+  document.head.appendChild(script);
 });
 
 // Nombre: LogoGoogle
@@ -36,7 +36,7 @@ const LogoFacebook = () => <svg aria-hidden="true" width="20" height="20" viewBo
 export default function Acceso({ titulo = 'Entra a tu cuenta', bajada, onListo }) {
   const sesion = useUsuario();
   const [modo, setModo] = useState('entrar');
-  const [d, setD] = useState({ nombre: '', correo: '', telefono: '', contrasena: '' });
+  const [datos, setDatos] = useState({ nombre: '', correo: '', telefono: '', contrasena: '' });
   const [verClave, setVerClave] = useState(false);
   const [config, setConfig] = useState({ google: null, facebook: null });
   const [estado, setEstado] = useState({ enviando: false, error: '' });
@@ -47,7 +47,7 @@ export default function Acceso({ titulo = 'Entra a tu cuenta', bajada, onListo }
   // Entrada: La respuesta del servidor.
   // Salida: Nada.
   // Objetivo: Dejarla conectada.
-  const listo = async (r) => { await sesion.entrar(r); onListo?.(); };
+  const listo = async (respuesta) => { await sesion.entrar(respuesta); onListo?.(); };
   // Nombre: fallo
   // Descripción: Muestra el error al entrar.
   // Entrada: El error.
@@ -84,9 +84,9 @@ export default function Acceso({ titulo = 'Entra a tu cuenta', bajada, onListo }
     try {
       await cargarScript('https://connect.facebook.net/es_LA/sdk.js', 'fb-sdk');
       window.FB.init({ appId: config.facebook, version: 'v19.0', cookie: false, xfbml: false });
-      window.FB.login((r) => {
-        if (!r.authResponse) return setEstado({ enviando: false, error: 'Cancelaste el inicio con Facebook.' });
-        api.auth.facebook(r.authResponse.accessToken).then(listo).catch(fallo);
+      window.FB.login((respuesta) => {
+        if (!respuesta.authResponse) return setEstado({ enviando: false, error: 'Cancelaste el inicio con Facebook.' });
+        api.auth.facebook(respuesta.authResponse.accessToken).then(listo).catch(fallo);
       }, { scope: 'public_profile,email' });
     } catch { fallo(new Error('No se pudo abrir Facebook. Revisa tu conexión.')); }
   }
@@ -96,17 +96,17 @@ export default function Acceso({ titulo = 'Entra a tu cuenta', bajada, onListo }
   // Entrada: El envío del formulario.
   // Salida: Nada.
   // Objetivo: Entrar o crear la cuenta.
-  async function enviar(e) {
-    e.preventDefault();
+  async function enviar(evento) {
+    evento.preventDefault();
     setEstado({ enviando: true, error: '' });
-    try { await listo(modo === 'crear' ? await api.auth.registro(d) : await api.auth.entrar(d)); } catch (error) { fallo(error); }
+    try { await listo(modo === 'crear' ? await api.auth.registro(datos) : await api.auth.entrar(datos)); } catch (error) { fallo(error); }
   }
   // Nombre: set
   // Descripción: Guarda lo que se escribe en un campo.
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
+  const set = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value });
 
   return (
     <div className="acceso">
@@ -134,16 +134,16 @@ export default function Acceso({ titulo = 'Entra a tu cuenta', bajada, onListo }
 
       <form className="acceso__form" onSubmit={enviar} noValidate>
         {modo === 'crear' && (
-          <div className="campo"><label htmlFor="ac-nombre">Nombre completo</label><input id="ac-nombre" autoComplete="name" value={d.nombre} onChange={set('nombre')} required /></div>
+          <div className="campo"><label htmlFor="ac-nombre">Nombre completo</label><input id="ac-nombre" autoComplete="name" value={datos.nombre} onChange={set('nombre')} required /></div>
         )}
-        <div className="campo"><label htmlFor="ac-correo">Correo</label><input id="ac-correo" type="email" autoComplete="email" value={d.correo} onChange={set('correo')} required /></div>
+        <div className="campo"><label htmlFor="ac-correo">Correo</label><input id="ac-correo" type="email" autoComplete="email" value={datos.correo} onChange={set('correo')} required /></div>
         {modo === 'crear' && (
-          <div className="campo"><label htmlFor="ac-tel">Teléfono (WhatsApp)</label><input id="ac-tel" type="tel" inputMode="tel" autoComplete="tel" value={d.telefono} onChange={set('telefono')} placeholder="8888 8888" required /></div>
+          <div className="campo"><label htmlFor="ac-tel">Teléfono (WhatsApp)</label><input id="ac-tel" type="tel" inputMode="tel" autoComplete="tel" value={datos.telefono} onChange={set('telefono')} placeholder="8888 8888" required /></div>
         )}
         <div className="campo">
           <label htmlFor="ac-clave">Contraseña{modo === 'crear' && <span className="tenue"> (mínimo 8, con letras y números)</span>}</label>
           <div className="acceso__clave">
-            <input id="ac-clave" type={verClave ? 'text' : 'password'} autoComplete={modo === 'crear' ? 'new-password' : 'current-password'} value={d.contrasena} onChange={set('contrasena')} required />
+            <input id="ac-clave" type={verClave ? 'text' : 'password'} autoComplete={modo === 'crear' ? 'new-password' : 'current-password'} value={datos.contrasena} onChange={set('contrasena')} required />
             <button type="button" onClick={() => setVerClave(!verClave)} aria-pressed={verClave}>{verClave ? 'Ocultar' : 'Ver'}</button>
           </div>
         </div>

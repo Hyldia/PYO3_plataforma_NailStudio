@@ -49,16 +49,16 @@ export const ServicioModel = {
   // Entrada: Los datos.
   // Salida: Un error o nada.
   // Objetivo: Evitar datos inválidos.
-  validar(d) {
-    if (!String(d.nombre || '').trim()) return 'Escribe el nombre del servicio.';
-    if (!String(d.categoria || '').trim()) return 'Elige la categoría.';
-    const dur = Number(d.duracion_min);
+  validar(datos) {
+    if (!String(datos.nombre || '').trim()) return 'Escribe el nombre del servicio.';
+    if (!String(datos.categoria || '').trim()) return 'Elige la categoría.';
+    const dur = Number(datos.duracion_min);
     if (!(dur >= 15 && dur <= 360)) return 'La duración debe estar entre 15 y 360 minutos.';
-    const precio = Number(d.precio);
+    const precio = Number(datos.precio);
     if (!(precio > 0)) return 'Escribe un precio mayor a 0.';
-    if (d.precio_oferta !== '' && d.precio_oferta != null) {
-      const o = Number(d.precio_oferta);
-      if (!(o > 0 && o < precio)) return 'El precio de oferta debe ser menor al precio normal.';
+    if (datos.precio_oferta !== '' && datos.precio_oferta != null) {
+      const oferta = Number(datos.precio_oferta);
+      if (!(oferta > 0 && oferta < precio)) return 'El precio de oferta debe ser menor al precio normal.';
     }
     return null;
   },
@@ -67,37 +67,37 @@ export const ServicioModel = {
   // Entrada: Los datos.
   // Salida: Los datos limpios.
   // Objetivo: Guardar siempre igual.
-  normalizar: (d) => ({
-    nombre: String(d.nombre).trim().slice(0, 80),
-    descripcion: String(d.descripcion || '').trim().slice(0, 500) || null,
-    categoria: String(d.categoria).trim().slice(0, 40),
-    duracion_min: Math.round(Number(d.duracion_min)),
-    precio: Math.round(Number(d.precio)),
-    precio_oferta: d.precio_oferta === '' || d.precio_oferta == null ? null : Math.round(Number(d.precio_oferta)),
-    incluye: (Array.isArray(d.incluye) ? d.incluye : String(d.incluye || '').split(/[|\n]/)).map((x) => x.trim()).filter(Boolean).slice(0, 12).join('|') || null,
-    etiqueta: String(d.etiqueta || '').trim().slice(0, 20) || null,
-    es_combo: d.es_combo ? 1 : 0,
-    destacado: d.destacado ? 1 : 0,
-    activo: d.activo === undefined ? 1 : (Number(d.activo) ? 1 : 0)
+  normalizar: (datos) => ({
+    nombre: String(datos.nombre).trim().slice(0, 80),
+    descripcion: String(datos.descripcion || '').trim().slice(0, 500) || null,
+    categoria: String(datos.categoria).trim().slice(0, 40),
+    duracion_min: Math.round(Number(datos.duracion_min)),
+    precio: Math.round(Number(datos.precio)),
+    precio_oferta: datos.precio_oferta === '' || datos.precio_oferta == null ? null : Math.round(Number(datos.precio_oferta)),
+    incluye: (Array.isArray(datos.incluye) ? datos.incluye : String(datos.incluye || '').split(/[|\n]/)).map((linea) => linea.trim()).filter(Boolean).slice(0, 12).join('|') || null,
+    etiqueta: String(datos.etiqueta || '').trim().slice(0, 20) || null,
+    es_combo: datos.es_combo ? 1 : 0,
+    destacado: datos.destacado ? 1 : 0,
+    activo: datos.activo === undefined ? 1 : (Number(datos.activo) ? 1 : 0)
   }),
   // Nombre: crear
   // Descripción: Crea un servicio.
   // Entrada: Los datos.
   // Salida: El servicio.
   // Objetivo: Agregar a la carta.
-  crear(d) {
-    const n = this.normalizar(d);
-    const r = getDb().prepare(`INSERT INTO servicios (${CAMPOS.join(', ')}) VALUES (${CAMPOS.map((c) => `@${c}`).join(', ')})`).run(n);
-    return this.buscarCualquiera(r.lastInsertRowid);
+  crear(datos) {
+    const normalizado = this.normalizar(datos);
+    const resultado = getDb().prepare(`INSERT INTO servicios (${CAMPOS.join(', ')}) VALUES (${CAMPOS.map((campo) => `@${campo}`).join(', ')})`).run(normalizado);
+    return this.buscarCualquiera(resultado.lastInsertRowid);
   },
   // Nombre: actualizar
   // Descripción: Actualiza un servicio.
   // Entrada: El número y los datos.
   // Salida: El servicio.
   // Objetivo: Editar la carta.
-  actualizar(id, d) {
-    const n = this.normalizar(d);
-    getDb().prepare(`UPDATE servicios SET ${CAMPOS.map((c) => `${c} = @${c}`).join(', ')} WHERE id = @id`).run({ ...n, id });
+  actualizar(id, datos) {
+    const normalizado = this.normalizar(datos);
+    getDb().prepare(`UPDATE servicios SET ${CAMPOS.map((campo) => `${campo} = @${campo}`).join(', ')} WHERE id = @id`).run({ ...normalizado, id });
     return this.buscarCualquiera(id);
   },
   // Nombre: cambiarImagen
@@ -126,10 +126,10 @@ export const ServicioModel = {
   // Objetivo: Mostrar cuánto cuesta cada diseño (el experto en servicios y precios es este modelo).
   sugeridoParaDiseno(foto) {
     const nombre = SERVICIO_POR_CATEGORIA[foto.categoria] || 'Manicure semipermanente';
-    const s = getDb().prepare('SELECT * FROM servicios WHERE nombre = ? AND activo = 1').get(nombre);
-    if (!s) return null;
+    const servicio = getDb().prepare('SELECT * FROM servicios WHERE nombre = ? AND activo = 1').get(nombre);
+    if (!servicio) return null;
     // Los recargos salen de la misma tabla que usa el diseñador de uñas: así un acabado cuesta igual en todo el sitio
     const recargo = (PRECIO.acabado[foto.acabado] || 0) + (foto.categoria === 'Nail art' ? RECARGO_NAIL_ART : 0);
-    return { id: s.id, nombre: s.nombre, duracion_min: s.duracion_min, precio: s.precio_oferta ?? s.precio, recargo };
+    return { id: servicio.id, nombre: servicio.nombre, duracion_min: servicio.duracion_min, precio: servicio.precio_oferta ?? servicio.precio, recargo };
   }
 };

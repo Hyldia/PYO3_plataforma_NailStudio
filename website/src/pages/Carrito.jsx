@@ -1,3 +1,4 @@
+// Página del carrito: productos y citas elegidas y el total antes de pagar.
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -25,7 +26,7 @@ export default function Carrito() {
 
   // Al entrar, pedir el stock y precio actuales de lo que hay en el carrito
   useEffect(() => {
-    const ids = [...new Set(carrito.items.filter((i) => i.tipo !== 'cita').map((i) => i.productoId ?? i.id))];
+    const ids = [...new Set(carrito.items.filter((item) => item.tipo !== 'cita').map((item) => item.productoId ?? item.id))];
     if (ids.length) api.productosPorIds(ids).then(carrito.refrescar).catch(() => {});
   }, []);
 
@@ -34,13 +35,13 @@ export default function Carrito() {
   }, []);
 
   const { elegidos } = carrito;
-  const items = carrito.items.filter((i) => i.stock !== 0);
-  const agotados = carrito.items.filter((i) => i.stock === 0);
-  const todos = items.length > 0 && items.every((i) => i.seleccionado !== false);
+  const items = carrito.items.filter((item) => item.stock !== 0);
+  const agotados = carrito.items.filter((item) => item.stock === 0);
+  const todos = items.length > 0 && items.every((item) => item.seleccionado !== false);
   const lista = vista === 'elegidos' ? elegidos : items;
   const ahorro = carrito.totalSinDescuento - carrito.totalElegido;
-  const pocos = elegidos.filter((i) => i.stock > 0 && i.stock < 10).length;
-  const enCarrito = new Set(items.map((i) => i.productoId ?? i.id));
+  const pocos = elegidos.filter((elegido) => elegido.stock > 0 && elegido.stock < 10).length;
+  const enCarrito = new Set(items.map((item) => item.productoId ?? item.id));
 
   return (
     <div className="contenedor pagina carrito-pagina">
@@ -62,7 +63,7 @@ export default function Carrito() {
         <div className="carrito-pagina__grid">
           <section aria-labelledby="cp-titulo" className="carrito-pagina__lista">
             <h1 id="cp-titulo" className="solo-lector">Carrito</h1>
-            <p className="carrito-pagina__envio"><span aria-hidden="true">✓</span> {items.some((i) => i.tipo !== 'cita') ? 'Retiro gratis en el salón' : 'Apartas tus citas con solo el 30 %'} <em>Oferta exclusiva</em></p>
+            <p className="carrito-pagina__envio"><span aria-hidden="true">✓</span> {items.some((item) => item.tipo !== 'cita') ? 'Retiro gratis en el salón' : 'Apartas tus citas con solo el 30 %'} <em>Oferta exclusiva</em></p>
 
             <div className="carrito-pagina__barra">
               <label className="carrito-pagina__todos">
@@ -76,48 +77,48 @@ export default function Carrito() {
             </div>
 
             <ul className="carrito-pagina__items">
-              {lista.map((i) => {
-                const descuento = i.precio_anterior ? Math.round((1 - i.precio / i.precio_anterior) * 100) : 0;
-                const casi = i.stock > 0 && i.stock < 10;
+              {lista.map((elemento) => {
+                const descuento = elemento.precio_anterior ? Math.round((1 - elemento.precio / elemento.precio_anterior) * 100) : 0;
+                const casi = elemento.stock > 0 && elemento.stock < 10;
                 return (
-                  <li key={i.clave} className="linea-carrito">
-                    <input type="checkbox" className="marca" checked={i.seleccionado !== false}
-                           onChange={(evento) => carrito.seleccionar(i.clave, evento.target.checked)} aria-label={`Incluir ${i.nombre} en el pedido`} />
-                    <Link to={enlaceArticulo(i)} className="linea-carrito__foto" tabIndex={-1} aria-hidden="true">
-                      <ProductoImagen producto={i} />
+                  <li key={elemento.clave} className="linea-carrito">
+                    <input type="checkbox" className="marca" checked={elemento.seleccionado !== false}
+                           onChange={(evento) => carrito.seleccionar(elemento.clave, evento.target.checked)} aria-label={`Incluir ${elemento.nombre} en el pedido`} />
+                    <Link to={enlaceArticulo(elemento)} className="linea-carrito__foto" tabIndex={-1} aria-hidden="true">
+                      <ProductoImagen producto={elemento} />
                       {casi && <span>Casi agotado</span>}
                     </Link>
                     <div className="linea-carrito__info">
                       <div className="linea-carrito__arriba">
-                        <Link to={enlaceArticulo(i)} className="linea-carrito__nombre">{i.nombre}</Link>
-                        <button type="button" className="linea-carrito__borrar" onClick={() => carrito.quitar(i.clave)} aria-label={`Eliminar ${i.nombre} del carrito`}>
+                        <Link to={enlaceArticulo(elemento)} className="linea-carrito__nombre">{elemento.nombre}</Link>
+                        <button type="button" className="linea-carrito__borrar" onClick={() => carrito.quitar(elemento.clave)} aria-label={`Eliminar ${elemento.nombre} del carrito`}>
                           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
                         </button>
                       </div>
-                      {i.tipo === 'cita' ? (
+                      {elemento.tipo === 'cita' ? (
                         <div className="linea-carrito__cita">
                           <span className="linea-carrito__chip">Cita en el salón</span>
-                          <p><strong>{i.fechaTexto}, {i.hora}</strong> con {i.especialistaNombre}</p>
-                          <p className="tenue">Para: {i.persona || 'ti'}{i.disenoTexto ? ` · Diseño: ${i.disenoTexto}` : ' · Diseño: lo eliges en el salón'}</p>
+                          <p><strong>{elemento.fechaTexto}, {elemento.hora}</strong> con {elemento.especialistaNombre}</p>
+                          <p className="tenue">Para: {elemento.persona || 'ti'}{elemento.disenoTexto ? ` · Diseño: ${elemento.disenoTexto}` : ' · Diseño: lo eliges en el salón'}</p>
                         </div>
-                      ) : i.detalle && <p className="linea-carrito__detalle">{i.detalle} ›</p>}
+                      ) : elemento.detalle && <p className="linea-carrito__detalle">{elemento.detalle} ›</p>}
                       {descuento >= 15 && <p className="linea-carrito__venta">GRAN VENTA</p>}
                       <div className="linea-carrito__abajo">
                         <div className="linea-carrito__precios">
-                          {i.precio_anterior && <s>{dinero(i.precio_anterior * i.cantidad)}</s>}
+                          {elemento.precio_anterior && <s>{dinero(elemento.precio_anterior * elemento.cantidad)}</s>}
                           <p>
-                            <strong className={descuento ? 'linea-carrito__oferta' : ''}>{dinero(i.precio * i.cantidad)}</strong>
+                            <strong className={descuento ? 'linea-carrito__oferta' : ''}>{dinero(elemento.precio * elemento.cantidad)}</strong>
                             {descuento > 0 && <span className="linea-carrito__pct">-{descuento}%</span>}
                           </p>
                         </div>
-                        {i.unico ? (
-                          <span className="linea-carrito__unico">{i.tipo === 'cita' ? '1 persona' : '1 set'}</span>
+                        {elemento.unico ? (
+                          <span className="linea-carrito__unico">{elemento.tipo === 'cita' ? '1 persona' : '1 set'}</span>
                         ) : (
                           <label className="linea-carrito__cant">
                             <span>Cant.</span>
-                            <select value={i.cantidad} onChange={(evento) => carrito.fijar(i.clave, evento.target.value)} aria-label={`Cantidad de ${i.nombre}`}>
+                            <select value={elemento.cantidad} onChange={(evento) => carrito.fijar(elemento.clave, evento.target.value)} aria-label={`Cantidad de ${elemento.nombre}`}>
                               <option value="0">Quitar</option>
-                              {Array.from({ length: Math.max(10, i.cantidad) }, (_, n) => <option key={n + 1} value={n + 1}>{n + 1}</option>)}
+                              {Array.from({ length: Math.max(10, elemento.cantidad) }, (_, numero) => <option key={numero + 1} value={numero + 1}>{numero + 1}</option>)}
                             </select>
                           </label>
                         )}
@@ -133,16 +134,16 @@ export default function Carrito() {
               <section className="no-disponibles" aria-labelledby="cp-agotados">
                 <h2 id="cp-agotados">Artículos no disponibles ({agotados.length})</h2>
                 <ul>
-                  {agotados.map((i) => (
-                    <li key={i.clave}>
-                      <Link to={enlaceArticulo(i)} className="no-disponibles__foto">
-                        <ProductoImagen producto={i} />
+                  {agotados.map((agotado) => (
+                    <li key={agotado.clave}>
+                      <Link to={enlaceArticulo(agotado)} className="no-disponibles__foto">
+                        <ProductoImagen producto={agotado} />
                         <span>Agotado</span>
                       </Link>
-                      <p className="no-disponibles__nombre">{i.nombre}</p>
+                      <p className="no-disponibles__nombre">{agotado.nombre}</p>
                       <div className="no-disponibles__botones">
-                        <Link to={`/tienda?categoria=${encodeURIComponent(i.categoria || '')}`} className="chip-filtro chip-filtro--borde">Similares ›</Link>
-                        <button type="button" className="chip-filtro chip-filtro--borde" onClick={() => carrito.quitar(i.clave)}>Quitar</button>
+                        <Link to={`/tienda?categoria=${encodeURIComponent(agotado.categoria || '')}`} className="chip-filtro chip-filtro--borde">Similares ›</Link>
+                        <button type="button" className="chip-filtro chip-filtro--borde" onClick={() => carrito.quitar(agotado.clave)}>Quitar</button>
                       </div>
                     </li>
                   ))}
@@ -179,7 +180,7 @@ export default function Carrito() {
         <section className="relacionados" aria-labelledby="cp-sugeridos">
           <h2 id="cp-sugeridos">{items.length ? 'Agrega también' : 'Lo más vendido'}</h2>
           <ul className="productos-rejilla productos-rejilla--grande">
-            {sugeridos.filter((p) => !enCarrito.has(p.id)).slice(0, 10).map((p) => <TarjetaProducto key={p.id} p={p} />)}
+            {sugeridos.filter((sugerido) => !enCarrito.has(sugerido.id)).slice(0, 10).map((sugerido) => <TarjetaProducto key={sugerido.id} p={sugerido} />)}
           </ul>
         </section>
       )}

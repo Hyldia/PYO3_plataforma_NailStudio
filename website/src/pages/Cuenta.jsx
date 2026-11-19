@@ -77,17 +77,17 @@ export default function Cuenta() {
     evento.preventDefault();
     try { sesion.actualizarUsuario(await api.cuenta.actualizar(datos)); setAviso({ texto: 'Datos guardados.' }); } catch (err) { setAviso({ texto: err.message, error: true }); }
   };
-  const u = sesion.usuario;
+  const usuario = sesion.usuario;
 
   return (
     <div className="contenedor pagina cuenta">
       <Migas pasos={[['Mi cuenta']]} />
       <header className="cuenta__hero">
-        <span className="cuenta__avatar" aria-hidden="true">{u.foto ? <img src={u.foto} alt="" referrerPolicy="no-referrer" /> : u.nombre[0]}</span>
+        <span className="cuenta__avatar" aria-hidden="true">{usuario.foto ? <img src={usuario.foto} alt="" referrerPolicy="no-referrer" /> : usuario.nombre[0]}</span>
         <div>
           <p className="cuenta__ante">Hola,</p>
-          <h1>{u.nombre.split(' ')[0]}</h1>
-          <p className="tenue">{u.correo} · entras con {PROVEEDOR[u.proveedor]}</p>
+          <h1>{usuario.nombre.split(' ')[0]}</h1>
+          <p className="tenue">{usuario.correo} · entras con {PROVEEDOR[usuario.proveedor]}</p>
         </div>
         <button type="button" className="boton boton--contorno boton--chico" onClick={() => sesion.salir()}>Salir</button>
       </header>
@@ -113,20 +113,20 @@ export default function Cuenta() {
         <h2 id="t-mis-ped">Mis pedidos y citas</h2>
         {!historial.pedidos.length && !historial.citas.length ? <p className="tenue">Todavía no tienes pedidos. <Link to="/tienda" className="enlace">Ir a la tienda</Link></p> : (
           <ul className="historial">
-            {historial.pedidos.map((p) => (
-              <li key={`p${p.id}`}><span className="historial__tipo">Pedido #{p.id}</span><span>{p.detalle}<br /><small className="tenue">{p.fecha.slice(0, 16)} · {p.entrega === 'envio' ? `Envío a ${p.direccion?.split(':')[0]}` : 'Retiro en el salón'}</small></span><strong>{dinero(p.total)}</strong><span className={`estado-pedido estado-pedido--${p.estado}`}>{ESTADO[p.estado] || p.estado}</span></li>
+            {historial.pedidos.map((pedido) => (
+              <li key={`p${pedido.id}`}><span className="historial__tipo">Pedido #{pedido.id}</span><span>{pedido.detalle}<br /><small className="tenue">{pedido.fecha.slice(0, 16)} · {pedido.entrega === 'envio' ? `Envío a ${pedido.direccion?.split(':')[0]}` : 'Retiro en el salón'}</small></span><strong>{dinero(pedido.total)}</strong><span className={`estado-pedido estado-pedido--${pedido.estado}`}>{ESTADO[pedido.estado] || pedido.estado}</span></li>
             ))}
-            {historial.citas.map((c) => {
-              const minutosQueFaltan = (new Date(`${c.fecha}T${c.hora}:00-06:00`).getTime() - Date.now()) / 60000;
-              const activa = ['pendiente', 'confirmada'].includes(c.estado) && minutosQueFaltan > 0;
+            {historial.citas.map((cita) => {
+              const minutosQueFaltan = (new Date(`${cita.fecha}T${cita.hora}:00-06:00`).getTime() - Date.now()) / 60000;
+              const activa = ['pendiente', 'confirmada'].includes(cita.estado) && minutosQueFaltan > 0;
               return (
-                <li key={`c${c.id}`}><span className="historial__tipo historial__tipo--cita">Cita</span><span>{c.servicio} con {c.especialista}<br /><small className="tenue">{c.fecha} · {c.hora}{c.cliente_nombre !== u.nombre ? ` · para ${c.cliente_nombre}` : ''}</small>
-                  {activa && (minutosQueFaltan >= 120
-                    ? (confirmarCancelar === c.id
-                      ? <span className="historial__cancelar">¿Seguro? <button type="button" className="enlace enlace--boton" onClick={() => cancelarCita(c.id)}>Sí, cancelar</button> · <button type="button" className="enlace enlace--boton" onClick={() => setConfirmarCancelar(null)}>No</button></span>
-                      : <button type="button" className="enlace enlace--boton historial__cancelar" onClick={() => setConfirmarCancelar(c.id)}>Cancelar cita</button>)
-                    : <small className="historial__cancelar tenue">Faltan menos de 2 horas: para cancelar escríbenos por WhatsApp.</small>)}
-                </span><strong>{dinero(c.total)}</strong><span className={`estado estado--${c.estado}`}>{ESTADO[c.estado] || c.estado}</span></li>
+                <li key={`c${cita.id}`}><span className="historial__tipo historial__tipo--cita">Cita</span><span>{cita.servicio} con {cita.especialista}<br /><small className="tenue">{cita.fecha} · {cita.hora}{cita.cliente_nombre !== usuario.nombre ? ` · para ${cita.cliente_nombre}` : ''}</small>
+                    {activa && (minutosQueFaltan >= 120
+                      ? (confirmarCancelar === cita.id
+                        ? <span className="historial__cancelar">¿Seguro? <button type="button" className="enlace enlace--boton" onClick={() => cancelarCita(cita.id)}>Sí, cancelar</button> · <button type="button" className="enlace enlace--boton" onClick={() => setConfirmarCancelar(null)}>No</button></span>
+                        : <button type="button" className="enlace enlace--boton historial__cancelar" onClick={() => setConfirmarCancelar(cita.id)}>Cancelar cita</button>)
+                      : <small className="historial__cancelar tenue">Faltan menos de 2 horas: para cancelar escríbenos por WhatsApp.</small>)}
+                  </span><strong>{dinero(cita.total)}</strong><span className={`estado estado--${cita.estado}`}>{ESTADO[cita.estado] || cita.estado}</span></li>
               );
             })}
             {avisoCita && <li className="historial__aviso" role="status">{avisoCita}</li>}

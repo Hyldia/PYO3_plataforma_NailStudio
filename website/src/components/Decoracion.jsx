@@ -47,9 +47,9 @@ const ADORNOS = [
 export default function Decoracion() {
   return (
     <div className="adornos" aria-hidden="true">
-      {ADORNOS.map((a, i) => (
-        <span key={i} className={`adorno adorno--${a.tipo}`} style={{ left: a.x, top: a.y, width: a.t, height: a.tipo === 'frasco' ? a.t * 1.5 : a.t, '--d': `${a.d}s` }}>
-          {a.tipo === 'frasco' ? <Frasco color={a.color} /> : a.tipo === 'destello' ? <Destello /> : <Corazon />}
+      {ADORNOS.map((adorno, i) => (
+        <span key={i} className={`adorno adorno--${adorno.tipo}`} style={{ left: adorno.x, top: adorno.y, width: adorno.t, height: adorno.tipo === 'frasco' ? adorno.t * 1.5 : adorno.t, '--d': `${adorno.d}s` }}>
+          {adorno.tipo === 'frasco' ? <Frasco color={adorno.color} /> : adorno.tipo === 'destello' ? <Destello /> : <Corazon />}
         </span>
       ))}
     </div>

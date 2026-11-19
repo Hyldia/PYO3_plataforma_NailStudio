@@ -13,7 +13,6 @@ import { ESPECIALISTAS, VERSION_ESPECIALISTAS } from './especialistasEjemplo.js'
 import { generarCatalogo } from './catalogoProductos.js';
 import { SERVICIOS, CUPONES } from './catalogoServicios.js';
 import { FOTOS_MUESTRA, IMAGENES_PRODUCTOS, VERSION_FOTOS } from './fotosMuestra.js';
-import { pathToFileURL } from 'node:url';
 
 // Nombre: seed
 // Descripción: Llena la base de datos con todo lo inicial.
@@ -81,7 +80,7 @@ function cargarEspecialistas(db) {
   const insertar = db.prepare(`INSERT INTO especialistas (nombre, especialidad, bio, experiencia, dias, hora_inicio, hora_fin)
     VALUES (@nombre, @especialidad, @bio, @experiencia, @dias, @hora_inicio, @hora_fin)`);
   db.transaction(() => {
-    ESPECIALISTAS.forEach((e) => { const ya = buscar.get(e.nombre); if (ya) actualizar.run({ ...e, id: ya.id }); else insertar.run(e); });
+    ESPECIALISTAS.forEach((especialista) => { const ya = buscar.get(especialista.nombre); if (ya) actualizar.run({ ...especialista, id: ya.id }); else insertar.run(especialista); });
     db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('version_especialistas', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor").run(String(VERSION_ESPECIALISTAS));
   })();
   return true;
@@ -107,7 +106,7 @@ function cargarFotosMuestra(db) {
   const img = db.prepare('UPDATE productos SET imagen = ? WHERE nombre = ? AND imagen IS NULL');
 
   db.transaction(() => {
-    FOTOS_MUESTRA.forEach((f) => { if (!existe.get(f.archivo)) foto.run({ ...vacio, ...f }); });
+    FOTOS_MUESTRA.forEach((fotoActual) => { if (!existe.get(fotoActual.archivo)) foto.run({ ...vacio, ...fotoActual }); });
     Object.entries(IMAGENES_PRODUCTOS).forEach(([nombre, url]) => img.run(url, nombre));
     db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('version_fotos', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor").run(String(VERSION_FOTOS));
   })();
@@ -129,7 +128,7 @@ function cargarCatalogo(db) {
     VALUES (@nombre, @descripcion, @categoria, @marca, @precio, @stock, @color, @tipo)`);
   db.transaction(() => {
     const nuevos = [];
-    generarCatalogo().forEach((p) => { if (!existe.get(p.nombre)) nuevos.push(Number(ins.run(p).lastInsertRowid)); });
+    generarCatalogo().forEach((producto) => { if (!existe.get(producto.nombre)) nuevos.push(Number(ins.run(producto).lastInsertRowid)); });
     // Productos de versiones anteriores: asignarles una ilustración
     db.exec(`
       UPDATE productos SET tipo = 'frasco-gel', categoria = 'Esmaltes y geles' WHERE tipo IS NULL AND nombre LIKE 'Esmalte%';
@@ -171,8 +170,8 @@ function cargarServicios(db) {
   const cupon = db.prepare(`INSERT OR IGNORE INTO cupones (codigo, descripcion, tipo, valor, minimo, vence, solo_combos, publico)
     VALUES (@codigo, @descripcion, @tipo, @valor, @minimo, @vence, @solo_combos, @publico)`);
   db.transaction(() => {
-    SERVICIOS.forEach((s) => { const e = buscar.get(s.nombre); if (e) actualizar.run({ ...s, id: e.id }); else insertar.run(s); });
-    CUPONES.forEach((c) => cupon.run({ solo_combos: 0, ...c }));
+    SERVICIOS.forEach((servicio) => { const existente = buscar.get(servicio.nombre); if (existente) actualizar.run({ ...servicio, id: existente.id }); else insertar.run(servicio); });
+    CUPONES.forEach((cuponActual) => cupon.run({ solo_combos: 0, ...cuponActual }));
     db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('version_servicios', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor").run(String(VERSION_SERVICIOS));
   })();
   return true;
@@ -207,9 +206,9 @@ function darDatosDeVenta(db, ids = null) {
   // Entrada: El producto y un número extra.
   // Salida: Un número entre 0 y 1.
   // Objetivo: Variar las ventas de ejemplo.
-  const azar = (id, n) => { const x = Math.sin(id * 9301 + n * 49297) * 233280; return x - Math.floor(x); };
+  const azar = (id, numero) => { const x = Math.sin(id * 9301 + numero * 49297) * 233280; return x - Math.floor(x); };
   const todos = db.prepare('SELECT id, precio FROM productos').all();
-  const productos = ids ? todos.filter((p) => ids.includes(p.id)) : todos;
+  const productos = ids ? todos.filter((todo) => ids.includes(todo.id)) : todos;
   const upd = db.prepare('UPDATE productos SET precio = ?, precio_anterior = ?, calificacion = ?, resenas = ?, vendidos = ?, stock = ? WHERE id = ?');
   productos.forEach(({ id, precio }) => {
     const enOferta = azar(id, 1) < 0.4;

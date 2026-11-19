@@ -47,11 +47,11 @@ export const ruletaController = {
       return res.status(429).json({ error: `Ya giraste la ruleta. Vuelve a intentarlo en ${horas} ${horas === 1 ? 'hora' : 'horas'}.` });
     }
     giros.set(ip, Date.now());
-    const total = PREMIOS.reduce((s, p) => s + p.peso, 0);
-    let n = randomInt(total);
-    const indice = PREMIOS.findIndex((p) => (n -= p.peso) < 0);
-    const p = PREMIOS[indice];
-    if (!p.codigo) giros.delete(ip); // "Otra vez": puede volver a girar
-    res.json({ indice, etiqueta: p.etiqueta, codigo: p.codigo, descripcion: CUPONES_RULETA.find((c) => c.codigo === p.codigo)?.descripcion || null });
+    const total = PREMIOS.reduce((suma, premio) => suma + premio.peso, 0);
+    let numero = randomInt(total);
+    const indice = PREMIOS.findIndex((premio) => (numero -= premio.peso) < 0);
+    const premio = PREMIOS[indice];
+    if (!premio.codigo) giros.delete(ip); // "Otra vez": puede volver a girar
+    res.json({ indice, etiqueta: premio.etiqueta, codigo: premio.codigo, descripcion: CUPONES_RULETA.find((cupon) => cupon.codigo === premio.codigo)?.descripcion || null });
   }
 };

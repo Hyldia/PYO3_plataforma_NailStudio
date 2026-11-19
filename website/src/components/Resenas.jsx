@@ -1,3 +1,4 @@
+// Reseñas de las clientas con sus estrellas.
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 
@@ -8,7 +9,7 @@ import { api } from '../lib/api.js';
 // Objetivo: Mostrar calificaciones.
 export const Estrellas = ({ valor, grande = false }) => (
   <span className={`puntos ${grande ? 'puntos--grande' : ''}`} aria-hidden="true">
-    {[1, 2, 3, 4, 5].map((n) => <span key={n} className={n <= Math.round(valor) ? 'llena' : ''}>★</span>)}
+    {[1, 2, 3, 4, 5].map((numero) => <span key={numero} className={numero <= Math.round(valor) ? 'llena' : ''}>★</span>)}
   </span>
 );
 
@@ -35,7 +36,7 @@ const FILTROS = [['', 'Todas'], ['buenas', 'Buenas'], ['regulares', 'Regulares']
 // Entrada: Las estrellas.
 // Salida: Sí o no.
 // Objetivo: Filtrar malas.
-const CUENTA = { '': () => true, buenas: (e) => e >= 4, regulares: (e) => e === 3, malas: (e) => e <= 2 };
+const CUENTA = { '': () => true, buenas: (estrellas) => estrellas >= 4, regulares: (e) => e === 3, malas: (estrellas) => estrellas <= 2 };
 
 // Fuente de las opiniones: reseñas de productos o comentarios de la galería y de los servicios
 // Nombre: fuenteDe
@@ -54,7 +55,7 @@ const fuenteDe = (tipo, id) => tipo === 'producto'
   // Entrada: Los datos.
   // Salida: La reseña.
   // Objetivo: Que opinen.
-  ? { listar: (l, f) => api.resenas(id, l, f), crear: (d) => api.crearResena(id, d) }
+  ? { listar: (lista, f) => api.resenas(id, lista, f), crear: (datos) => api.crearResena(id, datos) }
   // Nombre: listar
   // Descripción: Lista comentarios.
   // Entrada: Cuántos y filtro.
@@ -65,7 +66,7 @@ const fuenteDe = (tipo, id) => tipo === 'producto'
   // Entrada: Los datos.
   // Salida: El comentario.
   // Objetivo: Que opinen.
-  : { listar: (l, f) => api.comentarios(tipo, id, l, f), crear: (d) => api.crearComentario(tipo, id, d) };
+  : { listar: (lista, f) => api.comentarios(tipo, id, lista, f), crear: (datos) => api.crearComentario(tipo, id, datos) };
 
 // Reseñas/opiniones: resumen con barras, filtro (buenas, regulares, malas), tarjetas y formulario
 // Nombre: Resenas
@@ -98,12 +99,12 @@ export default function Resenas({ productoId, tipo = 'producto', refId, nombrePr
   // Entrada: El envío del formulario.
   // Salida: Nada.
   // Objetivo: Guardar la opinión.
-  async function enviar(e) {
-    e.preventDefault();
+  async function enviar(evento) {
+    evento.preventDefault();
     setEstado({ enviando: true, error: '', ok: '' });
     try {
-      const r = await fuente.crear(form);
-      setEstado({ enviando: false, error: '', ok: r.verificada ? '¡Gracias! Tu reseña se publicó como compra verificada.' : (esProducto ? '¡Gracias! Tu reseña se publicó.' : '¡Gracias! Tu opinión se publicó.') });
+      const respuesta = await fuente.crear(form);
+      setEstado({ enviando: false, error: '', ok: respuesta.verificada ? '¡Gracias! Tu reseña se publicó como compra verificada.' : (esProducto ? '¡Gracias! Tu reseña se publicó.' : '¡Gracias! Tu opinión se publicó.') });
       setForm({ nombre: '', estrellas: 5, comentario: '', pedido: '', telefono: '' });
       setAbierto(false);
       cargar();
@@ -115,13 +116,13 @@ export default function Resenas({ productoId, tipo = 'producto', refId, nombrePr
 
   if (!datos) return null;
   const { total, promedio, distribucion, resenas } = datos;
-  const verificadas = resenas.filter((r) => r.verificada).length;
+  const verificadas = resenas.filter((resena) => resena.verificada).length;
   // Nombre: cuantas
   // Descripción: Cuenta opiniones por grupo.
   // Entrada: El filtro.
   // Salida: La cantidad.
   // Objetivo: Mostrar cuántas hay.
-  const cuantas = (f) => distribucion.filter((d) => CUENTA[f](d.estrellas)).reduce((n, d) => n + d.cantidad, 0);
+  const cuantas = (f) => distribucion.filter((fila) => CUENTA[f](fila.estrellas)).reduce((suma, fila) => suma + fila.cantidad, 0);
   const totalFiltro = cuantas(filtro);
   const nombreH = `t-resenas-${tipo}-${id}`;
 
@@ -150,29 +151,29 @@ export default function Resenas({ productoId, tipo = 'producto', refId, nombrePr
       {total > 0 ? (
         <div className="resenas__rejilla">
           <ul className="resenas__barras" aria-label="Reseñas por estrellas">
-            {distribucion.map((d) => (
-              <li key={d.estrellas}>
-                <span>{d.estrellas} ★</span>
-                <span className="barra" aria-hidden="true"><span style={{ width: `${total ? (d.cantidad / total) * 100 : 0}%` }} /></span>
-                <span className="tenue">{d.cantidad}</span>
+            {distribucion.map((fila) => (
+              <li key={fila.estrellas}>
+                <span>{fila.estrellas} ★</span>
+                <span className="barra" aria-hidden="true"><span style={{ width: `${total ? (fila.cantidad / total) * 100 : 0}%` }} /></span>
+                <span className="tenue">{fila.cantidad}</span>
               </li>
             ))}
           </ul>
           <ul className="resenas__lista" key={filtro}>
             {resenas.length === 0 && <li className="tenue resenas__nada">No hay opiniones de este tipo todavía.</li>}
-            {resenas.map((r, i) => (
-              <li key={r.id} className={`resena resena--${r.estrellas >= 4 ? 'buena' : r.estrellas === 3 ? 'regular' : 'mala'}`} style={{ '--i': i % 12 }}>
+            {resenas.map((resena, i) => (
+              <li key={resena.id} className={`resena resena--${resena.estrellas >= 4 ? 'buena' : resena.estrellas === 3 ? 'regular' : 'mala'}`} style={{ '--i': i % 12 }}>
                 <div className="resena__autora">
-                  <span className="resena__avatar" aria-hidden="true">{r.nombre[0]}</span>
+                  <span className="resena__avatar" aria-hidden="true">{resena.nombre[0]}</span>
                   <div>
-                    <strong>{r.nombre}</strong>
-                    <p className="tenue">{fecha(r.creada_en)}</p>
+                    <strong>{resena.nombre}</strong>
+                    <p className="tenue">{fecha(resena.creada_en)}</p>
                   </div>
                 </div>
-                <p><Estrellas valor={r.estrellas} /><span className="solo-lector">{r.estrellas} de 5 estrellas</span></p>
-                {r.opcion && <p className="tenue resena__opcion">Opción: {r.opcion}</p>}
-                <p className="resena__texto">{r.comentario}</p>
-                {r.verificada ? <p className="resena__verificada">✓ Compra verificada</p> : null}
+                <p><Estrellas valor={resena.estrellas} /><span className="solo-lector">{resena.estrellas} de 5 estrellas</span></p>
+                {resena.opcion && <p className="tenue resena__opcion">Opción: {resena.opcion}</p>}
+                <p className="resena__texto">{resena.comentario}</p>
+                {resena.verificada ? <p className="resena__verificada">✓ Compra verificada</p> : null}
               </li>
             ))}
           </ul>
@@ -182,8 +183,8 @@ export default function Resenas({ productoId, tipo = 'producto', refId, nombrePr
       )}
 
       <div className="resenas__acciones">
-        {resenas.length < totalFiltro && <button type="button" className="boton-ver-mas" onClick={() => setLimite((l) => l + 12)}>Ver más reseñas <span aria-hidden="true">⌄</span></button>}
-        <button type="button" className="boton boton--contorno" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)}>{esProducto ? 'Escribir una reseña' : 'Dejar mi opinión'}</button>
+        {resenas.length < totalFiltro && <button type="button" className="boton-ver-mas" onClick={() => setLimite((anterior) => anterior + 12)}>Ver más reseñas <span aria-hidden="true">⌄</span></button>}
+        <button type="button" className="boton boton--contorno" aria-expanded={abierto} onClick={() => setAbierto((anterior) => !anterior)}>{esProducto ? 'Escribir una reseña' : 'Dejar mi opinión'}</button>
       </div>
       {estado.ok && <p role="status" className="resenas__ok">{estado.ok}</p>}
 
@@ -192,10 +193,10 @@ export default function Resenas({ productoId, tipo = 'producto', refId, nombrePr
           <fieldset className="campo">
             <legend>Tu calificación</legend>
             <div className="elegir-estrellas">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <label key={n} className={n <= form.estrellas ? 'activa' : ''}>
-                  <input type="radio" name={`${nombreH}-e`} value={n} checked={form.estrellas === n} onChange={() => setForm({ ...form, estrellas: n })} />
-                  <span aria-hidden="true">★</span><span className="solo-lector">{n} {n === 1 ? 'estrella' : 'estrellas'}</span>
+              {[1, 2, 3, 4, 5].map((numero) => (
+                <label key={numero} className={numero <= form.estrellas ? 'activa' : ''}>
+                  <input type="radio" name={`${nombreH}-e`} value={numero} checked={form.estrellas === numero} onChange={() => setForm({ ...form, estrellas: numero })} />
+                  <span aria-hidden="true">★</span><span className="solo-lector">{numero} {numero === 1 ? 'estrella' : 'estrellas'}</span>
                 </label>
               ))}
             </div>

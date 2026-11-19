@@ -18,7 +18,7 @@ const mananaIso = () => { const fecha = new Date(); fecha.setDate(fecha.getDate(
 // Entrada: "14:30".
 // Salida: "2:30 p. m.".
 // Objetivo: Horas fáciles de leer.
-const horaBonita = (hora) => { const [h, m] = hora.split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'a. m.' : 'p. m.'}`; };
+const horaBonita = (hora) => { const [horas, minutos] = hora.split(':').map(Number); return `${horas % 12 || 12}:${String(minutos).padStart(2, '0')} ${horas < 12 ? 'a. m.' : 'p. m.'}`; };
 
 // Nombre: VentanaNoAsistio
 // Descripción: Pide la decisión para una cita a la que la clienta no llegó.

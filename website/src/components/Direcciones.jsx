@@ -16,28 +16,28 @@ const ETIQUETAS = ['Casa', 'Trabajo', 'Otra'];
 export function FormularioDireccion({ inicial, onCerrar, onGuardada }) {
   const { usuario, setDirecciones, direcciones } = useUsuario();
   const nueva = !inicial?.id;
-  const [d, setD] = useState({ etiqueta: 'Casa', destinatario: usuario?.nombre || '', telefono: usuario?.telefono || '', provincia: '', canton: '', distrito: '', senas: '', principal: false, ...inicial });
+  const [datos, setDatos] = useState({ etiqueta: 'Casa', destinatario: usuario?.nombre || '', telefono: usuario?.telefono || '', provincia: '', canton: '', distrito: '', senas: '', principal: false, ...inicial });
   const [estado, setEstado] = useState({ guardando: false, error: '' });
   // Nombre: set
   // Descripción: Guarda lo que se escribe en un campo.
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
+  const set = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value });
 
   // Nombre: guardar
   // Descripción: Guarda la dirección.
   // Entrada: El envío del formulario.
   // Salida: Nada.
   // Objetivo: Tenerla para envíos.
-  async function guardar(e) {
-    e.preventDefault();
+  async function guardar(evento) {
+    evento.preventDefault();
     setEstado({ guardando: true, error: '' });
     try {
-      const r = nueva ? await api.cuenta.crearDireccion(d) : await api.cuenta.editarDireccion(d.id, d);
+      const guardada = nueva ? await api.cuenta.crearDireccion(datos) : await api.cuenta.editarDireccion(datos.id, datos);
       const lista = await api.cuenta.yo();
       setDirecciones(lista.direcciones);
-      onGuardada?.(r); onCerrar();
+      onGuardada?.(guardada); onCerrar();
     } catch (err) { setEstado({ guardando: false, error: err.message }); }
   }
 
@@ -47,23 +47,23 @@ export function FormularioDireccion({ inicial, onCerrar, onGuardada }) {
         <fieldset className="grupo">
           <legend className="grupo__titulo grupo__titulo--chico">Nombre de la dirección</legend>
           <div className="dias-chips">
-            {ETIQUETAS.map((t) => <label key={t} className={d.etiqueta === t ? 'activo' : ''}><input type="radio" name="etq" checked={d.etiqueta === t} onChange={() => setD({ ...d, etiqueta: t })} />{t}</label>)}
+            {ETIQUETAS.map((etiqueta) => <label key={etiqueta} className={datos.etiqueta === etiqueta ? 'activo' : ''}><input type="radio" name="etq" checked={datos.etiqueta === etiqueta} onChange={() => setDatos({ ...datos, etiqueta: etiqueta })} />{etiqueta}</label>)}
           </div>
         </fieldset>
         <div className="campos-dos">
-          <div className="campo"><label htmlFor="dir-dest">Quién recibe</label><input id="dir-dest" autoComplete="name" value={d.destinatario} onChange={set('destinatario')} required /></div>
-          <div className="campo"><label htmlFor="dir-tel">Teléfono</label><input id="dir-tel" type="tel" inputMode="tel" autoComplete="tel" value={d.telefono} onChange={set('telefono')} required /></div>
+          <div className="campo"><label htmlFor="dir-dest">Quién recibe</label><input id="dir-dest" autoComplete="name" value={datos.destinatario} onChange={set('destinatario')} required /></div>
+          <div className="campo"><label htmlFor="dir-tel">Teléfono</label><input id="dir-tel" type="tel" inputMode="tel" autoComplete="tel" value={datos.telefono} onChange={set('telefono')} required /></div>
         </div>
         <div className="campos-tres">
           <div className="campo"><label htmlFor="dir-prov">Provincia</label>
-            <select id="dir-prov" value={d.provincia} onChange={set('provincia')} required><option value="">Elegir</option>{PROVINCIAS.map((p) => <option key={p}>{p}</option>)}</select></div>
-          <div className="campo"><label htmlFor="dir-can">Cantón</label><input id="dir-can" value={d.canton} onChange={set('canton')} required /></div>
-          <div className="campo"><label htmlFor="dir-dis">Distrito</label><input id="dir-dis" value={d.distrito} onChange={set('distrito')} required /></div>
+            <select id="dir-prov" value={datos.provincia} onChange={set('provincia')} required><option value="">Elegir</option>{PROVINCIAS.map((provincia) => <option key={provincia}>{provincia}</option>)}</select></div>
+          <div className="campo"><label htmlFor="dir-can">Cantón</label><input id="dir-can" value={datos.canton} onChange={set('canton')} required /></div>
+          <div className="campo"><label htmlFor="dir-dis">Distrito</label><input id="dir-dis" value={datos.distrito} onChange={set('distrito')} required /></div>
         </div>
         <div className="campo"><label htmlFor="dir-senas">Otras señas</label>
-          <textarea id="dir-senas" rows="3" value={d.senas} onChange={set('senas')} placeholder="Ej.: 100 m norte de la iglesia, casa blanca con portón negro" required /></div>
+          <textarea id="dir-senas" rows="3" value={datos.senas} onChange={set('senas')} placeholder="Ej.: 100 m norte de la iglesia, casa blanca con portón negro" required /></div>
         {(direcciones.length > 0 || !nueva) && !inicial?.principal && (
-          <label className="casilla"><input type="checkbox" checked={Boolean(d.principal)} onChange={(evento) => setD({ ...d, principal: evento.target.checked })} /><span>Usar como dirección principal</span></label>
+          <label className="casilla"><input type="checkbox" checked={Boolean(datos.principal)} onChange={(evento) => setDatos({ ...datos, principal: evento.target.checked })} /><span>Usar como dirección principal</span></label>
         )}
         {estado.error && <p role="alert" className="error">{estado.error}</p>}
         <div className="botones">
@@ -138,7 +138,7 @@ export function ListaDirecciones({ elegida, onElegir }) {
       </ul>
       {direcciones.length >= MAX_DIRECCIONES && <p className="tenue">Tienes el máximo de {MAX_DIRECCIONES} direcciones. Edita o borra una para agregar otra.</p>}
       {error && <p role="alert" className="error">{error}</p>}
-      {editando && <FormularioDireccion inicial={editando.id ? editando : null} onCerrar={() => setEditando(null)} onGuardada={(d) => { if (!editando.id) onElegir?.(d.id); }} />}
+      {editando && <FormularioDireccion inicial={editando.id ? editando : null} onCerrar={() => setEditando(null)} onGuardada={(datos) => { if (!editando.id) onElegir?.(datos.id); }} />}
     </div>
   );
 }

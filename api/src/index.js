@@ -1,3 +1,4 @@
+// Arranque del servidor: prepara Express, la base de datos, las rutas de /api, las fotos subidas y el sitio ya construido.
 import express from 'express';
 import cors from 'cors';
 import { existsSync } from 'node:fs';

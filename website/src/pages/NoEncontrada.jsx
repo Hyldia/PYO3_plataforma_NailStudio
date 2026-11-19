@@ -1,3 +1,4 @@
+// Página que sale cuando la dirección no existe (error 404).
 import { Link } from 'react-router-dom';
 import { useTitulo } from '../lib/hooks.js';
 

@@ -14,19 +14,19 @@ import { useVistaRapida } from '../context/VistaRapidaContext.jsx';
 // Entrada: La lista.
 // Salida: La lista ordenada.
 // Objetivo: Que se vea más bonito.
-const conFotoPrimero = (l) => [...l].sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen));
+const conFotoPrimero = (lista) => [...lista].sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen));
 // Nombre: pct
 // Descripción: Calcula el porcentaje de descuento.
 // Entrada: El producto.
 // Salida: El porcentaje.
 // Objetivo: Mostrar cuánto ahorra.
-const pct = (p) => (p.precio_anterior ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0);
+const pct = (producto) => (producto.precio_anterior ? Math.round((1 - producto.precio / producto.precio_anterior) * 100) : 0);
 // Nombre: lista
 // Descripción: Saca la lista de productos de la respuesta.
 // Entrada: La respuesta.
 // Salida: La lista.
 // Objetivo: Trabajar con la lista.
-const lista = (r) => r.productos || r;
+const lista = (respuesta) => respuesta.productos || respuesta;
 
 // Nombre: Flecha
 // Descripción: Dibuja una flecha.
@@ -43,50 +43,50 @@ function Flecha({ dir = 1 }) {
 // Salida: El carrusel.
 // Objetivo: Destacar lo mejor arriba.
 function Carrusel({ ofertas, vendidos, kits }) {
-  const [i, setI] = useState(0);
+  const [actual, setActual] = useState(0);
   const [pausa, setPausa] = useState(false);
   const maximo = Math.max(0, ...ofertas.map(pct));
   const slides = [
     { clase: 'oferta', ante: 'Ofertas relámpago', titulo: <>Hasta <em>-{maximo}%</em> en lo que más usas</>, texto: 'Esmaltes, geles, limas y cuidado de manos con descuento solo por hoy.', boton: 'Ver ofertas', to: '/tienda?ofertas=1&orden=descuento', productos: ofertas, reloj: true },
     { clase: 'vendidos', ante: 'Top ventas', titulo: <>Lo que <em>todas</em> están comprando</>, texto: 'Los favoritos de nuestras clientas, probados en el salón.', boton: 'Ver más vendidos', to: '/tienda?orden=vendidos', productos: vendidos },
     { clase: 'kits', ante: 'Kits y equipos', titulo: <>Arma tu <em>estudio</em> en casa</>, texto: 'Lámparas, kits de manicure y todo para empezar. Retiro gratis en el salón.', boton: 'Ver kits', to: `/tienda?categoria=${encodeURIComponent('Kits')}`, productos: kits }
-  ].filter((s) => s.productos.length >= 3);
+  ].filter((diapositiva) => diapositiva.productos.length >= 3);
 
   useEffect(() => {
     if (pausa || slides.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    const t = setTimeout(() => setI((n) => (n + 1) % slides.length), 8000);
-    return () => clearTimeout(t);
-  }, [i, pausa, slides.length]);
+    const temporizador = setTimeout(() => setActual((anterior) => (anterior + 1) % slides.length), 8000);
+    return () => clearTimeout(temporizador);
+  }, [actual, pausa, slides.length]);
   if (!slides.length) return null;
-  const s = slides[i % slides.length];
+  const diapositiva = slides[actual % slides.length];
 
   return (
-    <section className={`vitrina vitrina--${s.clase}`} aria-roledescription="carrusel" aria-label="Campañas de la tienda"
+    <section className={`vitrina vitrina--${diapositiva.clase}`} aria-roledescription="carrusel" aria-label="Campañas de la tienda"
              onMouseEnter={() => setPausa(true)} onMouseLeave={() => setPausa(false)} onFocus={() => setPausa(true)} onBlur={() => setPausa(false)}>
-      <span className="vitrina__burbujas" aria-hidden="true">{Array.from({ length: 8 }, (_, n) => <i key={n} style={{ '--n': n }} />)}</span>
-      <div className="vitrina__texto" key={`t${i}`}>
-        <p className="vitrina__ante">{s.ante}</p>
-        <h2><Link to={s.to} className="enlace-titulo">{s.titulo}</Link></h2>
-        <p>{s.texto}</p>
-        {s.reloj && <CuentaRegresiva claro />}
-        <Link to={s.to} className="vitrina__boton">{s.boton} <Flecha /></Link>
+      <span className="vitrina__burbujas" aria-hidden="true">{Array.from({ length: 8 }, (_, numero) => <i key={numero} style={{ '--n': numero }} />)}</span>
+      <div className="vitrina__texto" key={`t${actual}`}>
+        <p className="vitrina__ante">{diapositiva.ante}</p>
+        <h2><Link to={diapositiva.to} className="enlace-titulo">{diapositiva.titulo}</Link></h2>
+        <p>{diapositiva.texto}</p>
+        {diapositiva.reloj && <CuentaRegresiva claro />}
+        <Link to={diapositiva.to} className="vitrina__boton">{diapositiva.boton} <Flecha /></Link>
       </div>
-      <ul className="vitrina__productos" key={`p${i}`}>
-        {s.productos.slice(0, 4).map((p, n) => (
-          <li key={p.id} style={{ '--n': n }}>
-            <Link to={`/tienda/${p.id}`} className="vitrina__producto">
-              <ProductoImagen producto={p} />
-              {pct(p) > 0 && <span className="vitrina__pct">-{pct(p)}%</span>}
-              <span className="vitrina__precio">{dinero(p.precio)}</span>
-              <span className="solo-lector">{p.nombre}</span>
+      <ul className="vitrina__productos" key={`p${actual}`}>
+        {diapositiva.productos.slice(0, 4).map((producto, numero) => (
+          <li key={producto.id} style={{ '--n': numero }}>
+            <Link to={`/tienda/${producto.id}`} className="vitrina__producto">
+              <ProductoImagen producto={producto} />
+              {pct(producto) > 0 && <span className="vitrina__pct">-{pct(producto)}%</span>}
+              <span className="vitrina__precio">{dinero(producto.precio)}</span>
+              <span className="solo-lector">{producto.nombre}</span>
             </Link>
           </li>
         ))}
       </ul>
       <div className="vitrina__puntos" role="group" aria-label="Elegir campaña">
-        {slides.map((x, n) => (
-          <button key={x.clase} type="button" aria-label={`Campaña ${n + 1}: ${x.ante}`} aria-current={n === i % slides.length}
-                  className={pausa ? 'pausa' : ''} onClick={() => setI(n)}><span key={i} /></button>
+        {slides.map((diapositiva, numero) => (
+          <button key={diapositiva.clase} type="button" aria-label={`Campaña ${numero + 1}: ${diapositiva.ante}`} aria-current={numero === actual % slides.length}
+                  className={pausa ? 'pausa' : ''} onClick={() => setActual(numero)}><span key={actual} /></button>
         ))}
       </div>
     </section>
@@ -103,12 +103,12 @@ function Categorias({ categorias, muestras }) {
     <section className="cat-circulos" aria-labelledby="t-cat-circ">
       <h2 id="t-cat-circ" className="fila-titulo">Compra por categoría</h2>
       <ul style={{ '--columnas': categorias.length <= 10 ? categorias.length : Math.ceil(categorias.length / 2), '--columnas-movil': [4, 3, 5].find((columnas) => categorias.length % columnas === 0) || 4 }}>
-        {categorias.map((c, n) => (
-          <li key={c.valor} style={{ '--n': n }}>
-            <Link to={`/tienda?categoria=${encodeURIComponent(c.valor)}`} className="cat-circulos__enlace">
-              <span className="cat-circulos__aro"><span className="cat-circulos__foto">{muestras[c.valor] ? <ProductoImagen producto={muestras[c.valor]} /> : null}</span></span>
-              <span className="cat-circulos__nombre">{c.valor}</span>
-              <span className="cat-circulos__cant">{c.cantidad} productos</span>
+        {categorias.map((categoria, numero) => (
+          <li key={categoria.valor} style={{ '--n': numero }}>
+            <Link to={`/tienda?categoria=${encodeURIComponent(categoria.valor)}`} className="cat-circulos__enlace">
+              <span className="cat-circulos__aro"><span className="cat-circulos__foto">{muestras[categoria.valor] ? <ProductoImagen producto={muestras[categoria.valor]} /> : null}</span></span>
+              <span className="cat-circulos__nombre">{categoria.valor}</span>
+              <span className="cat-circulos__cant">{categoria.cantidad} productos</span>
             </Link>
           </li>
         ))}
@@ -134,20 +134,20 @@ function FilaRelampago({ productos }) {
       </div>
       <div className="fila-flash__marco">
         <ul ref={ref}>
-          {productos.slice(0, 6).map((p, n) => {
-            const vendido = 55 + ((p.id * 13) % 40);
+          {productos.slice(0, 6).map((producto, numero) => {
+            const vendido = 55 + ((producto.id * 13) % 40);
             return (
-              <li key={p.id} style={{ '--n': n }}>
+              <li key={producto.id} style={{ '--n': numero }}>
                 <div className="flash-tarjeta">
-                  <button type="button" className="flash-tarjeta__foto" onClick={() => vista({ tipo: 'producto', id: p.id })} aria-label={`Vista previa de ${p.nombre}`}>
-                    <ProductoImagen producto={p} />
-                    <span className="flash-tarjeta__pct">-{pct(p)}%</span>
+                  <button type="button" className="flash-tarjeta__foto" onClick={() => vista({ tipo: 'producto', id: producto.id })} aria-label={`Vista previa de ${producto.nombre}`}>
+                    <ProductoImagen producto={producto} />
+                    <span className="flash-tarjeta__pct">-{pct(producto)}%</span>
                   </button>
-                  <BotonFavorito tipo="producto" nombre={p.nombre}
-                                 datos={{ id: p.id, nombre: p.nombre, precio: p.precio, precio_anterior: p.precio_anterior, imagen: p.imagen, color: p.color, tipo_producto: p.tipo, stock: p.stock, calificacion: p.calificacion, resenas: p.resenas, vendidos: p.vendidos, categoria: p.categoria }} />
-                  <Link to={`/tienda/${p.id}`} className="flash-tarjeta__nombre">{p.nombre}</Link>
-                  <p className="flash-tarjeta__precio"><b>{dinero(p.precio)}</b><s>{dinero(p.precio_anterior)}</s></p>
-                  <Link to={`/tienda/${p.id}`} className="flash-tarjeta__barra" aria-label={`${vendido} % vendido`}><span style={{ '--v': `${vendido}%` }} /><em>{vendido >= 85 ? '¡Casi agotado!' : `${vendido} % vendido`}</em></Link>
+                  <BotonFavorito tipo="producto" nombre={producto.nombre}
+                                 datos={{ id: producto.id, nombre: producto.nombre, precio: producto.precio, precio_anterior: producto.precio_anterior, imagen: producto.imagen, color: producto.color, tipo_producto: producto.tipo, stock: producto.stock, calificacion: producto.calificacion, resenas: producto.resenas, vendidos: producto.vendidos, categoria: producto.categoria }} />
+                  <Link to={`/tienda/${producto.id}`} className="flash-tarjeta__nombre">{producto.nombre}</Link>
+                  <p className="flash-tarjeta__precio"><b>{dinero(producto.precio)}</b><s>{dinero(producto.precio_anterior)}</s></p>
+                  <Link to={`/tienda/${producto.id}`} className="flash-tarjeta__barra" aria-label={`${vendido} % vendido`}><span style={{ '--v': `${vendido}%` }} /><em>{vendido >= 85 ? '¡Casi agotado!' : `${vendido} % vendido`}</em></Link>
                 </div>
               </li>
             );
@@ -172,7 +172,7 @@ export default function EscaparateTienda({ categorias, children }) {
       api.productos({ categoria: 'Kits', limite: 8 }).catch(() => []),
       api.productos({ categoria: 'Equipos', limite: 8 }).catch(() => [])
     ]).then(([o, v, k, e]) => {
-      const ofertas = lista(o).filter((p) => p.precio_anterior);
+      const ofertas = lista(o).filter((valor) => valor.precio_anterior);
       setDatos({ ofertas, vendidos: lista(v), kits: conFotoPrimero([...lista(k), ...lista(e)]) });
     }).catch(() => setDatos(null));
   }, []);
@@ -186,7 +186,7 @@ export default function EscaparateTienda({ categorias, children }) {
     // Primero la foto que la dueña eligió en el panel; si no hay, la del producto más vendido
     Promise.all([
       api.portadas().catch(() => ({})),
-      ...categorias.map((c) => api.productos({ categoria: c.valor, orden: 'vendidos', limite: 6 }).then((respuesta) => [c.valor, conFotoPrimero(lista(respuesta))[0]]).catch(() => [c.valor, null]))
+      ...categorias.map((categoria) => api.productos({ categoria: categoria.valor, orden: 'vendidos', limite: 6 }).then((respuesta) => [categoria.valor, conFotoPrimero(lista(respuesta))[0]]).catch(() => [categoria.valor, null]))
     ]).then(([portadas, ...pares]) => setMuestras(Object.fromEntries(pares.map(([k, p]) => [k, portadas[k] ? { ...(p || {}), nombre: k, imagen: portadas[k] } : p]))));
   }, [categorias]);
 

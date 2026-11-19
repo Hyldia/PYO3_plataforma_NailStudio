@@ -21,16 +21,16 @@ const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', '
 // Salida: El texto (lunes 5 de mayo).
 // Objetivo: Mensajes fáciles de leer.
 export function fechaLarga(fecha) {
-  const d = new Date(`${fecha}T12:00:00`);
-  return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
+  const dia = new Date(`${fecha}T12:00:00`);
+  return `${DIAS[dia.getDay()]} ${dia.getDate()} de ${MESES[dia.getMonth()]}`;
 }
 // Nombre: horaBonita
 // Descripción: Escribe la hora bonita.
 // Entrada: La hora.
 // Salida: El texto (3:00 p. m.).
 // Objetivo: Mensajes fáciles de leer.
-const horaBonita = (h) => {
-  const [hh, mm] = h.split(':').map(Number);
+const horaBonita = (hora) => {
+  const [hh, mm] = hora.split(':').map(Number);
   return `${hh > 12 ? hh - 12 : hh}:${String(mm).padStart(2, '0')} ${hh >= 12 ? 'p. m.' : 'a. m.'}`;
 };
 // Nombre: primerNombre
@@ -59,7 +59,7 @@ class PlantillaMensaje {
   // Entrada: Los datos.
   // Salida: El saludo.
   // Objetivo: Empezar el mensaje.
-  saludo(d) { return `Hola ${primerNombre(d.cliente_nombre)}, te saludamos de ${SALON.nombre} 💅`; }
+  saludo(datos) { return `Hola ${primerNombre(datos.cliente_nombre)}, te saludamos de ${SALON.nombre} 💅`; }
   // Nombre: motivo
   // Descripción: Escribe el motivo (vacío por defecto).
   // Entrada: Nada.
@@ -71,7 +71,7 @@ class PlantillaMensaje {
   // Entrada: Los datos.
   // Salida: El texto.
   // Objetivo: Recordar la cita.
-  detalle(d) { return d.fecha ? `Tu cita: ${d.servicio || 'servicio'}${d.especialista ? ` con ${d.especialista}` : ''}, el ${fechaLarga(d.fecha)} a las ${horaBonita(d.hora)}.` : ''; }
+  detalle(datos) { return datos.fecha ? `Tu cita: ${datos.servicio || 'servicio'}${datos.especialista ? ` con ${datos.especialista}` : ''}, el ${fechaLarga(datos.fecha)} a las ${horaBonita(datos.hora)}.` : ''; }
   // Nombre: opciones
   // Descripción: Escribe las opciones (vacío por defecto).
   // Entrada: Nada.
@@ -94,19 +94,19 @@ class MensajeCancelacion extends PlantillaMensaje {
   // Entrada: Los datos.
   // Salida: El texto.
   // Objetivo: Explicar la cancelación.
-  motivo(d) {
-    return `Lamentamos mucho avisarte que debemos cancelar tu cita${d.motivo ? ` por ${d.motivo.toLowerCase().replace(/\.$/, '')}` : ' por una emergencia'}.`;
+  motivo(datos) {
+    return `Lamentamos mucho avisarte que debemos cancelar tu cita${datos.motivo ? ` por ${datos.motivo.toLowerCase().replace(/\.$/, '')}` : ' por una emergencia'}.`;
   }
   // Nombre: opciones
   // Descripción: Ofrece opciones para reponer la cita.
   // Entrada: Los datos.
   // Salida: El texto.
   // Objetivo: Ayudar a reprogramar.
-  opciones(d) {
+  opciones(datos) {
     const partes = [];
-    if (d.anticipo > 0) partes.push(`El adelanto de ₡${Math.round(d.anticipo).toLocaleString('es-CR')} queda a tu favor para la nueva cita, o te lo devolvemos si lo prefieres.`);
+    if (datos.anticipo > 0) partes.push(`El adelanto de ₡${Math.round(datos.anticipo).toLocaleString('es-CR')} queda a tu favor para la nueva cita, o te lo devolvemos si lo prefieres.`);
     partes.push('Respóndenos este mensaje y te buscamos otro espacio con prioridad.');
-    if (d.nota) partes.push(d.nota);
+    if (datos.nota) partes.push(datos.nota);
     return partes.join('\n');
   }
   // Nombre: despedida
@@ -125,19 +125,19 @@ class MensajeReprogramacion extends MensajeCancelacion {
   // Entrada: Los datos.
   // Salida: El texto.
   // Objetivo: Explicar el cambio.
-  motivo(d) {
-    return `Por ${d.motivo ? d.motivo.toLowerCase().replace(/\.$/, '') : 'una emergencia'} no podremos atenderte en el horario que tenías.`;
+  motivo(datos) {
+    return `Por ${datos.motivo ? datos.motivo.toLowerCase().replace(/\.$/, '') : 'una emergencia'} no podremos atenderte en el horario que tenías.`;
   }
   // Nombre: opciones
   // Descripción: Escribe la nueva fecha.
   // Entrada: Los datos.
   // Salida: El texto.
   // Objetivo: Avisar la fecha nueva.
-  opciones(d) {
-    const propuesta = d.nuevaFecha && d.nuevaHora
-      ? `Te proponemos el ${fechaLarga(d.nuevaFecha)} a las ${horaBonita(d.nuevaHora)}. ¿Te sirve? Respóndenos SÍ para confirmarla o dinos otro horario.`
+  opciones(datos) {
+    const propuesta = datos.nuevaFecha && datos.nuevaHora
+      ? `Te proponemos el ${fechaLarga(datos.nuevaFecha)} a las ${horaBonita(datos.nuevaHora)}. ¿Te sirve? Respóndenos SÍ para confirmarla o dinos otro horario.`
       : 'Respóndenos con el día y la hora que mejor te sirvan y te la reprogramamos sin costo.';
-    return [propuesta, d.anticipo > 0 ? 'Tu adelanto se mantiene para la nueva cita.' : '', d.nota || ''].filter(Boolean).join('\n');
+    return [propuesta, datos.anticipo > 0 ? 'Tu adelanto se mantiene para la nueva cita.' : '', datos.nota || ''].filter(Boolean).join('\n');
   }
 }
 
@@ -195,19 +195,19 @@ class MensajePedidoListo extends PlantillaMensaje {
   // Entrada: Los datos del pedido.
   // Salida: El texto.
   // Objetivo: Avisar a la clienta.
-  motivo(d) { return `¡Tu pedido #${d.id} ya está listo para retirar! 🛍️`; }
+  motivo(datos) { return `¡Tu pedido #${datos.id} ya está listo para retirar! 🛍️`; }
   // Nombre: detalle
   // Descripción: Escribe qué incluye el pedido.
   // Entrada: Los datos.
   // Salida: El texto.
   // Objetivo: Recordar lo que compró.
-  detalle(d) { return d.detalle ? `Incluye: ${d.detalle}.` : ''; }
+  detalle(datos) { return datos.detalle ? `Incluye: ${datos.detalle}.` : ''; }
   // Nombre: opciones
   // Descripción: Escribe dónde retirar y cómo pagar.
   // Entrada: Los datos.
   // Salida: El texto.
   // Objetivo: Ayudar a retirar.
-  opciones(d) { return `Puedes pasar a retirarlo en ${SALON.direccion}.${d.metodo_pago === 'salon' ? ` Total a pagar: ₡${Math.round(d.total).toLocaleString('es-CR')}.` : ''}`; }
+  opciones(datos) { return `Puedes pasar a retirarlo en ${SALON.direccion}.${datos.metodo_pago === 'salon' ? ` Total a pagar: ₡${Math.round(datos.total).toLocaleString('es-CR')}.` : ''}`; }
   // Nombre: despedida
   // Descripción: Escribe la despedida.
   // Entrada: Nada.
@@ -232,8 +232,8 @@ class MensajeInasistenciaReprogramada extends PlantillaMensaje {
   // Entrada: Los datos con la nueva fecha y hora.
   // Salida: El texto.
   // Objetivo: Que sepa cuándo venir.
-  opciones(d) {
-    return [`Tu nueva cita: ${fechaLarga(d.nuevaFecha)} a las ${horaBonita(d.nuevaHora)}.`, d.anticipo > 0 ? 'Tu adelanto se mantiene para la nueva cita.' : '',
+  opciones(datos) {
+    return [`Tu nueva cita: ${fechaLarga(datos.nuevaFecha)} a las ${horaBonita(datos.nuevaHora)}.`, datos.anticipo > 0 ? 'Tu adelanto se mantiene para la nueva cita.' : '',
       'Si ese horario no te sirve, respóndenos por aquí. Recuerda que las citas se pueden cancelar hasta 2 horas antes.'].filter(Boolean).join('\n');
   }
   // Nombre: despedida
@@ -252,17 +252,17 @@ class MensajeInasistenciaCobro extends PlantillaMensaje {
   // Entrada: Los datos con el monto.
   // Salida: El texto.
   // Objetivo: Avisar el cobro con claridad y respeto.
-  motivo(d) { return `Te esperamos en tu cita y no llegaste. Según nuestra política de citas, se cobra ₡${Math.round(d.monto || 0).toLocaleString('es-CR')} por la cita no asistida.`; }
+  motivo(datos) { return `Te esperamos en tu cita y no llegaste. Según nuestra política de citas, se cobra ₡${Math.round(datos.monto || 0).toLocaleString('es-CR')} por la cita no asistida.`; }
   // Nombre: opciones
   // Descripción: Explica cómo pagar.
   // Entrada: Los datos de la cita.
   // Salida: El texto.
   // Objetivo: Que pueda pagar fácil.
-  opciones(d) {
+  opciones(datos) {
     const colones = (monto) => `₡${Math.round(monto).toLocaleString('es-CR')}`;
-    const pago = !(d.anticipo > 0) ? 'Puedes pagarlo por SINPE Móvil o en tu próxima visita.'
-      : d.anticipo >= d.monto ? `Se descuenta de tu adelanto de ${colones(d.anticipo)}${d.anticipo > d.monto ? `; los ${colones(d.anticipo - d.monto)} que sobran quedan a tu favor para tu próxima cita` : ''}.`
-        : `Se toma tu adelanto de ${colones(d.anticipo)} y los ${colones(d.monto - d.anticipo)} que faltan los puedes pagar por SINPE Móvil o en tu próxima visita.`;
+    const pago = !(datos.anticipo > 0) ? 'Puedes pagarlo por SINPE Móvil o en tu próxima visita.'
+      : datos.anticipo >= datos.monto ? `Se descuenta de tu adelanto de ${colones(datos.anticipo)}${datos.anticipo > datos.monto ? `; los ${colones(datos.anticipo - datos.monto)} que sobran quedan a tu favor para tu próxima cita` : ''}.`
+        : `Se toma tu adelanto de ${colones(datos.anticipo)} y los ${colones(datos.monto - datos.anticipo)} que faltan los puedes pagar por SINPE Móvil o en tu próxima visita.`;
     return [pago,
       'Si fue una emergencia, escríbenos por aquí y lo conversamos.'].join('\n');
   }

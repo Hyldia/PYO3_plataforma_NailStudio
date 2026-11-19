@@ -24,10 +24,10 @@ async function main() {
 
   // Juntamos varias páginas de retratos (cada búsqueda trae hasta 30)
   const pool = [];
-  for (const q of BUSQUEDAS) {
+  for (const busqueda of BUSQUEDAS) {
     for (let pagina = 1; pagina <= 3 && pool.length < clientas.length; pagina++) {
-      const { results = [] } = await buscarUnsplash(CLAVE, q, pagina);
-      results.filter((f) => f.height >= f.width * 0.9).forEach((f) => { if (!pool.some((x) => x.id === f.id)) pool.push(f); });
+      const { results = [] } = await buscarUnsplash(CLAVE, busqueda, pagina);
+      results.filter((resultado) => resultado.height >= resultado.width * 0.9).forEach((resultado) => { if (!pool.some((foto) => foto.id === resultado.id)) pool.push(resultado); });
     }
     if (pool.length >= clientas.length) break;
   }
@@ -35,12 +35,12 @@ async function main() {
 
   // Si hay más clientas que fotos, algunas fotos se repiten (son clientas de ejemplo)
   const guardar = db.prepare('INSERT OR REPLACE INTO fotos_clientas (telefono, foto, autor, autor_url) VALUES (?, ?, ?, ?)');
-  db.transaction(() => clientas.forEach((c, i) => {
-    const f = pool[i % pool.length];
-    const a = autorUnsplash(f);
-    guardar.run(c.telefono, urlFotoUnsplash(f).replace('w=1000', 'w=240'), a.autor, a.autor_url);
+  db.transaction(() => clientas.forEach((clienta, i) => {
+    const foto = pool[i % pool.length];
+    const autor = autorUnsplash(foto);
+    guardar.run(clienta.telefono, urlFotoUnsplash(foto).replace('w=1000', 'w=240'), autor.autor, autor.autor_url);
   }))();
   console.log(`Listo: ${clientas.length} clientas de ejemplo con foto (${pool.length} fotos distintas).`);
 }
 
-main().catch((e) => { console.error(e.message); process.exit(1); });
+main().catch((fallo) => { console.error(fallo.message); process.exit(1); });

@@ -1,3 +1,4 @@
+// Mapa de pantallas del sitio: qué página sale en cada dirección, con el encabezado y el pie de página.
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import Encabezado from './components/Encabezado.jsx';

@@ -1,7 +1,8 @@
+// Detalle de un diseño de la Galería: foto grande, datos, diseños parecidos y botón para reservarlo.
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { dinero, urlFoto } from '../config.js';
+import { dinero } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import { useReserva } from '../context/ReservaContext.jsx';
 import Foto from '../components/Foto.jsx';
@@ -36,14 +37,14 @@ export default function DisenoDetalle() {
 
   useEffect(() => {
     setFoto(null); setError(''); window.scrollTo(0, 0);
-    api.foto(id).then((f) => { setFoto(f); setForma(f.forma || 'Almendra'); api.vistaFoto(f.id); }).catch((e) => setError(e.message));
+    api.foto(id).then((respuesta) => { setFoto(respuesta); setForma(respuesta.forma || 'Almendra'); api.vistaFoto(respuesta.id); }).catch((fallo) => setError(fallo.message));
     api.fotosRelacionadas(id, 15).then(setRelacionados).catch(() => setRelacionados([]));
   }, [id]);
 
   if (error) return <div className="contenedor pagina"><p role="alert" className="error">{error}</p><Link to="/galeria" className="enlace">Volver a la galería</Link></div>;
   if (!foto) return <div className="contenedor pagina"><p className="tenue" role="status">Cargando diseño…</p></div>;
 
-  const p = foto.presson;
+  const presson = foto.presson;
   // Nombre: reservar
   // Descripción: Reserva el diseño.
   // Entrada: Nada.
@@ -61,9 +62,9 @@ export default function DisenoDetalle() {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Comprarlo.
-  const agregar = () => agregarPresson(foto, { forma, largo, presson: p });
+  const agregar = () => agregarPresson(foto, { forma, largo, presson: presson });
   const opinion = resumenes.get(foto.id);
-  const descuentoPresson = p?.precio_anterior ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0;
+  const descuentoPresson = presson?.precio_anterior ? Math.round((1 - presson.precio / presson.precio_anterior) * 100) : 0;
 
   return (
     <div className="contenedor pagina detalle-pagina">
@@ -111,10 +112,10 @@ export default function DisenoDetalle() {
             ) : (
               <>
                 <p>
-                  {p?.precio_anterior && <s className="detalle__antes">{dinero(p.precio_anterior)}</s>}
-                  <span className="detalle__precio-grande">{dinero(p?.precio)}</span>
+                  {presson?.precio_anterior && <s className="detalle__antes">{dinero(presson.precio_anterior)}</s>}
+                  <span className="detalle__precio-grande">{dinero(presson?.precio)}</span>
                 </p>
-                {descuentoPresson > 0 && <p className="etiquetas-oferta"><span>{descuentoPresson} % DE DESCUENTO por tiempo limitado</span>{p.stock < 10 && <span>CASI AGOTADO</span>}</p>}
+                {descuentoPresson > 0 && <p className="etiquetas-oferta"><span>{descuentoPresson} % DE DESCUENTO por tiempo limitado</span>{presson.stock < 10 && <span>CASI AGOTADO</span>}</p>}
               </>
             )}
           </div>
@@ -134,7 +135,7 @@ export default function DisenoDetalle() {
                     <span><b>En el salón</b><small>Te lo hacemos con cita</small></span>
                   </label>
                   <label className="opcion-modo">
-                    <input type="radio" name="modo" checked={modo === 'presson'} onChange={() => setModo('presson')} disabled={!p} />
+                    <input type="radio" name="modo" checked={modo === 'presson'} onChange={() => setModo('presson')} disabled={!presson} />
                     <span className="opcion-modo__foto"><Foto archivo={foto.archivo} alt="" /><em>HOT</em></span>
                     <span><b>Press-on</b><small>24 uñas para llevar</small></span>
                   </label>
@@ -145,13 +146,13 @@ export default function DisenoDetalle() {
                   <fieldset className="grupo">
                     <legend className="grupo__titulo grupo__titulo--chico">Forma: <span className="tenue">{forma}</span></legend>
                     <div className="selector__opciones">
-                      {FORMAS.map((f) => <label key={f} className="chip"><input type="radio" name="forma" checked={forma === f} onChange={() => setForma(f)} /><span>{f}</span></label>)}
+                      {FORMAS.map((formaActual) => <label key={formaActual} className="chip"><input type="radio" name="forma" checked={forma === formaActual} onChange={() => setForma(formaActual)} /><span>{formaActual}</span></label>)}
                     </div>
                   </fieldset>
                   <fieldset className="grupo">
                     <legend className="grupo__titulo grupo__titulo--chico">Largo: <span className="tenue">{largo}</span></legend>
                     <div className="selector__opciones">
-                      {LARGOS.map((l) => <label key={l} className="chip"><input type="radio" name="largo" checked={largo === l} onChange={() => setLargo(l)} /><span>{l}</span></label>)}
+                      {LARGOS.map((largoActual) => <label key={largoActual} className="chip"><input type="radio" name="largo" checked={largo === largoActual} onChange={() => setLargo(largoActual)} /><span>{largoActual}</span></label>)}
                     </div>
                   </fieldset>
                   <p className="tenue">Un set de 24 uñas con este diseño, para una persona.</p>
@@ -172,7 +173,7 @@ export default function DisenoDetalle() {
             <li>✓ Pago con SINPE o tarjeta</li>
             <li>✓ Cambios de cita sin costo hasta 24 h antes</li>
           </ul>
-          {foto.etiquetas && <p className="tenue">Etiquetas: {foto.etiquetas.split(',').filter((t) => !t.includes('archivo:')).join(', ')}</p>}
+          {foto.etiquetas && <p className="tenue">Etiquetas: {foto.etiquetas.split(',').filter((parte) => !parte.includes('archivo:')).join(', ')}</p>}
         </div>
       </div>
 
@@ -181,7 +182,7 @@ export default function DisenoDetalle() {
       {relacionados.length > 0 && (
         <section className="relacionados" aria-labelledby="t-rel">
           <h2 id="t-rel">Diseños relacionados</h2>
-          <ul className="disenos-rejilla">{relacionados.map((f, i) => <TarjetaDiseno key={f.id} foto={f} indice={i} presson={p} />)}</ul>
+          <ul className="disenos-rejilla">{relacionados.map((relacionado, i) => <TarjetaDiseno key={relacionado.id} foto={relacionado} indice={i} presson={presson} />)}</ul>
         </section>
       )}
     </div>

@@ -120,7 +120,7 @@ export default function Disena() {
   // Diseño y precio
   const diseno = useMemo(() => armarDiseno(configuracion), [configuracion]);
   const recargo = useMemo(() => calcularDiseno(diseno), [diseno]);
-  const servicio = servicios.find((s) => s.nombre === (servicioElegido || servicioSegunLargo(configuracion.largo)));
+  const servicio = servicios.find((servicio) => servicio.nombre === (servicioElegido || servicioSegunLargo(configuracion.largo)));
   const precioServicio = servicio ? (servicio.precio_oferta ?? servicio.precio) : 0;
   const precioTotal = precioServicio + recargo.total;
   const precioConCupon = Math.round(precioTotal * (1 - DESCUENTO_PRIMERA_CITA));
@@ -348,7 +348,7 @@ export default function Disena() {
             <label className="dp-precio__servicio">
               <span>Servicio</span>
               <select value={servicio?.nombre || ''} onChange={(evento) => setServicioElegido(evento.target.value)}>
-                {servicios.filter((s) => SERVICIOS_PARA_DISENO.includes(s.nombre)).map((s) => <option key={s.id} value={s.nombre}>{s.nombre} · {dinero(s.precio_oferta ?? s.precio)}</option>)}
+                {servicios.filter((servicio) => SERVICIOS_PARA_DISENO.includes(servicio.nombre)).map((servicio) => <option key={servicio.id} value={servicio.nombre}>{servicio.nombre} · {dinero(servicio.precio_oferta ?? servicio.precio)}</option>)}
               </select>
             </label>
             <button type="button" className="dp-link" aria-expanded={verDetallePrecio} onClick={() => setVerDetallePrecio(!verDetallePrecio)}>

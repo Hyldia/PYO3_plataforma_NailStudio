@@ -10,6 +10,7 @@ class PagoPorComision {
   // Salida: El pago.
   // Objetivo: Pagar a la especialista.
   calcular({ vendido, comision }) {
+    // Ej.: vendió ₡100 000 con 65 % → se le pagan ₡65 000 y el salón se queda ₡35 000
     const porComision = Math.round(vendido * (comision / 100));
     return { base: 0, porComision, total: porComision };
   }
@@ -23,6 +24,7 @@ class PagoBaseMasComision {
   // Salida: El pago.
   // Objetivo: Pagar a la especialista.
   calcular({ vendido, comision, salarioBase }) {
+    // Monto fijo de la quincena + su porcentaje de lo que vendió
     const porComision = Math.round(vendido * (comision / 100));
     return { base: salarioBase, porComision, total: salarioBase + porComision };
   }

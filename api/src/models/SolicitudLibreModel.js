@@ -48,11 +48,11 @@ export const SolicitudLibreModel = {
   // Salida: La solicitud actualizada.
   // Objetivo: Responder a la especialista.
   resolverSolicitud(id, { aprobar, respuesta = '' }) {
-    const s = getDb().prepare("SELECT * FROM solicitudes_libres WHERE id = ? AND estado = 'pendiente'").get(id);
-    if (!s) throw Object.assign(new Error('Esa solicitud ya no está pendiente.'), { status: 404 });
+    const solicitud = getDb().prepare("SELECT * FROM solicitudes_libres WHERE id = ? AND estado = 'pendiente'").get(id);
+    if (!solicitud) throw Object.assign(new Error('Esa solicitud ya no está pendiente.'), { status: 404 });
     let citasAfectadas = 0;
     getDb().transaction(() => {
-      if (aprobar) citasAfectadas = AusenciaModel.agregarAusencias(s.especialista_id, { desde: s.desde, hasta: s.hasta, tipo: s.tipo, motivo: s.motivo || 'Pedido por la especialista' });
+      if (aprobar) citasAfectadas = AusenciaModel.agregarAusencias(solicitud.especialista_id, { desde: solicitud.desde, hasta: solicitud.hasta, tipo: solicitud.tipo, motivo: solicitud.motivo || 'Pedido por la especialista' });
       getDb().prepare("UPDATE solicitudes_libres SET estado = ?, respuesta = ?, resuelta_en = datetime('now') WHERE id = ?")
         .run(aprobar ? 'aprobada' : 'rechazada', String(respuesta).trim().slice(0, 200) || null, id);
     })();

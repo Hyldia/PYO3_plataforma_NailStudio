@@ -1,3 +1,4 @@
+// Logo de AH Nails.
 import { SALON } from '../config.js';
 
 // Logo: monograma «AH» en letra cursiva y la palabra NAILS en mayúsculas espaciadas,

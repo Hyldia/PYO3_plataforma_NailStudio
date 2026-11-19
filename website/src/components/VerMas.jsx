@@ -23,8 +23,8 @@ export default function VerMas({ pagina = 1, paginas = 1, cargando = false, onCa
   // Entrada: El número.
   // Salida: Nada.
   // Objetivo: Ver más resultados.
-  const cambiar = (n) => {
-    if (!cargando && n >= 1 && n <= paginas && n !== pagina) onCambiar(n);
+  const cambiar = (numero) => {
+    if (!cargando && numero >= 1 && numero <= paginas && numero !== pagina) onCambiar(numero);
   };
 
   return (
@@ -33,13 +33,13 @@ export default function VerMas({ pagina = 1, paginas = 1, cargando = false, onCa
               disabled={cargando || pagina === 1} aria-label="Página anterior">
         <span aria-hidden="true">‹</span>
       </button>
-      {numerosPagina(pagina, paginas).map((n, i) => n === '...' ? (
+      {numerosPagina(pagina, paginas).map((numero, i) => numero === '...' ? (
         <span key={`e${i}`} className="paginacion__puntos" aria-hidden="true">…</span>
       ) : (
-        <button type="button" key={n} className={`paginacion__boton ${n === pagina ? 'paginacion__boton--activo' : ''}`}
-                onClick={() => cambiar(n)} disabled={cargando} aria-current={n === pagina ? 'page' : undefined}
-                aria-label={`Página ${n}`}>
-          {n}
+        <button type="button" key={numero} className={`paginacion__boton ${numero === pagina ? 'paginacion__boton--activo' : ''}`}
+                onClick={() => cambiar(numero)} disabled={cargando} aria-current={numero === pagina ? 'page' : undefined}
+                aria-label={`Página ${numero}`}>
+          {numero}
         </button>
       ))}
       <button type="button" className="paginacion__boton paginacion__flecha" onClick={() => cambiar(pagina + 1)}

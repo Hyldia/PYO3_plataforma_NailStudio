@@ -1,3 +1,4 @@
+// Reservar una cita paso a paso: servicio, especialista, día y hora, datos y pago del adelanto.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -23,7 +24,7 @@ const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', '
 // Entrada: La fecha.
 // Salida: El texto.
 // Objetivo: Trabajar con fechas.
-const aISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const aISO = (fecha) => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
 // Nombre: deISO
 // Descripción: Convierte un texto a fecha.
 // Entrada: El texto.
@@ -35,13 +36,13 @@ const deISO = (iso) => new Date(`${iso}T12:00:00`);
 // Entrada: El texto.
 // Salida: El texto limpio.
 // Objetivo: Fechas más cortas.
-const sinPunto = (t) => t.replace(/\./g, '');
+const sinPunto = (texto) => texto.replace(/\./g, '');
 // Nombre: trabaja
 // Descripción: Revisa si una especialista trabaja ese día.
 // Entrada: La especialista y la fecha.
 // Salida: Sí o no.
 // Objetivo: Mostrar días válidos.
-const trabaja = (e, iso) => !e || String(e.dias || '').split(',').map(Number).includes(deISO(iso).getDay() || 7);
+const trabaja = (especialista, iso) => !especialista || String(especialista.dias || '').split(',').map(Number).includes(deISO(iso).getDay() || 7);
 
 // Próximos 14 días en que abre el salón (domingo cerrado)
 // Nombre: proximosDias
@@ -50,8 +51,8 @@ const trabaja = (e, iso) => !e || String(e.dias || '').split(',').map(Number).in
 // Salida: Los días.
 // Objetivo: Elegir fecha.
 function proximosDias() {
-  const dias = []; const d = new Date();
-  while (dias.length < 14) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0) dias.push(new Date(d)); }
+  const dias = []; const fecha = new Date();
+  while (dias.length < 14) { fecha.setDate(fecha.getDate() + 1); if (fecha.getDay() !== 0) dias.push(new Date(fecha)); }
   return dias;
 }
 
@@ -61,10 +62,10 @@ function proximosDias() {
 // Entrada: La especialista y el servicio.
 // Salida: Sí o no.
 // Objetivo: Recomendarla.
-function recomendada(e, s) {
-  if (!s) return false;
+function recomendada(e, servicio) {
+  if (!servicio) return false;
   const esp = e.especialidad.toLowerCase();
-  const ser = `${s.categoria} ${s.nombre}`.toLowerCase();
+  const ser = `${servicio.categoria} ${servicio.nombre}`.toLowerCase();
   return (/acr[ií]l|polygel/.test(ser) && /acr[ií]l|polygel/.test(esp)) || (/pie|pedicure/.test(ser) && /pedicure|pie/.test(esp))
     || (/diseño|art/.test(ser) && /art|diseñ/.test(esp)) || (/rusa/.test(ser) && /rusa/.test(esp)) || (/francesa|boomer/.test(ser) && /francesa/.test(esp))
     || (/spa|hidrata|parafina/.test(ser) && /spa|hidrata/.test(esp)) || (/builder|fortalec/.test(ser) && /builder/.test(esp));
@@ -114,7 +115,7 @@ export default function Reservar() {
   useEffect(() => {
     Promise.all([api.servicios(), api.especialistas()])
       .then(([s, e]) => { setServicios(s); setEspecialistas(e); })
-      .catch((e) => setError(e.message));
+      .catch((fallo) => setError(fallo.message));
   }, []);
 
   useEffect(() => {
@@ -132,31 +133,31 @@ export default function Reservar() {
     api.libres(sel.fecha, sel.hora).then((ids) => setLibresMismaHora(ids.filter((id) => id !== sel.especialistaId))).catch(() => setLibresMismaHora([]));
   }, [acompana.activo, sel.fecha, sel.hora, sel.especialistaId]);
 
-  const categorias = useMemo(() => ['Todos', ...new Set(servicios.map((s) => s.categoria))], [servicios]);
-  const visibles = categoria === 'Todos' ? servicios : servicios.filter((s) => s.categoria === categoria);
+  const categorias = useMemo(() => ['Todos', ...new Set(servicios.map((servicio) => servicio.categoria))], [servicios]);
+  const visibles = categoria === 'Todos' ? servicios : servicios.filter((servicio) => servicio.categoria === categoria);
   const serviciosPagina = visibles.slice((paginaServicios - 1) * POR_PAGINA_SERVICIOS, paginaServicios * POR_PAGINA_SERVICIOS);
-  const servicio = servicios.find((s) => s.id === sel.servicioId);
-  const especialista = especialistas.find((e) => e.id === sel.especialistaId);
-  const indiceEsp = especialistas.findIndex((e) => e.id === sel.especialistaId);
+  const servicio = servicios.find((servicio) => servicio.id === sel.servicioId);
+  const especialista = especialistas.find((especialista) => especialista.id === sel.especialistaId);
+  const indiceEsp = especialistas.findIndex((especialista) => especialista.id === sel.especialistaId);
   const recargo = reserva.diseno?.precio || 0;
   // Nombre: precio
   // Descripción: Da el precio de un servicio.
   // Entrada: El servicio.
   // Salida: El precio.
   // Objetivo: Mostrar el total.
-  const precio = (s) => (s ? (s.precio_oferta ?? s.precio) : 0);
-  const servicioAcomp = servicios.find((s) => s.id === acompana.servicioId);
+  const precio = (servicio) => (servicio ? (servicio.precio_oferta ?? servicio.precio) : 0);
+  const servicioAcomp = servicios.find((servicio) => servicio.id === acompana.servicioId);
   // Con la misma especialista, la acompañante va en la siguiente hora libre del mismo día
-  const siguienteHora = horarios.find((h) => h.disponible && sel.hora && h.hora > sel.hora)?.hora;
-  const espAcomp = acompana.modo === 'misma' ? especialista : especialistas.find((e) => e.id === acompana.especialistaId);
+  const siguienteHora = horarios.find((horario) => horario.disponible && sel.hora && horario.hora > sel.hora)?.hora;
+  const espAcomp = acompana.modo === 'misma' ? especialista : especialistas.find((especialista) => especialista.id === acompana.especialistaId);
   const horaAcomp = acompana.modo === 'misma' ? siguienteHora : sel.hora;
   const acompanaLista = acompana.activo && servicioAcomp && espAcomp && horaAcomp;
   const total = precio(servicio) + recargo + (acompanaLista ? precio(servicioAcomp) : 0);
-  const libres = horarios.filter((h) => h.disponible).length;
+  const libres = horarios.filter((horario) => horario.disponible).length;
   const grupos = [
-    ['Mañana', horarios.filter((h) => Number(h.hora.slice(0, 2)) < 12)],
-    ['Tarde', horarios.filter((h) => Number(h.hora.slice(0, 2)) >= 12 && Number(h.hora.slice(0, 2)) < 17)],
-    ['Noche', horarios.filter((h) => Number(h.hora.slice(0, 2)) >= 17)]
+    ['Mañana', horarios.filter((horario) => Number(horario.hora.slice(0, 2)) < 12)],
+    ['Tarde', horarios.filter((horario) => Number(horario.hora.slice(0, 2)) >= 12 && Number(horario.hora.slice(0, 2)) < 17)],
+    ['Noche', horarios.filter((horario) => Number(horario.hora.slice(0, 2)) >= 17)]
   ].filter(([, l]) => l.length);
 
   const puedeSeguir = [servicio && especialista, sel.hora, !acompana.activo || acompanaLista][paso];
@@ -179,9 +180,9 @@ export default function Reservar() {
   // Entrada: La especialista.
   // Salida: Nada.
   // Objetivo: Armar la reserva.
-  function elegirEspecialista(e) {
-    const primerDia = dias.find((d) => trabaja(e, aISO(d)));
-    setSel({ ...sel, especialistaId: e.id, hora: null, fecha: trabaja(e, sel.fecha) ? sel.fecha : aISO(primerDia || dias[0]) });
+  function elegirEspecialista(especialista) {
+    const primerDia = dias.find((dia) => trabaja(especialista, aISO(dia)));
+    setSel({ ...sel, especialistaId: especialista.id, hora: null, fecha: trabaja(especialista, sel.fecha) ? sel.fecha : aISO(primerDia || dias[0]) });
   }
 
   // Desde la ficha: tocar una hora libre la elige y pasa a fecha y hora
@@ -191,7 +192,7 @@ export default function Reservar() {
   // Salida: Nada.
   // Objetivo: Armar la reserva.
   function elegirDeAgenda(fecha, hora) {
-    setSel((s) => ({ ...s, fecha, hora }));
+    setSel((anterior) => ({ ...anterior, fecha, hora }));
     if (servicio) { setPaso(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   }
 
@@ -213,11 +214,11 @@ export default function Reservar() {
       // Entrada: Servicio, especialista, hora y extra.
       // Salida: La cita.
       // Objetivo: Guardarla en el carrito.
-      const base = (s, e, hora, extra) => ({
-        id: `cita-${s.id}`, nombre: s.nombre, precio: precio(s) + (extra.recargo || 0), precio_anterior: s.precio_oferta != null ? s.precio + (extra.recargo || 0) : null,
-        servicioId: s.id, especialistaId: e.id, especialistaNombre: e.nombre,
-        fecha: sel.fecha, fechaTexto: CORTA.format(deISO(sel.fecha)), hora, duracion_min: s.duracion_min, ...extra,
-        imagen: extra.imagen || s.imagen // va al final para que la foto del servicio no se pierda si extra no trae foto
+      const base = (servicio, especialista, hora, extra) => ({
+        id: `cita-${servicio.id}`, nombre: servicio.nombre, precio: precio(servicio) + (extra.recargo || 0), precio_anterior: servicio.precio_oferta != null ? servicio.precio + (extra.recargo || 0) : null,
+        servicioId: servicio.id, especialistaId: especialista.id, especialistaNombre: especialista.nombre,
+        fecha: sel.fecha, fechaTexto: CORTA.format(deISO(sel.fecha)), hora, duracion_min: servicio.duracion_min, ...extra,
+        imagen: extra.imagen || servicio.imagen // va al final para que la foto del servicio no se pierda si extra no trae foto
       });
       const citas = [base(servicio, especialista, sel.hora, {
         recargo, disenoId, fotoRefId: reserva.fotoRef?.id || null, disenoTexto, imagen: reserva.fotoRef?.archivo, notas
@@ -239,8 +240,8 @@ export default function Reservar() {
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Ir a pagar.
-  function enviar(e) {
-    e.preventDefault();
+  function enviar(evento) {
+    evento.preventDefault();
     if (!puedeSeguir) return;
     if (paso === 2) { agregarAlCarrito(); return; }
     setPaso(paso + 1);
@@ -271,7 +272,7 @@ export default function Reservar() {
           </div>
           <div className="reserva-portada__equipo" aria-label={`${especialistas.length} especialistas`}>
             <div className="reserva-portada__caras">
-              {especialistas.slice(0, 6).map((e, i) => <Retrato key={e.id} e={e} i={i} />)}
+              {especialistas.slice(0, 6).map((especialista, i) => <Retrato key={especialista.id} e={especialista} i={i} />)}
             </div>
             <p><strong>{especialistas.length} especialistas</strong> listas para atenderte</p>
             <p className="reserva-portada__reloj">-15% con BIENVENIDA15 · termina en <CuentaRegresiva compacta /></p>
@@ -281,11 +282,11 @@ export default function Reservar() {
 
       <div className="contenedor pagina reservar-pagina">
         <ol className="pasos-reserva" aria-label="Pasos de la reserva" style={{ '--avance': `${(paso / 2) * 100}%` }}>
-          {pasos.map((p, i) => (
-            <li key={p.nombre} className={i === paso ? 'actual' : i < paso ? 'hecho' : ''} aria-current={i === paso ? 'step' : undefined}>
+          {pasos.map((pasoActual, i) => (
+            <li key={pasoActual.nombre} className={i === paso ? 'actual' : i < paso ? 'hecho' : ''} aria-current={i === paso ? 'step' : undefined}>
               <button type="button" disabled={i > paso} onClick={() => setPaso(i)}>
-                <span className="pasos-reserva__icono">{p.imagen || <b>{i + 1}</b>}</span>
-                <span>{p.nombre}</span>
+                <span className="pasos-reserva__icono">{pasoActual.imagen || <b>{i + 1}</b>}</span>
+                <span>{pasoActual.nombre}</span>
               </button>
             </li>
           ))}
@@ -309,31 +310,31 @@ export default function Reservar() {
                 <fieldset className="grupo">
                   <legend className="grupo__titulo">¿Qué te quieres hacer?</legend>
                   <div className="barra-chips barra-chips--quieta" role="group" aria-label="Filtrar por tipo">
-                    {categorias.map((c) => (
-                      <button key={c} type="button" className={`chip-filtro ${categoria === c ? 'chip-filtro--activo' : ''}`} aria-pressed={categoria === c} onClick={() => { setCategoria(c); setPaginaServicios(1); }}>
-                        {c} <span className="chip-filtro__n">{c === 'Todos' ? servicios.length : servicios.filter((s) => s.categoria === c).length}</span>
+                    {categorias.map((categoriaActual) => (
+                      <button key={categoriaActual} type="button" className={`chip-filtro ${categoria === categoriaActual ? 'chip-filtro--activo' : ''}`} aria-pressed={categoria === categoriaActual} onClick={() => { setCategoria(categoriaActual); setPaginaServicios(1); }}>
+                        {categoriaActual} <span className="chip-filtro__n">{categoriaActual === 'Todos' ? servicios.length : servicios.filter((servicio) => servicio.categoria === categoriaActual).length}</span>
                       </button>
                     ))}
                   </div>
                   <div ref={rejilla} className="servicios-elegir">
-                    {serviciosPagina.map((s, n) => {
-                      const desc = s.precio_oferta != null ? Math.round((1 - s.precio_oferta / s.precio) * 100) : 0;
+                    {serviciosPagina.map((servicio, numero) => {
+                      const desc = servicio.precio_oferta != null ? Math.round((1 - servicio.precio_oferta / servicio.precio) * 100) : 0;
                       return (
-                        <label key={s.id} className="servicio-elegir" style={{ '--retraso': `${Math.min(n, 12) * 40}ms` }}>
-                          <input type="radio" name="servicio" className="solo-lector" checked={sel.servicioId === s.id} onChange={() => elegirServicio(s.id)} />
+                        <label key={servicio.id} className="servicio-elegir" style={{ '--retraso': `${Math.min(numero, 12) * 40}ms` }}>
+                          <input type="radio" name="servicio" className="solo-lector" checked={sel.servicioId === servicio.id} onChange={() => elegirServicio(servicio.id)} />
                           <span className="servicio-elegir__foto">
-                            <Foto archivo={s.imagen} alt="" />
-                            {s.etiqueta && <span className={`servicio-elegir__etiqueta servicio-elegir__etiqueta--${s.etiqueta === 'Más pedido' ? 'top' : 'oferta'}`}>{s.etiqueta}</span>}
+                            <Foto archivo={servicio.imagen} alt="" />
+                            {servicio.etiqueta && <span className={`servicio-elegir__etiqueta servicio-elegir__etiqueta--${servicio.etiqueta === 'Más pedido' ? 'top' : 'oferta'}`}>{servicio.etiqueta}</span>}
                             {desc > 0 && <span className="servicio-elegir__pct">-{desc}%</span>}
                             <span className="servicio-elegir__check" aria-hidden="true">✓</span>
                           </span>
                           <span className="servicio-elegir__cuerpo">
-                            <strong>{s.nombre}</strong>
-                            <span className="servicio-elegir__datos">{s.duracion_min} min · {s.categoria}</span>
-                            {s.incluye && <span className="servicio-elegir__incluye">{s.incluye.split('|').slice(0, 3).join(' · ')}</span>}
+                            <strong>{servicio.nombre}</strong>
+                            <span className="servicio-elegir__datos">{servicio.duracion_min} min · {servicio.categoria}</span>
+                            {servicio.incluye && <span className="servicio-elegir__incluye">{servicio.incluye.split('|').slice(0, 3).join(' · ')}</span>}
                             <span className="servicio-elegir__precio">
-                              <b className={desc ? 'linea-carrito__oferta' : ''}>{dinero(s.precio_oferta ?? s.precio)}</b>
-                              {desc > 0 && <s>{dinero(s.precio)}</s>}
+                              <b className={desc ? 'linea-carrito__oferta' : ''}>{dinero(servicio.precio_oferta ?? servicio.precio)}</b>
+                              {desc > 0 && <s>{dinero(servicio.precio)}</s>}
                             </span>
                           </span>
                         </label>
@@ -341,8 +342,8 @@ export default function Reservar() {
                     })}
                   </div>
                   <VerMas pagina={paginaServicios} paginas={Math.ceil(visibles.length / POR_PAGINA_SERVICIOS)}
-                          onCambiar={(n) => {
-                            setPaginaServicios(n);
+                          onCambiar={(numero) => {
+                            setPaginaServicios(numero);
                             requestAnimationFrame(() => document.querySelector('.servicios-elegir')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
                           }} />
                 </fieldset>
@@ -350,19 +351,19 @@ export default function Reservar() {
                 <fieldset className="grupo" ref={refEspecialistas}>
                   <legend className="grupo__titulo">¿Con quién? <span className="tenue">Toca una para ver su horario</span></legend>
                   <div className="especialistas-elegir">
-                    {especialistas.map((e, i) => (
-                      <label key={e.id} className="especialista-elegir">
-                        <input type="radio" name="especialista" className="solo-lector" checked={sel.especialistaId === e.id} onChange={() => elegirEspecialista(e)} />
+                    {especialistas.map((especialista, i) => (
+                      <label key={especialista.id} className="especialista-elegir">
+                        <input type="radio" name="especialista" className="solo-lector" checked={sel.especialistaId === especialista.id} onChange={() => elegirEspecialista(especialista)} />
                         <span className="especialista-elegir__foto">
-                          <Retrato e={e} i={i} />
-                          {recomendada(e, servicio) && <span className="especialista-elegir__reco">Recomendada</span>}
+                          <Retrato e={especialista} i={i} />
+                          {recomendada(especialista, servicio) && <span className="especialista-elegir__reco">Recomendada</span>}
                           <span className="servicio-elegir__check" aria-hidden="true">✓</span>
                         </span>
                         <span className="especialista-elegir__cuerpo">
-                          <strong>{e.nombre}</strong>
-                          <span className="tenue">{e.especialidad}</span>
-                          <span className="especialista-elegir__datos">{e.experiencia ? `${e.experiencia} años` : ''}{e.citas > 0 ? ` · ${e.citas} citas` : ''}</span>
-                          <span className="especialista-elegir__horario">{String(e.dias).split(',').map((d) => NOMBRES_DIA[d]?.slice(0, 3)).join(' ')} · {e.hora_inicio}–{e.hora_fin}</span>
+                          <strong>{especialista.nombre}</strong>
+                          <span className="tenue">{especialista.especialidad}</span>
+                          <span className="especialista-elegir__datos">{especialista.experiencia ? `${especialista.experiencia} años` : ''}{especialista.citas > 0 ? ` · ${especialista.citas} citas` : ''}</span>
+                          <span className="especialista-elegir__horario">{String(especialista.dias).split(',').map((parte) => NOMBRES_DIA[parte]?.slice(0, 3)).join(' ')} · {especialista.hora_inicio}–{especialista.hora_fin}</span>
                         </span>
                       </label>
                     ))}
@@ -378,24 +379,24 @@ export default function Reservar() {
                         {especialista.foto_autor && <p className="tenue detalle__credito">Foto de muestra: {especialista.foto_autor} en Unsplash</p>}
                         <h4>Horario</h4>
                         <ul className="ficha-especialista__horario">
-                          {[1, 2, 3, 4, 5, 6].map((d) => {
-                            const si = String(especialista.dias).split(',').map(Number).includes(d);
-                            return <li key={d} className={si ? '' : 'libre-no'}><span>{NOMBRES_DIA[d]}</span><span>{si ? `${especialista.hora_inicio} – ${especialista.hora_fin}` : 'No trabaja'}</span></li>;
+                          {[1, 2, 3, 4, 5, 6].map((numeroDia) => {
+                            const si = String(especialista.dias).split(',').map(Number).includes(numeroDia);
+                            return <li key={numeroDia} className={si ? '' : 'libre-no'}><span>{NOMBRES_DIA[numeroDia]}</span><span>{si ? `${especialista.hora_inicio} – ${especialista.hora_fin}` : 'No trabaja'}</span></li>;
                           })}
                         </ul>
                       </div>
                       <div className="ficha-especialista__agenda">
                         <h4>Próximos espacios libres</h4>
                         <ul>
-                          {agenda.filter((a) => a.trabaja).slice(0, 5).map((a) => (
-                            <li key={a.fecha}>
-                              <span className="ficha-especialista__fecha">{sinPunto(CORTA.format(deISO(a.fecha)))}</span>
-                              {a.libres.length ? (
+                          {agenda.filter((dia) => dia.trabaja).slice(0, 5).map((dia) => (
+                            <li key={dia.fecha}>
+                              <span className="ficha-especialista__fecha">{sinPunto(CORTA.format(deISO(dia.fecha)))}</span>
+                              {dia.libres.length ? (
                                 <span className="ficha-especialista__horas">
-                                  {a.libres.slice(0, 4).map((h) => (
-                                    <button key={h} type="button" className="hora-mini" onClick={() => elegirDeAgenda(a.fecha, h)}>{h}</button>
+                                  {dia.libres.slice(0, 4).map((libre) => (
+                                    <button key={libre} type="button" className="hora-mini" onClick={() => elegirDeAgenda(dia.fecha, libre)}>{libre}</button>
                                   ))}
-                                  {a.libres.length > 4 && <span className="tenue">+{a.libres.length - 4}</span>}
+                                  {dia.libres.length > 4 && <span className="tenue">+{dia.libres.length - 4}</span>}
                                 </span>
                               ) : <span className="tenue">Lleno</span>}
                             </li>
@@ -412,17 +413,17 @@ export default function Reservar() {
             {paso === 1 && (
               <div className="paso-anim" key="p1">
                 <fieldset className="grupo">
-                  <legend className="grupo__titulo">Elige el día <span className="tenue">({especialista?.nombre} trabaja {String(especialista?.dias || '').split(',').map((d) => NOMBRES_DIA[d]?.toLowerCase()).join(', ')})</span></legend>
+                  <legend className="grupo__titulo">Elige el día <span className="tenue">({especialista?.nombre} trabaja {String(especialista?.dias || '').split(',').map((parte) => NOMBRES_DIA[parte]?.toLowerCase()).join(', ')})</span></legend>
                   <div className="dias-carrusel">
-                    {dias.map((d, i) => {
-                      const iso = aISO(d);
+                    {dias.map((dia, i) => {
+                      const iso = aISO(dia);
                       const no = !trabaja(especialista, iso);
                       return (
                         <label key={iso} className={`dia-chip ${no ? 'dia-chip--no' : ''}`}>
-                          <input type="radio" name="fecha" disabled={no} checked={sel.fecha === iso} onChange={() => setSel({ ...sel, fecha: iso, hora: null })} aria-label={`${LARGA.format(d)}${no ? ' (no trabaja)' : ''}`} />
-                          <span aria-hidden="true" className="dia-chip__semana">{i === 0 ? 'Mañana' : sinPunto(DIA.format(d))}</span>
-                          <span aria-hidden="true" className="dia-chip__numero">{d.getDate()}</span>
-                          <span aria-hidden="true" className="dia-chip__mes">{no ? 'Libre' : sinPunto(MES.format(d))}</span>
+                          <input type="radio" name="fecha" disabled={no} checked={sel.fecha === iso} onChange={() => setSel({ ...sel, fecha: iso, hora: null })} aria-label={`${LARGA.format(dia)}${no ? ' (no trabaja)' : ''}`} />
+                          <span aria-hidden="true" className="dia-chip__semana">{i === 0 ? 'Mañana' : sinPunto(DIA.format(dia))}</span>
+                          <span aria-hidden="true" className="dia-chip__numero">{dia.getDate()}</span>
+                          <span aria-hidden="true" className="dia-chip__mes">{no ? 'Libre' : sinPunto(MES.format(dia))}</span>
                         </label>
                       );
                     })}
@@ -433,12 +434,12 @@ export default function Reservar() {
                   {horarios.length > 0 && libres > 0 && libres <= 4 && <p className="aviso-pocos">¡Solo quedan {libres} {libres === 1 ? 'espacio' : 'espacios'} este día!</p>}
                   {grupos.map(([titulo, lista]) => (
                     <div key={titulo} className="horas-grupo">
-                      <p className="horas-grupo__titulo">{titulo} <span className="tenue">({lista.filter((h) => h.disponible).length} libres)</span></p>
+                      <p className="horas-grupo__titulo">{titulo} <span className="tenue">({lista.filter((elemento) => elemento.disponible).length} libres)</span></p>
                       <div className="horas">
-                        {lista.map((h) => (
-                          <label key={h.hora} className="hora">
-                            <input type="radio" name="hora" disabled={!h.disponible} checked={sel.hora === h.hora} onChange={() => setSel({ ...sel, hora: h.hora })} />
-                            <span>{h.hora}{!h.disponible && <span className="solo-lector"> (ocupada)</span>}</span>
+                        {lista.map((elemento) => (
+                          <label key={elemento.hora} className="hora">
+                            <input type="radio" name="hora" disabled={!elemento.disponible} checked={sel.hora === elemento.hora} onChange={() => setSel({ ...sel, hora: elemento.hora })} />
+                            <span>{elemento.hora}{!elemento.disponible && <span className="solo-lector"> (ocupada)</span>}</span>
                           </label>
                         ))}
                       </div>
@@ -490,12 +491,12 @@ export default function Reservar() {
                       <fieldset className="campo">
                         <legend>Su servicio</legend>
                         <div className="servicios-mini">
-                          {servicios.filter((s) => !s.es_combo).map((s) => (
-                            <label key={s.id} className="servicio-mini">
-                              <input type="radio" name="acomp-servicio" className="solo-lector" checked={acompana.servicioId === s.id} onChange={() => setAcompana({ ...acompana, servicioId: s.id })} />
-                              <Foto archivo={s.imagen} alt="" />
-                              <span>{s.nombre}</span>
-                              <b>{dinero(precio(s))}</b>
+                          {servicios.filter((servicio) => !servicio.es_combo).map((servicio) => (
+                            <label key={servicio.id} className="servicio-mini">
+                              <input type="radio" name="acomp-servicio" className="solo-lector" checked={acompana.servicioId === servicio.id} onChange={() => setAcompana({ ...acompana, servicioId: servicio.id })} />
+                              <Foto archivo={servicio.imagen} alt="" />
+                              <span>{servicio.nombre}</span>
+                              <b>{dinero(precio(servicio))}</b>
                             </label>
                           ))}
                         </div>
@@ -517,12 +518,12 @@ export default function Reservar() {
                         {acompana.modo === 'otra' && (
                           libresMismaHora.length ? (
                             <div className="especialistas-mini">
-                              {especialistas.filter((e) => libresMismaHora.includes(e.id)).map((e) => (
-                                <label key={e.id} className="especialista-mini">
-                                  <input type="radio" name="acomp-esp" className="solo-lector" checked={acompana.especialistaId === e.id} onChange={() => setAcompana({ ...acompana, especialistaId: e.id })} />
-                                  <Retrato e={e} i={especialistas.indexOf(e)} />
-                                  <strong>{e.nombre}</strong>
-                                  <span className="tenue">{e.especialidad}</span>
+                              {especialistas.filter((especialista) => libresMismaHora.includes(especialista.id)).map((especialista) => (
+                                <label key={especialista.id} className="especialista-mini">
+                                  <input type="radio" name="acomp-esp" className="solo-lector" checked={acompana.especialistaId === especialista.id} onChange={() => setAcompana({ ...acompana, especialistaId: especialista.id })} />
+                                  <Retrato e={especialista} i={especialistas.indexOf(especialista)} />
+                                  <strong>{especialista.nombre}</strong>
+                                  <span className="tenue">{especialista.especialidad}</span>
                                 </label>
                               ))}
                             </div>

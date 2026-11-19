@@ -12,9 +12,9 @@ export function useResumenes(tipo) {
   const [mapa, setMapa] = useState(() => (cache[tipo] instanceof Map ? cache[tipo] : new Map()));
   useEffect(() => {
     if (cache[tipo] instanceof Map) { setMapa(cache[tipo]); return; }
-    if (!cache[tipo]) cache[tipo] = api.resumenesComentarios(tipo).then((l) => (cache[tipo] = new Map(l.map((r) => [r.id, r])))).catch(() => { delete cache[tipo]; return new Map(); });
+    if (!cache[tipo]) cache[tipo] = api.resumenesComentarios(tipo).then((resumenes) => (cache[tipo] = new Map(resumenes.map((resumen) => [resumen.id, resumen])))).catch(() => { delete cache[tipo]; return new Map(); });
     let vivo = true;
-    Promise.resolve(cache[tipo]).then((m) => vivo && setMapa(m));
+    Promise.resolve(cache[tipo]).then((respuesta) => vivo && setMapa(respuesta));
     return () => { vivo = false; };
   }, [tipo]);
   return mapa;

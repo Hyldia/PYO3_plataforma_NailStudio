@@ -13,7 +13,7 @@ const POPULARES = ['Rubber base', 'Pedicure', 'Francesa', 'Acrílicas', 'Lámpar
 // Entrada: El texto.
 // Salida: El texto limpio.
 // Objetivo: Buscar sin importar tildes.
-const sinTildes = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const sinTildes = (texto) => String(texto || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 let serviciosCache = null;
 
 // Resalta en negrita la parte que coincide con lo escrito
@@ -41,7 +41,7 @@ export default function BuscadorEnVivo({ Lupa }) {
   const caja = useRef(null);
   const navegar = useNavigate();
   const { pathname } = useLocation();
-  const q = texto.trim();
+  const consulta = texto.trim();
 
   useEffect(() => { setAbierto(false); }, [pathname]);
   useEffect(() => {
@@ -58,41 +58,41 @@ export default function BuscadorEnVivo({ Lupa }) {
   // Busca 200 ms después de la última tecla
   useEffect(() => {
     setActivo(-1);
-    if (q.length < 2) { setRes({ servicios: [], productos: [], fotos: [], cargando: false }); return undefined; }
-    setRes((r) => ({ ...r, cargando: true }));
+    if (consulta.length < 2) { setRes({ servicios: [], productos: [], fotos: [], cargando: false }); return undefined; }
+    setRes((anterior) => ({ ...anterior, cargando: true }));
     let vigente = true;
-    const t = setTimeout(async () => {
-      serviciosCache ||= api.servicios().then((s) => s.servicios || s).catch(() => []);
+    const temporizador = setTimeout(async () => {
+      serviciosCache ||= api.servicios().then((respuesta) => respuesta.servicios || respuesta).catch(() => []);
       const [servicios, productos, fotos] = await Promise.all([
         serviciosCache,
-        api.productos({ q }).catch(() => []),
-        api.fotos({ q, limite: 4 }).then((f) => f.fotos || []).catch(() => [])
+        api.productos({ q: consulta }).catch(() => []),
+        api.fotos({ q: consulta, limite: 4 }).then((respuesta) => respuesta.fotos || []).catch(() => [])
       ]);
       if (!vigente) return;
-      const nq = sinTildes(q);
+      const nq = sinTildes(consulta);
       setRes({
-        servicios: servicios.filter((s) => sinTildes(`${s.nombre} ${s.categoria} ${s.descripcion || ''}`).includes(nq)).slice(0, 3),
+        servicios: servicios.filter((servicio) => sinTildes(`${servicio.nombre} ${servicio.categoria} ${servicio.descripcion || ''}`).includes(nq)).slice(0, 3),
         productos: (Array.isArray(productos) ? productos : productos.productos || []).slice(0, 5),
         fotos: fotos.slice(0, 4),
         cargando: false
       });
     }, 200);
-    return () => { vigente = false; clearTimeout(t); };
-  }, [q]);
+    return () => { vigente = false; clearTimeout(temporizador); };
+  }, [consulta]);
 
   // Todos los resultados en una sola lista para moverse con las flechas
   const opciones = useMemo(() => [
-    ...res.servicios.map((s) => ({ clave: `s${s.id}`, to: `/reservar?servicio=${s.id}` })),
-    ...res.productos.map((p) => ({ clave: `p${p.id}`, to: `/tienda/${p.id}` })),
-    ...res.fotos.map((f) => ({ clave: `f${f.id}`, to: `/galeria/${f.id}` })),
-    ...(q.length >= 2 ? [{ clave: 'todo', to: `/buscar?q=${encodeURIComponent(q)}` }] : [])
-  ], [res, q]);
+    ...res.servicios.map((servicio) => ({ clave: `s${servicio.id}`, to: `/reservar?servicio=${servicio.id}` })),
+    ...res.productos.map((producto) => ({ clave: `p${producto.id}`, to: `/tienda/${producto.id}` })),
+    ...res.fotos.map((foto) => ({ clave: `f${foto.id}`, to: `/galeria/${foto.id}` })),
+    ...(consulta.length >= 2 ? [{ clave: 'todo', to: `/buscar?q=${encodeURIComponent(consulta)}` }] : [])
+  ], [res, consulta]);
   // Nombre: idx
   // Descripción: Busca la posición de una opción.
   // Entrada: La clave.
   // Salida: La posición.
   // Objetivo: Moverse con flechas.
-  const idx = (clave) => opciones.findIndex((o) => o.clave === clave);
+  const idx = (clave) => opciones.findIndex((opcion) => opcion.clave === clave);
   // Nombre: ir
   // Descripción: Va a la página elegida.
   // Entrada: La dirección.
@@ -107,8 +107,8 @@ export default function BuscadorEnVivo({ Lupa }) {
   // Objetivo: Usar el buscador con teclado.
   const teclas = (evento) => {
     if (!abierto) setAbierto(true);
-    if (evento.key === 'ArrowDown') { evento.preventDefault(); setActivo((a) => Math.min(opciones.length - 1, a + 1)); }
-    if (evento.key === 'ArrowUp') { evento.preventDefault(); setActivo((a) => Math.max(-1, a - 1)); }
+    if (evento.key === 'ArrowDown') { evento.preventDefault(); setActivo((anterior) => Math.min(opciones.length - 1, anterior + 1)); }
+    if (evento.key === 'ArrowUp') { evento.preventDefault(); setActivo((anterior) => Math.max(-1, anterior - 1)); }
     if (evento.key === 'Escape') setAbierto(false);
   };
   // Nombre: enviar
@@ -119,10 +119,10 @@ export default function BuscadorEnVivo({ Lupa }) {
   const enviar = (evento) => {
     evento.preventDefault();
     if (activo >= 0 && opciones[activo]) return ir(opciones[activo].to);
-    if (q) ir(`/buscar?q=${encodeURIComponent(q)}`);
+    if (consulta) ir(`/buscar?q=${encodeURIComponent(consulta)}`);
   };
 
-  const nada = q.length >= 2 && !res.cargando && !res.servicios.length && !res.productos.length && !res.fotos.length;
+  const nada = consulta.length >= 2 && !res.cargando && !res.servicios.length && !res.productos.length && !res.fotos.length;
   // Nombre: opcion
   // Descripción: Dibuja una opción de la lista.
   // Entrada: Clave, destino y contenido.
@@ -146,23 +146,23 @@ export default function BuscadorEnVivo({ Lupa }) {
 
       {abierto && (
         <div className="bv__panel" id="bv-lista" role="listbox" aria-label="Sugerencias">
-          {q.length < 2 ? (
+          {consulta.length < 2 ? (
             <div className="bv__populares">
               <p className="bv__titulo">Lo más buscado</p>
-              <div>{POPULARES.map((p) => <button key={p} type="button" onClick={() => setTexto(p)}>{p}</button>)}</div>
+              <div>{POPULARES.map((popular) => <button key={popular} type="button" onClick={() => setTexto(popular)}>{popular}</button>)}</div>
             </div>
           ) : (
             <>
               {res.cargando && !res.productos.length && <p className="bv__cargando">Buscando…</p>}
-              {nada && <p className="bv__nada">No encontramos «{q}». Prueba con otra palabra.</p>}
+              {nada && <p className="bv__nada">No encontramos «{consulta}». Prueba con otra palabra.</p>}
               {res.servicios.length > 0 && (
                 <ul className="bv__grupo" aria-label="Servicios">
                   <li className="bv__titulo" role="presentation">Servicios</li>
-                  {res.servicios.map((s) => (
-                    opcion(`s${s.id}`, `/reservar?servicio=${s.id}`, <>
-                      <span className="bv__foto"><Foto archivo={s.imagen} alt="" /></span>
-                      <span className="bv__texto"><b><Resaltado texto={s.nombre} q={q} /></b><small>{s.categoria} · {s.duracion_min} min</small></span>
-                      <span className="bv__precio">{dinero(s.precio_oferta ?? s.precio)}</span>
+                  {res.servicios.map((servicio) => (
+                    opcion(`s${servicio.id}`, `/reservar?servicio=${servicio.id}`, <>
+                      <span className="bv__foto"><Foto archivo={servicio.imagen} alt="" /></span>
+                      <span className="bv__texto"><b><Resaltado texto={servicio.nombre} q={consulta} /></b><small>{servicio.categoria} · {servicio.duracion_min} min</small></span>
+                      <span className="bv__precio">{dinero(servicio.precio_oferta ?? servicio.precio)}</span>
                     </>)
                   ))}
                 </ul>
@@ -170,11 +170,11 @@ export default function BuscadorEnVivo({ Lupa }) {
               {res.productos.length > 0 && (
                 <ul className="bv__grupo" aria-label="Productos">
                   <li className="bv__titulo" role="presentation">Productos</li>
-                  {res.productos.map((p) => (
-                    opcion(`p${p.id}`, `/tienda/${p.id}`, <>
-                      <span className="bv__foto"><ProductoImagen producto={p} /></span>
-                      <span className="bv__texto"><b><Resaltado texto={p.nombre} q={q} /></b><small>{p.categoria}{p.stock === 0 ? ' · Agotado' : ''}</small></span>
-                      <span className="bv__precio">{dinero(p.precio)}</span>
+                  {res.productos.map((producto) => (
+                    opcion(`p${producto.id}`, `/tienda/${producto.id}`, <>
+                      <span className="bv__foto"><ProductoImagen producto={producto} /></span>
+                      <span className="bv__texto"><b><Resaltado texto={producto.nombre} q={consulta} /></b><small>{producto.categoria}{producto.stock === 0 ? ' · Agotado' : ''}</small></span>
+                      <span className="bv__precio">{dinero(producto.precio)}</span>
                     </>)
                   ))}
                 </ul>
@@ -182,16 +182,16 @@ export default function BuscadorEnVivo({ Lupa }) {
               {res.fotos.length > 0 && (
                 <ul className="bv__grupo bv__grupo--fotos" aria-label="Diseños">
                   <li className="bv__titulo" role="presentation">Diseños de la galería</li>
-                  {res.fotos.map((f) => (
-                    opcion(`f${f.id}`, `/galeria/${f.id}`, <>
-                      <span className="bv__miniatura"><Foto archivo={f.archivo} alt="" /></span>
-                      <small>{f.titulo}</small>
+                  {res.fotos.map((foto) => (
+                    opcion(`f${foto.id}`, `/galeria/${foto.id}`, <>
+                      <span className="bv__miniatura"><Foto archivo={foto.archivo} alt="" /></span>
+                      <small>{foto.titulo}</small>
                     </>)
                   ))}
                 </ul>
               )}
               {!nada && (
-                <ul className="bv__grupo">{opcion('todo', `/buscar?q=${encodeURIComponent(q)}`, <span className="bv__todo">Ver todos los resultados de «{q}» ›</span>)}</ul>
+                <ul className="bv__grupo">{opcion('todo', `/buscar?q=${encodeURIComponent(consulta)}`, <span className="bv__todo">Ver todos los resultados de «{consulta}» ›</span>)}</ul>
               )}
             </>
           )}

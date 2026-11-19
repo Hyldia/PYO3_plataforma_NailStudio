@@ -17,8 +17,8 @@ export function HistoriasCategorias({ opciones, activas, onElegir }) {
   const [portadas, setPortadas] = useState({});
   useEffect(() => {
     if (!opciones.length) return;
-    Promise.all(opciones.map((o) => api.fotos({ categoria: [o.valor], orden: 'populares', limite: 1 }).then((respuesta) => [o.valor, respuesta.fotos[0]?.archivo]).catch(() => [o.valor, null])))
-      .then((p) => setPortadas(Object.fromEntries(p)));
+    Promise.all(opciones.map((opcion) => api.fotos({ categoria: [opcion.valor], orden: 'populares', limite: 1 }).then((respuesta) => [opcion.valor, respuesta.fotos[0]?.archivo]).catch(() => [opcion.valor, null])))
+      .then((respuesta) => setPortadas(Object.fromEntries(respuesta)));
   }, [opciones.length]);
   if (!opciones.length) return null;
   const todas = !activas.length;
@@ -31,14 +31,14 @@ export function HistoriasCategorias({ opciones, activas, onElegir }) {
             <span className="historias__nombre">Todos</span>
           </button>
         </li>
-        {opciones.map((o, n) => {
-          const activa = activas.includes(o.valor);
+        {opciones.map((opcion, numero) => {
+          const activa = activas.includes(opcion.valor);
           return (
-            <li key={o.valor} style={{ '--n': n + 1 }}>
-              <button type="button" className={`historias__boton ${activa ? 'historias__boton--activa' : ''}`} aria-pressed={activa} onClick={() => onElegir(o.valor)}>
-                <span className="historias__aro"><span className="historias__foto"><Foto archivo={portadas[o.valor]} alt="" /></span></span>
-                <span className="historias__nombre">{o.valor}</span>
-                <span className="historias__cant">{o.cantidad} diseños</span>
+            <li key={opcion.valor} style={{ '--n': numero + 1 }}>
+              <button type="button" className={`historias__boton ${activa ? 'historias__boton--activa' : ''}`} aria-pressed={activa} onClick={() => onElegir(opcion.valor)}>
+                <span className="historias__aro"><span className="historias__foto"><Foto archivo={portadas[opcion.valor]} alt="" /></span></span>
+                <span className="historias__nombre">{opcion.valor}</span>
+                <span className="historias__cant">{opcion.cantidad} diseños</span>
               </button>
             </li>
           );
@@ -56,23 +56,23 @@ export function HistoriasCategorias({ opciones, activas, onElegir }) {
 export default function EscaparateGaleria({ total }) {
   const [top, setTop] = useState([]);
   const resumenes = [...useResumenes('foto').values()];
-  const nOpiniones = resumenes.reduce((s, r) => s + r.total, 0);
-  const promedio = nOpiniones ? (resumenes.reduce((s, r) => s + r.promedio * r.total, 0) / nOpiniones).toFixed(1) : null;
+  const nOpiniones = resumenes.reduce((suma, resumen) => suma + resumen.total, 0);
+  const promedio = nOpiniones ? (resumenes.reduce((suma, resumen) => suma + resumen.promedio * resumen.total, 0) / nOpiniones).toFixed(1) : null;
   useEffect(() => { api.fotos({ orden: 'populares', limite: 14 }).then((respuesta) => setTop(respuesta.fotos)).catch(() => setTop([])); }, []);
   if (top.length < 5) return <div className="inspira inspira--cargando" aria-hidden="true" />;
-  const vistas = top.reduce((s, f) => s + (f.vistas || 0), 0);
+  const vistas = top.reduce((suma, foto) => suma + (foto.vistas || 0), 0);
   const cinta = top.slice(0, 6);
   return (
     <>
       <section className="inspira" aria-labelledby="t-inspira">
-        <span className="inspira__brillos" aria-hidden="true">{Array.from({ length: 10 }, (_, n) => <i key={n} style={{ '--n': n, '--y': `${(n * 29) % 90}%` }} />)}</span>
+        <span className="inspira__brillos" aria-hidden="true">{Array.from({ length: 10 }, (_, numero) => <i key={numero} style={{ '--n': numero, '--y': `${(numero * 29) % 90}%` }} />)}</span>
         <div className="inspira__texto">
           <p className="inspira__ante">Galería AH Nails</p>
           <h2 id="t-inspira"><Link to={`/galeria/${top[0].id}`} className="enlace-titulo">Encuentra tu próximo <em>set favorito</em></Link></h2>
           <p>Diseños reales hechos en el salón. Resérvalo igualito o llévalo en press-on.</p>
           <ul className="inspira__datos">
             <li><strong><Contador valor={total} /></strong> diseños</li>
-            <li><strong><Contador valor={vistas} formato={(n) => n.toLocaleString('es-CR')} /></strong> vistas</li>
+            <li><strong><Contador valor={vistas} formato={(numero) => numero.toLocaleString('es-CR')} /></strong> vistas</li>
             {promedio && <li><strong>{promedio}★</strong> {nOpiniones} opiniones</li>}
           </ul>
           <div className="inspira__botones">
@@ -81,10 +81,10 @@ export default function EscaparateGaleria({ total }) {
           </div>
         </div>
         <div className="inspira__collage">
-          {top.slice(0, 5).map((f, n) => (
-            <Link key={f.id} to={`/galeria/${f.id}`} className={`inspira__polaroid inspira__polaroid--${n + 1}`} aria-label={f.titulo}>
-              <Foto archivo={f.archivo} alt="" prioridad={n < 2} />
-              <span>{f.titulo}</span>
+          {top.slice(0, 5).map((foto, numero) => (
+            <Link key={foto.id} to={`/galeria/${foto.id}`} className={`inspira__polaroid inspira__polaroid--${numero + 1}`} aria-label={foto.titulo}>
+              <Foto archivo={foto.archivo} alt="" prioridad={numero < 2} />
+              <span>{foto.titulo}</span>
             </Link>
           ))}
         </div>
@@ -94,12 +94,12 @@ export default function EscaparateGaleria({ total }) {
         <h2 id="t-tendencias" className="fila-titulo"><Link to="/galeria?orden=populares" className="enlace-titulo"><span className="tendencias__punto" aria-hidden="true" />Tendencias de la semana</Link></h2>
         <div className="tendencias__rejilla">
           <ul>
-            {cinta.map((f, n) => (
-              <li key={f.id}>
-                <Link to={`/galeria/${f.id}`} className="tendencias__item">
-                  <Foto archivo={f.archivo} alt="" />
-                  <span className="tendencias__rank">#{n + 1}</span>
-                  <span className="tendencias__info"><b>{f.titulo}</b><small>{miles(f.vistas)} vistas</small></span>
+            {cinta.map((foto, numero) => (
+              <li key={foto.id}>
+                <Link to={`/galeria/${foto.id}`} className="tendencias__item">
+                  <Foto archivo={foto.archivo} alt="" />
+                  <span className="tendencias__rank">#{numero + 1}</span>
+                  <span className="tendencias__info"><b>{foto.titulo}</b><small>{miles(foto.vistas)} vistas</small></span>
                 </Link>
               </li>
             ))}

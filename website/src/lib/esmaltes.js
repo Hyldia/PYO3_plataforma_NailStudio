@@ -25,22 +25,26 @@ const FAMILIAS = [
 // Entrada: Tono, saturación y luz.
 // Salida: El color.
 // Objetivo: Crear esmaltes.
-const hsl = (h, s, l) => {
-  s /= 100; l /= 100;
-  // Nombre: k
-  // Descripción: Calcula una parte del cambio de color.
-  // Entrada: Un número.
-  // Salida: Un número.
+// Fórmula estándar HSL → RGB: cada canal (rojo, verde, azul) sale de dónde cae el tono en la rueda de color.
+const hsl = (tono, saturacion, luz) => {
+  saturacion /= 100; luz /= 100;
+  // Nombre: posicionEnRueda
+  // Descripción: Ubica el tono en una rueda de 12 partes, corrida según el canal.
+  // Entrada: El desplazamiento del canal (0 rojo, 8 verde, 4 azul).
+  // Salida: Un número de 0 a 12.
   // Objetivo: Convertir colores.
-  const k = (n) => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  // Nombre: f
-  // Descripción: Calcula un canal de color.
-  // Entrada: Un número.
+  const posicionEnRueda = (desplazamiento) => (desplazamiento + tono / 30) % 12;
+  const intensidad = saturacion * Math.min(luz, 1 - luz); // qué tan lejos del gris puede ir el color
+  // Nombre: canal
+  // Descripción: Calcula un canal de color (rojo, verde o azul).
+  // Entrada: El desplazamiento del canal.
   // Salida: Un valor de 0 a 255.
   // Objetivo: Convertir colores.
-  const f = (n) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
-  return `#${[f(0), f(8), f(4)].map((x) => x.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+  const canal = (desplazamiento) => {
+    const enRueda = posicionEnRueda(desplazamiento);
+    return Math.round(255 * (luz - intensidad * Math.max(-1, Math.min(enRueda - 3, 9 - enRueda, 1))));
+  };
+  return `#${[canal(0), canal(8), canal(4)].map((valor) => valor.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
 };
 
 // Nombre: generar
@@ -50,29 +54,31 @@ const hsl = (h, s, l) => {
 // Objetivo: Tener colores para elegir.
 function generar() {
   const lista = [];
-  FAMILIAS.forEach((f) => {
-    const n = f.nombres.length;
-    f.nombres.forEach((nombre, i) => {
-      const t = n === 1 ? 0 : i / (n - 1);
-      const h = f.hs ? f.hs[i] : ((f.h[0] + (((f.h[1] - f.h[0]) + 360) % 360) * t) % 360);
-      const s = f.s[0] + (f.s[1] - f.s[0]) * t;
-      const l = f.l[0] + (f.l[1] - f.l[0]) * t;
+  FAMILIAS.forEach((familia) => {
+    const cantidad = familia.nombres.length;
+    familia.nombres.forEach((nombre, i) => {
+      // avance: 0 para el primer color de la familia y 1 para el último; los del medio quedan repartidos
+      const avance = cantidad === 1 ? 0 : i / (cantidad - 1);
+      // El tono se mueve por el camino más corto de la rueda (por eso el + 360 y el % 360)
+      const tono = familia.hs ? familia.hs[i] : ((familia.h[0] + (((familia.h[1] - familia.h[0]) + 360) % 360) * avance) % 360);
+      const saturacion = familia.s[0] + (familia.s[1] - familia.s[0]) * avance;
+      const luz = familia.l[0] + (familia.l[1] - familia.l[0]) * avance;
       const hex = nombre === 'Glitter plateado' || nombre === 'Plata' || nombre === 'Cromo espejo' ? '#C8CCD2'
-        : nombre === 'Glitter holográfico' ? '#D9D4EE' : nombre === 'Negro' ? '#141113' : nombre === 'Blanco puro' ? '#FAF8F6' : hsl(h, s, l);
-      lista.push({ codigo: `AH-${String(lista.length + 1).padStart(3, '0')}`, nombre, hex, familia: f.familia, tipo: f.tipo });
+        : nombre === 'Glitter holográfico' ? '#D9D4EE' : nombre === 'Negro' ? '#141113' : nombre === 'Blanco puro' ? '#FAF8F6' : hsl(tono, saturacion, luz);
+      lista.push({ codigo: `AH-${String(lista.length + 1).padStart(3, '0')}`, nombre, hex, familia: familia.familia, tipo: familia.tipo });
     });
   });
   return lista;
 }
 
 export const ESMALTES = generar();
-export const FAMILIAS_ESMALTE = FAMILIAS.map((f) => f.familia);
+export const FAMILIAS_ESMALTE = FAMILIAS.map((familia) => familia.familia);
 // Nombre: esmalte
 // Descripción: Busca un esmalte por código.
 // Entrada: El código.
 // Salida: El esmalte o nada.
 // Objetivo: Saber el color.
-export const esmalte = (codigo) => ESMALTES.find((e) => e.codigo === codigo);
+export const esmalte = (codigo) => ESMALTES.find((esmalte) => esmalte.codigo === codigo);
 // Los esmaltes especiales cuestan un poco más por uña
 export const EXTRA_TIPO = { Cremoso: 0, Jelly: 200, 'Neón': 300, Glitter: 300, 'Metálico': 400 };
 
@@ -115,15 +121,15 @@ export const POSICIONES = ['Base', 'Centro', 'Punta', 'Un lado', 'Toda la uña']
 // Objetivo: Guardar solo decoraciones válidas.
 export function limpiarExtras(lista) {
   if (!Array.isArray(lista)) return [];
-  return lista.slice(0, 12).map((x) => {
-    const tipo = EXTRAS[x?.tipo];
-    if (!tipo) throw new Error(`Decoración no válida: ${x?.tipo}`);
-    const dedos = [...new Set((x.dedos || []).map(Number))].filter((i) => i >= 0 && i <= 4).sort();
-    if (!dedos.length) throw new Error(`Elige en qué uñas van las ${String(x.tipo).toLowerCase()}.`);
+  return lista.slice(0, 12).map((elemento) => {
+    const tipo = EXTRAS[elemento?.tipo];
+    if (!tipo) throw new Error(`Decoración no válida: ${elemento?.tipo}`);
+    const dedos = [...new Set((elemento.dedos || []).map(Number))].filter((i) => i >= 0 && i <= 4).sort();
+    if (!dedos.length) throw new Error(`Elige en qué uñas van las ${String(elemento.tipo).toLowerCase()}.`);
     return {
-      tipo: x.tipo,
-      variante: tipo.variantes.includes(x.variante) ? x.variante : tipo.variantes[0],
-      posicion: POSICIONES.includes(x.posicion) ? x.posicion : 'Centro',
+      tipo: elemento.tipo,
+      variante: tipo.variantes.includes(elemento.variante) ? elemento.variante : tipo.variantes[0],
+      posicion: POSICIONES.includes(elemento.posicion) ? elemento.posicion : 'Centro',
       dedos
     };
   });
@@ -135,26 +141,29 @@ export function limpiarExtras(lista) {
 // Entrada: El diseño.
 // Salida: Precio y minutos.
 // Objetivo: Mostrar cuánto cuesta.
-export function calcularDiseno(d) {
+export function calcularDiseno(datos) {
   const lineas = [];
-  const largo = PRECIO_DISENO.largo[d.largo] || 0;
-  if (largo) lineas.push({ concepto: `Largo ${String(d.largo).toLowerCase()} (extensión)`, monto: largo });
-  (d.unas || []).forEach((u, i) => {
-    const e = esmalte(u.esmalte);
+  const largo = PRECIO_DISENO.largo[datos.largo] || 0;
+  if (largo) lineas.push({ concepto: `Largo ${String(datos.largo).toLowerCase()} (extensión)`, monto: largo });
+  (datos.unas || []).forEach((una, i) => {
+    const colorEsmalte = esmalte(una.esmalte);
     const partes = [
-      [u.acabado !== 'Brillante' && u.acabado, PRECIO_DISENO.acabado[u.acabado] || 0],
-      [u.decoracion !== 'Ninguna' && u.decoracion, PRECIO_DISENO.decoracion[u.decoracion] || 0],
-      [e && e.tipo !== 'Cremoso' && `esmalte ${e.tipo.toLowerCase()}`, e ? EXTRA_TIPO[e.tipo] : 0]
+      [una.acabado !== 'Brillante' && una.acabado, PRECIO_DISENO.acabado[una.acabado] || 0],
+      [una.decoracion !== 'Ninguna' && una.decoracion, PRECIO_DISENO.decoracion[una.decoracion] || 0],
+      [colorEsmalte && colorEsmalte.tipo !== 'Cremoso' && `esmalte ${colorEsmalte.tipo.toLowerCase()}`, colorEsmalte ? EXTRA_TIPO[colorEsmalte.tipo] : 0]
     ].filter(([nombre, monto]) => nombre && monto);
-    const monto = partes.reduce((s, [, m]) => s + m, 0) * 2;
-    if (monto) lineas.push({ concepto: `${DEDOS[i]}: ${partes.map(([n]) => n.toLowerCase()).join(' + ')} (x2 manos)`, monto, dedo: i });
+    // Lo de cada uña se cobra dos veces porque el mismo diseño va en las dos manos
+    const monto = partes.reduce((suma, [, montoParte]) => suma + montoParte, 0) * 2;
+    if (monto) lineas.push({ concepto: `${DEDOS[i]}: ${partes.map(([nombre]) => nombre.toLowerCase()).join(' + ')} (x2 manos)`, monto, dedo: i });
   });
-  (d.extras || []).forEach((x) => {
-    const p = EXTRAS[x.tipo];
-    if (!p || !x.dedos?.length) return;
-    lineas.push({ concepto: `${x.tipo} ${x.variante.toLowerCase()} en ${x.dedos.length === 5 ? 'todas las uñas' : x.dedos.map((i) => DEDOS[i].toLowerCase()).join(', ')} (x2 manos)`, monto: p.precio * x.dedos.length * 2 });
+  // Decoraciones pegadas: precio por uña × uñas elegidas × 2 manos
+  (datos.extras || []).forEach((elegida) => {
+    const delCatalogo = EXTRAS[elegida.tipo];
+    if (!delCatalogo || !elegida.dedos?.length) return;
+    lineas.push({ concepto: `${elegida.tipo} ${elegida.variante.toLowerCase()} en ${elegida.dedos.length === 5 ? 'todas las uñas' : elegida.dedos.map((dedo) => DEDOS[dedo].toLowerCase()).join(', ')} (x2 manos)`, monto: delCatalogo.precio * elegida.dedos.length * 2 });
   });
-  const distintos = new Set((d.unas || []).map((u) => u.esmalte)).size;
+  // El primer color va incluido; cada color distinto de más suma PRECIO_DISENO.colorExtra
+  const distintos = new Set((datos.unas || []).map((una) => una.esmalte)).size;
   if (distintos > 1) lineas.push({ concepto: `${distintos} colores combinados`, monto: (distintos - 1) * PRECIO_DISENO.colorExtra });
-  return { total: lineas.reduce((s, l) => s + l.monto, 0), lineas };
+  return { total: lineas.reduce((suma, linea) => suma + linea.monto, 0), lineas };
 }

@@ -13,10 +13,10 @@ export const accesoAdminController = {
   // Objetivo: Que solo la dueña entre al panel.
   entrar(req, res) {
     const ip = req.ip || 'x';
-    const f = fallos.get(ip);
-    if (f && f.n >= 5 && Date.now() - f.desde < ESPERA) return res.status(429).json({ error: 'Demasiados intentos. Espera 5 minutos y vuelve a intentarlo.' });
+    const fallo = fallos.get(ip);
+    if (fallo && fallo.n >= 5 && Date.now() - fallo.desde < ESPERA) return res.status(429).json({ error: 'Demasiados intentos. Espera 5 minutos y vuelve a intentarlo.' });
     if (!AdminModel.verificar(req.body.contrasena)) {
-      fallos.set(ip, { n: (f && Date.now() - f.desde < ESPERA ? f.n : 0) + 1, desde: f && Date.now() - f.desde < ESPERA ? f.desde : Date.now() });
+      fallos.set(ip, { n: (fallo && Date.now() - fallo.desde < ESPERA ? fallo.n : 0) + 1, desde: fallo && Date.now() - fallo.desde < ESPERA ? fallo.desde : Date.now() });
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
     }
     fallos.delete(ip);

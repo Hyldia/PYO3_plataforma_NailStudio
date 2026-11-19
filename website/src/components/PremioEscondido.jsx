@@ -37,7 +37,7 @@ const enSesion = () => { try { return Number(sessionStorage.getItem(SESION)) || 
 // Objetivo: Recordarlo.
 function guardar(codigo) {
   try {
-    const v = leer(); v[codigo] = Date.now(); localStorage.setItem(CLAVE, JSON.stringify(v));
+    const guardado = leer(); guardado[codigo] = Date.now(); localStorage.setItem(CLAVE, JSON.stringify(guardado));
     sessionStorage.setItem(SESION, String(enSesion() + 1));
   } catch { /* sin almacenamiento */ }
 }
@@ -46,13 +46,13 @@ function guardar(codigo) {
 // Entrada: El cupón.
 // Salida: Sí o no.
 // Objetivo: Preferir cupones nuevos.
-const libre = (c) => !leer()[c.codigo] || Date.now() - leer()[c.codigo] > 3 * 86400000;
+const libre = (cupon) => !leer()[cupon.codigo] || Date.now() - leer()[cupon.codigo] > 3 * 86400000;
 // Nombre: azar
 // Descripción: Elige uno al azar.
 // Entrada: La lista.
 // Salida: Un elemento.
 // Objetivo: Sorprender.
-const azar = (l) => l[Math.floor(Math.random() * l.length)];
+const azar = (lista) => lista[Math.floor(Math.random() * lista.length)];
 // Nombre: valor
 // Descripción: Escribe el valor del cupón.
 // Entrada: El cupón.
@@ -79,8 +79,8 @@ export default function PremioEscondido() {
   // Al cambiar de página: a veces esconde un premio en una tarjeta al azar
   useEffect(() => {
     setPremio(null); setPos(null); objetivo.current = null;
-    if (!cupones.length || SIN_PREMIO.some((p) => pathname.startsWith(p)) || enSesion() >= 6 || Math.random() > 0.8) return undefined;
-    let t;
+    if (!cupones.length || SIN_PREMIO.some((ruta) => pathname.startsWith(ruta)) || enSesion() >= 6 || Math.random() > 0.8) return undefined;
+    let temporizador;
     // Nombre: esconder
     // Descripción: Elige dónde esconder el regalito.
     // Entrada: El intento.
@@ -91,16 +91,16 @@ export default function PremioEscondido() {
       const posibles = nuevos.length ? nuevos : cupones;
       const tarjetas = ESCONDITES.flatMap((sel) => [...document.querySelectorAll(sel)]).filter((el) => el.offsetWidth > 60);
       // Si la página aún está cargando sus tarjetas, lo intenta otra vez en un ratito
-      if (!tarjetas.length) { if (intento < 6) t = setTimeout(() => esconder(intento + 1), 1500); return; }
+      if (!tarjetas.length) { if (intento < 6) temporizador = setTimeout(() => esconder(intento + 1), 1500); return; }
       // Lo esconde en una tarjeta que se vea en la pantalla en ese momento (así sí se puede encontrar)
-      const enPantalla = tarjetas.filter((el) => { const r = el.getBoundingClientRect(); return r.top > 60 && r.top < window.innerHeight - 80; });
+      const enPantalla = tarjetas.filter((el) => { const caja = el.getBoundingClientRect(); return caja.top > 60 && caja.top < window.innerHeight - 80; });
       const lista = enPantalla.length ? enPantalla : tarjetas;
-      const el = azar(lista.length > 2 ? lista.slice(1) : lista);
-      objetivo.current = el;
+      const elemento = azar(lista.length > 2 ? lista.slice(1) : lista);
+      objetivo.current = elemento;
       setPremio({ cupon: azar(posibles), giro: Math.round(Math.random() * 30 - 15), x: 0.3 + Math.random() * 0.4 });
     };
-    t = setTimeout(esconder, 2500 + Math.random() * 3500);
-    return () => clearTimeout(t);
+    temporizador = setTimeout(esconder, 2500 + Math.random() * 3500);
+    return () => clearTimeout(temporizador);
   }, [pathname, search, cupones]);
 
   // Sigue a la tarjeta aunque la página cambie de tamaño
@@ -112,10 +112,10 @@ export default function PremioEscondido() {
     // Salida: Nada.
     // Objetivo: Que el regalito la siga.
     const medir = () => {
-      const el = objetivo.current;
-      if (!el || !el.isConnected) { setPremio(null); return; }
-      const r = el.getBoundingClientRect();
-      setPos({ top: r.top + window.scrollY + 12, left: r.left + window.scrollX + r.width * premio.x - 18 }); // arriba, cerca del centro: no tapa el corazón ni el descuento
+      const elemento = objetivo.current;
+      if (!elemento || !elemento.isConnected) { setPremio(null); return; }
+      const caja = elemento.getBoundingClientRect();
+      setPos({ top: caja.top + window.scrollY + 12, left: caja.left + window.scrollX + caja.width * premio.x - 18 }); // arriba, cerca del centro: no tapa el corazón ni el descuento
     };
     medir();
     const i = setInterval(medir, 700);

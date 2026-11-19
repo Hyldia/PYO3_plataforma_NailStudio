@@ -1,18 +1,19 @@
+// Pie de página: datos del salón, enlaces, horario y WhatsApp.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from './Logo.jsx';
 import { SALON, enlaceWhatsApp } from '../config.js';
 
-// Nombre: I
+// Nombre: Icono
 // Descripción: Dibuja un ícono del pie.
 // Entrada: El dibujo.
 // Salida: El ícono.
 // Objetivo: Decorar el pie.
-const I = ({ children }) => <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>;
+const Icono = ({ children }) => <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>;
 const REDES = [
-  { clave: 'instagram', nombre: 'Instagram', icono: <I><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" /></I> },
-  { clave: 'facebook', nombre: 'Facebook', icono: <I><circle cx="12" cy="12" r="9" /><path d="M13 21v-7h2.5l.5-3H13V9.5c0-.9.4-1.5 1.6-1.5H16V5.3c-.4 0-1.3-.1-2.3-.1C11.6 5.2 10 6.5 10 8.9V11H7.6v3H10v7" /></I> },
-  { clave: 'tiktok', nombre: 'TikTok', icono: <I><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5" /><path d="M14 3c.4 2.6 2.2 4.4 5 4.6" /></I> }
+  { clave: 'instagram', nombre: 'Instagram', icono: <Icono><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" /></Icono> },
+  { clave: 'facebook', nombre: 'Facebook', icono: <Icono><circle cx="12" cy="12" r="9" /><path d="M13 21v-7h2.5l.5-3H13V9.5c0-.9.4-1.5 1.6-1.5H16V5.3c-.4 0-1.3-.1-2.3-.1C11.6 5.2 10 6.5 10 8.9V11H7.6v3H10v7" /></Icono> },
+  { clave: 'tiktok', nombre: 'TikTok', icono: <Icono><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5" /><path d="M14 3c.4 2.6 2.2 4.4 5 4.6" /></Icono> }
 ];
 
 const COLUMNAS = [
@@ -45,18 +46,18 @@ export default function Pie() {
   return (
     <footer className="pie">
       <div className="contenedor pie__rejilla">
-        {COLUMNAS.map((c) => (
-          <nav key={c.titulo} aria-label={c.titulo}>
-            <h2 className="pie__titulo">{c.titulo}</h2>
+        {COLUMNAS.map((columna) => (
+          <nav key={columna.titulo} aria-label={columna.titulo}>
+            <h2 className="pie__titulo">{columna.titulo}</h2>
             <ul className="pie__enlaces">
-              {c.enlaces.map(([t, to]) => <li key={t}><Link to={to}>{t}</Link></li>)}
+              {columna.enlaces.map(([t, to]) => <li key={t}><Link to={to}>{t}</Link></li>)}
             </ul>
           </nav>
         ))}
         <div className="pie__visita">
           <h2 className="pie__titulo">Visítanos</h2>
           <dl className="horario">
-            {SALON.horario.map((h) => (<div key={h.dias}><dt>{h.dias}</dt><dd>{h.horas}</dd></div>))}
+            {SALON.horario.map((turno) => (<div key={turno.dias}><dt>{turno.dias}</dt><dd>{turno.horas}</dd></div>))}
           </dl>
           <address>
             {SALON.direccion}<br />
@@ -72,13 +73,13 @@ export default function Pie() {
       <div className="contenedor pie__fila">
         <section aria-labelledby="pie-pagos">
           <h2 id="pie-pagos" className="pie__titulo">Aceptamos</h2>
-          <ul className="pie__pagos">{PAGOS.map((p) => <li key={p}>{p}</li>)}</ul>
+          <ul className="pie__pagos">{PAGOS.map((pago) => <li key={pago}>{pago}</li>)}</ul>
         </section>
         <section aria-labelledby="pie-redes">
           <h2 id="pie-redes" className="pie__titulo">Conecta con {SALON.nombre}</h2>
           <ul className="pie__redes">
-            {REDES.filter((r) => SALON.redes[r.clave]).map((r) => (
-              <li key={r.clave}><a href={SALON.redes[r.clave]} target="_blank" rel="noreferrer" aria-label={r.nombre}>{r.icono}</a></li>
+            {REDES.filter((red) => SALON.redes[red.clave]).map((red) => (
+              <li key={red.clave}><a href={SALON.redes[red.clave]} target="_blank" rel="noreferrer" aria-label={red.nombre}>{red.icono}</a></li>
             ))}
           </ul>
         </section>

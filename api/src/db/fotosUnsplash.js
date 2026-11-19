@@ -47,8 +47,8 @@ const buscar = (query, page) => buscarUnsplash(CLAVE, query, page);
 // Entrada: El texto de la foto.
 // Salida: Sí o no.
 // Objetivo: No guardar fotos que no son de uñas.
-const esDeUnas = (t) => /\b(nail|nails|manicure|manicured|pedicure|toenail|fingernail|polish)\b/.test(t) && /\b(hand|hands|finger|fingers|nail|nails|feet|toe|toes|woman|person)\b/.test(t)
-  && !/\b(bottles?|chair|salon interior|hammer|screw|wood)\b/.test(t);
+const esDeUnas = (texto) => /\b(nail|nails|manicure|manicured|pedicure|toenail|fingernail|polish)\b/.test(texto) && /\b(hand|hands|finger|fingers|nail|nails|feet|toe|toes|woman|person)\b/.test(texto)
+  && !/\b(bottles?|chair|salon interior|hammer|screw|wood)\b/.test(texto);
 
 // Nombre: main
 // Descripción: Busca y guarda fotos de uñas para la galería.
@@ -76,26 +76,26 @@ async function main() {
   if (inicioB > 0 || inicioP > 1) console.log(`Siguiendo desde «${LISTA[inicioB]}», página ${inicioP}.`);
 
   let agregadas = 0;
-  for (let b = inicioB; b < LISTA.length && agregadas < META; b++) {
-    const query = LISTA[b];
-    for (let page = b === inicioB ? inicioP : 1; page <= PAGINAS && agregadas < META; page++) {
+  for (let numeroBusqueda = inicioB; numeroBusqueda < LISTA.length && agregadas < META; numeroBusqueda++) {
+    const query = LISTA[numeroBusqueda];
+    for (let page = numeroBusqueda === inicioB ? inicioP : 1; page <= PAGINAS && agregadas < META; page++) {
       const { results = [], total_pages: paginas = 0 } = await buscar(query, page);
-      guardar.run(JSON.stringify(page >= Math.min(PAGINAS, paginas) ? { b: b + 1, p: 1 } : { b, p: page + 1 }));
-      for (const f of results) {
+      guardar.run(JSON.stringify(page >= Math.min(PAGINAS, paginas) ? { b: numeroBusqueda + 1, p: 1 } : { b: numeroBusqueda, p: page + 1 }));
+      for (const resultado of results) {
         if (agregadas >= META) break;
-        const descripcion = f.alt_description || f.description || '';
-        const etiquetas = (f.tags || []).map((t) => t.title).filter(Boolean);
+        const descripcion = resultado.alt_description || resultado.description || '';
+        const etiquetas = (resultado.tags || []).map((etiqueta) => etiqueta.title).filter(Boolean);
         if (!esDeUnas(`${descripcion} ${etiquetas.join(' ')}`.toLowerCase())) continue;
-        const archivo = urlFotoUnsplash(f);
+        const archivo = urlFotoUnsplash(resultado);
         if (existe.get(`${archivo.split('?')[0]}%`)) continue;
 
-        const c = clasificarFoto(descripcion, etiquetas);
+        const clasificacion = clasificarFoto(descripcion, etiquetas);
         const es = describirFoto(`${descripcion} ${etiquetas.join(' ')} ${query}`);
         insertar.run({
           archivo,
-          titulo: c.titulo, descripcion: es.descripcion, categoria: c.categoria,
-          forma: c.forma, color: c.color, acabado: c.acabado, etiquetas: [...new Set([...es.etiquetas, ...etiquetas])].slice(0, 16).join(', '),
-          ...autorUnsplash(f)
+          titulo: clasificacion.titulo, descripcion: es.descripcion, categoria: clasificacion.categoria,
+          forma: clasificacion.forma, color: clasificacion.color, acabado: clasificacion.acabado, etiquetas: [...new Set([...es.etiquetas, ...etiquetas])].slice(0, 16).join(', '),
+          ...autorUnsplash(resultado)
         });
         agregadas++;
       }
@@ -111,4 +111,4 @@ async function main() {
   }
 }
 
-main().catch((e) => { console.error(`\n${e.message}`); process.exit(1); });
+main().catch((fallo) => { console.error(`\n${fallo.message}`); process.exit(1); });

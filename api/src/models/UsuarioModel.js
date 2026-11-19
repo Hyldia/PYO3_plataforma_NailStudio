@@ -10,7 +10,7 @@ export const PROVINCIAS = ['San José', 'Alajuela', 'Cartago', 'Heredia', 'Guana
 // Entrada: La clienta.
 // Salida: Sus datos sin contraseña.
 // Objetivo: Cuidar su privacidad.
-const publico = (u) => u && { id: u.id, nombre: u.nombre, correo: u.correo, telefono: u.telefono, proveedor: u.proveedor, foto: u.foto, creado_en: u.creado_en };
+const publico = (usuario) => usuario && { id: usuario.id, nombre: usuario.nombre, correo: usuario.correo, telefono: usuario.telefono, proveedor: usuario.proveedor, foto: usuario.foto, creado_en: usuario.creado_en };
 
 export const UsuarioModel = {
   publico,
@@ -38,12 +38,12 @@ export const UsuarioModel = {
   // Entrada: Los datos.
   // Salida: Un error o nada.
   // Objetivo: Evitar cuentas incompletas.
-  validarRegistro(d) {
-    if (!d.nombre || d.nombre.trim().length < 2) return 'Escribe tu nombre.';
-    if (!/^\S+@\S+\.\S+$/.test(d.correo || '')) return 'Escribe un correo válido.';
-    if (!/^[\d\s+-]{8,15}$/.test(d.telefono || '')) return 'Escribe un teléfono de 8 dígitos (para avisarte por WhatsApp).';
-    if (!d.contrasena || d.contrasena.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
-    if (!/\d/.test(d.contrasena) || !/[a-záéíóúñ]/i.test(d.contrasena)) return 'La contraseña debe tener letras y números.';
+  validarRegistro(datos) {
+    if (!datos.nombre || datos.nombre.trim().length < 2) return 'Escribe tu nombre.';
+    if (!/^\S+@\S+\.\S+$/.test(datos.correo || '')) return 'Escribe un correo válido.';
+    if (!/^[\d\s+-]{8,15}$/.test(datos.telefono || '')) return 'Escribe un teléfono de 8 dígitos (para avisarte por WhatsApp).';
+    if (!datos.contrasena || datos.contrasena.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+    if (!/\d/.test(datos.contrasena) || !/[a-záéíóúñ]/i.test(datos.contrasena)) return 'La contraseña debe tener letras y números.';
     return null;
   },
   // Nombre: crear
@@ -52,9 +52,9 @@ export const UsuarioModel = {
   // Salida: La clienta.
   // Objetivo: Registrar clientas.
   crear({ nombre, correo, telefono = null, contrasenaHash = null, proveedor = 'formulario', proveedorId = null, foto = null }) {
-    const r = getDb().prepare(`INSERT INTO usuarios (nombre, correo, telefono, contrasena_hash, proveedor, proveedor_id, foto)
+    const resultado = getDb().prepare(`INSERT INTO usuarios (nombre, correo, telefono, contrasena_hash, proveedor, proveedor_id, foto)
       VALUES (?, ?, ?, ?, ?, ?, ?)`).run(nombre.trim().slice(0, 80), correo ? correo.toLowerCase() : null, telefono, contrasenaHash, proveedor, proveedorId, foto);
-    return this.buscarPorId(r.lastInsertRowid);
+    return this.buscarPorId(resultado.lastInsertRowid);
   },
   // Google o Facebook: si ya existe por proveedor se usa; si el correo ya tiene cuenta, se vincula
   // Nombre: desdeProveedor
@@ -125,13 +125,13 @@ export const UsuarioModel = {
   // Entrada: Los datos.
   // Salida: Un error o nada.
   // Objetivo: Evitar direcciones incompletas.
-  validarDireccion(d) {
-    if (!d.etiqueta || !d.etiqueta.trim()) return 'Ponle un nombre a la dirección (por ejemplo, Casa).';
-    if (!d.destinatario || d.destinatario.trim().length < 2) return 'Escribe quién recibe.';
-    if (!/^[\d\s+-]{8,15}$/.test(d.telefono || '')) return 'Escribe un teléfono de 8 dígitos.';
-    if (!PROVINCIAS.includes(d.provincia)) return 'Elige la provincia.';
-    if (!d.canton?.trim() || !d.distrito?.trim()) return 'Escribe el cantón y el distrito.';
-    if (!d.senas || d.senas.trim().length < 10) return 'Escribe las otras señas (por ejemplo, 100 m norte de la iglesia, casa blanca).';
+  validarDireccion(datos) {
+    if (!datos.etiqueta || !datos.etiqueta.trim()) return 'Ponle un nombre a la dirección (por ejemplo, Casa).';
+    if (!datos.destinatario || datos.destinatario.trim().length < 2) return 'Escribe quién recibe.';
+    if (!/^[\d\s+-]{8,15}$/.test(datos.telefono || '')) return 'Escribe un teléfono de 8 dígitos.';
+    if (!PROVINCIAS.includes(datos.provincia)) return 'Elige la provincia.';
+    if (!datos.canton?.trim() || !datos.distrito?.trim()) return 'Escribe el cantón y el distrito.';
+    if (!datos.senas || datos.senas.trim().length < 10) return 'Escribe las otras señas (por ejemplo, 100 m norte de la iglesia, casa blanca).';
     return null;
   },
   // Nombre: guardarDireccion
@@ -148,10 +148,10 @@ export const UsuarioModel = {
         db.prepare(`UPDATE direcciones SET etiqueta = @etiqueta, destinatario = @destinatario, telefono = @telefono, provincia = @provincia,
           canton = @canton, distrito = @distrito, senas = @senas WHERE id = @id AND usuario_id = @usuarioId`).run({ ...datos, id });
       } else {
-        const n = db.prepare('SELECT COUNT(*) AS n FROM direcciones WHERE usuario_id = ?').get(usuarioId).n;
-        if (n >= MAX_DIRECCIONES) throw Object.assign(new Error(`Puedes guardar hasta ${MAX_DIRECCIONES} direcciones. Edita o borra una.`), { status: 409 });
+        const cantidad = db.prepare('SELECT COUNT(*) AS n FROM direcciones WHERE usuario_id = ?').get(usuarioId).n;
+        if (cantidad >= MAX_DIRECCIONES) throw Object.assign(new Error(`Puedes guardar hasta ${MAX_DIRECCIONES} direcciones. Edita o borra una.`), { status: 409 });
         id = db.prepare(`INSERT INTO direcciones (usuario_id, etiqueta, destinatario, telefono, provincia, canton, distrito, senas, principal)
-          VALUES (@usuarioId, @etiqueta, @destinatario, @telefono, @provincia, @canton, @distrito, @senas, @principal)`).run({ ...datos, principal: n === 0 ? 1 : 0 }).lastInsertRowid;
+          VALUES (@usuarioId, @etiqueta, @destinatario, @telefono, @provincia, @canton, @distrito, @senas, @principal)`).run({ ...datos, principal: cantidad === 0 ? 1 : 0 }).lastInsertRowid;
       }
       if (d.principal) this.hacerPrincipal(usuarioId, id);
       return this.direccion(usuarioId, id);
@@ -172,10 +172,10 @@ export const UsuarioModel = {
   // Objetivo: Quitar direcciones.
   borrarDireccion(usuarioId, id) {
     const db = getDb();
-    const d = this.direccion(usuarioId, id);
-    if (!d) return false;
+    const direccion = this.direccion(usuarioId, id);
+    if (!direccion) return false;
     db.prepare('DELETE FROM direcciones WHERE id = ?').run(id);
-    if (d.principal) db.prepare('UPDATE direcciones SET principal = 1 WHERE id = (SELECT id FROM direcciones WHERE usuario_id = ? ORDER BY id LIMIT 1)').run(usuarioId);
+    if (direccion.principal) db.prepare('UPDATE direcciones SET principal = 1 WHERE id = (SELECT id FROM direcciones WHERE usuario_id = ? ORDER BY id LIMIT 1)').run(usuarioId);
     return true;
   },
   // Nombre: textoDireccion
@@ -183,7 +183,7 @@ export const UsuarioModel = {
   // Entrada: La dirección.
   // Salida: El texto.
   // Objetivo: Ponerla en el pedido.
-  textoDireccion: (d) => `${d.etiqueta}: ${d.destinatario} (${d.telefono}) · ${d.provincia}, ${d.canton}, ${d.distrito} · ${d.senas}`,
+  textoDireccion: (datos) => `${datos.etiqueta}: ${datos.destinatario} (${datos.telefono}) · ${datos.provincia}, ${datos.canton}, ${datos.distrito} · ${datos.senas}`,
 
   // Historial de la clienta
   // Nombre: pedidos

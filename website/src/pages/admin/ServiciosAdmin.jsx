@@ -25,7 +25,7 @@ const horas = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${m
 // Objetivo: Editar servicios.
 function Editor({ servicio, categorias, onCerrar, onGuardado }) {
   const nuevo = !servicio.id;
-  const [d, setD] = useState({ ...VACIO, ...servicio, descripcion: servicio.descripcion ?? '', precio_oferta: servicio.precio_oferta ?? '', etiqueta: servicio.etiqueta ?? '', incluye: (servicio.incluye || '').split('|').filter(Boolean).join('\n') });
+  const [datos, setDatos] = useState({ ...VACIO, ...servicio, descripcion: servicio.descripcion ?? '', precio_oferta: servicio.precio_oferta ?? '', etiqueta: servicio.etiqueta ?? '', incluye: (servicio.incluye || '').split('|').filter(Boolean).join('\n') });
   const [archivo, setArchivo] = useState([]);
   const [estado, setEstado] = useState({ guardando: false, error: '' });
   // Nombre: set
@@ -33,29 +33,29 @@ function Editor({ servicio, categorias, onCerrar, onGuardado }) {
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
+  const set = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value });
   // Nombre: marcar
   // Descripción: Marca o desmarca una casilla.
   // Entrada: El nombre del campo.
   // Salida: Una función para la casilla.
   // Objetivo: Llenar el formulario.
-  const marcar = (k) => (evento) => setD({ ...d, [k]: evento.target.checked ? 1 : 0 });
-  const oferta = Number(d.precio_oferta) > 0 && Number(d.precio_oferta) < Number(d.precio);
-  const pct = oferta ? Math.round((1 - d.precio_oferta / d.precio) * 100) : 0;
-  const incluye = d.incluye.split('\n').map((x) => x.trim()).filter(Boolean);
+  const marcar = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.checked ? 1 : 0 });
+  const oferta = Number(datos.precio_oferta) > 0 && Number(datos.precio_oferta) < Number(datos.precio);
+  const pct = oferta ? Math.round((1 - datos.precio_oferta / datos.precio) * 100) : 0;
+  const incluye = datos.incluye.split('\n').map((parte) => parte.trim()).filter(Boolean);
 
   // Nombre: guardar
   // Descripción: Guarda el servicio.
   // Entrada: El envío.
   // Salida: Nada.
   // Objetivo: Crear o editar.
-  async function guardar(e) {
-    e.preventDefault();
+  async function guardar(evento) {
+    evento.preventDefault();
     setEstado({ guardando: true, error: '' });
     try {
-      const s = nuevo ? await api.admin.crearServicio(d) : await api.admin.editarServicio(d.id, d);
-      if (archivo[0]) await api.admin.imagenServicio(s.id, formData(archivo[0]));
-      onGuardado(nuevo ? `«${s.nombre}» se agregó a los servicios.` : 'Cambios guardados.'); onCerrar();
+      const servicioGuardado = nuevo ? await api.admin.crearServicio(datos) : await api.admin.editarServicio(datos.id, datos);
+      if (archivo[0]) await api.admin.imagenServicio(servicioGuardado.id, formData(archivo[0]));
+      onGuardado(nuevo ? `«${servicioGuardado.nombre}» se agregó a los servicios.` : 'Cambios guardados.'); onCerrar();
     } catch (err) { setEstado({ guardando: false, error: err.message }); }
   }
 
@@ -65,39 +65,39 @@ function Editor({ servicio, categorias, onCerrar, onGuardado }) {
       <form className="editor-admin" onSubmit={guardar}>
         <div className="editor-admin__previa">
           <div className="editor-admin__foto">
-            {previa ? <img src={previa} alt="" /> : d.imagen ? <Foto archivo={d.imagen} alt="" /> : <div className="servicio-admin__sinfoto" aria-hidden="true">Sin foto</div>}
+            {previa ? <img src={previa} alt="" /> : datos.imagen ? <Foto archivo={datos.imagen} alt="" /> : <div className="servicio-admin__sinfoto" aria-hidden="true">Sin foto</div>}
             {pct > 0 && <span className="editor-admin__pct">-{pct}%</span>}
           </div>
-          {nuevo || !d.imagen ? <ZonaFotos archivos={archivo} onCambio={setArchivo} multiple={false} id="s-foto" texto="Foto del servicio" />
-            : <BotonFoto texto={archivo[0] ? 'Elegir otra foto' : 'Cambiar foto'} etiqueta={`de ${d.nombre}`} onArchivo={(f) => setArchivo([f])} />}
+          {nuevo || !datos.imagen ? <ZonaFotos archivos={archivo} onCambio={setArchivo} multiple={false} id="s-foto" texto="Foto del servicio" />
+            : <BotonFoto texto={archivo[0] ? 'Elegir otra foto' : 'Cambiar foto'} etiqueta={`de ${datos.nombre}`} onArchivo={(archivo) => setArchivo([archivo])} />}
           <div className="editor-admin__tarjeta">
-            {d.etiqueta && <span className="servicio-admin__etiqueta">{d.etiqueta}</span>}
-            <p className="editor-admin__nombre">{d.nombre || 'Nombre del servicio'}</p>
-            <p><strong className="editor-admin__precio">{dinero(oferta ? d.precio_oferta : d.precio || 0)}</strong>{oferta && <s>{dinero(d.precio)}</s>}</p>
-            <p className="tenue">{d.categoria} · {horas(Number(d.duracion_min) || 0)}</p>
-            {incluye.length > 0 && <ul className="servicio-admin__incluye">{incluye.slice(0, 4).map((x) => <li key={x}>{x}</li>)}</ul>}
+            {datos.etiqueta && <span className="servicio-admin__etiqueta">{datos.etiqueta}</span>}
+            <p className="editor-admin__nombre">{datos.nombre || 'Nombre del servicio'}</p>
+            <p><strong className="editor-admin__precio">{dinero(oferta ? datos.precio_oferta : datos.precio || 0)}</strong>{oferta && <s>{dinero(datos.precio)}</s>}</p>
+            <p className="tenue">{datos.categoria} · {horas(Number(datos.duracion_min) || 0)}</p>
+            {incluye.length > 0 && <ul className="servicio-admin__incluye">{incluye.slice(0, 4).map((detalle) => <li key={detalle}>{detalle}</li>)}</ul>}
           </div>
         </div>
         <div className="editor-admin__campos">
-          <div className="campo"><label htmlFor="s-nombre">Nombre</label><input id="s-nombre" value={d.nombre} onChange={set('nombre')} required /></div>
+          <div className="campo"><label htmlFor="s-nombre">Nombre</label><input id="s-nombre" value={datos.nombre} onChange={set('nombre')} required /></div>
           <div className="campos-dos">
             <div className="campo"><label htmlFor="s-cat">Categoría</label>
-              <input id="s-cat" list="s-cats" value={d.categoria} onChange={set('categoria')} required placeholder="Elige o escribe una nueva" />
-              <datalist id="s-cats">{categorias.map((c) => <option key={c} value={c} />)}</datalist>
+              <input id="s-cat" list="s-cats" value={datos.categoria} onChange={set('categoria')} required placeholder="Elige o escribe una nueva" />
+              <datalist id="s-cats">{categorias.map((categoria) => <option key={categoria} value={categoria} />)}</datalist>
             </div>
-            <div className="campo"><label htmlFor="s-dur">Duración (minutos)</label><input id="s-dur" type="number" min="15" max="360" step="5" value={d.duracion_min} onChange={set('duracion_min')} required /></div>
+            <div className="campo"><label htmlFor="s-dur">Duración (minutos)</label><input id="s-dur" type="number" min="15" max="360" step="5" value={datos.duracion_min} onChange={set('duracion_min')} required /></div>
           </div>
           <div className="campos-tres">
-            <div className="campo"><label htmlFor="s-precio">Precio (₡)</label><input id="s-precio" type="number" min="1" step="1" value={d.precio} onChange={set('precio')} required /></div>
-            <div className="campo"><label htmlFor="s-oferta">Precio de oferta <span className="tenue">(opcional)</span></label><input id="s-oferta" type="number" min="0" step="1" value={d.precio_oferta} onChange={set('precio_oferta')} placeholder="Vacío = sin oferta" /></div>
-            <div className="campo"><label htmlFor="s-etq">Etiqueta</label><select id="s-etq" value={d.etiqueta} onChange={set('etiqueta')}>{ETIQUETAS.map((x) => <option key={x} value={x}>{x || 'Ninguna'}</option>)}</select></div>
+            <div className="campo"><label htmlFor="s-precio">Precio (₡)</label><input id="s-precio" type="number" min="1" step="1" value={datos.precio} onChange={set('precio')} required /></div>
+            <div className="campo"><label htmlFor="s-oferta">Precio de oferta <span className="tenue">(opcional)</span></label><input id="s-oferta" type="number" min="0" step="1" value={datos.precio_oferta} onChange={set('precio_oferta')} placeholder="Vacío = sin oferta" /></div>
+            <div className="campo"><label htmlFor="s-etq">Etiqueta</label><select id="s-etq" value={datos.etiqueta} onChange={set('etiqueta')}>{ETIQUETAS.map((etiqueta) => <option key={etiqueta} value={etiqueta}>{etiqueta || 'Ninguna'}</option>)}</select></div>
           </div>
-          <div className="campo"><label htmlFor="s-desc">Descripción <span className="tenue">(la ven las clientas)</span></label><textarea id="s-desc" rows="2" value={d.descripcion} onChange={set('descripcion')} /></div>
-          <div className="campo"><label htmlFor="s-inc">¿Qué incluye? <span className="tenue">(una cosa por línea)</span></label><textarea id="s-inc" rows="3" value={d.incluye} onChange={set('incluye')} placeholder={'Limado y forma\nCutícula\nEsmaltado'} /></div>
+          <div className="campo"><label htmlFor="s-desc">Descripción <span className="tenue">(la ven las clientas)</span></label><textarea id="s-desc" rows="2" value={datos.descripcion} onChange={set('descripcion')} /></div>
+          <div className="campo"><label htmlFor="s-inc">¿Qué incluye? <span className="tenue">(una cosa por línea)</span></label><textarea id="s-inc" rows="3" value={datos.incluye} onChange={set('incluye')} placeholder={'Limado y forma\nCutícula\nEsmaltado'} /></div>
           <div className="casillas-fila">
-            <label className="casilla"><input type="checkbox" checked={Boolean(Number(d.activo))} onChange={marcar('activo')} /><span>Visible para reservar</span></label>
-            <label className="casilla"><input type="checkbox" checked={Boolean(Number(d.destacado))} onChange={marcar('destacado')} /><span>Destacado en la portada</span></label>
-            <label className="casilla"><input type="checkbox" checked={Boolean(Number(d.es_combo))} onChange={marcar('es_combo')} /><span>Es un combo</span></label>
+            <label className="casilla"><input type="checkbox" checked={Boolean(Number(datos.activo))} onChange={marcar('activo')} /><span>Visible para reservar</span></label>
+            <label className="casilla"><input type="checkbox" checked={Boolean(Number(datos.destacado))} onChange={marcar('destacado')} /><span>Destacado en la portada</span></label>
+            <label className="casilla"><input type="checkbox" checked={Boolean(Number(datos.es_combo))} onChange={marcar('es_combo')} /><span>Es un combo</span></label>
           </div>
           {estado.error && <p role="alert" className="error">{estado.error}</p>}
           <div className="botones">
@@ -129,19 +129,19 @@ export default function ServiciosAdmin() {
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Mostrar la lista.
-  const cargar = () => api.admin.servicios().then(setDatos).catch((e) => setAviso({ texto: e.message, error: true }));
+  const cargar = () => api.admin.servicios().then(setDatos).catch((fallo) => setAviso({ texto: fallo.message, error: true }));
   useEffect(() => { cargar(); }, []);
 
-  const lista = useMemo(() => datos.servicios.filter((s) => (!cat || s.categoria === cat)
-    && (!ver || (ver === 'ocultos' ? !s.activo : ver === 'oferta' ? s.precio_oferta : ver === 'sinfoto' ? !s.imagen : ver === 'hombres' ? s.categoria === 'Hombres' : s.activo))
-    && (!buscar || `${s.nombre} ${s.descripcion || ''}`.toLowerCase().includes(buscar.toLowerCase()))), [datos, cat, ver, buscar]);
+  const lista = useMemo(() => datos.servicios.filter((servicio) => (!cat || servicio.categoria === cat)
+    && (!ver || (ver === 'ocultos' ? !servicio.activo : ver === 'oferta' ? servicio.precio_oferta : ver === 'sinfoto' ? !servicio.imagen : ver === 'hombres' ? servicio.categoria === 'Hombres' : servicio.activo))
+    && (!buscar || `${servicio.nombre} ${servicio.descripcion || ''}`.toLowerCase().includes(buscar.toLowerCase()))), [datos, cat, ver, buscar]);
   const paginas = Math.ceil(lista.length / POR_PAGINA);
   const serviciosPagina = lista.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
   useEffect(() => { if (pagina > paginas) setPagina(Math.max(paginas, 1)); }, [pagina, paginas]);
   const cifras = useMemo(() => ({
-    activos: datos.servicios.filter((s) => s.activo).length,
-    ofertas: datos.servicios.filter((s) => s.activo && s.precio_oferta).length,
-    citas: datos.servicios.reduce((n, s) => n + s.citas, 0),
+    activos: datos.servicios.filter((servicio) => servicio.activo).length,
+    ofertas: datos.servicios.filter((servicio) => servicio.activo && servicio.precio_oferta).length,
+    citas: datos.servicios.reduce((suma, servicio) => suma + servicio.citas, 0),
     top: [...datos.servicios].sort((a, b) => b.citas - a.citas)[0]
   }), [datos]);
 
@@ -150,29 +150,29 @@ export default function ServiciosAdmin() {
   // Entrada: El servicio y la foto.
   // Salida: Nada.
   // Objetivo: Actualizarla.
-  const foto = async (s, archivo) => {
-    try { await api.admin.imagenServicio(s.id, formData(archivo)); setAviso({ texto: `Foto de «${s.nombre}» actualizada.` }); cargar(); } catch (e) { setAviso({ texto: e.message, error: true }); }
+  const foto = async (servicio, archivo) => {
+    try { await api.admin.imagenServicio(servicio.id, formData(archivo)); setAviso({ texto: `Foto de «${servicio.nombre}» actualizada.` }); cargar(); } catch (fallo) { setAviso({ texto: fallo.message, error: true }); }
   };
   // Nombre: alternar
   // Descripción: Muestra u oculta un servicio.
   // Entrada: El servicio.
   // Salida: Nada.
   // Objetivo: Pausar servicios.
-  const alternar = async (s) => {
-    try { await api.admin.editarServicio(s.id, { ...s, activo: s.activo ? 0 : 1 }); setAviso({ texto: s.activo ? `«${s.nombre}» quedó oculto: ya no aparece para reservar.` : `«${s.nombre}» vuelve a aparecer para reservar.` }); cargar(); } catch (e) { setAviso({ texto: e.message, error: true }); }
+  const alternar = async (servicio) => {
+    try { await api.admin.editarServicio(servicio.id, { ...servicio, activo: servicio.activo ? 0 : 1 }); setAviso({ texto: servicio.activo ? `«${servicio.nombre}» quedó oculto: ya no aparece para reservar.` : `«${servicio.nombre}» vuelve a aparecer para reservar.` }); cargar(); } catch (fallo) { setAviso({ texto: fallo.message, error: true }); }
   };
   // Nombre: borrar
   // Descripción: Borra un servicio.
   // Entrada: El servicio.
   // Salida: Nada.
   // Objetivo: Quitarlo.
-  const borrar = async (s) => {
-    if (!window.confirm(`¿Eliminar el servicio «${s.nombre}»?`)) return;
+  const borrar = async (servicio) => {
+    if (!window.confirm(`¿Eliminar el servicio «${servicio.nombre}»?`)) return;
     try {
-      const r = await api.admin.borrarServicio(s.id);
-      setAviso({ texto: r.resultado === 'oculto' ? `«${s.nombre}» tiene citas en el historial: quedó oculto en vez de borrarse.` : `«${s.nombre}» se eliminó.` });
+      const respuesta = await api.admin.borrarServicio(servicio.id);
+      setAviso({ texto: respuesta.resultado === 'oculto' ? `«${servicio.nombre}» tiene citas en el historial: quedó oculto en vez de borrarse.` : `«${servicio.nombre}» se eliminó.` });
       cargar();
-    } catch (e) { setAviso({ texto: e.message, error: true }); }
+    } catch (fallo) { setAviso({ texto: fallo.message, error: true }); }
   };
 
   return (
@@ -189,7 +189,7 @@ export default function ServiciosAdmin() {
       </ul>
       <div className="filtros-admin">
         <label className="filtros-admin__buscar"><span className="solo-lector">Buscar servicio</span><input type="search" value={buscar} onChange={(evento) => { setBuscar(evento.target.value); setPagina(1); }} placeholder="Buscar servicio" /></label>
-        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(evento) => { setCat(evento.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{datos.categorias.map((c) => <option key={c}>{c}</option>)}</select></label>
+        <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(evento) => { setCat(evento.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{datos.categorias.map((categoria) => <option key={categoria}>{categoria}</option>)}</select></label>
         <div className="barra-chips barra-chips--compacta" role="group" aria-label="Mostrar">
           {[['', 'Todos'], ['visibles', 'Visibles'], ['oferta', 'Con oferta'], ['ocultos', 'Ocultos'], ['sinfoto', 'Sin foto'], ['hombres', 'Para hombres']].map(([k, t]) => <button key={k} type="button" className={`chip-filtro ${ver === k ? 'chip-filtro--activo' : ''}`} onClick={() => { setVer(k); setPagina(1); }}>{t}</button>)}
         </div>
@@ -197,34 +197,34 @@ export default function ServiciosAdmin() {
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <p className="tenue">{lista.length} servicios</p>
       <ul ref={rejilla} className="admin-tarjetas admin-tarjetas--servicios">
-        {serviciosPagina.map((s, i) => {
-          const pct = s.precio_oferta ? Math.round((1 - s.precio_oferta / s.precio) * 100) : 0;
+        {serviciosPagina.map((servicio, i) => {
+          const pct = servicio.precio_oferta ? Math.round((1 - servicio.precio_oferta / servicio.precio) * 100) : 0;
           return (
-            <li key={s.id} className={`admin-tarjeta servicio-admin ${s.activo ? '' : 'admin-tarjeta--inactiva'}`} style={{ '--n': i % 24 }}>
+            <li key={servicio.id} className={`admin-tarjeta servicio-admin ${servicio.activo ? '' : 'admin-tarjeta--inactiva'}`} style={{ '--n': i % 24 }}>
               <div className="admin-tarjeta__foto">
-                {s.imagen ? <Foto archivo={s.imagen} alt={s.nombre} /> : <div className="servicio-admin__sinfoto" aria-hidden="true">Sin foto</div>}
-                {!s.activo && <span className="admin-tarjeta__sello">Oculto</span>}
-                {s.activo && s.etiqueta ? <span className="admin-tarjeta__sello admin-tarjeta__sello--oro">{s.etiqueta}</span> : null}
+                {servicio.imagen ? <Foto archivo={servicio.imagen} alt={servicio.nombre} /> : <div className="servicio-admin__sinfoto" aria-hidden="true">Sin foto</div>}
+                {!servicio.activo && <span className="admin-tarjeta__sello">Oculto</span>}
+                {servicio.activo && servicio.etiqueta ? <span className="admin-tarjeta__sello admin-tarjeta__sello--oro">{servicio.etiqueta}</span> : null}
                 {pct > 0 && <span className="servicio-admin__pct">-{pct}%</span>}
               </div>
               <div className="admin-tarjeta__info">
-                <p className="servicio-admin__cat">{s.categoria} · {horas(s.duracion_min)}</p>
-                <p className="admin-tarjeta__nombre">{s.nombre}</p>
-                <p className="servicio-admin__precio"><strong>{dinero(s.precio_oferta || s.precio)}</strong>{s.precio_oferta ? <s>{dinero(s.precio)}</s> : null}</p>
-                <p className="tenue">{s.citas} citas · {dinero(s.vendido)} vendido</p>
+                <p className="servicio-admin__cat">{servicio.categoria} · {horas(servicio.duracion_min)}</p>
+                <p className="admin-tarjeta__nombre">{servicio.nombre}</p>
+                <p className="servicio-admin__precio"><strong>{dinero(servicio.precio_oferta || servicio.precio)}</strong>{servicio.precio_oferta ? <s>{dinero(servicio.precio)}</s> : null}</p>
+                <p className="tenue">{servicio.citas} citas · {dinero(servicio.vendido)} vendido</p>
               </div>
               <div className="admin-tarjeta__botones">
-                <button type="button" className="boton boton--chico" onClick={() => setEditando(s)}>Editar<span className="solo-lector"> {s.nombre}</span></button>
-                <BotonFoto etiqueta={`de ${s.nombre}`} texto="Foto" onArchivo={(f) => foto(s, f)} />
-                <button type="button" className="boton boton--chico boton--contorno" onClick={() => alternar(s)}>{s.activo ? 'Ocultar' : 'Mostrar'}<span className="solo-lector"> {s.nombre}</span></button>
-                <button type="button" className="boton boton--chico boton--peligro" onClick={() => borrar(s)} aria-label={`Eliminar ${s.nombre}`}>Eliminar</button>
+                <button type="button" className="boton boton--chico" onClick={() => setEditando(servicio)}>Editar<span className="solo-lector"> {servicio.nombre}</span></button>
+                <BotonFoto etiqueta={`de ${servicio.nombre}`} texto="Foto" onArchivo={(archivo) => foto(servicio, archivo)} />
+                <button type="button" className="boton boton--chico boton--contorno" onClick={() => alternar(servicio)}>{servicio.activo ? 'Ocultar' : 'Mostrar'}<span className="solo-lector"> {servicio.nombre}</span></button>
+                <button type="button" className="boton boton--chico boton--peligro" onClick={() => borrar(servicio)} aria-label={`Eliminar ${servicio.nombre}`}>Eliminar</button>
               </div>
             </li>
           );
         })}
       </ul>
-      <VerMas pagina={pagina} paginas={paginas} onCambiar={(n) => { setPagina(n); document.getElementById('t-serv')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
-      {editando && <Editor servicio={editando} categorias={datos.categorias} onCerrar={() => setEditando(null)} onGuardado={(t) => { setAviso({ texto: t }); cargar(); }} />}
+      <VerMas pagina={pagina} paginas={paginas} onCambiar={(numero) => { setPagina(numero); document.getElementById('t-serv')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
+      {editando && <Editor servicio={editando} categorias={datos.categorias} onCerrar={() => setEditando(null)} onGuardado={(texto) => { setAviso({ texto: texto }); cargar(); }} />}
     </section>
   );
 }

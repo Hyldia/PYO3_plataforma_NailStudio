@@ -27,9 +27,9 @@ export const detalleController = {
   // Salida: El producto con sus datos.
   // Objetivo: Mostrar su página.
   producto(req, res) {
-    const p = ProductoModel.buscarPorId(req.params.id);
-    if (!p) return res.status(404).json({ error: 'Ese producto ya no está disponible.' });
-    res.json({ ...p, puesto: ProductoModel.puestoEnCategoria(p), variantes: ProductoModel.variantes(p.id) });
+    const producto = ProductoModel.buscarPorId(req.params.id);
+    if (!producto) return res.status(404).json({ error: 'Ese producto ya no está disponible.' });
+    res.json({ ...producto, puesto: ProductoModel.puestoEnCategoria(producto), variantes: ProductoModel.variantes(producto.id) });
   },
   // GET /api/productos/portadas: una foto real por categoría (la del más vendido con foto)
   // Nombre: portadas

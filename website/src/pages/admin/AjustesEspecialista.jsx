@@ -13,16 +13,16 @@ const TIPOS = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Inc
 // Salida: El formulario.
 // Objetivo: Configurar su pago.
 function Pago({ persona, onGuardado }) {
-  const [d, setD] = useState({ estacion: persona.estacion || '', esquema_pago: persona.esquema_pago || 'comision', comision: persona.comision ?? 65, salario_base: persona.salario_base || '' });
+  const [datos, setDatos] = useState({ estacion: persona.estacion || '', esquema_pago: persona.esquema_pago || 'comision', comision: persona.comision ?? 65, salario_base: persona.salario_base || '' });
   const [estado, setEstado] = useState({ texto: '', error: false });
   // Nombre: set
   // Descripción: Guarda lo que se escribe en un campo.
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value });
+  const set = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value });
   const ejemplo = 100000;
-  const ganaria = Math.round(ejemplo * (Number(d.comision) || 0) / 100) + (d.esquema_pago === 'base_comision' ? Number(d.salario_base) || 0 : 0);
+  const ganaria = Math.round(ejemplo * (Number(datos.comision) || 0) / 100) + (datos.esquema_pago === 'base_comision' ? Number(datos.salario_base) || 0 : 0);
   // Nombre: guardar
   // Descripción: Guarda la forma de pago.
   // Entrada: El envío.
@@ -30,21 +30,21 @@ function Pago({ persona, onGuardado }) {
   // Objetivo: Calcular su pago.
   const guardar = async (evento) => {
     evento.preventDefault();
-    try { await api.admin.pagoEspecialista(persona.id, d); setEstado({ texto: 'Guardado.' }); onGuardado(); } catch (err) { setEstado({ texto: err.message, error: true }); }
+    try { await api.admin.pagoEspecialista(persona.id, datos); setEstado({ texto: 'Guardado.' }); onGuardado(); } catch (err) { setEstado({ texto: err.message, error: true }); }
   };
   return (
     <form className="ajustes-esp__form" onSubmit={guardar}>
-      <div className="campo"><label htmlFor="a-est">¿Dónde se ubica? <span className="tenue">(estación o mesa)</span></label><input id="a-est" value={d.estacion} onChange={set('estacion')} placeholder="Ej.: Estación 2, junto a la ventana" maxLength={60} /></div>
+      <div className="campo"><label htmlFor="a-est">¿Dónde se ubica? <span className="tenue">(estación o mesa)</span></label><input id="a-est" value={datos.estacion} onChange={set('estacion')} placeholder="Ej.: Estación 2, junto a la ventana" maxLength={60} /></div>
       <fieldset className="grupo">
         <legend className="grupo__titulo grupo__titulo--chico">¿Cómo se le paga?</legend>
         <div className="opciones-pago-esp">
-          <label className={d.esquema_pago === 'comision' ? 'activo' : ''}><input type="radio" name="esquema" value="comision" checked={d.esquema_pago === 'comision'} onChange={set('esquema_pago')} /><b>Comisión</b><span>Un porcentaje de lo que cobra en sus citas</span></label>
-          <label className={d.esquema_pago === 'base_comision' ? 'activo' : ''}><input type="radio" name="esquema" value="base_comision" checked={d.esquema_pago === 'base_comision'} onChange={set('esquema_pago')} /><b>Base + comisión</b><span>Un monto fijo por quincena más un porcentaje</span></label>
+          <label className={datos.esquema_pago === 'comision' ? 'activo' : ''}><input type="radio" name="esquema" value="comision" checked={datos.esquema_pago === 'comision'} onChange={set('esquema_pago')} /><b>Comisión</b><span>Un porcentaje de lo que cobra en sus citas</span></label>
+          <label className={datos.esquema_pago === 'base_comision' ? 'activo' : ''}><input type="radio" name="esquema" value="base_comision" checked={datos.esquema_pago === 'base_comision'} onChange={set('esquema_pago')} /><b>Base + comisión</b><span>Un monto fijo por quincena más un porcentaje</span></label>
         </div>
       </fieldset>
       <div className="campos-dos">
-        <div className="campo"><label htmlFor="a-com">Comisión (%)</label><input id="a-com" type="number" min="0" max="100" step="1" value={d.comision} onChange={set('comision')} required /></div>
-        {d.esquema_pago === 'base_comision' && <div className="campo"><label htmlFor="a-base">Monto base por quincena (₡)</label><input id="a-base" type="number" min="1" step="1" value={d.salario_base} onChange={set('salario_base')} required /></div>}
+        <div className="campo"><label htmlFor="a-com">Comisión (%)</label><input id="a-com" type="number" min="0" max="100" step="1" value={datos.comision} onChange={set('comision')} required /></div>
+        {datos.esquema_pago === 'base_comision' && <div className="campo"><label htmlFor="a-base">Monto base por quincena (₡)</label><input id="a-base" type="number" min="1" step="1" value={datos.salario_base} onChange={set('salario_base')} required /></div>}
       </div>
       <p className="ajustes-esp__ejemplo">Ejemplo: si en la quincena atiende citas por <b>{dinero(ejemplo)}</b>, se le pagan <b>{dinero(ganaria)}</b>.</p>
       {estado.texto && <p role={estado.error ? 'alert' : 'status'} className={estado.error ? 'error' : 'aviso-ok'}>{estado.texto}</p>}
@@ -61,21 +61,21 @@ function Pago({ persona, onGuardado }) {
 function DiasLibres({ persona, onGuardado }) {
   const hoy = isoLocal(new Date());
   const [lista, setLista] = useState([]);
-  const [d, setD] = useState({ desde: hoy, hasta: hoy, tipo: 'libre', motivo: '' });
+  const [datos, setDatos] = useState({ desde: hoy, hasta: hoy, tipo: 'libre', motivo: '' });
   const [estado, setEstado] = useState({ texto: '', error: false });
   // Nombre: cargar
   // Descripción: Carga los libres.
   // Entrada: Nada.
   // Salida: Nada.
   // Objetivo: Mostrar la lista.
-  const cargar = () => api.admin.ausencias(persona.id).then((respuesta) => setLista(respuesta.ausencias.filter((a) => a.fecha >= hoy))).catch(() => {});
+  const cargar = () => api.admin.ausencias(persona.id).then((respuesta) => setLista(respuesta.ausencias.filter((ausencia) => ausencia.fecha >= hoy))).catch(() => {});
   useEffect(() => { cargar(); }, []);
   // Nombre: set
   // Descripción: Guarda lo que se escribe en un campo.
   // Entrada: El nombre del campo.
   // Salida: Una función para el campo.
   // Objetivo: Llenar el formulario.
-  const set = (k) => (evento) => setD({ ...d, [k]: evento.target.value, ...(k === 'desde' && evento.target.value > d.hasta ? { hasta: evento.target.value } : {}) });
+  const set = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value, ...(campo === 'desde' && evento.target.value > datos.hasta ? { hasta: evento.target.value } : {}) });
 
   // Nombre: agregar
   // Descripción: Agrega días libres.
@@ -85,8 +85,8 @@ function DiasLibres({ persona, onGuardado }) {
   const agregar = async (evento) => {
     evento.preventDefault();
     try {
-      const r = await api.admin.agregarAusencias(persona.id, d);
-      setEstado({ texto: r.citasAfectadas ? `Guardado. Ojo: ${persona.nombre} tiene ${r.citasAfectadas} ${r.citasAfectadas === 1 ? 'cita' : 'citas'} en esos días. Avísales a las clientas desde Agenda → «Emergencia».` : `Guardado. Esos días ya no se pueden reservar con ${persona.nombre}.`, error: false, alerta: r.citasAfectadas > 0 });
+      const respuesta = await api.admin.agregarAusencias(persona.id, datos);
+      setEstado({ texto: respuesta.citasAfectadas ? `Guardado. Ojo: ${persona.nombre} tiene ${respuesta.citasAfectadas} ${respuesta.citasAfectadas === 1 ? 'cita' : 'citas'} en esos días. Avísales a las clientas desde Agenda → «Emergencia».` : `Guardado. Esos días ya no se pueden reservar con ${persona.nombre}.`, error: false, alerta: respuesta.citasAfectadas > 0 });
       cargar(); onGuardado();
     } catch (err) { setEstado({ texto: err.message, error: true }); }
   };
@@ -102,13 +102,13 @@ function DiasLibres({ persona, onGuardado }) {
       <form className="ajustes-esp__form" onSubmit={agregar}>
         <p className="tenue">Los días que no trabaja por horario ya están en «Editar» (días de trabajo). Aquí se agregan días sueltos: libres, vacaciones, incapacidad o permisos.</p>
         <div className="campos-dos">
-          <div className="campo"><label htmlFor="d-desde">Desde</label><input id="d-desde" type="date" min={hoy} value={d.desde} onChange={set('desde')} required /></div>
-          <div className="campo"><label htmlFor="d-hasta">Hasta</label><input id="d-hasta" type="date" min={d.desde} value={d.hasta} onChange={set('hasta')} /></div>
+          <div className="campo"><label htmlFor="d-desde">Desde</label><input id="d-desde" type="date" min={hoy} value={datos.desde} onChange={set('desde')} required /></div>
+          <div className="campo"><label htmlFor="d-hasta">Hasta</label><input id="d-hasta" type="date" min={datos.desde} value={datos.hasta} onChange={set('hasta')} /></div>
         </div>
         <div className="tipos-ausencia" role="radiogroup" aria-label="Tipo">
-          {Object.entries(TIPOS).map(([k, t]) => <label key={k} className={`tipo-ausencia tipo-ausencia--${k} ${d.tipo === k ? 'activo' : ''}`}><input type="radio" name="tipo" value={k} checked={d.tipo === k} onChange={set('tipo')} />{t}</label>)}
+          {Object.entries(TIPOS).map(([clave, valor]) => <label key={clave} className={`tipo-ausencia tipo-ausencia--${clave} ${datos.tipo === clave ? 'activo' : ''}`}><input type="radio" name="tipo" value={clave} checked={datos.tipo === clave} onChange={set('tipo')} />{valor}</label>)}
         </div>
-        <div className="campo"><label htmlFor="d-mot">Nota <span className="tenue">(opcional)</span></label><input id="d-mot" value={d.motivo} onChange={set('motivo')} maxLength={120} placeholder="Ej.: cita médica" /></div>
+        <div className="campo"><label htmlFor="d-mot">Nota <span className="tenue">(opcional)</span></label><input id="d-mot" value={datos.motivo} onChange={set('motivo')} maxLength={120} placeholder="Ej.: cita médica" /></div>
         {estado.texto && <p role={estado.error || estado.alerta ? 'alert' : 'status'} className={estado.error ? 'error' : estado.alerta ? 'aviso-alerta' : 'aviso-ok'}>{estado.texto}</p>}
         <button type="submit" className="boton">Agregar</button>
       </form>
@@ -116,11 +116,11 @@ function DiasLibres({ persona, onGuardado }) {
         <h3 className="ajustes-esp__sub">Próximos días que no trabaja</h3>
         {lista.length === 0 ? <p className="tenue">No tiene días libres agendados.</p> : (
           <ul className="ausencias-lista">
-            {lista.map((a) => (
-              <li key={a.id} className={`tipo-ausencia--${a.tipo}`}>
-                <span className="ausencias-lista__fecha">{fechaLarga(a.fecha)}</span>
-                <span className="ausencias-lista__tipo">{TIPOS[a.tipo]}{a.motivo ? ` · ${a.motivo}` : ''}</span>
-                <button type="button" onClick={() => borrar(a)} aria-label={`Quitar ${fechaLarga(a.fecha)}`}>×</button>
+            {lista.map((elemento) => (
+              <li key={elemento.id} className={`tipo-ausencia--${elemento.tipo}`}>
+                <span className="ausencias-lista__fecha">{fechaLarga(elemento.fecha)}</span>
+                <span className="ausencias-lista__tipo">{TIPOS[elemento.tipo]}{elemento.motivo ? ` · ${elemento.motivo}` : ''}</span>
+                <button type="button" onClick={() => borrar(elemento)} aria-label={`Quitar ${fechaLarga(elemento.fecha)}`}>×</button>
               </li>
             ))}
           </ul>
@@ -149,8 +149,8 @@ function Acceso({ persona, onGuardado }) {
   const guardar = async (evento) => {
     evento.preventDefault();
     try {
-      const r = await api.admin.accesoEspecialista(persona.id, { usuario, contrasena: clave });
-      setEstado({ texto: clave ? `Listo. ${persona.nombre} entra en «Acceso del equipo» con el usuario «${r.usuario}» y la contraseña que escribiste. Dásela en persona.` : 'Usuario actualizado.' });
+      const respuesta = await api.admin.accesoEspecialista(persona.id, { usuario, contrasena: clave });
+      setEstado({ texto: clave ? `Listo. ${persona.nombre} entra en «Acceso del equipo» con el usuario «${respuesta.usuario}» y la contraseña que escribiste. Dásela en persona.` : 'Usuario actualizado.' });
       setClave(''); onGuardado();
     } catch (err) { setEstado({ texto: err.message, error: true }); }
   };
@@ -171,8 +171,8 @@ function Acceso({ persona, onGuardado }) {
   // Objetivo: Ahorrar tiempo.
   const sugerir = () => {
     const letras = 'abcdefghjkmnpqrstuvwxyz';
-    const r = crypto.getRandomValues(new Uint32Array(10));
-    setClave(`${[...r.slice(0, 6)].map((n) => letras[n % letras.length]).join('')}${[...r.slice(6)].map((n) => n % 10).join('')}`); setVer(true);
+    const aleatorios = crypto.getRandomValues(new Uint32Array(10));
+    setClave(`${[...aleatorios.slice(0, 6)].map((aleatorio) => letras[aleatorio % letras.length]).join('')}${[...aleatorios.slice(6)].map((aleatorio) => aleatorio % 10).join('')}`); setVer(true);
   };
   return (
     <form className="ajustes-esp__form" onSubmit={guardar}>
@@ -210,8 +210,8 @@ export default function AjustesEspecialista({ persona, inicio = 'datos', onCerra
     <Modal titulo={`Ficha de ${persona.nombre}`} onCerrar={onCerrar} ancho>
       <div className="ajustes-esp">
         <div className="ajustes-esp__pestanas" role="tablist">
-          {Object.entries(PESTANAS).map(([k, [t, ayuda]], i) => (
-            <button key={k} type="button" role="tab" aria-selected={pestana === k} onClick={() => setPestana(k)}>
+          {Object.entries(PESTANAS).map(([clave, [t, ayuda]], i) => (
+            <button key={clave} type="button" role="tab" aria-selected={pestana === clave} onClick={() => setPestana(clave)}>
               <span className="ajustes-esp__num" aria-hidden="true">{i + 1}</span>
               <span><b>{t}</b><small>{ayuda}</small></span>
             </button>

@@ -29,7 +29,7 @@ const hayVoz = () => typeof window !== 'undefined' && 'speechSynthesis' in windo
 // Objetivo: Leer en español.
 function vozEspanol() {
   const voces = window.speechSynthesis.getVoices();
-  return ['es-CR', 'es-MX', 'es-US', 'es-419', 'es-ES'].map((l) => voces.find((v) => v.lang === l)).find(Boolean) || voces.find((v) => v.lang?.startsWith('es')) || null;
+  return ['es-CR', 'es-MX', 'es-US', 'es-419', 'es-ES'].map((idioma) => voces.find((voz) => voz.lang === idioma)).find(Boolean) || voces.find((voz) => voz.lang?.startsWith('es')) || null;
 }
 // Nombre: hablar
 // Descripción: Lee un texto en voz alta.
@@ -41,12 +41,12 @@ export function hablar(texto, { alTerminar } = {}) {
   window.speechSynthesis.cancel();
   // Se lee por partes cortas (algunos navegadores cortan los textos largos)
   const partes = texto.replace(/\s+/g, ' ').match(/[^.!?]{1,220}[.!?]?/g) || [];
-  partes.forEach((p, i) => {
-    const u = new SpeechSynthesisUtterance(p.trim());
-    u.lang = 'es-CR'; u.rate = 0.95;
-    const v = vozEspanol(); if (v) u.voice = v;
-    if (i === partes.length - 1 && alTerminar) u.onend = alTerminar;
-    window.speechSynthesis.speak(u);
+  partes.forEach((parte, i) => {
+    const lectura = new SpeechSynthesisUtterance(parte.trim());
+    lectura.lang = 'es-CR'; lectura.rate = 0.95;
+    const voz = vozEspanol(); if (voz) lectura.voice = voz;
+    if (i === partes.length - 1 && alTerminar) lectura.onend = alTerminar;
+    window.speechSynthesis.speak(lectura);
   });
 }
 // Nombre: callar
@@ -87,24 +87,24 @@ const PISTAS = {
 function Guia({ onCerrar }) {
   const [elegida, setElegida] = useState(null);
   const irA = useNavigate();
-  const g = GUIAS.find((x) => x.id === elegida);
+  const guia = GUIAS.find((guia) => guia.id === elegida);
   return (
-    <Modal titulo={g ? g.titulo : '¿Qué quiere hacer hoy?'} onCerrar={onCerrar} ancho>
-      {!g ? (
+    <Modal titulo={guia ? guia.titulo : '¿Qué quiere hacer hoy?'} onCerrar={onCerrar} ancho>
+      {!guia ? (
         <ul className="guia__opciones">
-          {GUIAS.map((x) => (
-            <li key={x.id}><button type="button" onClick={() => setElegida(x.id)}>
-              <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={x.icono} /></svg>
-              {x.titulo}
+          {GUIAS.map((guia) => (
+            <li key={guia.id}><button type="button" onClick={() => setElegida(guia.id)}>
+              <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={guia.icono} /></svg>
+              {guia.titulo}
             </button></li>
           ))}
         </ul>
       ) : (
         <div className="guia__pasos">
-          <ol>{g.pasos.map((p, i) => <li key={i} style={{ '--n': i }}><span>{i + 1}</span>{p}</li>)}</ol>
+          <ol>{guia.pasos.map((paso, i) => <li key={i} style={{ '--n': i }}><span>{i + 1}</span>{paso}</li>)}</ol>
           <div className="botones">
-            <button type="button" className="boton-gigante" onClick={() => { onCerrar(); irA(g.ir); }}>Llévame ahí</button>
-            <button type="button" className="boton boton--contorno" onClick={() => hablar(`${g.titulo}. ${g.pasos.map((p, i) => `Paso ${i + 1}: ${p}`).join(' ')}`)}>Leerme los pasos</button>
+            <button type="button" className="boton-gigante" onClick={() => { onCerrar(); irA(guia.ir); }}>Llévame ahí</button>
+            <button type="button" className="boton boton--contorno" onClick={() => hablar(`${guia.titulo}. ${guia.pasos.map((paso, i) => `Paso ${i + 1}: ${paso}`).join(' ')}`)}>Leerme los pasos</button>
             <button type="button" className="boton boton--contorno" onClick={() => setElegida(null)}>← Otra opción</button>
           </div>
         </div>
@@ -135,12 +135,12 @@ export default function Accesibilidad() {
 
   // Aplica las preferencias a toda la página
   useEffect(() => {
-    const h = document.documentElement;
-    h.classList.toggle('a11y-gris', pref.gris);
-    h.classList.toggle('a11y-oscuro', pref.oscuro);
-    h.classList.toggle('a11y-sencillo', pref.sencillo);
-    h.classList.toggle('a11y-pausa', pref.pausa || pref.sencillo);
-    h.classList.toggle('a11y-lector', pref.lector);
+    const raiz = document.documentElement;
+    raiz.classList.toggle('a11y-gris', pref.gris);
+    raiz.classList.toggle('a11y-oscuro', pref.oscuro);
+    raiz.classList.toggle('a11y-sencillo', pref.sencillo);
+    raiz.classList.toggle('a11y-pausa', pref.pausa || pref.sencillo);
+    raiz.classList.toggle('a11y-lector', pref.lector);
     const zoom = pref.zoom * (pref.sencillo ? 1.12 : 1);
     document.body.style.zoom = zoom === 1 ? '' : String(zoom);
     try { localStorage.setItem(CLAVE, JSON.stringify(pref)); } catch { /* sin almacenamiento */ }
@@ -149,7 +149,7 @@ export default function Accesibilidad() {
   // Lectura al pasar el mouse o al moverse con el teclado
   useEffect(() => {
     if (!pref.lector) return undefined;
-    let t;
+    let temporizador;
     const SELECTOR = 'h1, h2, h3, h4, p, li, a, button, label, td, th, dt, dd, figcaption, [aria-label]';
     // Nombre: leerElemento
     // Descripción: Lee en voz alta lo que se toca.
@@ -157,19 +157,19 @@ export default function Accesibilidad() {
     // Salida: Nada.
     // Objetivo: Ayudar a personas con poca vista.
     const leerElemento = (evento) => {
-      const el = evento.target.closest?.(SELECTOR);
-      if (!el || el === ultimo.current || el.closest('.a11y')) return;
-      clearTimeout(t);
-      t = setTimeout(() => {
+      const elemento = evento.target.closest?.(SELECTOR);
+      if (!elemento || elemento === ultimo.current || elemento.closest('.a11y')) return;
+      clearTimeout(temporizador);
+      temporizador = setTimeout(() => {
         ultimo.current?.classList.remove('a11y-leyendo');
-        ultimo.current = el;
-        el.classList.add('a11y-leyendo');
-        hablar(el.getAttribute('aria-label') || el.innerText || el.alt || '');
+        ultimo.current = elemento;
+        elemento.classList.add('a11y-leyendo');
+        hablar(elemento.getAttribute('aria-label') || elemento.innerText || elemento.alt || '');
       }, evento.type === 'focusin' ? 50 : 450);
     };
     document.addEventListener('mouseover', leerElemento);
     document.addEventListener('focusin', leerElemento);
-    return () => { clearTimeout(t); document.removeEventListener('mouseover', leerElemento); document.removeEventListener('focusin', leerElemento); ultimo.current?.classList.remove('a11y-leyendo'); callar(); };
+    return () => { clearTimeout(temporizador); document.removeEventListener('mouseover', leerElemento); document.removeEventListener('focusin', leerElemento); ultimo.current?.classList.remove('a11y-leyendo'); callar(); };
   }, [pref.lector]);
 
   useEffect(() => { callar(); setLeyendo(false); }, [pathname]);
@@ -180,7 +180,7 @@ export default function Accesibilidad() {
   // Entrada: La opción.
   // Salida: Nada.
   // Objetivo: Cambiar preferencias.
-  const cambiar = (k) => setPref((p) => ({ ...p, [k]: !p[k] }));
+  const cambiar = (campo) => setPref((anterior) => ({ ...anterior, [campo]: !anterior[campo] }));
   const zoomIdx = ZOOMS.indexOf(pref.zoom) === -1 ? 0 : ZOOMS.indexOf(pref.zoom);
   // Nombre: leerPagina
   // Descripción: Lee toda la página en voz alta.
@@ -198,7 +198,7 @@ export default function Accesibilidad() {
     // Objetivo: Cambiar el botón a "leer".
     hablar(main.innerText, { alTerminar: () => setLeyendo(false) });
   };
-  const activos = ['gris', 'oscuro', 'sencillo', 'pausa', 'lector'].filter((k) => pref[k]).length + (pref.zoom !== 1 ? 1 : 0);
+  const activos = ['gris', 'oscuro', 'sencillo', 'pausa', 'lector'].filter((opcion) => pref[opcion]).length + (pref.zoom !== 1 ? 1 : 0);
 
   const OPCIONES = [
     { k: 'oscuro', t: 'Modo nocturno', d: 'Fondo oscuro, descansa la vista', i: <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /> },
@@ -235,11 +235,11 @@ export default function Accesibilidad() {
           </button>
 
           <ul className="a11y__opciones">
-            {OPCIONES.map((o) => (
-              <li key={o.k} className={o.grande ? 'a11y__opcion--grande' : ''}>
-                <button type="button" className={`a11y__opcion ${pref[o.k] ? 'a11y__opcion--activa' : ''}`} aria-pressed={pref[o.k]} onClick={() => cambiar(o.k)} disabled={o.voz && !hayVoz()}>
-                  <Icono d={o.i} />
-                  <span><strong>{o.t}</strong><small>{o.d}</small></span>
+            {OPCIONES.map((opcion) => (
+              <li key={opcion.k} className={opcion.grande ? 'a11y__opcion--grande' : ''}>
+                <button type="button" className={`a11y__opcion ${pref[opcion.k] ? 'a11y__opcion--activa' : ''}`} aria-pressed={pref[opcion.k]} onClick={() => cambiar(opcion.k)} disabled={opcion.voz && !hayVoz()}>
+                  <Icono d={opcion.i} />
+                  <span><strong>{opcion.t}</strong><small>{opcion.d}</small></span>
                   <i className="a11y__switch" aria-hidden="true" />
                 </button>
               </li>

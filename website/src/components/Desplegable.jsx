@@ -1,3 +1,4 @@
+// Botón que abre una lista de opciones (los filtros de Galería y Tienda) y se cierra al tocar afuera.
 import { useEffect, useId, useRef, useState } from 'react';
 
 // Chip con menú desplegable (como los filtros de las tiendas en línea).

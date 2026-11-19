@@ -12,16 +12,16 @@ const FONDOS = [['#FDE2EA', '#8C1D4B'], ['#E5ECFB', '#1F4F8A'], ['#FFF0D6', '#7A
 // Salida: Un número.
 // Objetivo: Dar siempre el mismo color a cada clienta.
 function numero(texto) {
-  let h = 2166136261;
-  for (const c of String(texto)) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return Math.abs(h);
+  let hash = 2166136261;
+  for (const letra of String(texto)) hash = Math.imul(hash ^ letra.charCodeAt(0), 16777619);
+  return Math.abs(hash);
 }
 // Nombre: iniciales
 // Descripción: Saca las iniciales de un nombre.
 // Entrada: El nombre.
 // Salida: Las iniciales.
 // Objetivo: Mostrarlas si no hay foto.
-const iniciales = (nombre) => String(nombre).trim().split(/\s+/).slice(0, 2).map((p) => p[0] || '').join('').toUpperCase();
+const iniciales = (nombre) => String(nombre).trim().split(/\s+/).slice(0, 2).map((parte) => parte[0] || '').join('').toUpperCase();
 
 // Nombre: AvatarClienta
 // Descripción: Muestra la foto o las iniciales de una clienta.

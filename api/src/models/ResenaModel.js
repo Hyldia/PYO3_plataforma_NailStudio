@@ -25,9 +25,9 @@ export const ResenaModel = {
   deProducto(productoId, limite = 6, filtro = '') {
     const db = getDb();
     const filas = db.prepare('SELECT estrellas, COUNT(*) AS n FROM resenas WHERE producto_id = ? GROUP BY estrellas').all(productoId);
-    const distribucion = [5, 4, 3, 2, 1].map((e) => ({ estrellas: e, cantidad: filas.find((f) => f.estrellas === e)?.n || 0 }));
-    const total = distribucion.reduce((s, d) => s + d.cantidad, 0);
-    const promedio = total ? Math.round(distribucion.reduce((s, d) => s + d.estrellas * d.cantidad, 0) / total * 10) / 10 : null;
+    const distribucion = [5, 4, 3, 2, 1].map((numero) => ({ estrellas: numero, cantidad: filas.find((fila) => fila.estrellas === numero)?.n || 0 }));
+    const total = distribucion.reduce((suma, fila) => suma + fila.cantidad, 0);
+    const promedio = total ? Math.round(distribucion.reduce((suma, fila) => suma + fila.estrellas * fila.cantidad, 0) / total * 10) / 10 : null;
     const resenas = db.prepare(`SELECT id, nombre, estrellas, comentario, opcion, creada_en, pedido_id IS NOT NULL AS verificada
       FROM resenas WHERE producto_id = ? ${FILTRO_ESTRELLAS[filtro] || ''} ORDER BY creada_en DESC, id DESC LIMIT ?`).all(productoId, Math.min(Number(limite) || 6, 50));
     return { total, promedio, distribucion, resenas };
@@ -43,9 +43,9 @@ export const ResenaModel = {
     const db = getDb();
     let pedidoId = null;
     if (pedido && telefono) {
-      const p = db.prepare(`SELECT p.id FROM pedidos p JOIN pedido_items i ON i.pedido_id = p.id
+      const pedidoEncontrado = db.prepare(`SELECT p.id FROM pedidos p JOIN pedido_items i ON i.pedido_id = p.id
         WHERE p.id = ? AND i.producto_id = ? AND replace(p.cliente_telefono, ' ', '') = ?`).get(Number(pedido), productoId, String(telefono).replace(/\D/g, ''));
-      pedidoId = p?.id ?? null;
+      pedidoId = pedidoEncontrado?.id ?? null;
     }
     const info = db.prepare('INSERT INTO resenas (producto_id, pedido_id, nombre, estrellas, comentario) VALUES (?, ?, ?, ?, ?)')
       .run(productoId, pedidoId, nombre, estrellas, comentario);

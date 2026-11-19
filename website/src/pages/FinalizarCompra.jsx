@@ -1,3 +1,4 @@
+// Pago del pedido: datos de la clienta, método de pago (SINPE, tarjeta o en el salón) y confirmación.
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -21,28 +22,28 @@ import Icono from '../components/Icono.jsx';
 // Entrada: El texto.
 // Salida: Los números.
 // Objetivo: Limpiar datos.
-const soloNumeros = (v) => v.replace(/\D/g, '');
+const soloNumeros = (valor) => valor.replace(/\D/g, '');
 // Nombre: formatoTarjeta
 // Descripción: Separa el número de tarjeta en grupos.
 // Entrada: El texto.
 // Salida: El número ordenado.
 // Objetivo: Leer fácil.
-const formatoTarjeta = (v) => soloNumeros(v).slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 ');
+const formatoTarjeta = (valor) => soloNumeros(valor).slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 ');
 // Nombre: marca
 // Descripción: Dice la marca de la tarjeta.
 // Entrada: El número.
 // Salida: La marca.
 // Objetivo: Mostrar el logo.
-const marca = (n) => (/^4/.test(n) ? 'Visa' : /^(5[1-5]|2[2-7])/.test(n) ? 'Mastercard' : /^3[47]/.test(n) ? 'American Express' : '');
+const marca = (numero) => (/^4/.test(numero) ? 'Visa' : /^(5[1-5]|2[2-7])/.test(numero) ? 'Mastercard' : /^3[47]/.test(numero) ? 'American Express' : '');
 // Nombre: luhn
 // Descripción: Revisa si la tarjeta es válida.
 // Entrada: El número.
 // Salida: Sí o no.
 // Objetivo: Evitar errores.
-function luhn(n) {
+function luhn(numero) {
   let suma = 0;
-  [...n].reverse().forEach((c, i) => { let d = Number(c); if (i % 2) { d *= 2; if (d > 9) d -= 9; } suma += d; });
-  return n.length >= 13 && suma % 10 === 0;
+  [...numero].reverse().forEach((digitoActual, i) => { let digito = Number(digitoActual); if (i % 2) { digito *= 2; if (digito > 9) digito -= 9; } suma += digito; });
+  return numero.length >= 13 && suma % 10 === 0;
 }
 
 const METODOS = [
@@ -61,7 +62,7 @@ export default function FinalizarCompra() {
   const carrito = useCarrito();
   const articulos = carrito.elegidos;
   const sesion = useUsuario();
-  const u = sesion.usuario;
+  const usuario = sesion.usuario;
 
   // Los datos vienen de la cuenta; "Cambiar datos" los actualiza en la cuenta
   const [cliente, setCliente] = useState({ nombre: '', telefono: '', email: '' });
@@ -69,12 +70,12 @@ export default function FinalizarCompra() {
   const [entrega, setEntrega] = useState('retiro');
   const [direccionId, setDireccionId] = useState(null);
   useEffect(() => {
-    if (!u) return;
-    setCliente({ nombre: u.nombre, telefono: u.telefono || '', email: u.correo || '' });
-    setEditando(!u.telefono);
-  }, [u?.id]);
+    if (!usuario) return;
+    setCliente({ nombre: usuario.nombre, telefono: usuario.telefono || '', email: usuario.correo || '' });
+    setEditando(!usuario.telefono);
+  }, [usuario?.id]);
   useEffect(() => {
-    if (!sesion.direcciones.some((d) => d.id === direccionId)) setDireccionId(sesion.direcciones.find((d) => d.principal)?.id ?? sesion.direcciones[0]?.id ?? null);
+    if (!sesion.direcciones.some((direccion) => direccion.id === direccionId)) setDireccionId(sesion.direcciones.find((direccion) => direccion.principal)?.id ?? sesion.direcciones[0]?.id ?? null);
   }, [sesion.direcciones]);
   const envio = entrega === 'envio';
   const [metodo, setMetodo] = useState('sinpe');
@@ -90,10 +91,10 @@ export default function FinalizarCompra() {
   const [estado, setEstado] = useState({ enviando: false, error: '', pedido: null });
 
   // Productos de la tienda y citas (una por persona) viajan por separado
-  const items = useMemo(() => articulos.filter((i) => i.tipo !== 'cita').map((i) => ({ productoId: i.productoId ?? i.id, cantidad: i.cantidad, detalle: i.detalle })), [articulos]);
-  const citas = useMemo(() => articulos.filter((i) => i.tipo === 'cita').map((i) => ({
-    servicioId: i.servicioId, especialistaId: i.especialistaId, fecha: i.fecha, hora: i.hora,
-    disenoId: i.disenoId, fotoRefId: i.fotoRefId, persona: i.persona, notas: i.notas
+  const items = useMemo(() => articulos.filter((articulo) => articulo.tipo !== 'cita').map((articulo) => ({ productoId: articulo.productoId ?? articulo.id, cantidad: articulo.cantidad, detalle: articulo.detalle })), [articulos]);
+  const citas = useMemo(() => articulos.filter((articulo) => articulo.tipo === 'cita').map((articulo) => ({
+    servicioId: articulo.servicioId, especialistaId: articulo.especialistaId, fecha: articulo.fecha, hora: articulo.hora,
+    disenoId: articulo.disenoId, fotoRefId: articulo.fotoRefId, persona: articulo.persona, notas: articulo.notas
   })), [articulos]);
   const claveItems = JSON.stringify([items, citas]);
 
@@ -103,9 +104,9 @@ export default function FinalizarCompra() {
   useEffect(() => {
     if (!items.length && !citas.length) { setCotizacion(null); return; }
     api.cotizarPedido({ items, citas, cupon, metodoPago: metodo, entrega })
-      .then((c) => { setCotizacion(c); setErrores((e) => ({ ...e, cupon: '' })); })
+      .then((respuesta) => { setCotizacion(respuesta); setErrores((anterior) => ({ ...anterior, cupon: '' })); })
       .catch((err) => {
-        setErrores((e) => ({ ...e, cupon: err.message }));
+        setErrores((anterior) => ({ ...anterior, cupon: err.message }));
         if (cupon) setCupon('');
       });
   }, [claveItems, cupon, metodo, entrega]);
@@ -113,8 +114,8 @@ export default function FinalizarCompra() {
 
   const numero = soloNumeros(tarjeta.numero);
   const anioActual = new Date().getFullYear();
-  const pocos = articulos.filter((i) => i.stock > 0 && i.stock < 10).length;
-  const cantidad = articulos.reduce((s, i) => s + i.cantidad, 0);
+  const pocos = articulos.filter((articulo) => articulo.stock > 0 && articulo.stock < 10).length;
+  const cantidad = articulos.reduce((suma, articulo) => suma + articulo.cantidad, 0);
 
   // Nombre: aplicarCupon
   // Descripción: Aplica un cupón.
@@ -122,10 +123,10 @@ export default function FinalizarCompra() {
   // Salida: Nada.
   // Objetivo: Dar el descuento.
   function aplicarCupon(codigo) {
-    const c = String(codigo || cuponTexto).trim().toUpperCase();
-    if (!c) { setErrores((e) => ({ ...e, cupon: 'Escribe el código del cupón.' })); return; }
-    setCuponTexto(c);
-    setCupon(c);
+    const codigoCupon = String(codigo || cuponTexto).trim().toUpperCase();
+    if (!codigoCupon) { setErrores((anterior) => ({ ...anterior, cupon: 'Escribe el código del cupón.' })); return; }
+    setCuponTexto(codigoCupon);
+    setCupon(codigoCupon);
     setVerCupones(false);
   }
 
@@ -135,13 +136,13 @@ export default function FinalizarCompra() {
   // Salida: Nada.
   // Objetivo: Pasar al pago.
   async function confirmarDatos() {
-    const e = {};
-    if (!cliente.nombre.trim()) e.nombre = 'Escribe tu nombre.';
-    if (!/^[\d\s+-]{8,15}$/.test(cliente.telefono)) e.telefono = 'Escribe un teléfono de 8 dígitos.';
-    setErrores((x) => ({ ...x, nombre: e.nombre, telefono: e.telefono }));
-    if (e.nombre || e.telefono) return;
+    const erroresCampos = {};
+    if (!cliente.nombre.trim()) erroresCampos.nombre = 'Escribe tu nombre.';
+    if (!/^[\d\s+-]{8,15}$/.test(cliente.telefono)) erroresCampos.telefono = 'Escribe un teléfono de 8 dígitos.';
+    setErrores((anterior) => ({ ...anterior, nombre: erroresCampos.nombre, telefono: erroresCampos.telefono }));
+    if (erroresCampos.nombre || erroresCampos.telefono) return;
     try { sesion.actualizarUsuario(await api.cuenta.actualizar({ nombre: cliente.nombre, telefono: cliente.telefono })); setEditando(false); }
-    catch (error) { setErrores((x) => ({ ...x, telefono: error.message })); }
+    catch (error) { setErrores((anterior) => ({ ...anterior, telefono: error.message })); }
   }
 
   // Nombre: validar
@@ -150,21 +151,21 @@ export default function FinalizarCompra() {
   // Salida: Sí o no.
   // Objetivo: Evitar errores.
   function validar() {
-    const e = {};
-    if (!cliente.nombre.trim()) e.nombre = 'Escribe tu nombre.';
-    if (!/^[\d\s+-]{8,15}$/.test(cliente.telefono)) e.telefono = 'Escribe un teléfono de 8 dígitos.';
-    if (cliente.email && !/^\S+@\S+\.\S+$/.test(cliente.email)) e.email = 'Revisa el correo.';
+    const erroresCampos = {};
+    if (!cliente.nombre.trim()) erroresCampos.nombre = 'Escribe tu nombre.';
+    if (!/^[\d\s+-]{8,15}$/.test(cliente.telefono)) erroresCampos.telefono = 'Escribe un teléfono de 8 dígitos.';
+    if (cliente.email && !/^\S+@\S+\.\S+$/.test(cliente.email)) erroresCampos.email = 'Revisa el correo.';
     if (metodo === 'tarjeta') {
-      if (!luhn(numero)) e.numero = numero ? 'El número de tarjeta no es válido.' : 'Ingresa el número de tarjeta.';
-      if (!tarjeta.mes || !tarjeta.anio) e.vence = 'Elige mes y año de vencimiento.';
-      else if (Number(tarjeta.anio) === anioActual && Number(tarjeta.mes) < new Date().getMonth() + 1) e.vence = 'La tarjeta está vencida.';
-      if (!/^\d{3,4}$/.test(tarjeta.cvv)) e.cvv = 'El CVV tiene 3 o 4 dígitos.';
+      if (!luhn(numero)) erroresCampos.numero = numero ? 'El número de tarjeta no es válido.' : 'Ingresa el número de tarjeta.';
+      if (!tarjeta.mes || !tarjeta.anio) erroresCampos.vence = 'Elige mes y año de vencimiento.';
+      else if (Number(tarjeta.anio) === anioActual && Number(tarjeta.mes) < new Date().getMonth() + 1) erroresCampos.vence = 'La tarjeta está vencida.';
+      if (!/^\d{3,4}$/.test(tarjeta.cvv)) erroresCampos.cvv = 'El CVV tiene 3 o 4 dígitos.';
     }
-    if (envio && items.length && !direccionId) e.direccion = 'Elige o agrega la dirección de envío.';
-    if (metodo === 'sinpe' && !/^\d{6,25}$/.test(comprobante)) e.comprobante = 'Escribe el número de comprobante de SINPE Móvil.';
-    setErrores(e);
-    if (e.nombre || e.telefono || e.email) setEditando(true);
-    return Object.keys(e).length === 0;
+    if (envio && items.length && !direccionId) erroresCampos.direccion = 'Elige o agrega la dirección de envío.';
+    if (metodo === 'sinpe' && !/^\d{6,25}$/.test(comprobante)) erroresCampos.comprobante = 'Escribe el número de comprobante de SINPE Móvil.';
+    setErrores(erroresCampos);
+    if (erroresCampos.nombre || erroresCampos.telefono || erroresCampos.email) setEditando(true);
+    return Object.keys(erroresCampos).length === 0;
   }
 
   // Nombre: finalizar
@@ -193,38 +194,38 @@ export default function FinalizarCompra() {
 
   // Pedido listo
   if (estado.pedido) {
-    const p = estado.pedido;
+    const pedidoEncontrado = estado.pedido;
     return (
       <div className="contenedor pagina compra-lista">
         <div className="compra-lista__caja" role="status">
           <span className="compra-lista__check" aria-hidden="true">✓</span>
-          <h1>{p.id ? `¡Pedido #${p.id} recibido!` : p.citas.length > 1 ? '¡Tus citas están reservadas!' : '¡Tu cita está reservada!'}</h1>
-          <p>Total: <strong>{dinero(p.total)}</strong>{p.descuento > 0 && <> · ahorraste {dinero(p.descuento)} con tu cupón</>}</p>
-          <p className="tenue">Pagaste hoy {dinero(p.pagado)}{p.enSalon > 0 ? ` · pagas ${dinero(p.enSalon)} en el salón` : ''} · {p.metodo}{p.referenciaPago && p.referenciaPago !== 'EN-SALON' ? ` (${p.referenciaPago})` : ''}</p>
-          {p.citas.length > 0 && (
+          <h1>{pedidoEncontrado.id ? `¡Pedido #${pedidoEncontrado.id} recibido!` : pedidoEncontrado.citas.length > 1 ? '¡Tus citas están reservadas!' : '¡Tu cita está reservada!'}</h1>
+          <p>Total: <strong>{dinero(pedidoEncontrado.total)}</strong>{pedidoEncontrado.descuento > 0 && <> · ahorraste {dinero(pedidoEncontrado.descuento)} con tu cupón</>}</p>
+          <p className="tenue">Pagaste hoy {dinero(pedidoEncontrado.pagado)}{pedidoEncontrado.enSalon > 0 ? ` · pagas ${dinero(pedidoEncontrado.enSalon)} en el salón` : ''} · {pedidoEncontrado.metodo}{pedidoEncontrado.referenciaPago && pedidoEncontrado.referenciaPago !== 'EN-SALON' ? ` (${pedidoEncontrado.referenciaPago})` : ''}</p>
+          {pedidoEncontrado.citas.length > 0 && (
             <ul className="cita-lista__citas">
-              {p.citas.map((c) => (
-                <li key={c.id} className="cita-lista__tarjeta">
-                  <p className="cita-lista__fecha">{new Date(`${c.fecha}T12:00:00`).toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-                  <p className="cita-lista__hora">{c.hora}</p>
-                  <p>{c.servicio} con {c.especialista} · para {c.cliente_nombre}</p>
-                  <p className="tenue">Reserva #{c.id} · {c.estado === 'confirmada' ? 'Confirmada' : 'Pendiente de confirmar'}</p>
+              {pedidoEncontrado.citas.map((cita) => (
+                <li key={cita.id} className="cita-lista__tarjeta">
+                  <p className="cita-lista__fecha">{new Date(`${cita.fecha}T12:00:00`).toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                  <p className="cita-lista__hora">{cita.hora}</p>
+                  <p>{cita.servicio} con {cita.especialista} · para {cita.cliente_nombre}</p>
+                  <p className="tenue">Reserva #{cita.id} · {cita.estado === 'confirmada' ? 'Confirmada' : 'Pendiente de confirmar'}</p>
                 </li>
               ))}
             </ul>
           )}
           <ol className="compra-lista__pasos">
-            {p.requiereVerificacion && metodo === 'sinpe' && <li>Revisamos tu comprobante de SINPE Móvil.</li>}
-            {p.id && (p.direccion
-              ? <li>Preparamos tu pedido y lo enviamos a: {p.direccion}. Te escribimos por WhatsApp al {cliente.telefono} cuando salga.</li>
+            {pedidoEncontrado.requiereVerificacion && metodo === 'sinpe' && <li>Revisamos tu comprobante de SINPE Móvil.</li>}
+            {pedidoEncontrado.id && (pedidoEncontrado.direccion
+              ? <li>Preparamos tu pedido y lo enviamos a: {pedidoEncontrado.direccion}. Te escribimos por WhatsApp al {cliente.telefono} cuando salga.</li>
               : <li>Preparamos tu pedido y te escribimos por WhatsApp al {cliente.telefono} cuando esté listo para retirar.</li>)}
-            {p.citas.length > 0 && <li>Te recordamos tu cita por WhatsApp un día antes.</li>}
-            {(!p.direccion || p.citas.length > 0) && <li>Te esperamos en {SALON.direccion}{p.enSalon > 0 ? ` (ahí pagas lo que falta)` : ''}.</li>}
+            {pedidoEncontrado.citas.length > 0 && <li>Te recordamos tu cita por WhatsApp un día antes.</li>}
+            {(!pedidoEncontrado.direccion || pedidoEncontrado.citas.length > 0) && <li>Te esperamos en {SALON.direccion}{pedidoEncontrado.enSalon > 0 ? ` (ahí pagas lo que falta)` : ''}.</li>}
           </ol>
           <div className="compra-lista__botones">
-            {p.citas.length > 0 && <button type="button" className="boton" onClick={() => descargarCalendario(p.citas)}>Agregar a mi calendario</button>}
-            <Link to="/tienda" className={p.citas.length ? 'boton boton--contorno' : 'boton'}>Seguir comprando</Link>
-            {!p.citas.length && <Link to="/reservar" className="boton boton--contorno">Reservar una cita</Link>}
+            {pedidoEncontrado.citas.length > 0 && <button type="button" className="boton" onClick={() => descargarCalendario(pedidoEncontrado.citas)}>Agregar a mi calendario</button>}
+            <Link to="/tienda" className={pedidoEncontrado.citas.length ? 'boton boton--contorno' : 'boton'}>Seguir comprando</Link>
+            {!pedidoEncontrado.citas.length && <Link to="/reservar" className="boton boton--contorno">Reservar una cita</Link>}
           </div>
         </div>
       </div>
@@ -242,7 +243,7 @@ export default function FinalizarCompra() {
   }
 
   // Para comprar hay que tener cuenta: así sabemos quién compra y a dónde va el pedido
-  if (!u) {
+  if (!usuario) {
     return (
       <div className="contenedor pagina compra compra--acceso">
         <nav aria-label="Ruta" className="migas">
@@ -260,7 +261,7 @@ export default function FinalizarCompra() {
                 <li>Pagas más rápido la próxima vez</li>
               </ul>
               <ul className="compra-acceso__fotos" aria-hidden="true">
-                {articulos.slice(0, 4).map((i) => <li key={i.clave}><ProductoImagen producto={i} /></li>)}
+                {articulos.slice(0, 4).map((articulo) => <li key={articulo.clave}><ProductoImagen producto={articulo} /></li>)}
               </ul>
             </aside>
           </div>
@@ -318,7 +319,7 @@ export default function FinalizarCompra() {
                 <div className="tarjeta-datos">
                   <p><strong>{cliente.nombre}</strong> <span>{cliente.telefono}</span></p>
                   {cliente.email && <p className="tenue">{cliente.email}</p>}
-                  <p className="tarjeta-datos__lugar">{envio && items.length ? `Envío a: ${sesion.direcciones.find((d) => d.id === direccionId)?.etiqueta || 'elige una dirección'}` : `Retiro en: ${SALON.direccion}`}</p>
+                  <p className="tarjeta-datos__lugar">{envio && items.length ? `Envío a: ${sesion.direcciones.find((direccion) => direccion.id === direccionId)?.etiqueta || 'elige una dirección'}` : `Retiro en: ${SALON.direccion}`}</p>
                 </div>
               )}
             </section>
@@ -344,8 +345,8 @@ export default function FinalizarCompra() {
                 <>
                   <h2 id={items.length ? undefined : 't-retiro'} className="compra__citas-titulo">{citas.length > 1 ? `Tus ${citas.length} citas` : 'Tu cita'}</h2>
                   <ul className="compra__citas">
-                    {articulos.filter((i) => i.tipo === 'cita').map((i) => (
-                      <li key={i.clave}><strong>{i.fechaTexto}, {i.hora}</strong> · {i.nombre} con {i.especialistaNombre}{i.persona ? ` (para ${i.persona})` : ''}</li>
+                    {articulos.filter((articulo) => articulo.tipo === 'cita').map((articulo) => (
+                      <li key={articulo.clave}><strong>{articulo.fechaTexto}, {articulo.hora}</strong> · {articulo.nombre} con {articulo.especialistaNombre}{articulo.persona ? ` (para ${articulo.persona})` : ''}</li>
                     ))}
                   </ul>
                   <p className="tenue">Hoy pagas el 30 % de las citas para apartar el espacio; el resto, en el salón.</p>
@@ -357,7 +358,7 @@ export default function FinalizarCompra() {
           {envio && items.length > 0 && (
             <section aria-labelledby="t-dir" className="compra__direcciones">
               <div className="compra__cabeza"><h2 id="t-dir">¿A dónde lo enviamos?</h2><Link to="/cuenta" className="enlace-flecha">Mis direcciones ›</Link></div>
-              <ListaDirecciones elegida={direccionId} onElegir={(id) => { setDireccionId(id); setErrores((x) => ({ ...x, direccion: '' })); }} />
+              <ListaDirecciones elegida={direccionId} onElegir={(id) => { setDireccionId(id); setErrores((anterior) => ({ ...anterior, direccion: '' })); }} />
               {errores.direccion && <p role="alert" className="error">{errores.direccion}</p>}
             </section>
           )}
@@ -368,18 +369,18 @@ export default function FinalizarCompra() {
               <Link to="/carrito" className="enlace-flecha">Ver todo ›</Link>
             </div>
             <ul className="compra__carrusel">
-              {articulos.map((i) => (
-                <li key={i.clave}>
-                  <Link to={enlaceArticulo(i)} className="compra__foto">
-                    <ProductoImagen producto={i} />
-                    {i.tipo === 'cita' ? <span>{i.fechaTexto} · {i.hora}</span> : i.stock > 0 && i.stock < 10 && <span>Casi agotado</span>}
-                    {i.cantidad > 1 && <b>×{i.cantidad}</b>}
+              {articulos.map((articulo) => (
+                <li key={articulo.clave}>
+                  <Link to={enlaceArticulo(articulo)} className="compra__foto">
+                    <ProductoImagen producto={articulo} />
+                    {articulo.tipo === 'cita' ? <span>{articulo.fechaTexto} · {articulo.hora}</span> : articulo.stock > 0 && articulo.stock < 10 && <span>Casi agotado</span>}
+                    {articulo.cantidad > 1 && <b>×{articulo.cantidad}</b>}
                   </Link>
                   <p className="compra__precio">
-                    <strong className={i.precio_anterior ? 'linea-carrito__oferta' : ''}>{dinero(i.precio)}</strong>
-                    {i.precio_anterior && <s>{dinero(i.precio_anterior)}</s>}
+                    <strong className={articulo.precio_anterior ? 'linea-carrito__oferta' : ''}>{dinero(articulo.precio)}</strong>
+                    {articulo.precio_anterior && <s>{dinero(articulo.precio_anterior)}</s>}
                   </p>
-                  <span className="solo-lector">{i.nombre}{i.detalle ? `, ${i.detalle}` : ''}, cantidad {i.cantidad}</span>
+                  <span className="solo-lector">{articulo.nombre}{articulo.detalle ? `, ${articulo.detalle}` : ''}, cantidad {articulo.cantidad}</span>
                 </li>
               ))}
             </ul>
@@ -397,16 +398,16 @@ export default function FinalizarCompra() {
           <section aria-labelledby="t-pago" className="compra__pago">
             <h2 id="t-pago">Métodos de pago</h2>
             <div role="radiogroup" aria-labelledby="t-pago" className="metodos">
-              {METODOS.filter((m) => !(envio && items.length && m.id === 'salon')).map((m) => (
-                <div key={m.id} className={`metodo ${metodo === m.id ? 'metodo--activo' : ''}`}>
+              {METODOS.filter((metodo) => !(envio && items.length && metodo.id === 'salon')).map((metodoActual) => (
+                <div key={metodoActual.id} className={`metodo ${metodo === metodoActual.id ? 'metodo--activo' : ''}`}>
                   <label className="metodo__fila">
-                    <input type="radio" className="marca" name="metodo" value={m.id} checked={metodo === m.id} onChange={() => setMetodo(m.id)} />
-                    {m.logo}
-                    <span className="metodo__nombre">{m.nombre}</span>
-                    {m.marcas && <span className="metodo__marcas" aria-hidden="true">{m.marcas.map((x) => <span key={x}>{x}</span>)}</span>}
+                    <input type="radio" className="marca" name="metodo" value={metodoActual.id} checked={metodo === metodoActual.id} onChange={() => setMetodo(metodoActual.id)} />
+                    {metodoActual.logo}
+                    <span className="metodo__nombre">{metodoActual.nombre}</span>
+                    {metodoActual.marcas && <span className="metodo__marcas" aria-hidden="true">{metodoActual.marcas.map((marca) => <span key={marca}>{marca}</span>)}</span>}
                   </label>
 
-                  {metodo === m.id && m.id === 'tarjeta' && (
+                  {metodo === metodoActual.id && metodoActual.id === 'tarjeta' && (
                     <div className="metodo__panel">
                       <p className="seguro"><Icono nombre="candado" tam={16} /> Todas las transacciones son seguras y cifradas</p>
                       <div className="campo">
@@ -446,7 +447,7 @@ export default function FinalizarCompra() {
                       <p className="aviso-prueba">Modo de prueba: no se hace ningún cobro real y la página no guarda tu tarjeta. Para probar usa 4242 4242 4242 4242 con cualquier fecha futura.</p>
                     </div>
                   )}
-                  {metodo === m.id && m.id === 'sinpe' && (
+                  {metodo === metodoActual.id && metodoActual.id === 'sinpe' && (
                     <div className="metodo__panel">
                       <ol className="ficha__pasos">
                         <li>Abre la app de tu banco y elige SINPE Móvil.</li>
@@ -461,7 +462,7 @@ export default function FinalizarCompra() {
                       </div>
                     </div>
                   )}
-                  {metodo === m.id && m.id === 'salon' && (
+                  {metodo === metodoActual.id && metodoActual.id === 'salon' && (
                     <div className="metodo__panel">
                       <p>Apartamos tu pedido{citas.length ? ' y tus citas' : ''} y pagas todo en el salón, en efectivo, tarjeta o SINPE.{citas.length ? ' Las citas quedan pendientes hasta que te confirmemos por WhatsApp.' : ''}</p>
                     </div>
@@ -498,11 +499,11 @@ export default function FinalizarCompra() {
           </button>
           {verCupones && (
             <ul className="cupon-lista">
-              {cupones.map((c) => (
-                <li key={c.codigo}>
-                  <button type="button" onClick={() => aplicarCupon(c.codigo)} disabled={Boolean(c.solo_combos)}>
-                    <strong>{c.codigo}</strong>
-                    <span>{c.descripcion}{c.solo_combos ? ' (solo citas)' : ''}</span>
+              {cupones.map((cupon) => (
+                <li key={cupon.codigo}>
+                  <button type="button" onClick={() => aplicarCupon(cupon.codigo)} disabled={Boolean(cupon.solo_combos)}>
+                    <strong>{cupon.codigo}</strong>
+                    <span>{cupon.descripcion}{cupon.solo_combos ? ' (solo citas)' : ''}</span>
                   </button>
                 </li>
               ))}

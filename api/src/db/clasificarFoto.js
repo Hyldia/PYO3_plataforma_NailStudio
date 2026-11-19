@@ -45,22 +45,22 @@ const buscar = (lista, texto) => (lista.find(([, re]) => re.test(texto)) || [nul
 // Objetivo: Ordenar la galería sola.
 export function clasificarFoto(descripcion = '', etiquetas = []) {
   const texto = `${descripcion} ${etiquetas.join(' ')}`.toLowerCase();
-  const r = {
+  const resultado = {
     categoria: buscar(REGLAS.categoria, texto) || 'Manicure',
     forma: buscar(REGLAS.forma, texto),
     color: buscar(REGLAS.color, texto),
     acabado: buscar(REGLAS.acabado, texto) || 'Brillante'
   };
-  if (/\bfrench\b|francesa/.test(texto)) r.color = r.color || 'Nude';
+  if (/\bfrench\b|francesa/.test(texto)) resultado.color = resultado.color || 'Nude';
 
   // Título en español a partir de lo detectado: "Francesa rosa almendra"
-  const clave = Object.keys(TITULOS).find((k) => texto.includes(k));
-  const partes = [clave ? TITULOS[clave] : r.categoria === 'Nail art' ? 'Diseño' : r.categoria];
-  if (r.color && !partes[0].toLowerCase().includes(r.color.toLowerCase())) partes.push(r.color.toLowerCase());
-  if (r.forma && !partes.join(' ').toLowerCase().includes(r.forma.toLowerCase())) partes.push(r.forma.toLowerCase());
-  r.titulo = partes.join(' ');
-  r.etiquetas = etiquetas.slice(0, 6).join(', ') || null;
-  return r;
+  const clave = Object.keys(TITULOS).find((clave) => texto.includes(clave));
+  const partes = [clave ? TITULOS[clave] : resultado.categoria === 'Nail art' ? 'Diseño' : resultado.categoria];
+  if (resultado.color && !partes[0].toLowerCase().includes(resultado.color.toLowerCase())) partes.push(resultado.color.toLowerCase());
+  if (resultado.forma && !partes.join(' ').toLowerCase().includes(resultado.forma.toLowerCase())) partes.push(resultado.forma.toLowerCase());
+  resultado.titulo = partes.join(' ');
+  resultado.etiquetas = etiquetas.slice(0, 6).join(', ') || null;
+  return resultado;
 }
 
 // ---------------------------------------------------------------------------
@@ -88,16 +88,16 @@ const DETALLES = {
 // Salida: { descripcion, etiquetas } en español.
 // Objetivo: Que cada foto tenga palabras claras para encontrarla por color, técnica o decoración.
 export function describirFoto(texto = '') {
-  const t = String(texto).toLowerCase();
-  const todos = (lista) => lista.filter(([, re]) => re.test(t)).map(([n]) => n);
-  const colores = todos(REGLAS.color).map((c) => c.toLowerCase());
-  const forma = buscar(REGLAS.forma, t);
-  const acabado = buscar(REGLAS.acabado, t);
+  const minusculas = String(texto).toLowerCase();
+  const todos = (lista) => lista.filter(([, re]) => re.test(minusculas)).map(([n]) => n);
+  const colores = todos(REGLAS.color).map((color) => color.toLowerCase());
+  const forma = buscar(REGLAS.forma, minusculas);
+  const acabado = buscar(REGLAS.acabado, minusculas);
   const tecnicas = todos(DETALLES.tecnica);
   const decoraciones = todos(DETALLES.decoracion);
-  const largo = buscar(DETALLES.largo, t);
+  const largo = buscar(DETALLES.largo, minusculas);
   const ocasion = todos(DETALLES.ocasion);
-  const pies = /\b(feet|foot|toe|toenails?|pedicure|pedicura|pies)\b/.test(t);
+  const pies = /\b(feet|foot|toe|toenails?|pedicure|pedicura|pies)\b/.test(minusculas);
   const partes = [`${pies ? 'Pedicure' : 'Uñas'}${forma ? ` ${forma.toLowerCase()}` : ''}${largo ? ` ${largo}` : ''}`];
   if (colores.length) partes.push(`en ${colores.slice(0, 3).join(' y ')}`);
   if (tecnicas.length) partes.push(`con ${tecnicas.join(', ')}`);

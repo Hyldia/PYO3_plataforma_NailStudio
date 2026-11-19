@@ -32,10 +32,10 @@ const error = (mensaje, status = 400) => Object.assign(new Error(mensaje), { sta
 // Objetivo: Que nadie cambie precios desde el navegador.
 function armarProductos(items = []) {
   return items.map(({ productoId, cantidad, detalle }) => {
-    const p = ProductoModel.buscarPorId(productoId);
-    if (!p) throw error('Uno de los productos ya no está disponible.');
-    if (p.stock === 0) throw error(`${p.nombre} se agotó. Quítalo del carrito para continuar.`);
-    return { tipo: 'producto', productoId: p.id, nombre: p.nombre, precio: p.precio, precioAnterior: p.precio_anterior,
+    const producto = ProductoModel.buscarPorId(productoId);
+    if (!producto) throw error('Uno de los productos ya no está disponible.');
+    if (producto.stock === 0) throw error(`${producto.nombre} se agotó. Quítalo del carrito para continuar.`);
+    return { tipo: 'producto', productoId: producto.id, nombre: producto.nombre, precio: producto.precio, precioAnterior: producto.precio_anterior,
       cantidad: Math.max(1, Number(cantidad) || 1), detalle: detalle ? String(detalle).slice(0, 300) : null };
   });
 }
@@ -49,22 +49,22 @@ function armarProductos(items = []) {
 // Objetivo: Cobrar el precio correcto.
 function armarCitas(citas = []) {
   const usadas = new Set();
-  return citas.map((c) => {
-    const servicio = ServicioModel.buscarPorId(c.servicioId);
-    const especialista = EspecialistaModel.buscarPorId(c.especialistaId);
+  return citas.map((cita) => {
+    const servicio = ServicioModel.buscarPorId(cita.servicioId);
+    const especialista = EspecialistaModel.buscarPorId(cita.especialistaId);
     if (!servicio || !especialista) throw error('Revisa la cita: falta el servicio o la especialista.');
-    if (!CitaModel.esFechaValida(c.fecha) || !CitaModel.esHoraValida(c.hora)) throw error('Revisa la fecha y la hora de la cita.');
-    const clave = `${especialista.id}|${c.fecha}|${c.hora}`;
-    if (usadas.has(clave)) throw error(`Hay dos citas con ${especialista.nombre} a las ${c.hora}. Cambia la hora de una.`);
+    if (!CitaModel.esFechaValida(cita.fecha) || !CitaModel.esHoraValida(cita.hora)) throw error('Revisa la fecha y la hora de la cita.');
+    const clave = `${especialista.id}|${cita.fecha}|${cita.hora}`;
+    if (usadas.has(clave)) throw error(`Hay dos citas con ${especialista.nombre} a las ${cita.hora}. Cambia la hora de una.`);
     usadas.add(clave);
-    if (!CitaModel.horaDisponible(especialista.id, c.fecha, c.hora)) throw error(`La hora ${c.hora} con ${especialista.nombre} ya no está disponible. Cámbiala en el carrito.`, 409);
-    const diseno = c.disenoId ? DisenoModel.buscarPorId(c.disenoId) : null;
+    if (!CitaModel.horaDisponible(especialista.id, cita.fecha, cita.hora)) throw error(`La hora ${cita.hora} con ${especialista.nombre} ya no está disponible. Cámbiala en el carrito.`, 409);
+    const diseno = cita.disenoId ? DisenoModel.buscarPorId(cita.disenoId) : null;
     // Si la foto de la galería tiene su propio precio, ese es el que se cobra
-    const precioFoto = c.fotoRefId ? FotoModel.buscarPorId(c.fotoRefId)?.precio : null;
+    const precioFoto = cita.fotoRefId ? FotoModel.buscarPorId(cita.fotoRefId)?.precio : null;
     const precio = (precioFoto ?? servicio.precio_oferta ?? servicio.precio) + (diseno?.precio || 0);
     return { tipo: 'cita', servicio, especialista, diseno, precio, precioAnterior: precioFoto == null && servicio.precio_oferta != null ? servicio.precio + (diseno?.precio || 0) : null,
-      cantidad: 1, fecha: c.fecha, hora: c.hora, fotoRefId: c.fotoRefId || null,
-      persona: c.persona ? String(c.persona).trim().slice(0, 60) : null, notas: c.notas ? String(c.notas).slice(0, 500) : null };
+      cantidad: 1, fecha: cita.fecha, hora: cita.hora, fotoRefId: cita.fotoRefId || null,
+      persona: cita.persona ? String(cita.persona).trim().slice(0, 60) : null, notas: cita.notas ? String(cita.notas).slice(0, 500) : null };
   });
 }
 
@@ -79,20 +79,20 @@ function cotizar(productos, citas, codigo, metodoPago, entrega = 'retiro') {
   let base = calcularPrecioPedido(lineas);
   let cupon = null;
   if (codigo) {
-    const v = CuponModel.validar(codigo, { subtotal: base.subtotal, esCombo: citas.some((c) => c.servicio.es_combo) });
-    if (v.error) throw error(v.error);
-    cupon = v.cupon;
+    const validacion = CuponModel.validar(codigo, { subtotal: base.subtotal, esCombo: citas.some((cita) => cita.servicio.es_combo) });
+    if (validacion.error) throw error(validacion.error);
+    cupon = validacion.cupon;
     base = calcularPrecioPedido(lineas, cupon);
   }
   const factor = base.subtotal ? base.total / base.subtotal : 1;
-  const subProductos = productos.reduce((s, l) => s + l.precio * l.cantidad, 0);
+  const subProductos = productos.reduce((suma, producto) => suma + producto.precio * producto.cantidad, 0);
   const productosNeto = Math.round(subProductos * factor);
   const citasNeto = base.total - productosNeto;
   const envio = entrega === 'envio' && productos.length ? COSTO_ENVIO : 0;
   if (envio && metodoPago === 'salon') throw error('Para el envío a domicilio paga con SINPE Móvil o tarjeta.');
   const anticipo = metodoPago === 'salon' ? 0 : Math.round(citasNeto * PORCENTAJE_ADELANTO);
   const pagasHoy = metodoPago === 'salon' ? 0 : productosNeto + envio + anticipo;
-  const sinOfertas = lineas.reduce((s, l) => s + (l.precioAnterior || l.precio) * l.cantidad, 0);
+  const sinOfertas = lineas.reduce((suma, linea) => suma + (linea.precioAnterior || linea.precio) * linea.cantidad, 0);
   return { ...base, total: base.total + envio, envio, cupon, factor, productosNeto, citasNeto, anticipo, pagasHoy, enSalon: base.total + envio - pagasHoy, sinOfertas, ahorroOfertas: sinOfertas - base.subtotal };
 }
 
@@ -101,10 +101,10 @@ function cotizar(productos, citas, codigo, metodoPago, entrega = 'retiro') {
 // Entrada: El cálculo completo.
 // Salida: Un resumen del total.
 // Objetivo: No mostrar datos internos.
-const publico = (c) => ({ subtotal: c.subtotal, total: c.total, envio: c.envio, costoEnvio: COSTO_ENVIO, descuento: c.descuento, detalle: c.detalle,
-  cupon: c.cupon ? { codigo: c.cupon.codigo, descripcion: c.cupon.descripcion } : null,
-  productosNeto: c.productosNeto, citasNeto: c.citasNeto, anticipo: c.anticipo, pagasHoy: c.pagasHoy, enSalon: c.enSalon,
-  sinOfertas: c.sinOfertas, ahorroOfertas: c.ahorroOfertas });
+const publico = (cotizacion) => ({ subtotal: cotizacion.subtotal, total: cotizacion.total, envio: cotizacion.envio, costoEnvio: COSTO_ENVIO, descuento: cotizacion.descuento, detalle: cotizacion.detalle,
+  cupon: cotizacion.cupon ? { codigo: cotizacion.cupon.codigo, descripcion: cotizacion.cupon.descripcion } : null,
+  productosNeto: cotizacion.productosNeto, citasNeto: cotizacion.citasNeto, anticipo: cotizacion.anticipo, pagasHoy: cotizacion.pagasHoy, enSalon: cotizacion.enSalon,
+  sinOfertas: cotizacion.sinOfertas, ahorroOfertas: cotizacion.ahorroOfertas });
 
 export const pedidoController = {
   // POST /api/pedidos/cotizar: el resumen antes de pagar
@@ -128,53 +128,53 @@ export const pedidoController = {
     const { items = [], citas: citasPedidas = [], metodoPago, pago, cupon, notas, entrega = 'retiro', direccionId } = req.body;
     if (!items.length && !citasPedidas.length) return res.status(400).json({ error: 'El carrito está vacío.' });
     // La clienta tiene cuenta (middleware soloUsuario): sus datos vienen de la cuenta
-    const u = req.usuario;
-    const cliente = { nombre: req.body.cliente?.nombre || u.nombre, telefono: req.body.cliente?.telefono || u.telefono || '', email: u.correo };
+    const usuario = req.usuario;
+    const cliente = { nombre: req.body.cliente?.nombre || usuario.nombre, telefono: req.body.cliente?.telefono || usuario.telefono || '', email: usuario.correo };
     let direccion = null;
     if (entrega === 'envio' && items.length) {
-      const d = UsuarioModel.direccion(u.id, direccionId);
-      if (!d) return res.status(400).json({ error: 'Elige la dirección de envío.' });
-      direccion = UsuarioModel.textoDireccion(d);
+      const direccionGuardada = UsuarioModel.direccion(usuario.id, direccionId);
+      if (!direccionGuardada) return res.status(400).json({ error: 'Elige la dirección de envío.' });
+      direccion = UsuarioModel.textoDireccion(direccionGuardada);
     }
     const errorCliente = PedidoModel.validarCliente(cliente);
     if (errorCliente) return res.status(400).json({ error: errorCliente });
 
     const productos = armarProductos(items);
     const citas = armarCitas(citasPedidas);
-    const c = cotizar(productos, citas, cupon, metodoPago, direccion ? 'envio' : 'retiro');
+    const cotizacion = cotizar(productos, citas, cupon, metodoPago, direccion ? 'envio' : 'retiro');
 
     // Strategy + Factory: se cobra lo que toca pagar hoy
     const metodo = crearMetodoPago(metodoPago);
-    const cobro = metodo.cobrar(c.pagasHoy, pago);
+    const cobro = metodo.cobrar(cotizacion.pagasHoy, pago);
     if (!cobro.ok) return res.status(402).json({ error: cobro.mensaje });
 
     // Todo o nada: si una cita se ocupó en este momento, no se guarda nada
     const resultado = enTransaccion(() => {
       const pedido = productos.length ? PedidoModel.crear(cliente, productos, metodo.nombre, {
-        total: c.productosNeto + c.envio, usuarioId: u.id, entrega: direccion ? 'envio' : 'retiro', direccion, costoEnvio: c.envio, descuento: Math.round(productos.reduce((s, l) => s + l.precio * l.cantidad, 0) * (1 - c.factor)),
-        cupon: c.cupon?.codigo, notas: notas ? String(notas).slice(0, 300) : null, referencia: cobro.referencia
+        total: cotizacion.productosNeto + cotizacion.envio, usuarioId: usuario.id, entrega: direccion ? 'envio' : 'retiro', direccion, costoEnvio: cotizacion.envio, descuento: Math.round(productos.reduce((suma, producto) => suma + producto.precio * producto.cantidad, 0) * (1 - cotizacion.factor)),
+        cupon: cotizacion.cupon?.codigo, notas: notas ? String(notas).slice(0, 300) : null, referencia: cobro.referencia
       }) : null;
-      const creadas = citas.map((l) => {
-        if (!CitaModel.horaDisponible(l.especialista.id, l.fecha, l.hora)) throw error(`La hora ${l.hora} con ${l.especialista.nombre} se acaba de ocupar.`, 409);
-        const total = Math.round(l.precio * c.factor);
+      const creadas = citas.map((cita) => {
+        if (!CitaModel.horaDisponible(cita.especialista.id, cita.fecha, cita.hora)) throw error(`La hora ${cita.hora} con ${cita.especialista.nombre} se acaba de ocupar.`, 409);
+        const total = Math.round(cita.precio * cotizacion.factor);
         return CitaModel.crear({
-          servicioId: l.servicio.id, especialistaId: l.especialista.id, disenoId: l.diseno?.id ?? null, fotoRefId: l.fotoRefId,
-          nombre: l.persona || cliente.nombre.trim(), telefono: cliente.telefono.trim(), email: cliente.email?.trim() || null,
-          notas: [l.persona ? `Viene con ${cliente.nombre.trim()}` : null, l.notas].filter(Boolean).join('. ') || null,
-          fecha: l.fecha, hora: l.hora, estado: cobro.requiereVerificacion ? 'pendiente' : 'confirmada',
+          servicioId: cita.servicio.id, especialistaId: cita.especialista.id, disenoId: cita.diseno?.id ?? null, fotoRefId: cita.fotoRefId,
+          nombre: cita.persona || cliente.nombre.trim(), telefono: cliente.telefono.trim(), email: cliente.email?.trim() || null,
+          notas: [cita.persona ? `Viene con ${cliente.nombre.trim()}` : null, cita.notas].filter(Boolean).join('. ') || null,
+          fecha: cita.fecha, hora: cita.hora, estado: cobro.requiereVerificacion ? 'pendiente' : 'confirmada',
           total, anticipo: metodoPago === 'salon' ? 0 : Math.round(total * PORCENTAJE_ADELANTO),
-          cuponCodigo: c.cupon?.codigo ?? null, descuento: l.precio - total, metodoPago: metodo.nombre, pedidoId: pedido?.id ?? null, usuarioId: u.id
+          cuponCodigo: cotizacion.cupon?.codigo ?? null, descuento: cita.precio - total, metodoPago: metodo.nombre, pedidoId: pedido?.id ?? null, usuarioId: usuario.id
         });
       });
       return { pedido, creadas };
     });
 
-    if (c.cupon) CuponModel.registrarUso(c.cupon.codigo);
+    if (cotizacion.cupon) CuponModel.registrarUso(cotizacion.cupon.codigo);
     // Observer: recordatorios por WhatsApp para cada cita
     resultado.creadas.forEach((cita) => eventos.emit('cita:creada', { cita, recordatorios: { whatsapp: true } }));
     res.status(201).json({
-      id: resultado.pedido?.id ?? null, citas: resultado.creadas, total: c.total, descuento: c.descuento,
-      pagado: c.pagasHoy, enSalon: c.enSalon, envio: c.envio, direccion, metodo: metodo.nombre, referenciaPago: cobro.referencia, requiereVerificacion: Boolean(cobro.requiereVerificacion)
+      id: resultado.pedido?.id ?? null, citas: resultado.creadas, total: cotizacion.total, descuento: cotizacion.descuento,
+      pagado: cotizacion.pagasHoy, enSalon: cotizacion.enSalon, envio: cotizacion.envio, direccion, metodo: metodo.nombre, referenciaPago: cobro.referencia, requiereVerificacion: Boolean(cobro.requiereVerificacion)
     });
   }
 };
