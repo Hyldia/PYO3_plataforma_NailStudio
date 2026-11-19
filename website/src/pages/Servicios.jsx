@@ -184,7 +184,11 @@ export default function Servicios() {
               const foto = c === 'Todos' ? servicios[0]?.imagen : servicios.find((s) => s.categoria === c)?.imagen;
               const n = c === 'Todos' ? servicios.length : servicios.filter((s) => s.categoria === c).length;
               return (
-                <button key={c} type="button" className="filtro-foto" aria-pressed={categoria === c} onClick={() => fijar('categoria', c === 'Todos' ? '' : c)}>
+                <button key={c} type="button" className="filtro-foto" aria-pressed={categoria === c}
+                        onClick={(e) => {
+                          fijar('categoria', c === 'Todos' ? '' : c);
+                          e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+                        }}>
                   <span className="filtro-foto__img"><Foto archivo={foto} alt="" /></span>
                   <span className="filtro-foto__nombre">{c}</span>
                   <span className="filtro-foto__n">{n}</span>
@@ -221,6 +225,9 @@ export default function Servicios() {
             <ul key={`${categoria}-${soloOfertas}-${texto}`} className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
               {lista.map((s) => <TarjetaServicio key={s.id} s={s} opinion={resumenes.get(s.id)} onOpiniones={setOpiniones} />)}
             </ul>
+            {lista.length > 4 && (
+              <p className="servicios-rejilla__desliza"><span aria-hidden="true">‹</span> Desliza para ver más <span aria-hidden="true">›</span></p>
+            )}
           </section>
         ))}
       </div>
