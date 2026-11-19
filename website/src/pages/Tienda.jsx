@@ -21,8 +21,7 @@ export default function Tienda() {
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
-  const [visibles, setVisibles] = useState(POR_PAGINA);
-  const [cargandoMas, setCargandoMas] = useState(false);
+  const [pagina, setPagina] = useState(1);
 
   const categoria = params.get('categoria') || '';
   const orden = params.get('orden') || 'relevancia';
@@ -33,6 +32,7 @@ export default function Tienda() {
   const fijar = (cambios) => {
     const p = new URLSearchParams(params);
     Object.entries(cambios).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)));
+    setPagina(1);
     setParams(p, { replace: true });
   };
 
@@ -41,12 +41,12 @@ export default function Tienda() {
   useEffect(() => {
     setCargando(true);
     api.productos(Object.fromEntries(params))
-      .then((p) => { setProductos(p); setError(''); setVisibles(POR_PAGINA); })
+      .then((p) => { setProductos(p); setError(''); setPagina(1); })
       .catch((e) => setError(e.message))
       .finally(() => setCargando(false));
   }, [params]);
 
-  const limpiar = () => { setTexto(''); setParams({}, { replace: true }); };
+  const limpiar = () => { setTexto(''); setPagina(1); setParams({}, { replace: true }); };
   const hayFiltros = categoria || ofertas || disponibles || rango !== RANGOS[0] || orden !== 'relevancia';
   const vendidos = orden === 'vendidos';
   const verVendidos = () => fijar({ orden: vendidos ? '' : 'vendidos', ofertas: '' });
@@ -123,11 +123,20 @@ export default function Tienda() {
         <div className="vacio"><p>No hay productos con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>
       )}
       <ul className={`productos-rejilla productos-rejilla--grande ${ofertas ? 'productos-rejilla--ofertas' : ''}`} key={`${orden}-${ofertas}`}>
-        {productos.slice(0, visibles).map((p, i) => <TarjetaProducto key={p.id} p={p} puesto={vendidos && i < 20 ? i + 1 : undefined} oferta={ofertas} />)}
-        {cargandoMas && <Fantasmas n={Math.min(POR_PAGINA, productos.length - visibles)} />}
+        {productos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA).map((p, i) => <TarjetaProducto key={p.id} p={p} puesto={vendidos && (pagina - 1) * POR_PAGINA + i < 20 ? (pagina - 1) * POR_PAGINA + i + 1 : undefined} oferta={ofertas} />)}
+        {cargando && <Fantasmas n={Math.min(POR_PAGINA, productos.length)} />}
       </ul>
-      <VerMas vistos={Math.min(visibles, productos.length)} total={productos.length} cargando={cargandoMas} cosa="productos" texto="Ver más productos"
-              onClick={() => { setCargandoMas(true); setTimeout(() => { setVisibles((v) => v + POR_PAGINA); setCargandoMas(false); }, 450); }} />
+      <VerMas pagina={pagina} paginas={Math.ceil(productos.length / POR_PAGINA)} cargando={cargando}
+              onCambiar={(n) => {
+                setPagina(n);
+                requestAnimationFrame(() => {
+                  const rejilla = document.querySelector('.productos-rejilla');
+                  const encabezado = document.querySelector('.encabezado');
+                  const margen = encabezado?.offsetHeight || 76;
+                  const posicion = rejilla ? rejilla.getBoundingClientRect().top + window.scrollY - margen : 0;
+                  window.scrollTo({ top: Math.max(0, posicion), behavior: 'smooth' });
+                });
+              }} />
     </div>
   );
 }

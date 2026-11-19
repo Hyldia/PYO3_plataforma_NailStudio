@@ -1,14 +1,37 @@
-// Botón "Ver más" al estilo de las tiendas en línea: barra de avance y botón animado
-export default function VerMas({ vistos, total, cargando, onClick, texto = 'Ver más', cosa = 'artículos' }) {
-  if (vistos >= total) return null;
+function numerosPagina(pagina, paginas) {
+  if (paginas <= 7) return Array.from({ length: paginas }, (_, i) => i + 1);
+  if (pagina <= 4) return [1, 2, 3, 4, 5, '...', paginas];
+  if (pagina >= paginas - 3) return [1, '...', paginas - 4, paginas - 3, paginas - 2, paginas - 1, paginas];
+  return [1, '...', pagina - 1, pagina, pagina + 1, '...', paginas];
+}
+
+export default function VerMas({ pagina = 1, paginas = 1, cargando = false, onCambiar }) {
+  if (paginas <= 1) return null;
+
+  const cambiar = (n) => {
+    if (!cargando && n >= 1 && n <= paginas && n !== pagina) onCambiar(n);
+  };
+
   return (
-    <div className="ver-mas">
-      <p className="ver-mas__texto">Viendo {vistos} de {total} {cosa}</p>
-      <div className="ver-mas__barra" aria-hidden="true"><span style={{ width: `${Math.round((vistos / total) * 100)}%` }} /></div>
-      <button type="button" className="boton-ver-mas" onClick={onClick} disabled={cargando}>
-        {cargando ? <><span className="girando" aria-hidden="true" /> Cargando…</> : <>{texto} <span className="flecha-baja" aria-hidden="true">⌄</span></>}
+    <nav className="paginacion" aria-label="Paginación de resultados">
+      <button type="button" className="paginacion__boton paginacion__flecha" onClick={() => cambiar(pagina - 1)}
+              disabled={cargando || pagina === 1} aria-label="Página anterior">
+        <span aria-hidden="true">‹</span>
       </button>
-    </div>
+      {numerosPagina(pagina, paginas).map((n, i) => n === '...' ? (
+        <span key={`e${i}`} className="paginacion__puntos" aria-hidden="true">…</span>
+      ) : (
+        <button type="button" key={n} className={`paginacion__boton ${n === pagina ? 'paginacion__boton--activo' : ''}`}
+                onClick={() => cambiar(n)} disabled={cargando} aria-current={n === pagina ? 'page' : undefined}
+                aria-label={`Página ${n}`}>
+          {n}
+        </button>
+      ))}
+      <button type="button" className="paginacion__boton paginacion__flecha" onClick={() => cambiar(pagina + 1)}
+              disabled={cargando || pagina === paginas} aria-label="Página siguiente">
+        <span aria-hidden="true">›</span>
+      </button>
+    </nav>
   );
 }
 
