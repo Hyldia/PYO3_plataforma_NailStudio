@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { UPLOADS_DIR } from '../db/connection.js';
+import { UPLOADS_DIR } from '../db/conexion.js';
 
 const TIPOS = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 

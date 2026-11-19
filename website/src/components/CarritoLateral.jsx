@@ -1,31 +1,55 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { dinero } from '../config.js';
 import ProductoImagen from './ProductoImagen.jsx';
 
-// Carrito fijo a la derecha en pantallas anchas (como en las tiendas en línea grandes).
-// En celular y tablet se llega al carrito desde el ícono del encabezado.
+// Carrito que se abre a la derecha solo cuando se toca el ícono del carrito (en pantallas anchas).
+// En celular y tablet el ícono lleva directo a la página del carrito.
+export const abrirCarritoLateral = () => window.dispatchEvent(new Event('carrito:alternar'));
 export const enlaceArticulo = (i) => (i.tipo === 'cita' ? (i.fotoRefId ? `/galeria/${i.fotoRefId}` : '/servicios') : i.fotoId ? `/galeria/${i.fotoId}` : `/tienda/${i.productoId ?? i.id}`);
 
 export default function CarritoLateral() {
   const carrito = useCarrito();
   const { pathname } = useLocation();
   const irA = useNavigate();
-  // En la página del carrito no hace falta repetirlo al lado
-  const visible = carrito.items.length > 0 && !['/carrito', '/finalizar-compra'].includes(pathname);
-
+  const [abierto, setAbierto] = useState(false);
   useEffect(() => {
-    document.body.classList.toggle('con-carrito-lateral', visible);
-    return () => document.body.classList.remove('con-carrito-lateral');
-  }, [visible]);
+    const alternar = () => setAbierto((a) => !a);
+    window.addEventListener('carrito:alternar', alternar);
+    return () => window.removeEventListener('carrito:alternar', alternar);
+  }, []);
+  // Se cierra al cambiar de página o con la tecla Esc
+  useEffect(() => { setAbierto(false); }, [pathname]);
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const tecla = (e) => { if (e.key === 'Escape') setAbierto(false); };
+    window.addEventListener('keydown', tecla);
+    return () => window.removeEventListener('keydown', tecla);
+  }, [abierto]);
 
+  const visible = abierto && !['/carrito', '/finalizar-compra'].includes(pathname) && !pathname.startsWith('/admin') && !pathname.startsWith('/equipo');
   if (!visible) return null;
+  if (!carrito.items.length) {
+    return (
+      <>
+        <div className="carrito-lateral__fondo" onClick={() => setAbierto(false)} aria-hidden="true" />
+        <aside className="carrito-lateral carrito-lateral--vacio" aria-label="Carrito">
+          <button type="button" className="carrito-lateral__cerrar" onClick={() => setAbierto(false)} aria-label="Cerrar el carrito">×</button>
+          <p>Tu carrito está vacío.</p>
+          <button type="button" className="carrito-lateral__ir" onClick={() => irA('/tienda')}>Ir a la tienda</button>
+        </aside>
+      </>
+    );
+  }
   const pocos = carrito.elegidos.filter((i) => i.stock > 0 && i.stock < 10).length;
   const todos = carrito.items.every((i) => i.seleccionado !== false);
 
   return (
+    <>
+    <div className="carrito-lateral__fondo" onClick={() => setAbierto(false)} aria-hidden="true" />
     <aside className="carrito-lateral" aria-labelledby="cl-titulo">
+      <button type="button" className="carrito-lateral__cerrar" onClick={() => setAbierto(false)} aria-label="Cerrar el carrito">×</button>
       <Link to="/carrito" className="carrito-lateral__cabeza">
         <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6" /><circle cx="10" cy="20" r="1.4" /><circle cx="17" cy="20" r="1.4" /></svg>
         <h2 id="cl-titulo">Subtotal</h2>
@@ -69,5 +93,6 @@ export default function CarritoLateral() {
         ))}
       </ul>
     </aside>
+    </>
   );
 }

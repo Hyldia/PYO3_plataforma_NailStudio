@@ -11,7 +11,7 @@
 //
 // Unsplash permite 50 consultas por hora. Si se corta, espera una hora y vuelve a correrlo:
 // el comando guarda en qué búsqueda y página iba y sigue desde ahí (no gasta consultas repitiendo).
-import { getDb } from './connection.js';
+import { getDb } from './conexion.js';
 import { clasificarFoto } from './clasificarFoto.js';
 import { claveUnsplash, buscarUnsplash, urlFotoUnsplash, autorUnsplash } from './unsplash.js';
 

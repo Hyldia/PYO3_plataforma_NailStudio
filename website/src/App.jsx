@@ -10,6 +10,7 @@ import Reservar from './pages/Reservar.jsx';
 import Tienda from './pages/Tienda.jsx';
 import Contacto from './pages/Contacto.jsx';
 import Admin from './pages/Admin.jsx';
+import PortalEquipo from './pages/PortalEquipo.jsx';
 import NoEncontrada from './pages/NoEncontrada.jsx';
 import Buscar from './pages/Buscar.jsx';
 import Animaciones from './components/Animaciones.jsx';
@@ -22,6 +23,8 @@ import ProductoDetalle from './pages/ProductoDetalle.jsx';
 import Favoritos from './pages/Favoritos.jsx';
 import Cuenta from './pages/Cuenta.jsx';
 import Ruleta from './components/Ruleta.jsx';
+import CuponSorpresa from './components/CuponSorpresa.jsx';
+import PremioEscondido from './components/PremioEscondido.jsx';
 import ChatAsistente from './components/ChatAsistente.jsx';
 import Accesibilidad from './components/Accesibilidad.jsx';
 
@@ -51,6 +54,7 @@ export default function App() {
           <Route path="/tienda" element={<Tienda />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/equipo" element={<PortalEquipo />} />
           <Route path="/buscar" element={<Buscar />} />
           <Route path="/galeria/:id" element={<DisenoDetalle />} />
           <Route path="/tienda/:id" element={<ProductoDetalle />} />
@@ -65,6 +69,8 @@ export default function App() {
       <Aviso />
       <CarritoLateral />
       <Ruleta />
+      <CuponSorpresa />
+      <PremioEscondido />
       <ChatAsistente />
       <Accesibilidad />
       <Animaciones />

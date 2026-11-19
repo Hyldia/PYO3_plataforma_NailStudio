@@ -3,19 +3,38 @@
 // Uso (dentro de la carpeta api):
 //   PowerShell:  $env:UNSPLASH_KEY="tu_access_key"; npm run fotos-productos
 //   Para cambiar también las fotos que ya tienen:  npm run fotos-productos -- --todas
+//   Para revisar fotos rotas (que Unsplash borró) y reponerlas:  npm run fotos-productos -- --revisar
 //
 // Busca fotos por tipo de producto (lámparas, cortacutículas, limas, cremas, frascos de esmalte...)
 // y, en los esmaltes y geles, elige la foto cuyo color se parezca al del producto.
 // Usa unas 30 consultas, dentro del límite de 50 por hora de Unsplash.
 // Si se corta por el límite, espera una hora y vuelve a correrlo: sigue con los que faltan.
-import { getDb } from './connection.js';
+import { getDb } from './conexion.js';
 import { claveUnsplash, buscarUnsplash, urlFotoUnsplash, autorUnsplash } from './unsplash.js';
 
 const CLAVE = claveUnsplash();
 const TODAS = process.argv.includes('--todas');
+const REVISAR = process.argv.includes('--revisar');
+
+// Revisa una por una las fotos guardadas: si ya no abren, se borran para ponerles otra
+async function revisarRotas(db) {
+  const conFoto = db.prepare("SELECT id, imagen FROM productos WHERE imagen LIKE 'http%'").all();
+  const quitar = db.prepare('UPDATE productos SET imagen = NULL, imagen_autor = NULL, imagen_autor_url = NULL WHERE id = ?');
+  let rotas = 0;
+  for (let i = 0; i < conFoto.length; i += 10) {
+    await Promise.all(conFoto.slice(i, i + 10).map(async (p) => {
+      try {
+        const r = await fetch(p.imagen, { method: 'HEAD' });
+        if (!r.ok) { quitar.run(p.id); rotas++; }
+      } catch { /* sin internet: no se toca */ }
+    }));
+    process.stdout.write(`\rRevisando fotos: ${Math.min(i + 10, conFoto.length)} de ${conFoto.length}…`);
+  }
+  console.log(`\n${rotas ? `${rotas} fotos rotas: se les buscará una nueva.` : 'Ninguna foto rota.'}`);
+}
 
 // Qué buscar en Unsplash según el nombre del producto (se aplica la primera regla que coincida)
-const GRUPOS = [
+export const GRUPOS = [
   // Primero los frascos y el acrílico, para que "Esmalte gel Dorado glitter" no caiga en decoración
   { re: /^(esmalte|rubber base|top coat|base |builder|primer|deshidratante|bonder|gel |set \d+ geles|gotas secantes|spray secante|diluyente)/i, busquedas: ['nail polish bottle', 'nail polish', 'gel polish'], paginas: 2 },
   // Pedicure antes que las herramientas, para que "Lima para pies" o "Cortaúñas para uña encarnada" busquen fotos de pies
@@ -40,6 +59,8 @@ const GRUPOS = [
   { re: /tips|press-on|pegamento|cinta adhesiva/i, busquedas: ['press on nails', 'fake nails'] },
   { re: /balines|pedrería|perlas|glitter|cromo|perla|stickers|foil|flores secas|cinta de rayas|ojo de gato|charms|cadena|piedras|escamas|polvo terciopelo|polvo neón|polvo efecto/i, busquedas: ['nail rhinestones', 'glitter'] },
   { re: /^kit/i, busquedas: ['manicure kit', 'manicure set'] },
+  // Todo lo que no entró en ninguna regla de arriba recibe una foto general de manicure (antes se quedaba sin foto)
+  { re: /./, busquedas: ['manicure products', 'nail care products', 'nail salon products'], paginas: 2 }
 ];
 
 // Palabras en inglés para elegir el frasco del color correcto
@@ -73,6 +94,7 @@ function puntajeColor(nombre, foto) {
 
 async function main() {
   const db = getDb();
+  if (REVISAR) await revisarRotas(db);
   const productos = db.prepare(`SELECT id, nombre FROM productos ${TODAS ? '' : 'WHERE imagen IS NULL'} ORDER BY id`).all();
   if (!productos.length) { console.log('Todos los productos ya tienen foto. Usa --todas para cambiarlas.'); return; }
 
@@ -119,4 +141,4 @@ async function main() {
   }
 }
 
-main().catch((e) => { console.error(`\n${e.message}`); process.exit(1); });
+if (process.argv[1]?.endsWith('fotosProductos.js')) main().catch((e) => { console.error(`\n${e.message}`); process.exit(1); });

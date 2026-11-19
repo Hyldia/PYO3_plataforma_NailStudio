@@ -10,6 +10,7 @@ import TarjetaDiseno from '../components/TarjetaDiseno.jsx';
 import ProductoImagen from '../components/ProductoImagen.jsx';
 import Foto from '../components/Foto.jsx';
 import Contador from '../components/Contador.jsx';
+import Migas from '../components/Migas.jsx';
 
 const CORAZON = 'M12 20.5s-7.5-4.6-9.3-9.4C1.4 7.6 3.6 4 7.2 4c2 0 3.6 1.1 4.8 2.8C13.2 5.1 14.8 4 16.8 4c3.6 0 5.8 3.6 4.5 7.1-1.8 4.8-9.3 9.4-9.3 9.4z';
 const Corazones = () => (
@@ -61,7 +62,7 @@ export default function Favoritos() {
   const total = disponibles.reduce((s, p) => s + p.precio, 0);
   const ahorro = disponibles.reduce((s, p) => s + (p.precio_anterior ? p.precio_anterior - p.precio : 0), 0);
   const bajaron = productos.filter((p) => p.guardadoA && p.precio < p.guardadoA).length;
-  const collage = useMemo(() => fav.items.slice(0, 4), [fav.items]);
+  const collage = useMemo(() => fav.items.slice(0, 5), [fav.items]);
 
   const agregarTodo = () => {
     disponibles.forEach((p) => carrito.agregar(p, { cantidad: 1 }));
@@ -76,7 +77,7 @@ export default function Favoritos() {
 
   return (
     <div className="contenedor pagina favoritos-pagina">
-      <nav aria-label="Ruta" className="migas"><ol><li><Link to="/">Inicio</Link></li><li aria-current="page">Favoritos</li></ol></nav>
+      <Migas pasos={[['Favoritos']]} />
 
       <section className="fav-hero" aria-labelledby="t-fav">
         <Corazones />
@@ -86,6 +87,17 @@ export default function Favoritos() {
             <p className="fav-hero__ante">Tu lista de deseos</p>
             <h1 id="t-fav">Mis favoritos</h1>
             <p>{fav.cantidad ? `${fav.cantidad} ${fav.cantidad === 1 ? 'cosa guardada' : 'cosas guardadas'} para después.` : 'Toca el corazón de un producto o diseño para guardarlo aquí.'}</p>
+            {fav.cantidad > 0 && (
+              <ul className="fav-hero__datos">
+                <li><strong><Contador valor={productos.length} /></strong> {productos.length === 1 ? 'producto' : 'productos'}</li>
+                <li><strong><Contador valor={disenos.length} /></strong> {disenos.length === 1 ? 'diseño' : 'diseños'}</li>
+                {productos.some((p) => p.precio_anterior) && <li><strong><Contador valor={productos.filter((p) => p.precio_anterior).length} /></strong> en oferta</li>}
+              </ul>
+            )}
+            <div className="fav-hero__botones">
+              <Link to="/tienda" className="fav-hero__enlace">Seguir comprando</Link>
+              <Link to="/galeria" className="fav-hero__enlace fav-hero__enlace--borde">Ver diseños</Link>
+            </div>
           </div>
         </div>
         {fav.cantidad > 0 && (
@@ -104,7 +116,7 @@ export default function Favoritos() {
                 <p><span>Todo tu carrito de deseos</span><strong><Contador valor={total} formato={dinero} /></strong></p>
                 {ahorro > 0 && <p className="fav-hero__ahorro">Ahorras {dinero(ahorro)} si lo pides hoy</p>}
                 <button type="button" className="fav-hero__boton" onClick={agregarTodo}>
-                  {agregados ? `✓ ${agregados} agregados al carrito` : `Agregar ${disponibles.length === 1 ? 'el producto' : `los ${disponibles.length} productos`} al carrito`}
+                  {agregados ? `Listo: ${agregados} en el carrito` : `Agregar todo al carrito (${disponibles.length})`}
                 </button>
               </div>
             )}

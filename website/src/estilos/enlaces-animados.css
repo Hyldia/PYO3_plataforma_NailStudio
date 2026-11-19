@@ -1,0 +1,19 @@
+/* Partes animadas que se pueden tocar */
+
+/* Todo lo animado se puede tocar */
+.enlace-titulo { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: inherit; flex-wrap: wrap; }
+.enlace-titulo:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.relampago__hasta { text-decoration: none; cursor: pointer; }
+.relampago__hasta:hover { animation-play-state: paused; box-shadow: 0 0 0 4px rgba(255,255,255,0.5); }
+.relampago__cinta li { padding: 0; }
+.relampago__cinta a { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; color: inherit; text-decoration: none; border-radius: 999px; transition: transform 0.2s; }
+.relampago__cinta a:hover { transform: scale(1.06); }
+a.flash-tarjeta__barra { display: block; text-decoration: none; }
+.fav-hero__collage a { display: block; width: 100%; height: 100%; }
+.fav-hero__collage li { transition: transform 0.25s; } .fav-hero__collage li:hover { transform: rotate(0) scale(1.1) !important; z-index: 5; }
+.relampago__cinta li { background: rgba(255,255,255,0.95); }
+.vitrina .enlace-titulo, .inspira .enlace-titulo, .podio .enlace-titulo { display: inline; }
+.boton--ambar { background: #FFF1D6; border-color: #E8B04B; color: #7A4B00; }
+.boton--ambar:hover { background: #FFE3A8; }
+.boton--verde { background: var(--confianza); border-color: var(--confianza); color: #fff; }
+.enlace--chico { align-self: flex-start; font-size: 0.82rem; margin-top: 4px; }

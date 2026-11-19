@@ -7,6 +7,7 @@ import { useTitulo } from '../lib/hooks.js';
 import { useUsuario } from '../context/UsuarioContext.jsx';
 import Acceso from '../components/Acceso.jsx';
 import { ListaDirecciones } from '../components/Direcciones.jsx';
+import Migas from '../components/Migas.jsx';
 
 const ESTADO = { recibido: 'Recibido', listo: 'Listo', completado: 'Completado', cancelado: 'Cancelado', pendiente: 'Pendiente', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada' };
 const PROVEEDOR = { google: 'Google', facebook: 'Facebook', formulario: 'correo y contraseña' };
@@ -55,7 +56,7 @@ export default function Cuenta() {
 
   return (
     <div className="contenedor pagina cuenta">
-      <nav aria-label="Ruta" className="migas"><ol><li><Link to="/">Inicio</Link></li><li aria-current="page">Mi cuenta</li></ol></nav>
+      <Migas pasos={[['Mi cuenta']]} />
       <header className="cuenta__hero">
         <span className="cuenta__avatar" aria-hidden="true">{u.foto ? <img src={u.foto} alt="" referrerPolicy="no-referrer" /> : u.nombre[0]}</span>
         <div>

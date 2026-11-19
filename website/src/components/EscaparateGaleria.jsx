@@ -6,7 +6,7 @@ import { api } from '../lib/api.js';
 import Foto from './Foto.jsx';
 import Contador from './Contador.jsx';
 import { miles } from './TarjetaDiseno.jsx';
-import { useResumenes } from '../lib/resumenes.js';
+import { useResumenes } from '../lib/resumenesOpiniones.js';
 
 export function HistoriasCategorias({ opciones, activas, onElegir }) {
   const [portadas, setPortadas] = useState({});
@@ -51,7 +51,7 @@ export default function EscaparateGaleria({ total }) {
   useEffect(() => { api.fotos({ orden: 'populares', limite: 14 }).then((r) => setTop(r.fotos)).catch(() => setTop([])); }, []);
   if (top.length < 5) return <div className="inspira inspira--cargando" aria-hidden="true" />;
   const vistas = top.reduce((s, f) => s + (f.vistas || 0), 0);
-  const cinta = top.slice(0, 12);
+  const cinta = top.slice(0, 6);
   return (
     <>
       <section className="inspira" aria-labelledby="t-inspira">
@@ -82,13 +82,13 @@ export default function EscaparateGaleria({ total }) {
 
       <section className="tendencias" aria-labelledby="t-tendencias">
         <h2 id="t-tendencias" className="fila-titulo"><Link to="/galeria?orden=populares" className="enlace-titulo"><span className="tendencias__punto" aria-hidden="true" />Tendencias de la semana</Link></h2>
-        <div className="tendencias__pista">
+        <div className="tendencias__rejilla">
           <ul>
-            {[...cinta, ...cinta].map((f, n) => (
-              <li key={`${f.id}-${n}`} aria-hidden={n >= cinta.length}>
-                <Link to={`/galeria/${f.id}`} tabIndex={n >= cinta.length ? -1 : undefined} className="tendencias__item">
+            {cinta.map((f, n) => (
+              <li key={f.id}>
+                <Link to={`/galeria/${f.id}`} className="tendencias__item">
                   <Foto archivo={f.archivo} alt="" />
-                  <span className="tendencias__rank">#{(n % cinta.length) + 1}</span>
+                  <span className="tendencias__rank">#{n + 1}</span>
                   <span className="tendencias__info"><b>{f.titulo}</b><small>{miles(f.vistas)} vistas</small></span>
                 </Link>
               </li>

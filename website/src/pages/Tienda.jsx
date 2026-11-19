@@ -5,8 +5,9 @@ import { useDebounce, useTitulo } from '../lib/hooks.js';
 import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import Desplegable from '../components/Desplegable.jsx';
-import { BannerOfertas, PodioVendidos } from '../components/BannersTienda.jsx';
+import { BannerOfertas, PodioVendidos, PortadaCategoria } from '../components/BannersTienda.jsx';
 import EscaparateTienda from '../components/EscaparateTienda.jsx';
+import Migas from '../components/Migas.jsx';
 
 const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
 const ORDENES = { relevancia: 'Relevancia', vendidos: 'Más vendidos', descuento: 'Mayor descuento', calificacion: 'Mejor calificados', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', nuevos: 'Más nuevos' };
@@ -50,22 +51,11 @@ export default function Tienda() {
   const hayFiltros = categoria || ofertas || disponibles || rango !== RANGOS[0] || orden !== 'relevancia';
   const vendidos = orden === 'vendidos';
   const verVendidos = () => fijar({ orden: vendidos ? '' : 'vendidos', ofertas: '' });
+  const titulo = categoria || (ofertas ? 'Ofertas' : vendidos ? 'Más vendidos' : 'Tienda');
+  const inicio = ![...params.keys()].filter((k) => k !== 'q').length; // escribir en el buscador no cambia la portada
 
-  return (
-    <div className="contenedor pagina pagina--resultados">
-      <header className="resultados-cabeza">
-        <div>
-          <h1>{categoria || (ofertas ? 'Ofertas' : vendidos ? 'Más vendidos' : 'Tienda')}</h1>
-          <p className="tenue">Productos profesionales para tus uñas y tus manos. Se retiran gratis en el salón.</p>
-        </div>
-        <label className="buscador buscador--chico">
-          <span className="solo-lector">Buscar productos</span>
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Busca: rubber base, lámpara, lima…" />
-        </label>
-      </header>
-
-      <div className="barra-chips" role="group" aria-label="Filtros y orden">
+  const barra = (
+      <div className="barra-chips barra-filtros" role="group" aria-label="Filtros y orden">
         <button type="button" className={`chip-filtro chip-filtro--fuego ${vendidos ? 'chip-filtro--activo' : ''}`} aria-pressed={vendidos} onClick={verVendidos}>
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4 5 5.5 5 10.5A5 5 0 0 1 7 13c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z" /></svg>
           Más vendidos
@@ -73,7 +63,7 @@ export default function Tienda() {
         <button type="button" className={`chip-filtro chip-filtro--rayo ${ofertas ? 'chip-filtro--activo' : ''}`} aria-pressed={ofertas}
                 onClick={() => fijar({ ofertas: ofertas ? '' : '1', orden: ofertas ? '' : 'descuento' })}>
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
-          Ofertas que terminan hoy
+          Ofertas del día
         </button>
         <Desplegable etiqueta={<span>Ordenar por: <b>{ORDENES[orden]}</b></span>}>
           {(cerrar) => (
@@ -84,7 +74,7 @@ export default function Tienda() {
             </div>
           )}
         </Desplegable>
-        <Desplegable etiqueta={categoria ? `Categoría: ${categoria}` : 'Categoría'} activo={Boolean(categoria)}>
+        <Desplegable etiqueta={categoria || 'Categoría'} activo={Boolean(categoria)}>
           {(cerrar) => (
             <div className="desplegable__opciones" role="radiogroup" aria-label="Categoría">
               <label className="casilla"><input type="radio" name="cat-tienda" checked={!categoria} onChange={() => { fijar({ categoria: '' }); cerrar(); }} /><span>Todas</span></label>
@@ -109,15 +99,30 @@ export default function Tienda() {
         <button type="button" className={`chip-filtro ${disponibles ? 'chip-filtro--activo' : ''}`} aria-pressed={disponibles} onClick={() => fijar({ disponibles: disponibles ? '' : '1' })}>
           Solo disponibles
         </button>
-        {hayFiltros && <button type="button" className="chip-filtro chip-filtro--limpiar" onClick={limpiar}>Quitar filtros</button>}
+        {hayFiltros && <button type="button" className="chip-filtro chip-filtro--limpiar" onClick={limpiar} title="Quitar todos los filtros"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>Quitar</button>}
+        <label className="buscador buscador--chico barra-filtros__buscar">
+          <span className="solo-lector">Buscar productos</span>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar producto…" />
+        </label>
+        <p className="barra-filtros__cuenta" aria-live="polite">{cargando ? 'Buscando…' : `${productos.length} ${productos.length === 1 ? 'producto' : 'productos'}`}</p>
       </div>
+  );
 
-      {![...params.keys()].length && <EscaparateTienda categorias={categorias} />}
-      {![...params.keys()].length && <h2 className="fila-titulo fila-titulo--todos">Todos los productos</h2>}
-      {!cargando && !error && vendidos && !ofertas && <PodioVendidos productos={productos} categoria={categoria} />}
-      {!cargando && !error && ofertas && <BannerOfertas productos={productos} />}
-
-      <p className="tenue" aria-live="polite">{cargando ? 'Buscando…' : `${productos.length} ${productos.length === 1 ? 'producto' : 'productos'}`}</p>
+  return (
+    <div className="contenedor pagina pagina--resultados">
+      <h1 className="solo-lector">{titulo}</h1>
+      <Migas pasos={titulo === 'Tienda' ? [['Tienda']] : [['Tienda', '/tienda'], [titulo]]} />
+      {inicio ? <EscaparateTienda categorias={categorias}>{barra}</EscaparateTienda> : (
+        <>
+          {cargando && !productos.length ? <div className="vitrina vitrina--cargando" aria-hidden="true" />
+            : ofertas ? <BannerOfertas productos={productos} />
+            : vendidos ? <PodioVendidos productos={productos} categoria={categoria} />
+            : <PortadaCategoria titulo={titulo} productos={productos} />}
+          {barra}
+        </>
+      )}
+      {inicio && <h2 className="fila-titulo fila-titulo--todos">{q.trim() ? `Resultados de «${q.trim()}»` : 'Todos los productos'}</h2>}
       {error && <p role="alert" className="error">{error}</p>}
       {!cargando && productos.length === 0 && (
         <div className="vacio"><p>No hay productos con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>

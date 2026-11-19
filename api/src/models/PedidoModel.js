@@ -1,5 +1,5 @@
 // MODELO: pedidos de la tienda.
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 export const PedidoModel = {
   validarCliente(cliente = {}) {

@@ -1,10 +1,10 @@
 // Chat de ayuda en la esquina inferior derecha (siempre visible).
-// Sofi es una asistente virtual: responde las preguntas frecuentes con el patrón Chain of Responsibility (lib/asistente.js)
+// Sofi es una asistente virtual: responde las preguntas frecuentes con el patrón Chain of Responsibility (patrones/cadenaAsistente.js)
 // y, si no sabe, ofrece pasar con una persona del salón por WhatsApp.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { crearCadena, normalizar, PREGUNTAS_RAPIDAS } from '../lib/asistente.js';
+import { crearCadena, normalizar, PREGUNTAS_RAPIDAS } from '../patrones/cadenaAsistente.js';
 import { SALON, urlFoto } from '../config.js';
 
 // La foto que el salón sube en el panel tiene prioridad sobre la de config.js
@@ -104,7 +104,7 @@ export default function ChatAsistente() {
   const [abierto, setAbierto] = useState(false);
   const [mensajes, setMensajes] = useState(() => leer() || [{
     de: 'sofi', hora: hora(),
-    texto: `¡Hola! 👋 Soy Sofi, la asistente virtual de ${SALON.nombre}. Te ayudo con citas, precios, horarios, pagos y envíos. ¿Qué necesitas?`,
+    texto: `¡Hola! Soy Sofi, la asistente virtual de ${SALON.nombre}. Te ayudo con citas, precios, horarios, pagos y envíos. ¿Qué necesitas?`,
     opciones: PREGUNTAS_RAPIDAS
   }]);
   const [texto, setTexto] = useState('');
@@ -146,7 +146,7 @@ export default function ChatAsistente() {
   }
 
   const reiniciar = () => { setMensajes([{ de: 'sofi', hora: hora(), texto: '¡Empecemos de nuevo! ¿En qué te ayudo?', opciones: PREGUNTAS_RAPIDAS }]); };
-  if (pathname.startsWith('/admin')) return null;
+  if (pathname.startsWith('/admin') || pathname.startsWith('/equipo')) return null;
 
   return (
     <div className={`chat ${abierto ? 'chat--abierto' : ''}`}>
@@ -183,7 +183,7 @@ export default function ChatAsistente() {
 
       {!abierto && saludo && (
         <button type="button" className="chat__saludo" onClick={() => setAbierto(true)}>
-          <b>¡Hola! Soy Sofi 👋</b> ¿Te ayudo a reservar o con alguna duda?
+          <b>¡Hola! Soy Sofi</b> ¿Te ayudo a reservar o con alguna duda?
         </button>
       )}
       <button type="button" className="chat__boton" onClick={() => setAbierto(!abierto)} aria-expanded={abierto} aria-label={abierto ? 'Cerrar el chat' : 'Abrir el chat de ayuda con Sofi'}>

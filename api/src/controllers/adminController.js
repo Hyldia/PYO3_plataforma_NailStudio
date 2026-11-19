@@ -1,20 +1,20 @@
 // CONTROLADOR del panel del salón: agenda con calendario, avisos por WhatsApp,
-// productos, equipo y pedidos. Los mensajes usan los patrones de patterns/mensajes.js.
+// productos, equipo y pedidos. Los mensajes usan los patrones de patrones/plantillaMensajes.js.
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
-import { UPLOADS_DIR } from '../db/connection.js';
+import { UPLOADS_DIR } from '../db/conexion.js';
 import { CitaModel } from '../models/CitaModel.js';
 import { ProductoModel } from '../models/ProductoModel.js';
 import { EspecialistaModel } from '../models/EspecialistaModel.js';
 import { PedidoModel } from '../models/PedidoModel.js';
 import { MensajeModel } from '../models/MensajeModel.js';
 import { FotoModel } from '../models/FotoModel.js';
-import { aplicarAccion } from '../patterns/estadoCita.js';
-import { cambiarEstadoPedido } from '../patterns/estadoPedido.js';
-import { prepararMensaje, TIPOS_MENSAJE } from '../patterns/mensajes.js';
-import { eventos } from '../patterns/eventos.js';
+import { aplicarAccion } from '../patrones/estadoCita.js';
+import { cambiarEstadoPedido } from '../patrones/estadoPedido.js';
+import { prepararMensaje, TIPOS_MENSAJE } from '../patrones/plantillaMensajes.js';
+import { eventos } from '../patrones/observadorEventos.js';
 import ExcelJS from 'exceljs';
-import { SALON } from '../patterns/mensajes.js';
+import { SALON } from '../patrones/plantillaMensajes.js';
 
 const borrarArchivo = (nombre) => nombre && !nombre.startsWith('http') && unlink(join(UPLOADS_DIR, nombre)).catch(() => {});
 const MES = /^\d{4}-\d{2}$/;
@@ -26,11 +26,11 @@ function mensajeDeCita(cita, tipo, extra = {}, soloVista = false) {
   return m;
 }
 
-// Cancela una cita con el patrón State y prepara el aviso
-function cancelarCita(cita, { motivo, tipo = 'cancelacion', nuevaFecha, nuevaHora, nota }) {
+// Cancela una cita con el patrón State y prepara el aviso (también la usa el portal del equipo)
+export function cancelarCita(cita, { motivo, tipo = 'cancelacion', nuevaFecha, nuevaHora, nota, quien = '' }) {
   const nuevo = aplicarAccion(cita.estado, 'cancelar');
   CitaModel.cambiarEstado(cita.id, nuevo);
-  CitaModel.guardarMotivo(cita.id, motivo || 'Emergencia');
+  CitaModel.guardarMotivo(cita.id, `${motivo || 'Emergencia'}${quien ? ` (la canceló ${quien})` : ''}`);
   eventos.emit('cita:cancelada', { citaId: cita.id });
   return { cita: CitaModel.buscarPorId(cita.id), mensaje: mensajeDeCita(cita, tipo, { motivo, nuevaFecha, nuevaHora, nota }) };
 }

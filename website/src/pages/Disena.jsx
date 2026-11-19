@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { DisenoBuilder, DISENO_INICIAL, describir, normalizar } from '../lib/disenoBuilder.js';
+import { DisenoBuilder, DISENO_INICIAL, describir, normalizar } from '../patrones/constructorDiseno.js';
 import { ESMALTES, FAMILIAS_ESMALTE, OPCIONES_DISENO, PRECIO_DISENO, EXTRA_TIPO, DEDOS, esmalte, calcularDiseno } from '../lib/esmaltes.js';
 import { useReserva } from '../context/ReservaContext.jsx';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { api } from '../lib/api.js';
 import { dinero } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
-import { Una, datosUna } from '../components/MuestraUnas.jsx';
+import { Una, datosUna } from '../components/DibujoUnas.jsx';
 import ManoFoto, { TONOS_FOTO } from '../components/ManoFoto.jsx';
 import Foto from '../components/Foto.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
+import Migas from '../components/Migas.jsx';
 
 const mas = (n) => (n ? `+${dinero(n)}` : 'Incluido');
 const BUSCAR_DECO = { Francesa: 'francesa', 'Francesa de color': 'francesa', 'Baby boomer': 'degradado', 'Ombré': 'degradado', 'Mármol': 'mármol', Corazones: 'corazones',
@@ -130,6 +131,7 @@ export default function Disena() {
 
   return (
     <div className="estudio-pagina">
+      <div className="contenedor migas-arriba"><Migas pasos={[['Diseña tus uñas']]} /></div>
       <span className="estudio-brillo estudio-brillo--1" aria-hidden="true" />
       <span className="estudio-brillo estudio-brillo--2" aria-hidden="true" />
       <div className="estudio">

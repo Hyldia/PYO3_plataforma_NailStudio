@@ -1,0 +1,106 @@
+/* Animaciones y adornos (se apagan con "reducir movimiento") */
+
+/* =====================================================================
+   Animaciones y adornos (se desactivan con "reducir movimiento")
+   ===================================================================== */
+@keyframes flotar { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-14px) rotate(6deg); } }
+@keyframes titilar { 0%, 100% { opacity: 0.35; transform: scale(0.8) rotate(0); } 50% { opacity: 1; transform: scale(1.15) rotate(20deg); } }
+@keyframes degradado { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes brillo { 0% { transform: translateX(-120%) skewX(-20deg); } 60%, 100% { transform: translateX(260%) skewX(-20deg); } }
+@keyframes latido { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes rebote { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
+@keyframes tic { from { transform: translateY(-40%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes desplazar { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes subir { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+@keyframes mecer { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* Aparición al hacer scroll */
+.aparece { opacity: 0; transform: translateY(26px); }
+.aparece--visible { animation: subir 0.6s cubic-bezier(.2, .7, .2, 1) var(--retraso, 0ms) both; }
+
+/* Portadas con degradado en movimiento, adornos y onda inferior */
+.banner, .servicios-hero { position: relative; isolation: isolate; background-size: 220% 220% !important; animation: degradado 14s ease infinite; }
+.servicios-hero { background: linear-gradient(120deg, #4A0E26, var(--vino-hondo), var(--vino), #C2507C, var(--vino)); }
+.banner { background: linear-gradient(120deg, #4A0E26, var(--vino-hondo), var(--vino), #C2507C, var(--vino-hondo)); }
+.adornos { position: absolute; inset: 0; overflow: hidden; z-index: -1; pointer-events: none; }
+.adorno { position: absolute; display: block; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.25)); }
+.adorno--frasco, .adorno--corazon { animation: flotar 6s ease-in-out var(--d) infinite; }
+.adorno--destello { animation: titilar 3s ease-in-out var(--d) infinite; }
+.onda { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: clamp(24px, 4vw, 56px); fill: var(--fondo); }
+.banner__rejilla, .servicios-hero__rejilla { padding-bottom: clamp(48px, 7vw, 96px) !important; }
+@media (max-width: 860px) { .adorno--frasco { opacity: 0.5; } }
+
+/* Recuadros de datos de Servicios: vidrio, ícono y brillo */
+.servicios-hero__datos li { position: relative; overflow: hidden; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(40, 0, 20, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform 0.25s ease, background 0.25s ease; animation: mecer 5s ease-in-out infinite; }
+.servicios-hero__datos li:nth-child(2) { animation-delay: 0.6s; }
+.servicios-hero__datos li:nth-child(3) { animation-delay: 1.2s; }
+.servicios-hero__datos li:hover { transform: translateY(-6px) scale(1.03); background: rgba(255, 255, 255, 0.2); }
+.servicios-hero__datos li::after { content: ''; position: absolute; top: 0; left: 0; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent); animation: brillo 4.5s ease-in-out infinite; }
+.servicios-hero__datos li:nth-child(2)::after { animation-delay: 1.5s; }
+.servicios-hero__datos li:nth-child(3)::after { animation-delay: 3s; }
+.servicios-hero__datos strong { font-size: clamp(1.6rem, 2.6vw, 2.4rem); line-height: 1; }
+.dato__icono { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 214, 228, 0.9), rgba(255, 255, 255, 0.55)); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); margin-bottom: 8px; }
+@media (min-width: 1200px) { .servicios-hero__datos li { padding: 22px; } }
+
+/* Botones con brillo que cruza */
+.boton, .encabezado__reservar { position: relative; overflow: hidden; } .boton { transition: background 0.15s, transform 0.15s, box-shadow 0.2s; }
+.boton:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(110, 21, 57, 0.25); }
+.boton:active { transform: translateY(0) scale(0.98); }
+.banner .boton--claro::after, .servicios-hero .boton--claro::after, .encabezado__reservar::after {
+  content: ''; position: absolute; top: 0; left: 0; width: 35%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: brillo 3.8s ease-in-out infinite; pointer-events: none; }
+.boton:disabled::after { display: none; }
+
+/* Tarjetas: zoom de la foto, etiqueta que late y carrito que rebota */
+.tarjeta-producto__foto, .servicio__foto { overflow: hidden; }
+.tarjeta-producto__foto .foto img, .tarjeta-producto__foto svg, .servicio__foto img { transition: transform 0.5s ease; }
+.tarjeta-producto:hover .tarjeta-producto__foto .foto img, .tarjeta-producto:hover .tarjeta-producto__foto svg, .servicio:hover .servicio__foto img { transform: scale(1.08); }
+.tarjeta-producto__descuento, .insignia-servicio--descuento { animation: latido 2.2s ease-in-out infinite; }
+.tarjeta-producto__agregar { transition: transform 0.2s, background 0.2s, color 0.2s; }
+.tarjeta-producto__agregar:hover { transform: rotate(-10deg) scale(1.12); }
+.encabezado__cuenta { display: inline-block; animation: rebote 0.45s ease; }
+.banner__producto { animation: mecer 4.5s ease-in-out infinite; }
+.banner__productos li:nth-child(2) .banner__producto { animation-delay: 0.7s; }
+.banner__productos li:nth-child(3) .banner__producto { animation-delay: 1.4s; }
+.banner__producto:hover { animation-play-state: paused; }
+.cuenta-regresiva__digitos .tic { animation: tic 0.35s ease; }
+
+/* Barra de anuncios en movimiento */
+.anuncios { overflow: hidden; }
+.anuncios__pista { overflow: hidden; }
+.anuncios .anuncios__lista { display: flex; width: max-content; padding: 8px 0; margin: 0; animation: desplazar 32s linear infinite; grid-template-columns: none; }
+.anuncios:hover .anuncios__lista, .anuncios:focus-within .anuncios__lista { animation-play-state: paused; }
+.anuncios .anuncios__lista li { display: block !important; border-left: none !important; }
+.anuncios .anuncios__lista a { flex-direction: row; gap: 8px; align-items: center; padding: 2px 32px; white-space: nowrap; }
+.anuncios__brillo { color: #F6C5D6; }
+
+/* Categorías en círculos */
+.categorias { padding-top: 8px; }
+.categorias__lista { list-style: none; margin: 0; padding: 8px 0 4px; display: flex; gap: clamp(12px, 2vw, 28px); overflow-x: auto; scrollbar-width: none; justify-content: space-between; }
+.categorias__lista::-webkit-scrollbar { display: none; }
+.categoria-circulo a { display: flex; flex-direction: column; align-items: center; gap: 8px; width: clamp(76px, 8vw, 112px); text-decoration: none; color: var(--tinta); text-align: center; }
+.categoria-circulo__imagen { width: clamp(72px, 7.5vw, 104px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 3px solid var(--superficie);
+  box-shadow: 0 6px 16px rgba(110, 21, 57, 0.15); transition: transform 0.25s, box-shadow 0.25s; background: var(--rubor); }
+.categoria-circulo__imagen .foto { width: 100%; height: 100%; }
+.categoria-circulo a:hover .categoria-circulo__imagen { transform: translateY(-6px) rotate(-4deg); box-shadow: 0 12px 24px rgba(110, 21, 57, 0.25); border-color: var(--vino); }
+.categoria-circulo__nombre { font-size: 0.85rem; font-weight: 700; line-height: 1.2; }
+
+/* Aviso flotante del carrito */
+.aviso-flotante { position: fixed; right: 20px; bottom: 20px; z-index: 60; display: flex; align-items: center; gap: 12px; max-width: min(360px, calc(100% - 40px));
+  padding: 14px 16px; border-radius: 14px; background: var(--fondo-oscuro); color: #fff; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(140%); opacity: 0; transition: transform 0.35s cubic-bezier(.2, .9, .3, 1.3), opacity 0.25s; pointer-events: none; }
+.aviso-flotante--visible { transform: none; opacity: 1; pointer-events: auto; }
+.aviso-flotante__check { width: 32px; height: 32px; border-radius: 50%; background: var(--confianza); display: flex; align-items: center; justify-content: center; font-weight: 800; flex: 0 0 auto; animation: rebote 0.5s ease; }
+.aviso-flotante__boton { margin-left: auto; border: 1px solid rgba(255, 255, 255, 0.5); background: transparent; color: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+@media (max-width: 600px) { .aviso-flotante { left: 12px; right: 12px; bottom: 12px; max-width: none; } }
+
+/* Respeta "reducir movimiento" del sistema: sin animaciones, todo visible */
+@media (prefers-reduced-motion: reduce) {
+  .aparece { opacity: 1; transform: none; }
+  .anuncios .anuncios__lista { animation: none; flex-wrap: wrap; justify-content: center; width: auto; }
+  .anuncios .anuncios__lista li[aria-hidden="true"] { display: none !important; }
+}

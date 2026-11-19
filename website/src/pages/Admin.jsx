@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
 import { api, sesionAdmin } from '../lib/api.js';
 import { useTitulo } from '../lib/hooks.js';
+import { dinero } from '../config.js';
 import Foto from '../components/Foto.jsx';
 import Modal from '../components/Modal.jsx';
 import AgendaAdmin from './admin/AgendaAdmin.jsx';
 import ProductosAdmin from './admin/ProductosAdmin.jsx';
 import EquipoAdmin from './admin/EquipoAdmin.jsx';
 import PedidosAdmin from './admin/PedidosAdmin.jsx';
-import { ZonaFotos, BotonFoto, formData } from './admin/comunes.jsx';
+import ContrasenaAdmin from './admin/ContrasenaAdmin.jsx';
+import ServiciosAdmin from './admin/ServiciosAdmin.jsx';
+import PagosEquipo from './admin/PagosEquipo.jsx';
+import ReportesAdmin from './admin/ReportesAdmin.jsx';
+import Campanita from './admin/Campanita.jsx';
+import { ZonaFotos, BotonFoto, formData } from './admin/piezasPanel.jsx';
 
 const CATEGORIAS = ['Manicure', 'Acrílicas', 'Polygel', 'Gel', 'Pedicure', 'Nail art'];
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
@@ -17,17 +23,24 @@ const ACABADOS = ['Brillante', 'Mate', 'Chrome', 'Glitter'];
 function Entrar({ onEntrar }) {
   const [clave, setClave] = useState('');
   const [error, setError] = useState('');
+  const [ver, setVer] = useState(false);
   const entrar = async (e) => {
     e.preventDefault();
-    sesionAdmin.guardar(clave);
-    try { await api.admin.verificar(); onEntrar(); } catch (err) { sesionAdmin.cerrar(); setError(err.message); }
+    try {
+      const r = await api.admin.entrar(clave);
+      sesionAdmin.guardar(r.token);
+      onEntrar(r.contrasenaInicial);
+    } catch (err) { setError(err.message); }
   };
   return (
     <form className="caja admin-entrar" onSubmit={entrar}>
       <h1>Acceso del salón</h1>
       <div className="campo">
-        <label htmlFor="clave">Clave de administración</label>
-        <input id="clave" type="password" autoComplete="current-password" value={clave} onChange={(e) => setClave(e.target.value)} />
+        <label htmlFor="clave">Contraseña del salón</label>
+        <div className="acceso__clave">
+          <input id="clave" type={ver ? 'text' : 'password'} autoComplete="current-password" value={clave} onChange={(e) => setClave(e.target.value)} />
+          <button type="button" onClick={() => setVer(!ver)} aria-pressed={ver}>{ver ? 'Ocultar' : 'Ver'}</button>
+        </div>
       </div>
       {error && <p role="alert" className="error">{error}</p>}
       <button type="submit" className="boton">Entrar</button>
@@ -46,7 +59,7 @@ const Elegir = ({ id, etiqueta, opciones, valor, onCambio, vacio = true }) => (
 );
 
 function Galeria() {
-  const VACIO = { titulo: '', descripcion: '', categoria: 'Manicure', forma: '', color: '', acabado: '', etiquetas: '', destacada: false };
+  const VACIO = { titulo: '', descripcion: '', categoria: 'Manicure', forma: '', color: '', acabado: '', etiquetas: '', destacada: false, precio: '' };
   const [datos, setDatos] = useState(VACIO);
   const [archivos, setArchivos] = useState([]);
   const [fotos, setFotos] = useState([]);
@@ -56,6 +69,7 @@ function Galeria() {
   const [buscar, setBuscar] = useState('');
   const [cat, setCat] = useState('');
   const [visibles, setVisibles] = useState(24);
+  const [subiendoAbierto, setSubiendoAbierto] = useState(false);
 
   // Trae todas las fotos (el servidor entrega de a 100)
   const cargar = async () => {
@@ -81,7 +95,7 @@ function Galeria() {
         await api.admin.subirFoto(fd);
       }
       setEstado({ subiendo: false, mensaje: `${archivos.length} ${archivos.length === 1 ? 'foto subida' : 'fotos subidas'}.`, error: '' });
-      setArchivos([]); setDatos(VACIO); cargar();
+      setArchivos([]); setDatos(VACIO); setSubiendoAbierto(false); cargar();
     } catch (err) { setEstado({ subiendo: false, mensaje: '', error: err.message }); }
   }
 
@@ -105,6 +119,10 @@ function Galeria() {
         <Elegir id={`${prefijo}-forma`} etiqueta="Forma" opciones={FORMAS} valor={d.forma} onCambio={(v) => set({ ...d, forma: v })} />
         <Elegir id={`${prefijo}-color`} etiqueta="Color" opciones={COLORES} valor={d.color} onCambio={(v) => set({ ...d, color: v })} />
         <Elegir id={`${prefijo}-acab`} etiqueta="Acabado" opciones={ACABADOS} valor={d.acabado} onCambio={(v) => set({ ...d, acabado: v })} />
+      </div>
+      <div className="campo campo--precio">
+        <label htmlFor={`${prefijo}-precio`}>Precio de este diseño (₡) <span className="tenue">(opcional: cualquier monto; vacío = precio normal del servicio)</span></label>
+        <input id={`${prefijo}-precio`} type="number" min="0" step="any" inputMode="numeric" value={d.precio ?? ''} onChange={(e) => set({ ...d, precio: e.target.value })} placeholder="Ej.: 18500" />
       </div>
       <div className="campo"><label htmlFor={`${prefijo}-desc`}>Descripción <span className="tenue">(se lee en voz alta para personas ciegas)</span></label><input id={`${prefijo}-desc`} value={d.descripcion || ''} onChange={(e) => set({ ...d, descripcion: e.target.value })} placeholder="Ej.: Uñas largas almendradas, base nude con punta blanca" /></div>
       <div className="campo"><label htmlFor={`${prefijo}-tags`}>Palabras clave para el buscador</label><input id={`${prefijo}-tags`} value={d.etiquetas || ''} onChange={(e) => set({ ...d, etiquetas: e.target.value })} placeholder="boda, elegante, verano" /></div>
@@ -141,8 +159,14 @@ function Galeria() {
   return (
     <section aria-labelledby="t-galeria-admin">
       {modal}
-      <h2 id="t-galeria-admin">Galería</h2>
+      <div className="admin__cabeza">
+        <div><h2 id="t-galeria-admin">Galería</h2><p className="tenue">Las fotos de diseños que ven las clientas.</p></div>
+        {!subiendoAbierto && <button type="button" className="boton" onClick={() => setSubiendoAbierto(true)}>+ Agregar nueva imagen</button>}
+      </div>
+      {estado.mensaje && !subiendoAbierto && <p role="status" className="aviso-ok">{estado.mensaje}</p>}
+      {subiendoAbierto && (
       <form className="subida" onSubmit={subir}>
+        <button type="button" className="subida__cerrar" onClick={() => { setSubiendoAbierto(false); setArchivos([]); setEstado({ subiendo: false, mensaje: '', error: '' }); }} aria-label="Cerrar sin subir">×</button>
         <div className="subida__cabeza">
           <span className="subida__icono" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M6 10l6-6 6 6M4 20h16" /></svg></span>
           <div><h3>Subir fotos nuevas</h3><p className="tenue">Arrastra varias a la vez: se guardan con los mismos datos y títulos numerados.</p></div>
@@ -155,6 +179,7 @@ function Galeria() {
         {estado.mensaje && <p role="status" className="aviso-ok">{estado.mensaje}</p>}
         <button type="submit" className="boton subida__boton" disabled={estado.subiendo || !archivos.length}>{estado.subiendo ? 'Subiendo…' : archivos.length ? `Subir ${archivos.length} ${archivos.length === 1 ? 'foto' : 'fotos'} a la galería` : 'Elige fotos para subir'}</button>
       </form>
+      )}
 
       <div className="filtros-admin">
         <label className="filtros-admin__buscar"><span className="solo-lector">Buscar diseño</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setVisibles(24); }} placeholder="Buscar por título, color o forma" /></label>
@@ -171,10 +196,10 @@ function Galeria() {
             <div className="admin-tarjeta__info">
               <p className="admin-tarjeta__nombre">{f.titulo}</p>
               <p className="editar-foto__chips">{[f.categoria, f.forma, f.color, f.acabado].filter(Boolean).map((x) => <span key={x}>{x}</span>)}</p>
-              <p className="tenue">{f.vistas} vistas</p>
+              <p className="tenue">{f.precio ? <strong className="galeria-admin__precio">{dinero(f.precio)}</strong> : 'Precio del servicio'} · {f.vistas} vistas</p>
             </div>
             <div className="admin-tarjeta__botones">
-              <button type="button" className="boton boton--chico" onClick={() => setEditando({ ...f, destacada: !!f.destacada })}>Editar<span className="solo-lector"> {f.titulo}</span></button>
+              <button type="button" className="boton boton--chico" onClick={() => setEditando({ ...f, destacada: !!f.destacada, precio: f.precio ?? '' })}>Editar<span className="solo-lector"> {f.titulo}</span></button>
               <button type="button" className="boton boton--chico boton--peligro" onClick={() => borrar(f)}>Borrar<span className="solo-lector"> {f.titulo}</span></button>
             </div>
           </li>
@@ -186,114 +211,75 @@ function Galeria() {
 }
 
 
-// Nombres legibles de las tablas para el panel
-const NOMBRE_TABLA = {
-  citas: 'Citas', disenos: 'Diseños', recordatorios: 'Recordatorios', pedidos: 'Pedidos', pedido_items: 'Productos de cada pedido',
-  productos: 'Productos', servicios: 'Servicios', especialistas: 'Especialistas', fotos: 'Fotos de la galería', ajustes: 'Ajustes internos'
+const SECCIONES = {
+  agenda: ['Agenda', AgendaAdmin], servicios: ['Servicios', ServiciosAdmin], galeria: ['Galería', Galeria], productos: ['Productos', ProductosAdmin],
+  equipo: ['Equipo', EquipoAdmin], pagos: ['Pagos al equipo', PagosEquipo], pedidos: ['Pedidos', PedidosAdmin], graficas: ['Gráficas', ReportesAdmin],
+  contrasena: ['Contraseña', ContrasenaAdmin]
 };
-
-function BaseDeDatos() {
-  const [tablas, setTablas] = useState([]);
-  const [tabla, setTabla] = useState('citas');
-  const [datos, setDatos] = useState(null);
-  const [pagina, setPagina] = useState(1);
-  const [texto, setTexto] = useState('');
-  const [q, setQ] = useState('');
-  const [verSql, setVerSql] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => { api.admin.tablas().then(setTablas).catch((e) => setError(e.message)); }, []);
-  useEffect(() => { const t = setTimeout(() => { setQ(texto); setPagina(1); }, 300); return () => clearTimeout(t); }, [texto]);
-  useEffect(() => {
-    api.admin.tabla(tabla, { pagina, porPagina: 25, q }).then((d) => { setDatos(d); setError(''); }).catch((e) => setError(e.message));
-  }, [tabla, pagina, q]);
-
-  const elegir = (t) => { setTabla(t); setPagina(1); setTexto(''); setQ(''); };
-  const info = tablas.find((t) => t.nombre === tabla);
-  const paginas = datos ? Math.max(1, Math.ceil(datos.total / datos.porPagina)) : 1;
-  const celda = (v) => (v === null || v === undefined ? <span className="tenue">vacío</span>
-    : typeof v === 'string' && v.startsWith('http') ? <a className="enlace" href={v} target="_blank" rel="noreferrer">ver</a>
-    : String(v));
-
-  return (
-    <section aria-labelledby="t-bd">
-      <div className="admin__cabeza">
-        <h2 id="t-bd">Base de datos</h2>
-        <p className="tenue">Solo lectura. Así se ve lo que el sitio guarda en SQLite.</p>
-      </div>
-      {error && <p role="alert" className="error">{error}</p>}
-      <div className="bd">
-        <nav className="bd__tablas" aria-label="Tablas">
-          {tablas.map((t) => (
-            <button key={t.nombre} type="button" aria-current={tabla === t.nombre ? 'true' : undefined} onClick={() => elegir(t.nombre)}>
-              <span>{NOMBRE_TABLA[t.nombre] || t.nombre}<span className="bd__tecnico">{t.nombre}</span></span>
-              <span className="bd__cuenta">{t.filas}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="bd__contenido">
-          <div className="barra-busqueda">
-            <label className="buscador">
-              <span className="solo-lector">Buscar en la tabla</span>
-              <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={`Buscar en ${NOMBRE_TABLA[tabla] || tabla}`} />
-            </label>
-            <button type="button" className="boton boton--contorno boton--chico" onClick={() => setVerSql(!verSql)} aria-expanded={verSql}>
-              {verSql ? 'Ocultar estructura' : 'Ver estructura (SQL)'}
-            </button>
-            <button type="button" className="boton boton--chico" onClick={() => api.admin.descargarCsv(tabla).catch((e) => setError(e.message))}>Descargar CSV</button>
-          </div>
-          {verSql && info && <pre className="bd__sql">{info.sql}</pre>}
-          {datos && (
-            <>
-              <p aria-live="polite"><strong>{datos.total}</strong> {datos.total === 1 ? 'fila' : 'filas'}{q && ` que contienen «${q}»`}</p>
-              <div className="tabla-envoltura">
-                <table className="tabla tabla--datos">
-                  <caption className="solo-lector">Tabla {tabla}, página {pagina} de {paginas}</caption>
-                  <thead><tr>{datos.columnas.map((c) => <th key={c} scope="col">{c}</th>)}</tr></thead>
-                  <tbody>
-                    {datos.filas.map((f, i) => (
-                      <tr key={f.id ?? i}>{datos.columnas.map((c) => <td key={c}>{celda(f[c])}</td>)}</tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="paginacion">
-                <button type="button" className="boton boton--contorno boton--chico" disabled={pagina <= 1} onClick={() => setPagina(pagina - 1)}>Anterior</button>
-                <span>Página {pagina} de {paginas}</span>
-                <button type="button" className="boton boton--contorno boton--chico" disabled={pagina >= paginas} onClick={() => setPagina(pagina + 1)}>Siguiente</button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const SECCIONES = { agenda: ['Agenda', AgendaAdmin], galeria: ['Galería', Galeria], productos: ['Productos', ProductosAdmin], equipo: ['Equipo', EquipoAdmin], pedidos: ['Pedidos', PedidosAdmin], bd: ['Base de datos', BaseDeDatos] };
+// Menú del panel ordenado por grupos, cada opción con su ícono
+const GRUPOS = [
+  ['Salón', ['agenda', 'servicios', 'galeria']],
+  ['Tienda', ['productos', 'pedidos']],
+  ['Equipo', ['equipo', 'pagos']],
+  ['Números', ['graficas']],
+  ['Seguridad', ['contrasena']]
+];
+const ICONOS = {
+  agenda: <><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
+  servicios: <><path d="M9 3h6v6l3 3v9H6v-9l3-3z" /><path d="M9 14h6" /></>,
+  galeria: <><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="2" /><path d="m21 17-5-5-9 8" /></>,
+  productos: <><path d="M4 7l8-4 8 4v10l-8 4-8-4z" /><path d="M4 7l8 4 8-4M12 11v10" /></>,
+  pedidos: <><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" /><path d="M9 8h6M9 12h6" /></>,
+  equipo: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5" /><circle cx="17.5" cy="9" r="2.5" /><path d="M16 14.6c2.6.2 4.6 2 5.3 4.9" /></>,
+  pagos: <><rect x="2.5" y="6" width="19" height="13" rx="2.5" /><circle cx="12" cy="12.5" r="2.5" /><path d="M6 9.5v6M18 9.5v6" /></>,
+  graficas: <><path d="M4 20V10M10 20V4M16 20v-7M21 20H3" /></>,
+  contrasena: <><rect x="4" y="10.5" width="16" height="10.5" rx="2.5" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /><circle cx="12" cy="15.5" r="1.4" /></>
+};
 
 export default function Admin() {
   useTitulo('Panel del salón');
   const [dentro, setDentro] = useState(false);
   const [seccion, setSeccion] = useState('agenda');
+  const [inicial, setInicial] = useState(false);
 
-  useEffect(() => { if (sesionAdmin.obtener()) api.admin.verificar().then(() => setDentro(true)).catch(() => sesionAdmin.cerrar()); }, []);
+  useEffect(() => { if (sesionAdmin.obtener()) api.admin.verificar().then((r) => { setDentro(true); setInicial(r.contrasenaInicial); }).catch(() => sesionAdmin.cerrar()); }, []);
 
-  if (!dentro) return <div className="contenedor pagina"><Entrar onEntrar={() => setDentro(true)} /></div>;
+  if (!dentro) return <div className="contenedor pagina"><Entrar onEntrar={(ini) => { setDentro(true); setInicial(ini); }} /></div>;
   const Seccion = SECCIONES[seccion][1];
+  const salir = async () => { await api.admin.salir().catch(() => {}); sesionAdmin.cerrar(); setDentro(false); };
 
   return (
     <div className="contenedor pagina admin">
       <div className="admin__cabeza">
         <h1>Panel del salón</h1>
-        <button type="button" className="enlace enlace--boton" onClick={() => { sesionAdmin.cerrar(); setDentro(false); }}>Salir</button>
+        <div className="admin__arriba">
+          <Campanita seccion={seccion} onIr={(s) => { setSeccion(s); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+          <button type="button" className="enlace enlace--boton" onClick={salir}>Salir</button>
+        </div>
       </div>
-      <nav className="admin__nav" aria-label="Secciones del panel">
-        {Object.entries(SECCIONES).map(([clave, [texto]]) => (
-          <button key={clave} type="button" aria-current={seccion === clave ? 'page' : undefined} onClick={() => setSeccion(clave)}>{texto}</button>
-        ))}
-      </nav>
-      <Seccion />
+      {inicial && seccion !== 'contrasena' && (
+        <p className="aviso-alerta" role="alert">
+          Están usando la contraseña inicial del panel. <button type="button" className="enlace enlace--boton" onClick={() => setSeccion('contrasena')}>Cámbienla aquí</button> para que nadie más pueda entrar.
+        </p>
+      )}
+      <div className="panel-marco">
+        <nav className="panel-menu" aria-label="Secciones del panel">
+          {GRUPOS.map(([grupo, claves]) => (
+            <div key={grupo} className="panel-menu__grupo">
+              <p className="panel-menu__titulo">{grupo}</p>
+              {claves.map((clave) => (
+                <button key={clave} type="button" className="panel-menu__opcion" aria-current={seccion === clave ? 'page' : undefined} onClick={() => { setSeccion(clave); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{ICONOS[clave]}</svg>
+                  {SECCIONES[clave][0]}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div className="panel-contenido" key={seccion}>
+          <Seccion onCambiada={() => setInicial(false)} />
+        </div>
+      </div>
     </div>
   );
 }

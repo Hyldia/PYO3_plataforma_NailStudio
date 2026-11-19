@@ -1,6 +1,6 @@
 // MODELO: cuentas de clientas, sus sesiones y sus direcciones (máximo 3).
-import { getDb } from '../db/connection.js';
-import { hashToken, nuevoToken } from '../patterns/autenticacion.js';
+import { getDb } from '../db/conexion.js';
+import { hashToken, nuevoToken } from '../patrones/estrategiaAutenticacion.js';
 
 export const MAX_DIRECCIONES = 3;
 const DIAS_SESION = 60;

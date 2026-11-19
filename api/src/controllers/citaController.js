@@ -5,10 +5,11 @@ import { ServicioModel } from '../models/ServicioModel.js';
 import { EspecialistaModel } from '../models/EspecialistaModel.js';
 import { DisenoModel } from '../models/DisenoModel.js';
 import { RecordatorioModel } from '../models/RecordatorioModel.js';
-import { crearMetodoPago } from '../patterns/pagos.js';
-import { aplicarAccion } from '../patterns/estadoCita.js';
-import { eventos } from '../patterns/eventos.js';
+import { crearMetodoPago } from '../patrones/estrategiaPagos.js';
+import { aplicarAccion } from '../patrones/estadoCita.js';
+import { eventos } from '../patrones/observadorEventos.js';
 import { CuponModel } from '../models/CuponModel.js';
+import { FotoModel } from '../models/FotoModel.js';
 
 export const citaController = {
   disponibilidad(req, res) {
@@ -33,8 +34,11 @@ export const citaController = {
   crear(req, res) {
     const { servicioId, especialistaId, disenoId, fotoRefId, fecha, hora, cliente = {}, notas, metodoPago, pago, recordatorios = {}, cupon: codigoCupon } = req.body;
 
-    const servicio = ServicioModel.buscarPorId(servicioId);
-    if (!servicio) return res.status(400).json({ error: 'Elige un servicio.' });
+    const base = ServicioModel.buscarPorId(servicioId);
+    if (!base) return res.status(400).json({ error: 'Elige un servicio.' });
+    // Si la foto de la galería tiene su propio precio, ese es el que se cobra
+    const precioFoto = fotoRefId ? FotoModel.buscarPorId(fotoRefId)?.precio : null;
+    const servicio = precioFoto != null ? { ...base, precio: precioFoto, precio_oferta: null } : base;
     if (!EspecialistaModel.buscarPorId(especialistaId)) return res.status(400).json({ error: 'Elige una especialista.' });
     if (!CitaModel.esFechaValida(fecha) || !CitaModel.esHoraValida(hora)) return res.status(400).json({ error: 'Elige una fecha y una hora.' });
     const errorCliente = CitaModel.validarCliente(cliente);

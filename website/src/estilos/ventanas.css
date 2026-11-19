@@ -1,0 +1,68 @@
+/* Ventanas emergentes: vista previa rápida y editar en el panel */
+
+/* =====================================================================
+   Ventanas emergentes: vista previa rápida y editar en el panel
+   ===================================================================== */
+.modal { border: none; padding: 0; border-radius: 18px; width: min(560px, calc(100% - 24px)); max-height: calc(100dvh - 32px); background: var(--superficie); box-shadow: 0 30px 80px rgba(0,0,0,0.35); }
+.modal--ancho { width: min(1180px, calc(100% - 24px)); }
+.modal[open] { animation: modal-entra 0.28s cubic-bezier(.2,.8,.2,1) both; }
+.modal::backdrop { background: rgba(20,10,15,0.6); backdrop-filter: blur(2px); animation: aparecer 0.2s ease both; }
+@keyframes modal-entra { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: none; } }
+.modal__cuerpo { padding: clamp(16px, 3vw, 32px); }
+.modal__cabeza { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.modal__cabeza h2 { font-family: var(--sans); font-size: 1.3rem; }
+.modal__cerrar { margin-left: auto; width: 44px; height: 44px; border: none; border-radius: 50%; background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--tinta); }
+.modal__cerrar:hover { background: var(--rubor); }
+body.con-modal { overflow: hidden; }
+
+.vista-rapida { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(16px, 3vw, 40px); align-items: start; }
+@media (max-width: 760px) { .vista-rapida { grid-template-columns: 1fr; } }
+.vista-rapida--cargando { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 300px; }
+.girando--oscuro { border-color: var(--linea); border-top-color: var(--oferta); }
+.vista-rapida__foto { position: relative; aspect-ratio: 4 / 5; border-radius: 12px; overflow: hidden; background: var(--rubor); }
+.vista-rapida__foto > .foto, .vista-rapida__foto > svg, .vista-rapida__foto > div:first-child { width: 100%; height: 100%; }
+.vista-rapida__foto img { transition: transform 0.4s; }
+.vista-rapida__foto:hover img { transform: scale(1.1); }
+.vista-rapida__info { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.vista-rapida__titulo { font-size: 1.15rem; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.vista-rapida__precio { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.vista-rapida__precio s { color: var(--gris); font-size: 1.2rem; }
+.vista-rapida__precio strong { color: var(--oferta); font-size: 2.2rem; line-height: 1; }
+.vista-rapida__chips, .editar-foto__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.vista-rapida__chips span, .editar-foto__chips span { padding: 3px 10px; border-radius: 999px; background: var(--rubor); font-size: 0.85rem; font-weight: 600; color: var(--vino-hondo-texto); }
+.vista-rapida__variantes { display: flex; flex-wrap: wrap; gap: 8px; max-height: 150px; overflow-y: auto; }
+.vista-rapida__variante { padding: 8px 16px; border: 1.5px solid var(--linea); border-radius: 999px; background: var(--papel); font: inherit; font-size: 0.9rem; cursor: pointer; }
+.vista-rapida__variante em { font-style: normal; color: var(--oferta); font-size: 0.75rem; font-weight: 700; }
+.vista-rapida__variante.activa { border-color: var(--tinta); box-shadow: 0 0 0 1px var(--tinta); font-weight: 700; }
+.vista-rapida__variante:disabled { opacity: 0.5; text-decoration: line-through; cursor: not-allowed; }
+.boton-gigante--naranja { background: linear-gradient(90deg, #FF7A1F, var(--oferta)); }
+.vista-rapida .boton-gigante { position: relative; bottom: auto; }
+
+/* Botón "Vista previa" sobre la foto de las tarjetas */
+.tarjeta-producto, .tarjeta-diseno { position: relative; }
+.boton-vista { position: absolute; left: 50%; top: 0; transform: translate(-50%, 0); margin-top: calc(var(--alto-vista, 0px)); z-index: 3; opacity: 0;
+  padding: 8px 18px; border: none; border-radius: 999px; background: rgba(255,255,255,0.95); color: #22161C; font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2); transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
+.tarjeta-producto .boton-vista { top: 38%; }
+.tarjeta-diseno .boton-vista { top: 40%; }
+.tarjeta-producto:hover .boton-vista, .tarjeta-diseno:hover .boton-vista, .boton-vista:focus-visible { opacity: 1; transform: translate(-50%, -4px); pointer-events: auto; }
+@media (hover: none) { .boton-vista { display: none; } }
+
+/* Editar diseño (panel) */
+.editar-foto { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr); gap: 28px; }
+@media (max-width: 760px) { .editar-foto { grid-template-columns: 1fr; } }
+.editar-foto__previa { display: flex; flex-direction: column; gap: 10px; }
+.editar-foto__previa > .foto { aspect-ratio: 4 / 5; border-radius: 12px; }
+.editar-foto__tarjeta { position: relative; padding: 14px; border-radius: 12px; border: 1px solid var(--linea); background: var(--papel); display: flex; flex-direction: column; gap: 6px; }
+.editar-foto__dest { position: static; align-self: flex-start; }
+.editar-foto__campos { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.editar-foto__campos .campos-cuatro { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.editar-foto__campos input, .editar-foto__campos select { width: 100%; min-width: 0; }
+
+/* Leyendas de los grupos del diseñador dentro de la caja */
+.disena-grupo__titulo { float: left; width: 100%; }
+.disena-grupo > *:not(legend) { clear: both; }
+.editar-foto__campos input[type="checkbox"] { width: 20px; flex: 0 0 auto; }
+.editar-foto__campos .casilla { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 560px) { .disena-acento { grid-template-columns: auto auto; } .disena-acento > span:last-child { grid-column: 1 / -1; } .disena-previa__cabeza h2 { font-size: 1.2rem; } }
+.muestra-una, .mano-previa { overflow: hidden; } .disena-pagina, .disena-portada { overflow-x: clip; }

@@ -6,7 +6,7 @@ import { dinero } from '../config.js';
 import Foto from './Foto.jsx';
 import CuentaRegresiva from './CuentaRegresiva.jsx';
 import BotonFavorito from './BotonFavorito.jsx';
-import { useResumenes } from '../lib/resumenes.js';
+import { useResumenes } from '../lib/resumenesOpiniones.js';
 
 export const miles = (n) => (n >= 1000 ? `${(n / 1000).toLocaleString('es-CR', { maximumFractionDigits: 1 })} mil` : String(n));
 // Porcentaje de opiniones positivas de ejemplo, siempre el mismo para cada foto

@@ -4,6 +4,7 @@ import { dinero } from '../config.js';
 import ProductoImagen from './ProductoImagen.jsx';
 import CuentaRegresiva from './CuentaRegresiva.jsx';
 import Contador from './Contador.jsx';
+import Decoracion from './Decoracion.jsx';
 
 const Rayo = ({ tam = 22 }) => <svg aria-hidden="true" width={tam} height={tam} viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>;
 const Corona = () => <svg aria-hidden="true" width="38" height="28" viewBox="0 0 38 28"><path d="M3 24 1 6l10 8 8-13 8 13 10-8-2 18z" fill="#E8B04B" stroke="#B7832A" strokeWidth="1.5" strokeLinejoin="round" /><circle cx="19" cy="17" r="3" fill="#C2185B" /></svg>;
@@ -76,6 +77,49 @@ export function BannerOfertas({ productos }) {
         </ul>
       </div>
       <div className="relampago__barra" aria-hidden="true"><span style={{ width: '78%' }} /><em>78 % vendido · ¡se acaban!</em></div>
+    </section>
+  );
+}
+
+// Portada para una categoría (o la tienda filtrada): texto con datos y botones a la izquierda
+// y 4 productos que flotan a la derecha, con adornos.
+export function PortadaCategoria({ titulo, productos }) {
+  const muestra = [...productos].sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen)).slice(0, 4);
+  const enOferta = productos.filter((p) => p.precio_anterior).length;
+  const desde = productos.length ? Math.min(...productos.map((p) => p.precio)) : 0;
+  const vendidos = productos.reduce((s, p) => s + (p.vendidos || 0), 0);
+  const base = `/tienda?categoria=${encodeURIComponent(titulo)}`;
+  return (
+    <section className="vitrina vitrina--categoria" aria-labelledby="t-portada-cat">
+      <Decoracion />
+      <span className="vitrina__burbujas" aria-hidden="true">{Array.from({ length: 8 }, (_, n) => <i key={n} style={{ '--n': n }} />)}</span>
+      <div className="vitrina__texto">
+        <p className="vitrina__ante">Tienda AH Nails · categoría</p>
+        <h2 id="t-portada-cat" className="portada-cat__titulo">{titulo}</h2>
+        <p>Productos profesionales, los mismos que usamos en el salón. Se retiran gratis.</p>
+        <ul className="portada-cat__datos">
+          <li><strong><Contador valor={productos.length} /></strong> productos</li>
+          {desde > 0 && <li>desde <strong>{dinero(desde)}</strong></li>}
+          {enOferta > 0 && <li><strong><Contador valor={enOferta} /></strong> en oferta</li>}
+          {vendidos > 0 && <li><strong><Contador valor={vendidos} formato={(n) => n.toLocaleString('es-CR')} /></strong> vendidos</li>}
+        </ul>
+        <div className="portada-cat__botones">
+          {enOferta > 0 && <Link to={`${base}&ofertas=1&orden=descuento`} className="vitrina__boton"><Rayo tam={16} /> Ver ofertas</Link>}
+          <Link to={`${base}&orden=vendidos`} className="portada-cat__secundario">Lo más vendido</Link>
+        </div>
+      </div>
+      <ul className="vitrina__productos portada-cat__productos">
+        {muestra.map((p, n) => (
+          <li key={p.id} style={{ '--n': n }}>
+            <Link to={`/tienda/${p.id}`} className="vitrina__producto">
+              <ProductoImagen producto={p} />
+              {p.precio_anterior && <span className="vitrina__pct">-{Math.round((1 - p.precio / p.precio_anterior) * 100)}%</span>}
+              <span className="vitrina__precio">{dinero(p.precio)}</span>
+              <span className="portada-cat__nombre">{p.nombre}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

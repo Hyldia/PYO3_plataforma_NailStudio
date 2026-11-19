@@ -1,5 +1,5 @@
 // MODELO: recordatorios programados de cada cita.
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 export const RecordatorioModel = {
   crear: (citaId, canal, enviarEn) =>

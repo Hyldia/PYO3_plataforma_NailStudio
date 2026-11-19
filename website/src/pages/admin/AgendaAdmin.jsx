@@ -5,7 +5,7 @@ import { api } from '../../lib/api.js';
 import { dinero } from '../../config.js';
 import Foto from '../../components/Foto.jsx';
 import Modal from '../../components/Modal.jsx';
-import { TarjetaMensaje, Whats, fechaLarga, nombreMes, isoLocal } from './comunes.jsx';
+import { TarjetaMensaje, Whats, fechaLarga, nombreMes, isoLocal } from './piezasPanel.jsx';
 
 const ACCIONES = { pendiente: ['confirmar'], confirmada: ['completar'], completada: [], cancelada: [] };
 const TEXTO_ACCION = { confirmar: 'Confirmar', completar: 'Marcar atendida' };
@@ -147,6 +147,8 @@ export default function AgendaAdmin() {
   const [especialistas, setEspecialistas] = useState([]);
   const [tipos, setTipos] = useState({});
   const [filtro, setFiltro] = useState('');
+  const [verEstado, setVerEstado] = useState('');
+  const [buscarClienta, setBuscarClienta] = useState('');
   const [ventana, setVentana] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [error, setError] = useState('');
@@ -163,7 +165,10 @@ export default function AgendaAdmin() {
   const elegirDia = (f) => { setFecha(f); if (f.slice(0, 7) !== mes) setMes(f.slice(0, 7)); };
 
   const dia = dias.find((d) => d.fecha === fecha);
-  const visibles = citas.filter((c) => !filtro || String(c.especialista_id) === filtro);
+  const ESTADOS_FILTRO = { activas: ['pendiente', 'confirmada'], completada: ['completada'], cancelada: ['cancelada'] };
+  const visibles = citas.filter((c) => (!filtro || String(c.especialista_id) === filtro)
+    && (!verEstado || ESTADOS_FILTRO[verEstado].includes(c.estado))
+    && (!buscarClienta || `${c.cliente_nombre} ${c.cliente_telefono} ${c.servicio}`.toLowerCase().includes(buscarClienta.toLowerCase())));
   const activas = citas.filter((c) => ['pendiente', 'confirmada'].includes(c.estado));
   const cobrar = activas.reduce((s, c) => s + (c.total - c.anticipo), 0);
 
@@ -192,24 +197,32 @@ export default function AgendaAdmin() {
             <li><strong>{citas.filter((c) => c.estado === 'cancelada').length}</strong>canceladas</li>
             <li><strong>{dinero(cobrar)}</strong>por cobrar</li>
           </ul>
-          {especialistas.length > 0 && citas.length > 0 && (
-            <div className="barra-chips barra-chips--compacta" role="group" aria-label="Filtrar por especialista">
-              <button type="button" className={`chip-filtro ${!filtro ? 'chip-filtro--activo' : ''}`} aria-pressed={!filtro} onClick={() => setFiltro('')}>Todas</button>
-              {especialistas.filter((e) => citas.some((c) => c.especialista_id === e.id)).map((e) => (
-                <button key={e.id} type="button" className={`chip-filtro ${filtro === String(e.id) ? 'chip-filtro--activo' : ''}`} aria-pressed={filtro === String(e.id)} onClick={() => setFiltro(String(e.id))}>{e.nombre}</button>
-              ))}
+          {citas.length > 0 && (
+            <div className="filtros-admin filtros-admin--agenda">
+              <label className="filtros-admin__buscar"><span className="solo-lector">Buscar clienta</span><input type="search" value={buscarClienta} onChange={(e) => setBuscarClienta(e.target.value)} placeholder="Buscar clienta o servicio" /></label>
+              <label><span className="solo-lector">Especialista</span>
+                <select value={filtro} onChange={(e) => setFiltro(e.target.value)}>
+                  <option value="">Todas las especialistas ({citas.length})</option>
+                  {especialistas.filter((e) => citas.some((c) => c.especialista_id === e.id)).map((e) => <option key={e.id} value={e.id}>{e.nombre} ({citas.filter((c) => c.especialista_id === e.id).length})</option>)}
+                </select>
+              </label>
+              <div className="barra-chips barra-chips--compacta" role="group" aria-label="Mostrar">
+                {[['', 'Todas'], ['activas', 'Por atender'], ['completada', 'Atendidas'], ['cancelada', 'Canceladas']].map(([k, t]) => (
+                  <button key={k} type="button" className={`chip-filtro ${verEstado === k ? 'chip-filtro--activo' : ''}`} aria-pressed={verEstado === k} onClick={() => setVerEstado(k)}>{t}</button>
+                ))}
+              </div>
             </div>
           )}
 
           {visibles.length === 0 ? (
-            <div className="dia-panel__vacio"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /></svg><p>{dia?.nivel === 'cerrado' ? 'El salón está cerrado este día.' : 'No hay citas este día.'}</p></div>
+            <div className="dia-panel__vacio"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /></svg><p>{dia?.nivel === 'cerrado' ? 'El salón está cerrado este día.' : citas.length ? 'Ninguna cita coincide con los filtros.' : 'No hay citas este día.'}</p></div>
           ) : (
             <ol className="citas-dia">
               {visibles.map((c, i) => (
                 <li key={c.id} className={`cita-admin cita-admin--${c.estado}`} style={{ '--n': i }}>
                   <div className="cita-admin__hora"><strong>{c.hora}</strong><span>{c.duracion_min} min</span></div>
                   <div className="cita-admin__info">
-                    <p className="cita-admin__nombre">{c.cliente_nombre} <span className={`estado estado--${c.estado}`}>{c.estado}</span></p>
+                    <p className="cita-admin__nombre">{c.cliente_nombre} <span className={`estado estado--${c.estado}`}>{{ pendiente: 'Por confirmar', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada' }[c.estado] || c.estado}</span></p>
                     <p>{c.servicio} · con <b>{c.especialista}</b></p>
                     <p className="tenue">{c.forma ? `${c.forma}, ${c.largo}, ${c.color}, ${c.acabado}` : 'Diseño: lo elige en el salón'} · {dinero(c.total)} (adelanto {dinero(c.anticipo)})</p>
                     {c.notas && <p className="cita-admin__nota">“{c.notas}”</p>}

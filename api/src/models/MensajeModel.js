@@ -1,5 +1,5 @@
 // MODELO: historial de mensajes de WhatsApp preparados desde el panel.
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 export const MensajeModel = {
   registrar({ citaId = null, pedidoId = null, cliente, telefono, tipo, texto, enlace }) {

@@ -2,7 +2,7 @@
 import { FotoModel } from '../models/FotoModel.js';
 import { ProductoModel } from '../models/ProductoModel.js';
 import { ServicioModel } from '../models/ServicioModel.js';
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 // Servicio con el que se hace cada tipo de diseño, y recargo por acabado especial
 const SERVICIO_POR_CATEGORIA = {
@@ -24,7 +24,7 @@ function servicioSugerido(foto) {
 // Precios de cada diseño para mostrarlos en las tarjetas de la galería
 export function conPrecios(fotos) {
   const presson = ProductoModel.buscarPorNombre(PRESSON);
-  return fotos.map((f) => { const sv = servicioSugerido(f); return { ...f, servicio_id: sv?.id ?? null, precio_salon: sv?.precio ?? null, precio_presson: presson?.precio ?? null, presson_anterior: presson?.precio_anterior ?? null }; });
+  return fotos.map((f) => { const sv = servicioSugerido(f); return { ...f, servicio_id: sv?.id ?? null, precio_salon: f.precio ?? sv?.precio ?? null, precio_presson: presson?.precio ?? null, presson_anterior: presson?.precio_anterior ?? null }; });
 }
 
 export const detalleController = {
@@ -32,7 +32,8 @@ export const detalleController = {
     const foto = FotoModel.conPuesto(req.params.id);
     if (!foto) return res.status(404).json({ error: 'Ese diseño ya no está en la galería.' });
     const presson = ProductoModel.buscarPorNombre(PRESSON);
-    res.json({ ...foto, servicio: servicioSugerido(foto), presson: presson && { id: presson.id, precio: presson.precio, precio_anterior: presson.precio_anterior, stock: presson.stock } });
+    const sv = servicioSugerido(foto);
+    res.json({ ...foto, servicio: sv && { ...sv, precio: foto.precio ?? sv.precio }, presson: presson && { id: presson.id, precio: presson.precio, precio_anterior: presson.precio_anterior, stock: presson.stock } });
   },
   fotosRelacionadas: (req, res) => res.json(conPrecios(FotoModel.relacionados(req.params.id, req.query.limite))),
 
@@ -50,6 +51,9 @@ export const detalleController = {
     db.prepare('SELECT DISTINCT categoria FROM productos').all().forEach(({ categoria }) => { mapa[categoria] = foto('categoria = ?', categoria); });
     mapa.rubber = foto("nombre LIKE '%rubber%'");
     mapa.aceite = foto("nombre LIKE 'Aceite%'");
+    mapa.Equipos = foto("categoria = 'Equipos' AND nombre LIKE 'Lámpara%'") || mapa.Equipos;
+    // La foto que el salón eligió en el panel (Productos → Fotos de las categorías) tiene prioridad
+    db.prepare("SELECT clave, valor FROM ajustes WHERE clave LIKE 'portada:%'").all().forEach((a) => { mapa[a.clave.slice(8)] = a.valor; });
     res.json(mapa);
   },
   productosRelacionados: (req, res) => res.json(ProductoModel.relacionados(req.params.id, req.query.limite))

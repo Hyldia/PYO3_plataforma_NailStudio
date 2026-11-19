@@ -4,7 +4,38 @@ import { api } from '../../lib/api.js';
 import { dinero } from '../../config.js';
 import Modal from '../../components/Modal.jsx';
 import ProductoImagen from '../../components/ProductoImagen.jsx';
-import { BotonFoto, ZonaFotos, formData } from './comunes.jsx';
+import { BotonFoto, ZonaFotos, formData } from './piezasPanel.jsx';
+import { CATEGORIAS, claveCategoria } from '../../lib/categoriasPortada.js';
+
+// Fotos de los círculos de categorías que salen en la portada
+function FotosCategorias() {
+  const [portadas, setPortadas] = useState({});
+  const [aviso, setAviso] = useState('');
+  const cargar = () => api.portadas().then(setPortadas).catch(() => {});
+  useEffect(() => { cargar(); }, []);
+  const subir = async (c, archivo) => {
+    try { await api.admin.fotoPortada(claveCategoria(c), formData(archivo)); setAviso(`Listo: «${c.nombre}» tiene foto nueva en la portada.`); cargar(); } catch (e) { setAviso(e.message); }
+  };
+  const quitar = async (c) => { await api.admin.quitarFotoPortada(claveCategoria(c)).catch(() => {}); setAviso(`«${c.nombre}» vuelve a usar la foto de su producto más vendido.`); cargar(); };
+  return (
+    <details className="portadas-admin">
+      <summary>
+        <span><b>Fotos de los círculos de la portada</b><small>Los círculos de categorías que salen arriba en la página principal. Toca uno para cambiar su foto.</small></span>
+      </summary>
+      {aviso && <p role="status" className="aviso-ok">{aviso}</p>}
+      <ul>
+        {CATEGORIAS.map((c) => (
+          <li key={c.nombre}>
+            <span className="portadas-admin__circulo"><ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color, imagen: portadas[claveCategoria(c)] || null }} /></span>
+            <p>{c.nombre}</p>
+            <BotonFoto texto="Cambiar" etiqueta={`del círculo ${c.nombre}`} onArchivo={(f) => subir(c, f)} />
+            <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => quitar(c)}>Usar la automática</button>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
 
 const VACIO = { nombre: '', categoria: '', marca: 'AH Nails', precio: '', precio_anterior: '', stock: '10', descripcion: '' };
 const POR_PAGINA = 24;
@@ -129,6 +160,7 @@ export default function ProductosAdmin() {
         <li className="cifras-admin--ambar"><strong>{pocos}</strong>con poco stock</li>
         <li><strong>{productos.filter((p) => p.precio_anterior).length}</strong>en oferta</li>
       </ul>
+      <FotosCategorias />
       <div className="filtros-admin">
         <label className="filtros-admin__buscar"><span className="solo-lector">Buscar producto</span><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre, marca o N.º" /></label>
         <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => setCat(e.target.value)}><option value="">Todas las categorías</option>{categorias.map((c) => <option key={c.valor} value={c.valor}>{c.valor} ({c.cantidad})</option>)}</select></label>

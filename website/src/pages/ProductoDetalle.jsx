@@ -11,6 +11,7 @@ import Resenas from '../components/Resenas.jsx';
 import BotonFavorito from '../components/BotonFavorito.jsx';
 import { miles } from '../components/TarjetaDiseno.jsx';
 import { fichaProducto, etiquetaVariante } from '../lib/fichaProducto.js';
+import Icono from '../components/Icono.jsx';
 
 export default function ProductoDetalle() {
   const { id } = useParams();
@@ -76,7 +77,7 @@ export default function ProductoDetalle() {
               </a>
             )}
           </p>
-          {p.puesto <= 20 && <p className="insignia-ranking">🏆 #{p.puesto} MÁS VENDIDO <span>en {p.categoria} ›</span></p>}
+          {p.puesto <= 20 && <p className="insignia-ranking"><Icono nombre="trofeo" tam={16} /> #{p.puesto} MÁS VENDIDO <span>en {p.categoria} ›</span></p>}
 
           <div className="detalle__precio">
             <p>
@@ -126,7 +127,7 @@ export default function ProductoDetalle() {
                     </ul>
                   </fieldset>
                 )}
-                {pocos && <p className="aviso-pocos">🔥 ¡Solo quedan {p.stock}! Muchas clientas lo tienen en el carrito.</p>}
+                {pocos && <p className="aviso-pocos"><Icono nombre="fuego" tam={17} /> ¡Solo quedan {p.stock}! Muchas clientas lo tienen en el carrito.</p>}
                 {enCarrito ? (
                   <div className="anadido" role="status">
                     <ProductoImagen producto={p} />
@@ -170,9 +171,9 @@ export default function ProductoDetalle() {
           ))}
 
           <ul className="garantias">
-            <li><span aria-hidden="true">🛍️</span><div><strong>Retiro gratis en el salón ›</strong><p className="tenue">Te escribimos por WhatsApp cuando tu pedido esté listo.</p></div></li>
-            <li><span aria-hidden="true">🔒</span><div><strong>Pago seguro · Privacidad segura ›</strong><p className="tenue">SINPE Móvil o pago al retirar. No guardamos datos de tarjetas.</p></div></li>
-            <li><span aria-hidden="true">💅</span><div><strong>Productos que usamos en el salón ›</strong><p className="tenue">Las especialistas te explican cómo usarlo cuando lo retiras.</p></div></li>
+            <li><span className="icono-caja"><Icono nombre="bolsa" tam={22} /></span><div><strong>Retiro gratis en el salón ›</strong><p className="tenue">Te escribimos por WhatsApp cuando tu pedido esté listo.</p></div></li>
+            <li><span className="icono-caja"><Icono nombre="candado" tam={22} /></span><div><strong>Pago seguro · Privacidad segura ›</strong><p className="tenue">SINPE Móvil o pago al retirar. No guardamos datos de tarjetas.</p></div></li>
+            <li><span className="icono-caja"><Icono nombre="pincel" tam={22} /></span><div><strong>Productos que usamos en el salón ›</strong><p className="tenue">Las especialistas te explican cómo usarlo cuando lo retiras.</p></div></li>
           </ul>
         </div>
       </div>

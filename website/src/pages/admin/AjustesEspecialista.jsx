@@ -1,0 +1,164 @@
+// Ventana de cada especialista: dónde trabaja y cómo se le paga, sus días libres y su usuario para el portal del equipo.
+import { useEffect, useState } from 'react';
+import { api } from '../../lib/api.js';
+import { dinero } from '../../config.js';
+import Modal from '../../components/Modal.jsx';
+import { fechaLarga, isoLocal } from './piezasPanel.jsx';
+
+const TIPOS = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Incapacidad', permiso: 'Permiso' };
+
+function Pago({ persona, onGuardado }) {
+  const [d, setD] = useState({ estacion: persona.estacion || '', esquema_pago: persona.esquema_pago || 'comision', comision: persona.comision ?? 40, salario_base: persona.salario_base || '' });
+  const [estado, setEstado] = useState({ texto: '', error: false });
+  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  const ejemplo = 100000;
+  const ganaria = Math.round(ejemplo * (Number(d.comision) || 0) / 100) + (d.esquema_pago === 'base_comision' ? Number(d.salario_base) || 0 : 0);
+  const guardar = async (e) => {
+    e.preventDefault();
+    try { await api.admin.pagoEspecialista(persona.id, d); setEstado({ texto: 'Guardado.' }); onGuardado(); } catch (err) { setEstado({ texto: err.message, error: true }); }
+  };
+  return (
+    <form className="ajustes-esp__form" onSubmit={guardar}>
+      <div className="campo"><label htmlFor="a-est">¿Dónde se ubica? <span className="tenue">(estación o mesa)</span></label><input id="a-est" value={d.estacion} onChange={set('estacion')} placeholder="Ej.: Estación 2, junto a la ventana" maxLength={60} /></div>
+      <fieldset className="grupo">
+        <legend className="grupo__titulo grupo__titulo--chico">¿Cómo se le paga?</legend>
+        <div className="opciones-pago-esp">
+          <label className={d.esquema_pago === 'comision' ? 'activo' : ''}><input type="radio" name="esquema" value="comision" checked={d.esquema_pago === 'comision'} onChange={set('esquema_pago')} /><b>Comisión</b><span>Un porcentaje de lo que cobra en sus citas</span></label>
+          <label className={d.esquema_pago === 'base_comision' ? 'activo' : ''}><input type="radio" name="esquema" value="base_comision" checked={d.esquema_pago === 'base_comision'} onChange={set('esquema_pago')} /><b>Base + comisión</b><span>Un monto fijo por quincena más un porcentaje</span></label>
+        </div>
+      </fieldset>
+      <div className="campos-dos">
+        <div className="campo"><label htmlFor="a-com">Comisión (%)</label><input id="a-com" type="number" min="0" max="100" step="1" value={d.comision} onChange={set('comision')} required /></div>
+        {d.esquema_pago === 'base_comision' && <div className="campo"><label htmlFor="a-base">Monto base por quincena (₡)</label><input id="a-base" type="number" min="1" step="1000" value={d.salario_base} onChange={set('salario_base')} required /></div>}
+      </div>
+      <p className="ajustes-esp__ejemplo">Ejemplo: si en la quincena atiende citas por <b>{dinero(ejemplo)}</b>, se le pagan <b>{dinero(ganaria)}</b>.</p>
+      {estado.texto && <p role={estado.error ? 'alert' : 'status'} className={estado.error ? 'error' : 'aviso-ok'}>{estado.texto}</p>}
+      <button type="submit" className="boton">Guardar</button>
+    </form>
+  );
+}
+
+function DiasLibres({ persona, onGuardado }) {
+  const hoy = isoLocal(new Date());
+  const [lista, setLista] = useState([]);
+  const [d, setD] = useState({ desde: hoy, hasta: hoy, tipo: 'libre', motivo: '' });
+  const [estado, setEstado] = useState({ texto: '', error: false });
+  const cargar = () => api.admin.ausencias(persona.id).then((r) => setLista(r.ausencias.filter((a) => a.fecha >= hoy))).catch(() => {});
+  useEffect(() => { cargar(); }, []);
+  const set = (k) => (e) => setD({ ...d, [k]: e.target.value, ...(k === 'desde' && e.target.value > d.hasta ? { hasta: e.target.value } : {}) });
+
+  const agregar = async (e) => {
+    e.preventDefault();
+    try {
+      const r = await api.admin.agregarAusencias(persona.id, d);
+      setEstado({ texto: r.citasAfectadas ? `Guardado. Ojo: ${persona.nombre} tiene ${r.citasAfectadas} ${r.citasAfectadas === 1 ? 'cita' : 'citas'} en esos días. Avísales a las clientas desde Agenda → «Emergencia».` : `Guardado. Esos días ya no se pueden reservar con ${persona.nombre}.`, error: false, alerta: r.citasAfectadas > 0 });
+      cargar(); onGuardado();
+    } catch (err) { setEstado({ texto: err.message, error: true }); }
+  };
+  const borrar = async (a) => { await api.admin.borrarAusencia(persona.id, a.id).catch(() => {}); cargar(); onGuardado(); };
+
+  return (
+    <div className="ajustes-esp__dias">
+      <form className="ajustes-esp__form" onSubmit={agregar}>
+        <p className="tenue">Los días que no trabaja por horario ya están en «Editar» (días de trabajo). Aquí se agregan días sueltos: libres, vacaciones, incapacidad o permisos.</p>
+        <div className="campos-dos">
+          <div className="campo"><label htmlFor="d-desde">Desde</label><input id="d-desde" type="date" min={hoy} value={d.desde} onChange={set('desde')} required /></div>
+          <div className="campo"><label htmlFor="d-hasta">Hasta</label><input id="d-hasta" type="date" min={d.desde} value={d.hasta} onChange={set('hasta')} /></div>
+        </div>
+        <div className="tipos-ausencia" role="radiogroup" aria-label="Tipo">
+          {Object.entries(TIPOS).map(([k, t]) => <label key={k} className={`tipo-ausencia tipo-ausencia--${k} ${d.tipo === k ? 'activo' : ''}`}><input type="radio" name="tipo" value={k} checked={d.tipo === k} onChange={set('tipo')} />{t}</label>)}
+        </div>
+        <div className="campo"><label htmlFor="d-mot">Nota <span className="tenue">(opcional)</span></label><input id="d-mot" value={d.motivo} onChange={set('motivo')} maxLength={120} placeholder="Ej.: cita médica" /></div>
+        {estado.texto && <p role={estado.error || estado.alerta ? 'alert' : 'status'} className={estado.error ? 'error' : estado.alerta ? 'aviso-alerta' : 'aviso-ok'}>{estado.texto}</p>}
+        <button type="submit" className="boton">Agregar</button>
+      </form>
+      <div>
+        <h3 className="ajustes-esp__sub">Próximos días que no trabaja</h3>
+        {lista.length === 0 ? <p className="tenue">No tiene días libres agendados.</p> : (
+          <ul className="ausencias-lista">
+            {lista.map((a) => (
+              <li key={a.id} className={`tipo-ausencia--${a.tipo}`}>
+                <span className="ausencias-lista__fecha">{fechaLarga(a.fecha)}</span>
+                <span className="ausencias-lista__tipo">{TIPOS[a.tipo]}{a.motivo ? ` · ${a.motivo}` : ''}</span>
+                <button type="button" onClick={() => borrar(a)} aria-label={`Quitar ${fechaLarga(a.fecha)}`}>×</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Acceso({ persona, onGuardado }) {
+  const [usuario, setUsuario] = useState(persona.usuario || persona.nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, ''));
+  const [clave, setClave] = useState('');
+  const [ver, setVer] = useState(false);
+  const [estado, setEstado] = useState({ texto: '', error: false });
+  const tiene = Boolean(persona.usuario);
+  const guardar = async (e) => {
+    e.preventDefault();
+    try {
+      const r = await api.admin.accesoEspecialista(persona.id, { usuario, contrasena: clave });
+      setEstado({ texto: clave ? `Listo. ${persona.nombre} entra en «Acceso del equipo» con el usuario «${r.usuario}» y la contraseña que escribiste. Dásela en persona.` : 'Usuario actualizado.' });
+      setClave(''); onGuardado();
+    } catch (err) { setEstado({ texto: err.message, error: true }); }
+  };
+  const quitar = async () => {
+    if (!window.confirm(`¿Quitarle el acceso a ${persona.nombre}? Ya no podrá entrar al portal.`)) return;
+    await api.admin.quitarAcceso(persona.id).catch(() => {});
+    setEstado({ texto: 'Acceso quitado.' }); onGuardado();
+  };
+  const sugerir = () => {
+    const letras = 'abcdefghjkmnpqrstuvwxyz';
+    const r = crypto.getRandomValues(new Uint32Array(10));
+    setClave(`${[...r.slice(0, 6)].map((n) => letras[n % letras.length]).join('')}${[...r.slice(6)].map((n) => n % 10).join('')}`); setVer(true);
+  };
+  return (
+    <form className="ajustes-esp__form" onSubmit={guardar}>
+      <p className="tenue">Con esto {persona.nombre} entra en <b>Acceso del equipo</b> (enlace al pie de la página o en <b>/equipo</b>) y ve sus citas, sus clientas, sus días libres y cuánto lleva ganado. No ve nada de las demás.</p>
+      <p className={`acceso-esp__estado ${tiene ? 'acceso-esp__estado--si' : ''}`}>{tiene ? `Tiene acceso con el usuario «${persona.usuario}».` : 'Todavía no tiene acceso.'}</p>
+      <div className="campo"><label htmlFor="ac-usu">Usuario</label><input id="ac-usu" value={usuario} onChange={(e) => setUsuario(e.target.value.toLowerCase().replace(/\s/g, ''))} autoComplete="off" required /></div>
+      <div className="campo">
+        <label htmlFor="ac-cla">{tiene ? 'Contraseña nueva (vacío = dejar la que tiene)' : 'Contraseña'}</label>
+        <div className="acceso__clave">
+          <input id="ac-cla" type={ver ? 'text' : 'password'} value={clave} onChange={(e) => setClave(e.target.value)} autoComplete="new-password" required={!tiene} minLength={8} />
+          <button type="button" onClick={() => setVer(!ver)} aria-pressed={ver}>{ver ? 'Ocultar' : 'Ver'}</button>
+        </div>
+        <button type="button" className="enlace enlace--boton enlace--chico" onClick={sugerir}>Inventar una contraseña segura</button>
+        <span className="tenue">Al menos 8 caracteres, con letras y números.</span>
+      </div>
+      {estado.texto && <p role={estado.error ? 'alert' : 'status'} className={estado.error ? 'error' : 'aviso-ok'}>{estado.texto}</p>}
+      <div className="botones">
+        <button type="submit" className="boton">{tiene ? 'Guardar' : 'Dar acceso'}</button>
+        {tiene && <button type="button" className="boton boton--contorno boton--peligro" onClick={quitar}>Quitar acceso</button>}
+      </div>
+    </form>
+  );
+}
+
+const PESTANAS = { datos: ['Datos, foto y horario', 'Nombre, especialidad, foto y días que trabaja'], pago: ['Pago y estación', 'Dónde se ubica y cuánto gana'], dias: ['Días libres', 'Vacaciones, permisos e incapacidades'], acceso: ['Usuario y contraseña', 'Para que entre a ver sus citas'] };
+
+export default function AjustesEspecialista({ persona, inicio = 'datos', onCerrar, onGuardado, datos }) {
+  const [pestana, setPestana] = useState(inicio);
+  return (
+    <Modal titulo={`Ficha de ${persona.nombre}`} onCerrar={onCerrar} ancho>
+      <div className="ajustes-esp">
+        <div className="ajustes-esp__pestanas" role="tablist">
+          {Object.entries(PESTANAS).map(([k, [t, ayuda]], i) => (
+            <button key={k} type="button" role="tab" aria-selected={pestana === k} onClick={() => setPestana(k)}>
+              <span className="ajustes-esp__num" aria-hidden="true">{i + 1}</span>
+              <span><b>{t}</b><small>{ayuda}</small></span>
+            </button>
+          ))}
+        </div>
+        <div role="tabpanel">
+          {pestana === 'datos' && datos}
+          {pestana === 'pago' && <Pago persona={persona} onGuardado={onGuardado} />}
+          {pestana === 'dias' && <DiasLibres persona={persona} onGuardado={onGuardado} />}
+          {pestana === 'acceso' && <Acceso persona={persona} onGuardado={onGuardado} />}
+        </div>
+      </div>
+    </Modal>
+  );
+}

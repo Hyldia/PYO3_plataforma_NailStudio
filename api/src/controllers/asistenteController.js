@@ -1,7 +1,7 @@
 // Foto de la asistente del chat: la sube el salón desde el panel (Equipo) y se guarda en la tabla ajustes.
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
-import { getDb, UPLOADS_DIR } from '../db/connection.js';
+import { getDb, UPLOADS_DIR } from '../db/conexion.js';
 
 const leer = () => getDb().prepare("SELECT valor FROM ajustes WHERE clave = 'asistente_foto'").get()?.valor || null;
 

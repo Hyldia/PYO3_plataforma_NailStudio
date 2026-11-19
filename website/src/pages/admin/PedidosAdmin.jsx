@@ -3,11 +3,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { SALON, dinero } from '../../config.js';
 import Modal from '../../components/Modal.jsx';
-import { TarjetaMensaje, isoLocal } from './comunes.jsx';
+import { TarjetaMensaje, isoLocal } from './piezasPanel.jsx';
 
 const ESTADOS = { recibido: 'Recibido', listo: 'Listo para retirar', completado: 'Completado', cancelado: 'Cancelado' };
 const SIGUIENTE = { recibido: ['listo', 'completado', 'cancelado'], listo: ['completado', 'recibido', 'cancelado'], completado: ['listo'], cancelado: [] };
-const TEXTO = { listo: 'Marcar listo', completado: 'Marcar retirado', recibido: 'Volver a recibido', cancelado: 'Cancelar' };
+const TEXTO = { listo: 'Listo para retirar', completado: 'Ya lo retiró', recibido: 'Volver a recibido', cancelado: 'Cancelar' };
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
+// «2026-11-15 15:51» → «15 nov 2026 · 3:51 p. m.»
+function fechaPedido(texto = '') {
+  const [f, h = ''] = String(texto).replace('T', ' ').split(' ');
+  const [a, m, d] = f.split('-').map(Number);
+  if (!d) return texto;
+  const [hh, mm] = h.split(':').map(Number);
+  const hora = Number.isFinite(hh) ? ` · ${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a. m.' : 'p. m.'}` : '';
+  return `${d} ${MESES[m - 1]} ${a}${hora}`;
+}
 
 function rango(tipo) {
   const hoy = new Date();
@@ -109,34 +120,61 @@ export default function PedidosAdmin() {
       {error && <p role="alert" className="error">{error}</p>}
 
       {pedidos.length === 0 ? <p className="tenue">No hay pedidos con esos filtros.</p> : (
-        <div className="tabla-envoltura">
-          <table className="tabla tabla--pedidos">
-            <thead><tr><th scope="col">N.º</th><th scope="col">Fecha</th><th scope="col">Clienta</th><th scope="col">Productos</th><th scope="col">Total</th><th scope="col">Pago</th><th scope="col">Estado y retiro</th><th scope="col"><span className="solo-lector">Acciones</span></th></tr></thead>
-            <tbody>
-              {pedidos.map((p) => (
-                <tr key={p.id} className={`fila-pedido fila-pedido--${p.estado}`}>
-                  <td><strong>#{p.id}</strong></td>
-                  <td>{(p.fecha_local || p.creado_en).slice(0, 16)}</td>
-                  <td>{p.cliente_nombre}<br /><span className="tenue">{p.cliente_telefono}</span></td>
-                  <td className="tabla-pedidos__detalle">{p.detalle}{p.cupon_codigo && <span className="chip-cupon">{p.cupon_codigo} −{dinero(p.descuento)}</span>}{p.citas > 0 && <span className="chip-cupon chip-cupon--cita">+ {p.citas} {p.citas === 1 ? 'cita' : 'citas'}</span>}</td>
-                  <td><strong>{dinero(p.total)}</strong></td>
-                  <td>{p.metodo_pago}</td>
-                  <td>
-                    <span className={`estado-pedido estado-pedido--${p.estado}`}>{ESTADOS[p.estado] || p.estado}</span>
-                    <p className="tabla-pedidos__retiro">{p.entrega === 'envio' ? <>Envío ({dinero(p.costo_envio)}) a <b>{p.direccion}</b></> : `Retiro en el salón ${SALON.nombre}`}</p>
-                    {p.estado === 'completado' && <p className="tenue">Retiró {p.retirado_por || 'la clienta'}{p.completado_en ? ` · ${p.completado_en.slice(0, 16)}` : ''}</p>}
+        <ul className="pedidos-lista">
+          {pedidos.map((p, n) => {
+            const pasos = ['recibido', 'listo', 'completado'];
+            const paso = pasos.indexOf(p.estado);
+            const siguientes = p.estado === 'completado' ? [] : (SIGUIENTE[p.estado] || []).filter((e) => e === 'listo' || e === 'completado');
+            return (
+              <li key={p.id} className={`pedido-card pedido-card--${p.estado}`} style={{ '--n': n % 20 }}>
+                <header className="pedido-card__cabeza">
+                  <div className="pedido-card__numero"><strong>Pedido #{p.id}</strong><span>{fechaPedido(p.fecha_local || p.creado_en)}</span></div>
+                  <span className={`estado-pedido estado-pedido--${p.estado}`}>{ESTADOS[p.estado] || p.estado}</span>
+                  <div className="pedido-card__total"><strong>{dinero(p.total)}</strong><span>{p.metodo_pago}</span></div>
+                </header>
+
+                <div className="pedido-card__cuerpo">
+                  <div>
+                    <p className="pedido-card__etiqueta">Clienta</p>
+                    <p className="pedido-card__clienta">{p.cliente_nombre}</p>
+                    <a className="pedido-card__tel" href={`tel:${String(p.cliente_telefono).replace(/\s/g, '')}`}>{p.cliente_telefono}</a>
+                  </div>
+                  <div>
+                    <p className="pedido-card__etiqueta">Productos</p>
+                    <ul className="pedido-card__productos">{String(p.detalle || '').split(/, (?=\d+ ×)/).map((x, k) => { const [cant, ...resto] = x.split(' × '); return <li key={k}><b>{cant}</b><span>{resto.join(' × ') || x}</span></li>; })}</ul>
+                    {(p.cupon_codigo || p.citas > 0) && (
+                      <p className="pedido-card__extras">
+                        {p.cupon_codigo && <span className="chip-cupon">Cupón {p.cupon_codigo} −{dinero(p.descuento)}</span>}
+                        {p.citas > 0 && <span className="chip-cupon chip-cupon--cita">+ {p.citas} {p.citas === 1 ? 'cita' : 'citas'}</span>}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="pedido-card__etiqueta">Entrega</p>
+                    <p>{p.entrega === 'envio' ? <>Envío a domicilio ({dinero(p.costo_envio)})</> : 'La retira en el salón'}</p>
+                    {p.entrega === 'envio' && <p className="tenue">{p.direccion}</p>}
+                    {p.estado === 'completado' && <p className="tenue">Retiró {p.retirado_por || 'la clienta'}{p.completado_en ? ` · ${fechaPedido(p.completado_en)}` : ''}</p>}
                     {p.notas_admin && <p className="tenue">“{p.notas_admin}”</p>}
-                  </td>
-                  <td className="tabla__acciones">
-                    {(SIGUIENTE[p.estado] || []).map((e) => (
-                      <button key={e} type="button" className={`boton boton--chico ${e === 'cancelado' ? 'boton--peligro' : e === 'recibido' ? 'boton--contorno' : ''}`} onClick={() => cambiar(p, e)}>{TEXTO[e]}</button>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+
+                <footer className="pedido-card__pie">
+                  {p.estado === 'cancelado' ? <p className="pedido-card__cancelado">Pedido cancelado</p> : (
+                    <ol className="pedido-pasos" aria-label="Avance del pedido">
+                      {['Recibido', 'Listo para retirar', 'Entregado'].map((t, k) => <li key={t} className={k <= paso ? 'hecho' : ''} aria-current={k === paso ? 'step' : undefined}><span>{k < paso ? '✓' : k + 1}</span>{t}</li>)}
+                    </ol>
+                  )}
+                  <div className="pedido-card__acciones">
+                    {(SIGUIENTE[p.estado] || []).includes('cancelado') && <button type="button" className="enlace enlace--boton enlace--chico pedido-card__cancelar" onClick={() => cambiar(p, 'cancelado')}>Cancelar pedido</button>}
+                    {p.estado === 'completado' && <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => cambiar(p, 'listo')}>Deshacer entrega</button>}
+                    {(SIGUIENTE[p.estado] || []).includes('recibido') && <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => cambiar(p, 'recibido')}>Volver a recibido</button>}
+                    {siguientes.map((e) => <button key={e} type="button" className={`boton boton--chico ${e === 'listo' && siguientes.length > 1 ? 'boton--contorno' : ''}`} onClick={() => cambiar(p, e)}>{TEXTO[e]}</button>)}
+                  </div>
+                </footer>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       {ventana?.tipo === 'completar' && <VentanaCompletar pedido={ventana.pedido} onCerrar={() => setVentana(null)} onListo={cargar} />}

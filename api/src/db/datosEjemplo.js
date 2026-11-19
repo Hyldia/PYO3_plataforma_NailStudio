@@ -3,7 +3,7 @@
 // Sirven para la demo y para que el panel y la base de datos no se vean vacíos.
 // Los nombres y teléfonos son inventados.
 import { HORARIOS, PORCENTAJE_ADELANTO } from '../models/CitaModel.js';
-import { DisenoBuilder, OPCIONES } from '../patterns/disenoBuilder.js';
+import { DisenoBuilder, OPCIONES } from '../patrones/constructorDiseno.js';
 
 const NOMBRES = ['María', 'Ana', 'Valeria', 'Daniela', 'Sofía', 'Camila', 'Fernanda', 'Gabriela', 'Andrea', 'Paola',
   'Natalia', 'Carolina', 'Mariana', 'Laura', 'Melissa', 'Karla', 'Tatiana', 'Priscilla', 'Yesenia', 'Rebeca',

@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { seed } from './db/seed.js';
-import { UPLOADS_DIR } from './db/connection.js';
+import { UPLOADS_DIR } from './db/conexion.js';
 import api from './routes/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

@@ -12,7 +12,7 @@ const REDES = [
 
 const COLUMNAS = [
   { titulo: 'Información del salón', enlaces: [['Quiénes somos', '/contacto'], ['Contáctanos', '/contacto'], ['Ubicación y horario', '/contacto'], ['Galería de trabajos', '/galeria']] },
-  { titulo: 'Atención a clientas', enlaces: [['Reservar una cita', '/reservar'], ['Servicios y precios', '/servicios'], ['Cupones y combos', '/servicios?categoria=Combos'], ['Diseña tus uñas', '/disena']] },
+  { titulo: 'Atención a clientas', enlaces: [['Reservar una cita', '/reservar'], ['Servicios y precios', '/servicios'], ['Preguntas frecuentes', '/contacto'], ['Diseña tus uñas', '/disena']] },
   { titulo: 'Tienda', enlaces: [['Ofertas', '/tienda?ofertas=1&orden=descuento'], ['Lo más vendido', '/tienda?orden=vendidos'], ['Pedicure', '/tienda?categoria=Pedicure'], ['Tu carrito', '/carrito']] }
 ];
 
@@ -76,7 +76,7 @@ export default function Pie() {
       <div className="contenedor pie__legal">
         <span>© {new Date().getFullYear()} {SALON.nombre}. Todos los derechos reservados.</span>
         <span>Fotos de muestra: <a href="https://unsplash.com" target="_blank" rel="noreferrer">Unsplash</a></span>
-        <Link to="/admin">Acceso del salón</Link>
+        <span className="pie__accesos"><Link to="/equipo">Acceso del equipo</Link><Link to="/admin">Acceso del salón</Link></span>
       </div>
 
       {arriba && (

@@ -8,8 +8,9 @@ import Foto from '../components/Foto.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import Resenas from '../components/Resenas.jsx';
 import BotonFavorito from '../components/BotonFavorito.jsx';
-import { olvidarResumenes, useResumenes } from '../lib/resumenes.js';
+import { olvidarResumenes, useResumenes } from '../lib/resumenesOpiniones.js';
 import TarjetaDiseno, { miles, positivo, useAgregarPresson } from '../components/TarjetaDiseno.jsx';
+import Icono from '../components/Icono.jsx';
 
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
 const LARGOS = ['Corto', 'Medio', 'Largo'];
@@ -79,7 +80,7 @@ export default function DisenoDetalle() {
             {opinion ? <a href="#resenas" className="detalle__estrellas" aria-label={`${opinion.promedio} de 5 estrellas, ${opinion.total} opiniones`}><span aria-hidden="true">{'★'.repeat(Math.round(opinion.promedio))}</span> {opinion.promedio} ({opinion.total})</a>
               : <span className="detalle__estrellas" aria-label={`${positivo(foto.id)} % de opiniones positivas`}><span aria-hidden="true">★★★★★</span> {positivo(foto.id)} %</span>}
           </p>
-          {foto.puesto <= 10 && <p className="insignia-ranking">🏆 #{foto.puesto} MÁS POPULAR <span>en {foto.categoria}</span></p>}
+          {foto.puesto <= 10 && <p className="insignia-ranking"><Icono nombre="trofeo" tam={16} /> #{foto.puesto} MÁS POPULAR <span>en {foto.categoria}</span></p>}
 
           <div className="detalle__precio">
             {modo === 'salon' ? (

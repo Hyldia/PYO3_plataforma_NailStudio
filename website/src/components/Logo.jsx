@@ -2,7 +2,7 @@ import { SALON } from '../config.js';
 
 // Logo: monograma «AH» en letra cursiva y la palabra NAILS en mayúsculas espaciadas,
 // separados por una línea fina. Si el salón tiene un logo en imagen, reemplacen este componente
-// por <img src="/logo.svg" alt={SALON.nombre} />.
+// por una imagen: <img src="/logo.png" alt={SALON.nombre} /> (guarden el archivo en website/public).
 export default function Logo({ claro = false }) {
   return (
     <span className={`logo ${claro ? 'logo--claro' : ''}`} aria-label={SALON.nombre} role="img">

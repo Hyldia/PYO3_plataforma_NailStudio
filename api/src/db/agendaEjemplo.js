@@ -17,8 +17,8 @@ export function cargarAgendaEjemplo(db) {
   const elegir = (l) => l[Math.floor(r() * l.length)];
   const servicios = db.prepare('SELECT * FROM servicios WHERE activo = 1').all();
   const especialistas = EspecialistaModel.listar();
-  const ins = db.prepare(`INSERT INTO citas (servicio_id, especialista_id, cliente_nombre, cliente_telefono, fecha, hora, estado, total, anticipo, metodo_pago)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const ins = db.prepare(`INSERT INTO citas (servicio_id, especialista_id, cliente_nombre, cliente_telefono, fecha, hora, estado, total, anticipo, metodo_pago, ejemplo)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`);
 
   db.transaction(() => {
     const d = new Date(); d.setHours(12, 0, 0, 0);

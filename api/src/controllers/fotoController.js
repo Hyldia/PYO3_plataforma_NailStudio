@@ -1,7 +1,7 @@
 // CONTROLADOR: galería pública y administración de fotos.
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
-import { UPLOADS_DIR } from '../db/connection.js';
+import { UPLOADS_DIR } from '../db/conexion.js';
 import { FotoModel } from '../models/FotoModel.js';
 import { conPrecios } from './detalleController.js';
 

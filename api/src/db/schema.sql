@@ -226,3 +226,63 @@ CREATE TABLE IF NOT EXISTS direcciones (
   principal    INTEGER NOT NULL DEFAULT 0,
   creada_en    TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Sesiones del panel del salón (se guarda el hash del token, nunca el token)
+CREATE TABLE IF NOT EXISTS sesiones_admin (
+  token_hash  TEXT PRIMARY KEY,
+  vence_en    TEXT NOT NULL,
+  creada_en   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Días libres, vacaciones o incapacidades de cada especialista (ese día no se puede reservar con ella)
+CREATE TABLE IF NOT EXISTS ausencias (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  especialista_id INTEGER NOT NULL REFERENCES especialistas(id) ON DELETE CASCADE,
+  fecha           TEXT NOT NULL,
+  tipo            TEXT NOT NULL DEFAULT 'libre' CHECK (tipo IN ('libre', 'vacaciones', 'incapacidad', 'permiso')),
+  motivo          TEXT,
+  creada_en       TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (especialista_id, fecha)
+);
+
+-- Pagos hechos a cada especialista (uno por quincena)
+CREATE TABLE IF NOT EXISTS pagos_equipo (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  especialista_id INTEGER NOT NULL REFERENCES especialistas(id) ON DELETE CASCADE,
+  desde           TEXT NOT NULL,
+  hasta           TEXT NOT NULL,
+  citas           INTEGER NOT NULL,
+  vendido         REAL NOT NULL,
+  monto           REAL NOT NULL,
+  pagado_en       TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (especialista_id, desde, hasta)
+);
+
+-- Sesiones del portal de cada especialista
+CREATE TABLE IF NOT EXISTS sesiones_equipo (
+  token_hash      TEXT PRIMARY KEY,
+  especialista_id INTEGER NOT NULL REFERENCES especialistas(id) ON DELETE CASCADE,
+  vence_en        TEXT NOT NULL
+);
+
+-- Días libres que pide cada especialista desde su portal; la administradora los aprueba o rechaza
+CREATE TABLE IF NOT EXISTS solicitudes_libres (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  especialista_id INTEGER NOT NULL REFERENCES especialistas(id) ON DELETE CASCADE,
+  desde           TEXT NOT NULL,
+  hasta           TEXT NOT NULL,
+  tipo            TEXT NOT NULL DEFAULT 'libre',
+  motivo          TEXT,
+  estado          TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
+  respuesta       TEXT,
+  creada_en       TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en     TEXT
+);
+
+-- Fotos de muestra de las clientas de ejemplo (npm run fotos-clientas). Las clientas reales usan la foto de su cuenta.
+CREATE TABLE IF NOT EXISTS fotos_clientas (
+  telefono TEXT PRIMARY KEY,
+  foto     TEXT NOT NULL,
+  autor    TEXT,
+  autor_url TEXT
+);

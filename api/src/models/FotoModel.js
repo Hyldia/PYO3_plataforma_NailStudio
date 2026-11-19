@@ -1,5 +1,5 @@
 // MODELO: fotos de la galería, con búsqueda y filtros combinables.
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 export const CAMPOS_FILTRABLES = ['categoria', 'forma', 'color', 'acabado'];
 const ORDEN = {
@@ -65,8 +65,8 @@ export const FotoModel = {
 
   crear(f) {
     const r = getDb().prepare(`
-      INSERT INTO fotos (archivo, titulo, descripcion, categoria, forma, color, acabado, etiquetas, destacada)
-      VALUES (@archivo, @titulo, @descripcion, @categoria, @forma, @color, @acabado, @etiquetas, @destacada)
+      INSERT INTO fotos (archivo, titulo, descripcion, categoria, forma, color, acabado, etiquetas, destacada, precio)
+      VALUES (@archivo, @titulo, @descripcion, @categoria, @forma, @color, @acabado, @etiquetas, @destacada, @precio)
     `).run(f);
     return this.buscarPorId(r.lastInsertRowid);
   },
@@ -74,7 +74,7 @@ export const FotoModel = {
   actualizar(id, f) {
     getDb().prepare(`
       UPDATE fotos SET titulo = @titulo, descripcion = @descripcion, categoria = @categoria, forma = @forma,
-        color = @color, acabado = @acabado, etiquetas = @etiquetas, destacada = @destacada WHERE id = @id
+        color = @color, acabado = @acabado, etiquetas = @etiquetas, destacada = @destacada, precio = @precio WHERE id = @id
     `).run({ ...f, id });
     return this.buscarPorId(id);
   },
@@ -88,6 +88,8 @@ export const FotoModel = {
     descripcion: b.descripcion || null,
     categoria: b.categoria || 'Manicure',
     forma: b.forma || null, color: b.color || null, acabado: b.acabado || null,
+    // Precio libre del diseño (vacío = se usa el precio del servicio)
+    precio: b.precio === '' || b.precio == null || !(Number(b.precio) > 0) ? null : Math.round(Number(b.precio)),
     etiquetas: b.etiquetas || null,
     destacada: b.destacada === 'true' || b.destacada === true ? 1 : 0
   })

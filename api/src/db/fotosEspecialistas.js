@@ -6,7 +6,7 @@
 //
 // Son fotos de muestra para la presentación. Para el sitio real del salón, usen fotos del
 // equipo de verdad: las clientas tienen que ver a quien las va a atender.
-import { getDb } from './connection.js';
+import { getDb } from './conexion.js';
 import { claveUnsplash, buscarUnsplash, urlFotoUnsplash, autorUnsplash } from './unsplash.js';
 
 const CLAVE = claveUnsplash();

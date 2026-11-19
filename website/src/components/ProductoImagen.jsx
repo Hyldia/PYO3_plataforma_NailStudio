@@ -153,7 +153,8 @@ function Dibujo({ tipo, c }) {
 }
 
 export default function ProductoImagen({ producto, className = '' }) {
-  if (producto.imagen) return <Foto archivo={producto.imagen} alt={producto.nombre} className={className} />;
+  // Si la foto no carga (por ejemplo, la borraron de Unsplash), se muestra la ilustración del producto
+  if (producto.imagen) return <Foto archivo={producto.imagen} alt={producto.nombre} className={className} respaldo={<ProductoImagen producto={{ ...producto, imagen: null }} className={className} />} />;
   if (producto.tipo === 'cita' && producto.servicioId) return <FotoServicio producto={producto} className={className} />;
   return (
     <div className={`foto producto-ilustracion ${className}`} role="img" aria-label={producto.nombre}>

@@ -9,18 +9,8 @@ import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import ProductoImagen from '../components/ProductoImagen.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import Decoracion from '../components/Decoracion.jsx';
+import { CATEGORIAS, claveCategoria } from '../lib/categoriasPortada.js';
 
-const CATEGORIAS = [
-  { nombre: 'Esmaltes y geles', tipo: 'frasco-gel', color: '#E0245E', to: '/tienda?categoria=Esmaltes y geles' },
-  { nombre: 'Rubber base', tipo: 'frasco-gel', color: '#F2C8CF', to: '/tienda?q=rubber', clave: 'rubber' },
-  { nombre: 'Herramientas', tipo: 'alicate', color: '#C0C4C8', to: '/tienda?categoria=Herramientas' },
-  { nombre: 'Limas', tipo: 'lima', color: '#1E1A1C', to: '/tienda?categoria=Limas y pulidores' },
-  { nombre: 'Cuidado de manos', tipo: 'crema', color: '#F2D4CB', to: '/tienda?categoria=Cuidado de manos' },
-  { nombre: 'Pedicure', tipo: 'crema', color: '#A8E0C8', to: '/tienda?categoria=Pedicure' },
-  { nombre: 'Manicure pro', tipo: 'caja', color: '#D9B79A', to: '/tienda?categoria=Manicure profesional' },
-  { nombre: 'Aceites', tipo: 'gotero', color: '#E8B65C', to: '/tienda?q=aceite', clave: 'aceite' },
-  { nombre: 'Decoración', tipo: 'tarro', color: '#D4AF37', to: '/tienda?categoria=Decoración' },
-];
 
 const Flecha = () => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>;
 
@@ -125,12 +115,14 @@ export default function Inicio() {
       <section className="contenedor categorias" aria-labelledby="t-categorias">
         <h2 id="t-categorias" className="solo-lector">Compra por categoría</h2>
         <ul className="categorias__lista">
-          {CATEGORIAS.map((c) => (
-            <li key={c.nombre} className="categoria-circulo">
+          {CATEGORIAS.map((c, n) => (
+            <li key={c.nombre} className="categoria-circulo" style={{ '--n': n }}>
               <Link to={c.to}>
-                <span className="categoria-circulo__imagen" aria-hidden="true">
-                  {/* Foto real del producto más vendido de la categoría; el dibujo solo si aún no hay foto */}
-                  <ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color, imagen: portadas[c.clave || decodeURIComponent(c.to.split('categoria=')[1] || '')] || null }} />
+                <span className="categoria-circulo__aro" aria-hidden="true">
+                  <span className="categoria-circulo__imagen">
+                    {/* Foto real del producto más vendido de la categoría; el dibujo solo si aún no hay foto */}
+                    <ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color, imagen: portadas[claveCategoria(c)] || null }} />
+                  </span>
                 </span>
                 <span className="categoria-circulo__nombre">{c.nombre}</span>
               </Link>
@@ -138,16 +130,6 @@ export default function Inicio() {
           ))}
         </ul>
       </section>
-
-      {/* Franja de confianza */}
-      <div className="contenedor">
-        <ul className="confianza__lista">
-          <li>Pago seguro</li>
-          <li>Retiro en salón</li>
-          <li>Productos profesionales</li>
-          <li>Especialistas certificadas</li>
-        </ul>
-      </div>
 
       {/* Ofertas relámpago + servicios en oferta, lado a lado en computadora */}
       <div className="contenedor dos-columnas">

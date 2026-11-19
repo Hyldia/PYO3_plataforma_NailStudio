@@ -1,5 +1,5 @@
 // MODELO: cupones de descuento y sus reglas (vigencia, compra mínima, solo combos).
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 

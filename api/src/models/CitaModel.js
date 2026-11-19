@@ -1,7 +1,7 @@
 // MODELO: citas. Incluye las reglas de negocio de una reserva
 // (horarios del salón, validación de datos y cálculo del total y el adelanto).
-import { getDb } from '../db/connection.js';
-import { calcularPrecio } from '../patterns/precio.js';
+import { getDb } from '../db/conexion.js';
+import { calcularPrecio } from '../patrones/decoradorPrecio.js';
 import { EspecialistaModel } from './EspecialistaModel.js';
 
 export const HORARIOS = ['09:00', '10:00', '11:00', '12:00', '13:30', '14:30', '15:30', '16:30', '17:30'];
@@ -29,7 +29,7 @@ export const CitaModel = {
     return null;
   },
 
-  // Usa el patrón Decorator (patterns/precio.js): servicio → recargo de diseño → cupón
+  // Usa el patrón Decorator (patrones/decoradorPrecio.js): servicio → recargo de diseño → cupón
   calcularMontos(servicio, recargoDiseno, metodoPago, cupon = null) {
     const { total, descuento, detalle } = calcularPrecio(servicio, recargoDiseno, cupon);
     const anticipo = metodoPago === 'salon' ? 0 : Math.round(total * PORCENTAJE_ADELANTO);

@@ -29,7 +29,7 @@ function Carrusel({ ofertas, vendidos, kits }) {
 
   useEffect(() => {
     if (pausa || slides.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    const t = setTimeout(() => setI((n) => (n + 1) % slides.length), 6500);
+    const t = setTimeout(() => setI((n) => (n + 1) % slides.length), 8000);
     return () => clearTimeout(t);
   }, [i, pausa, slides.length]);
   if (!slides.length) return null;
@@ -90,7 +90,6 @@ function Categorias({ categorias, muestras }) {
 function FilaRelampago({ productos }) {
   const ref = useRef(null);
   const vista = useVistaRapida();
-  const mover = (d) => ref.current?.scrollBy({ left: d * ref.current.clientWidth * 0.8, behavior: 'smooth' });
   return (
     <section className="fila-flash" aria-labelledby="t-fila-flash">
       <div className="fila-flash__cabeza">
@@ -99,9 +98,8 @@ function FilaRelampago({ productos }) {
         <Link to="/tienda?ofertas=1&orden=descuento" className="fila-flash__todo">Ver todo <Flecha /></Link>
       </div>
       <div className="fila-flash__marco">
-        <button type="button" className="fila-flash__flecha fila-flash__flecha--izq" onClick={() => mover(-1)} aria-label="Ver anteriores"><Flecha dir={-1} /></button>
         <ul ref={ref}>
-          {productos.map((p, n) => {
+          {productos.slice(0, 6).map((p, n) => {
             const vendido = 55 + ((p.id * 13) % 40);
             return (
               <li key={p.id} style={{ '--n': n }}>
@@ -120,13 +118,12 @@ function FilaRelampago({ productos }) {
             );
           })}
         </ul>
-        <button type="button" className="fila-flash__flecha fila-flash__flecha--der" onClick={() => mover(1)} aria-label="Ver siguientes"><Flecha /></button>
       </div>
     </section>
   );
 }
 
-export default function EscaparateTienda({ categorias }) {
+export default function EscaparateTienda({ categorias, children }) {
   const [datos, setDatos] = useState(null);
   useEffect(() => {
     Promise.all([
@@ -146,10 +143,11 @@ export default function EscaparateTienda({ categorias }) {
       .then((pares) => setMuestras(Object.fromEntries(pares)));
   }, [categorias]);
 
-  if (!datos) return <div className="vitrina vitrina--cargando" aria-hidden="true" />;
+  if (!datos) return <><div className="vitrina vitrina--cargando" aria-hidden="true" />{children}</>;
   return (
     <>
       <Carrusel ofertas={conFotoPrimero(datos.ofertas)} vendidos={conFotoPrimero(datos.vendidos)} kits={datos.kits} />
+      {children}
       {categorias.length > 0 && <Categorias categorias={categorias} muestras={muestras} />}
       {datos.ofertas.length > 3 && <FilaRelampago productos={datos.ofertas} />}
     </>

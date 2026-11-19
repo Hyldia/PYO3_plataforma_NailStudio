@@ -1,5 +1,5 @@
 // MODELO: diseños de uñas que arma la clienta (se construyen con el patrón Builder).
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 export const DisenoModel = {
   buscarPorId: (id) => getDb().prepare('SELECT * FROM disenos WHERE id = ?').get(id),

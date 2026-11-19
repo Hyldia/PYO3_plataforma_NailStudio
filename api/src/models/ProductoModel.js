@@ -1,5 +1,5 @@
 // MODELO: productos de la tienda, con búsqueda, filtros y orden.
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 const ORDEN = {
   relevancia: 'stock > 0 DESC, id',

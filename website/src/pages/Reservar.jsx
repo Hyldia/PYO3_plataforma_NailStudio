@@ -4,13 +4,14 @@ import { api } from '../lib/api.js';
 import { useReserva } from '../context/ReservaContext.jsx';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { dinero } from '../config.js';
-import { describir } from '../lib/disenoBuilder.js';
+import { describir } from '../patrones/constructorDiseno.js';
 import { useTitulo } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
-import MuestraUnas from '../components/MuestraUnas.jsx';
+import MuestraUnas from '../components/DibujoUnas.jsx';
 import Decoracion from '../components/Decoracion.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import VerMas from '../components/VerMas.jsx';
+import Migas from '../components/Migas.jsx';
 
 const DIA = new Intl.DateTimeFormat('es-CR', { weekday: 'short' });
 const MES = new Intl.DateTimeFormat('es-CR', { month: 'short' });
@@ -180,6 +181,7 @@ export default function Reservar() {
 
   return (
     <>
+      <div className="contenedor migas-arriba"><Migas pasos={[['Servicios', '/servicios'], ['Reservar cita']]} /></div>
       <section className="reserva-portada" aria-labelledby="t-reservar">
         <Decoracion />
         <div className="contenedor reserva-portada__rejilla">

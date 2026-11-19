@@ -1,5 +1,5 @@
 // MODELO: reseñas de los productos de la tienda.
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
 // Guarda en el producto el promedio y la cantidad de reseñas, para mostrarlos en las tarjetas
 export const SQL_RESUMEN = `UPDATE productos SET

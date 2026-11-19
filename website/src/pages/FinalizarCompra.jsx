@@ -12,6 +12,7 @@ import { descargarCalendario } from '../lib/calendario.js';
 import { useUsuario } from '../context/UsuarioContext.jsx';
 import Acceso from '../components/Acceso.jsx';
 import { ListaDirecciones } from '../components/Direcciones.jsx';
+import Icono from '../components/Icono.jsx';
 
 
 // Tarjeta: formato, marca y validación (Luhn) en el navegador; el servidor vuelve a validar
@@ -333,7 +334,7 @@ export default function FinalizarCompra() {
               ))}
             </ul>
             <button type="button" className="enlace-boton compra__regalo" aria-expanded={regalo.abierto} onClick={() => setRegalo({ ...regalo, abierto: !regalo.abierto })}>
-              <span aria-hidden="true">🎁</span> Agregar gratis una tarjeta de mensaje de regalo ›
+              <Icono nombre="regalo" tam={18} /> Agregar gratis una tarjeta de mensaje de regalo ›
             </button>
             {regalo.abierto && (
               <div className="campo">
@@ -357,7 +358,7 @@ export default function FinalizarCompra() {
 
                   {metodo === m.id && m.id === 'tarjeta' && (
                     <div className="metodo__panel">
-                      <p className="seguro">🔒 Todas las transacciones son seguras y cifradas</p>
+                      <p className="seguro"><Icono nombre="candado" tam={16} /> Todas las transacciones son seguras y cifradas</p>
                       <div className="campo">
                         <label htmlFor="fc-numero">* Número de tarjeta</label>
                         <div className={`entrada-tarjeta ${errores.numero ? 'entrada-tarjeta--error' : ''}`}>
@@ -368,7 +369,7 @@ export default function FinalizarCompra() {
                           {marca(numero) && <span className="entrada-tarjeta__marca">{marca(numero)}</span>}
                           {luhn(numero) && <span className="entrada-tarjeta__ok" aria-label="Número válido">✓</span>}
                         </div>
-                        {errores.numero && <p id="fc-numero-error" className="error-campo">❗ {errores.numero}</p>}
+                        {errores.numero && <p id="fc-numero-error" className="error-campo"><Icono nombre="alerta" tam={15} /> {errores.numero}</p>}
                       </div>
                       <div className="metodo__vence">
                         <fieldset className="campo">
@@ -383,13 +384,13 @@ export default function FinalizarCompra() {
                               {Array.from({ length: 12 }, (_, i) => <option key={i} value={anioActual + i}>{anioActual + i}</option>)}
                             </select>
                           </div>
-                          {errores.vence && <p className="error-campo">❗ {errores.vence}</p>}
+                          {errores.vence && <p className="error-campo"><Icono nombre="alerta" tam={15} /> {errores.vence}</p>}
                         </fieldset>
                         <div className="campo">
                           <label htmlFor="fc-cvv">* CVV</label>
                           <input id="fc-cvv" inputMode="numeric" autoComplete="cc-csc" placeholder="Código de 3 a 4 dígitos" maxLength={4} value={tarjeta.cvv}
                                  aria-invalid={Boolean(errores.cvv)} onChange={(e) => setTarjeta({ ...tarjeta, cvv: soloNumeros(e.target.value) })} />
-                          {errores.cvv && <p className="error-campo">❗ {errores.cvv}</p>}
+                          {errores.cvv && <p className="error-campo"><Icono nombre="alerta" tam={15} /> {errores.cvv}</p>}
                         </div>
                       </div>
                       <p className="aviso-prueba">Modo de prueba: no se hace ningún cobro real y la página no guarda tu tarjeta. Para probar usa 4242 4242 4242 4242 con cualquier fecha futura.</p>
@@ -406,7 +407,7 @@ export default function FinalizarCompra() {
                         <label htmlFor="fc-comprobante">* Número de comprobante</label>
                         <input id="fc-comprobante" inputMode="numeric" value={comprobante} aria-invalid={Boolean(errores.comprobante)}
                                onChange={(e) => setComprobante(soloNumeros(e.target.value))} />
-                        {errores.comprobante && <p className="error-campo">❗ {errores.comprobante}</p>}
+                        {errores.comprobante && <p className="error-campo"><Icono nombre="alerta" tam={15} /> {errores.comprobante}</p>}
                       </div>
                     </div>
                   )}
@@ -479,7 +480,7 @@ export default function FinalizarCompra() {
           </button>
 
           <section className="garantia" aria-labelledby="t-g1">
-            <h3 id="t-g1">🛍️ Compra garantizada</h3>
+            <h3 id="t-g1"><Icono nombre="bolsa" tam={20} /> Compra garantizada</h3>
             <ul>
               <li>Retiro gratis en el salón</li>
               <li>Productos profesionales que usamos en el salón</li>
@@ -487,7 +488,7 @@ export default function FinalizarCompra() {
             </ul>
           </section>
           <section className="garantia" aria-labelledby="t-g2">
-            <h3 id="t-g2">🔒 {SALON.nombre} protege tu información</h3>
+            <h3 id="t-g2"><Icono nombre="candado" tam={20} /> {SALON.nombre} protege tu información</h3>
             <ul>
               <li>No guardamos los datos de tu tarjeta</li>
               <li>Tus datos solo se usan para tu pedido</li>

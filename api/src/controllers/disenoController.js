@@ -1,6 +1,6 @@
 // CONTROLADOR: diseños de uñas. Usa el patrón Builder para armar y validar el diseño.
 import { DisenoModel } from '../models/DisenoModel.js';
-import { DisenoBuilder, OPCIONES } from '../patterns/disenoBuilder.js';
+import { DisenoBuilder, OPCIONES } from '../patrones/constructorDiseno.js';
 
 export const disenoController = {
   opciones: (req, res) => res.json(OPCIONES),

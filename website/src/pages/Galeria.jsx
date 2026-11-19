@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { useDebounce, useTitulo } from '../lib/hooks.js';
 import Desplegable from '../components/Desplegable.jsx';
 import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaDiseno from '../components/TarjetaDiseno.jsx';
-import EscaparateGaleria, { HistoriasCategorias } from '../components/EscaparateGaleria.jsx';
+import EscaparateGaleria from '../components/EscaparateGaleria.jsx';
+import Migas from '../components/Migas.jsx';
 
 const CAMPOS = [
   { clave: 'categoria', titulo: 'Tipo de servicio' },
@@ -57,27 +58,19 @@ export default function Galeria() {
       .finally(() => setCargando(false));
   }, [params, pagina]);
 
+  // La portada siempre muestra el total de la galería, no el de los filtros
+  const totalGaleria = useRef(0);
+  if (!activos.length && !params.get('q') && !cargando) totalGaleria.current = resultado.total;
+
   const limpiar = () => { setTexto(''); setPagina(1); setParams({}, { replace: true }); };
 
   return (
     <div className="contenedor pagina pagina--resultados">
-      <header className="resultados-cabeza">
-        <div>
-          <h1>Galería de diseños</h1>
-          <p className="tenue">Toca un diseño para verlo en grande, reservarlo en el salón o llevarlo en press-on.</p>
-        </div>
-        <label className="buscador buscador--chico">
-          <span className="solo-lector">Buscar en la galería</span>
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Busca: francesa, nude, coffin, flores…" />
-        </label>
-      </header>
+      <h1 className="solo-lector">Galería de diseños</h1>
+      <Migas pasos={[['Galería']]} />
+      <EscaparateGaleria total={totalGaleria.current || resultado.total} />
 
-      {![...params.keys()].length && <EscaparateGaleria total={resultado.total} />}
-      <HistoriasCategorias opciones={opciones.categoria || []} activas={lista('categoria')}
-                           onElegir={(v) => fijar('categoria', v ? (lista('categoria').includes(v) && lista('categoria').length === 1 ? [] : [v]) : [])} />
-
-      <div className="barra-chips" role="group" aria-label="Filtros y orden">
+      <div className="barra-chips barra-filtros" role="group" aria-label="Filtros y orden">
         <button type="button" className={`chip-filtro ${orden === 'populares' ? 'chip-filtro--activo' : ''}`} aria-pressed={orden === 'populares'}
                 onClick={() => fijar('orden', orden === 'populares' ? '' : 'populares')}>
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
@@ -105,10 +98,14 @@ export default function Galeria() {
             </fieldset>
           </Desplegable>
         ) : null))}
-        {activos.length > 0 && <button type="button" className="chip-filtro chip-filtro--limpiar" onClick={limpiar}>Quitar filtros ({activos.length})</button>}
+        {activos.length > 0 && <button type="button" className="chip-filtro chip-filtro--limpiar" onClick={limpiar} title="Quitar todos los filtros"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>Quitar</button>}
+        <label className="buscador buscador--chico barra-filtros__buscar">
+          <span className="solo-lector">Buscar en la galería</span>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar diseño…" />
+        </label>
+        <p className="barra-filtros__cuenta" aria-live="polite">{cargando && pagina === 1 ? 'Buscando…' : `${resultado.total} diseños`}</p>
       </div>
-
-      <p className="tenue" aria-live="polite">{cargando && pagina === 1 ? 'Buscando…' : `${resultado.total} diseños`}</p>
       {error && <p role="alert" className="error">{error}</p>}
       {!cargando && !error && resultado.total === 0 && (
         <div className="vacio"><p>No encontramos diseños con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>

@@ -1,6 +1,6 @@
 // CONTROLADOR: finalizar compra. Un mismo pedido puede traer productos de la tienda
 // y citas (una por persona, cada una con un solo diseño).
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 import { ProductoModel } from '../models/ProductoModel.js';
 import { PedidoModel } from '../models/PedidoModel.js';
 import { CuponModel } from '../models/CuponModel.js';
@@ -8,10 +8,11 @@ import { CitaModel, PORCENTAJE_ADELANTO } from '../models/CitaModel.js';
 import { ServicioModel } from '../models/ServicioModel.js';
 import { EspecialistaModel } from '../models/EspecialistaModel.js';
 import { DisenoModel } from '../models/DisenoModel.js';
-import { crearMetodoPago } from '../patterns/pagos.js';
-import { calcularPrecioPedido } from '../patterns/precio.js';
-import { eventos } from '../patterns/eventos.js';
+import { crearMetodoPago } from '../patrones/estrategiaPagos.js';
+import { calcularPrecioPedido } from '../patrones/decoradorPrecio.js';
+import { eventos } from '../patrones/observadorEventos.js';
 import { UsuarioModel } from '../models/UsuarioModel.js';
+import { FotoModel } from '../models/FotoModel.js';
 
 // Envío a domicilio (solo productos; las citas son en el salón). Se cambia con la variable COSTO_ENVIO.
 export const COSTO_ENVIO = Number(process.env.COSTO_ENVIO ?? 2500);
@@ -43,8 +44,10 @@ function armarCitas(citas = []) {
     usadas.add(clave);
     if (!CitaModel.horaDisponible(especialista.id, c.fecha, c.hora)) throw error(`La hora ${c.hora} con ${especialista.nombre} ya no está disponible. Cámbiala en el carrito.`, 409);
     const diseno = c.disenoId ? DisenoModel.buscarPorId(c.disenoId) : null;
-    const precio = (servicio.precio_oferta ?? servicio.precio) + (diseno?.precio || 0);
-    return { tipo: 'cita', servicio, especialista, diseno, precio, precioAnterior: servicio.precio_oferta != null ? servicio.precio + (diseno?.precio || 0) : null,
+    // Si la foto de la galería tiene su propio precio, ese es el que se cobra
+    const precioFoto = c.fotoRefId ? FotoModel.buscarPorId(c.fotoRefId)?.precio : null;
+    const precio = (precioFoto ?? servicio.precio_oferta ?? servicio.precio) + (diseno?.precio || 0);
+    return { tipo: 'cita', servicio, especialista, diseno, precio, precioAnterior: precioFoto == null && servicio.precio_oferta != null ? servicio.precio + (diseno?.precio || 0) : null,
       cantidad: 1, fecha: c.fecha, hora: c.hora, fotoRefId: c.fotoRefId || null,
       persona: c.persona ? String(c.persona).trim().slice(0, 60) : null, notas: c.notas ? String(c.notas).slice(0, 500) : null };
   });

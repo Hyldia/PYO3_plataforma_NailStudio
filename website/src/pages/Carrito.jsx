@@ -8,6 +8,7 @@ import ProductoImagen from '../components/ProductoImagen.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import { enlaceArticulo } from '../components/CarritoLateral.jsx';
+import Icono from '../components/Icono.jsx';
 
 // Página del carrito: lista con casillas para elegir qué pedir y resumen a la derecha
 export default function Carrito() {
@@ -163,7 +164,7 @@ export default function Carrito() {
               <span>Hacer pedido ({carrito.cantidadElegida})</span>
             </button>
             <p className="resumen-pedido__nota">ⓘ Pagas con SINPE Móvil o al retirar en el salón.</p>
-            <p className="resumen-pedido__nota resumen-pedido__nota--verde">🔒 No se te cobra nada hasta que confirmes el pedido.</p>
+            <p className="resumen-pedido__nota resumen-pedido__nota--verde"><Icono nombre="candado" tam={16} /> No se te cobra nada hasta que confirmes el pedido.</p>
             <Link to="/tienda" className="enlace">← Seguir comprando</Link>
           </aside>
         </div>

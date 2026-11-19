@@ -1,4 +1,4 @@
-import { Una, datosUna } from './MuestraUnas.jsx';
+import { Una, datosUna } from './DibujoUnas.jsx';
 import { DEDOS } from '../lib/esmaltes.js';
 
 // Probador sobre una foto real de una mano: las uñas originales se borraron de la foto

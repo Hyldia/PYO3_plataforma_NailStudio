@@ -8,16 +8,21 @@ import Decoracion from '../components/Decoracion.jsx';
 import Contador from '../components/Contador.jsx';
 import Modal from '../components/Modal.jsx';
 import Resenas from '../components/Resenas.jsx';
-import { olvidarResumenes, useResumenes } from '../lib/resumenes.js';
+import Desplegable from '../components/Desplegable.jsx';
+import { olvidarResumenes, useResumenes } from '../lib/resumenesOpiniones.js';
+import Migas from '../components/Migas.jsx';
 
 const ORDEN_CATEGORIAS = ['Combos', 'Manos', 'Uñas acrílicas', 'Gel y polygel', 'Pies', 'Tratamientos', 'Diseños y extras', 'Retiros y reparaciones'];
-const FECHA = new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'long' });
 
 const Icono = {
   reloj: <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>,
   check: <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5 9-10" /></svg>,
   tijera: <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="6" cy="7" r="3" /><circle cx="6" cy="17" r="3" /><path d="M8.5 8.5 20 18M8.5 15.5 20 6" /></svg>
 };
+
+const ORDENES = { relevancia: 'Recomendados', calificacion: 'Mejor calificados', descuento: 'Mayor descuento', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', rapidos: 'Más rápidos' };
+const PRECIOS = [['', 'Cualquier precio', () => true], ['15000', 'Hasta ₡15 000', (p) => p <= 15000], ['25000', '₡15 000 a ₡25 000', (p) => p > 15000 && p <= 25000], ['mas', 'Más de ₡25 000', (p) => p > 25000]];
+const DURACIONES = [['', 'Cualquier duración', () => true], ['1h', 'Hasta 1 hora', (m) => m <= 60], ['2h', '1 a 2 horas', (m) => m > 60 && m <= 120], ['mas', 'Más de 2 horas', (m) => m > 120]];
 
 const duracion = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ''}` : `${min} min`);
 const ahorro = (s) => (s.precio_oferta != null ? s.precio - s.precio_oferta : 0);
@@ -75,58 +80,45 @@ function TarjetaServicio({ s, opinion, onOpiniones }) {
   );
 }
 
-function Cupon({ c }) {
-  const [copiado, setCopiado] = useState(false);
-  const copiar = async () => {
-    try { await navigator.clipboard.writeText(c.codigo); setCopiado(true); setTimeout(() => setCopiado(false), 2000); } catch { /* sin portapapeles */ }
-  };
-  const condiciones = [
-    c.minimo > 0 && `Desde ${dinero(c.minimo)}`,
-    c.solo_combos && 'Solo combos',
-    c.vence && `Vence el ${FECHA.format(new Date(`${c.vence}T12:00:00`))}`
-  ].filter(Boolean).join(' · ');
-  return (
-    <li className="cupon">
-      <div className="cupon__valor">{c.tipo === 'porcentaje' ? `${c.valor}\u00a0%` : dinero(c.valor)}<span>de descuento</span></div>
-      <div className="cupon__info">
-        <p className="cupon__descripcion">{c.descripcion}</p>
-        <p className="cupon__condiciones">{condiciones}</p>
-        <div className="cupon__acciones">
-          <code className="cupon__codigo">{c.codigo}</code>
-          <button type="button" className="boton boton--contorno boton--chico" onClick={copiar}>{copiado ? 'Copiado' : 'Copiar'}</button>
-          <Link to={`/reservar?cupon=${c.codigo}`} className="enlace">Usar ahora</Link>
-        </div>
-        <span className="solo-lector" aria-live="polite">{copiado ? `Código ${c.codigo} copiado` : ''}</span>
-      </div>
-    </li>
-  );
-}
-
 export default function Servicios() {
   useTitulo('Servicios y precios');
   const [params, setParams] = useSearchParams();
   const [servicios, setServicios] = useState([]);
-  const [cupones, setCupones] = useState([]);
   const [error, setError] = useState('');
   const [texto, setTexto] = useState('');
   const categoria = params.get('categoria') || 'Todos';
   const soloOfertas = params.get('ofertas') === '1';
+  const orden = ORDENES[params.get('orden')] ? params.get('orden') : 'relevancia';
+  const precio = PRECIOS.find((r) => r[0] === (params.get('precio') || '')) || PRECIOS[0];
+  const tiempo = DURACIONES.find((r) => r[0] === (params.get('duracion') || '')) || DURACIONES[0];
   const resumenes = useResumenes('servicio');
   const [opiniones, setOpiniones] = useState(null);
 
   useEffect(() => {
     api.servicios().then(setServicios).catch((e) => setError(e.message));
-    api.cupones().then(setCupones).catch(() => {});
   }, []);
 
   const fijar = (k, v) => { const p = new URLSearchParams(params); v ? p.set(k, v) : p.delete(k); setParams(p, { replace: true }); };
+  const limpiar = () => { setTexto(''); setParams({}, { replace: true }); };
+  const hayFiltros = categoria !== 'Todos' || soloOfertas || orden !== 'relevancia' || precio !== PRECIOS[0] || tiempo !== DURACIONES[0] || texto;
 
   const categorias = useMemo(() => ORDEN_CATEGORIAS.filter((c) => servicios.some((s) => s.categoria === c))
     .concat([...new Set(servicios.map((s) => s.categoria))].filter((c) => !ORDEN_CATEGORIAS.includes(c))), [servicios]);
 
+  const nota = (s) => resumenes.get(s.id)?.promedio || 0;
+  const comparar = {
+    relevancia: () => 0,
+    calificacion: (a, b) => nota(b) - nota(a),
+    descuento: (a, b) => porcentaje(b) - porcentaje(a),
+    'precio-asc': (a, b) => (a.precio_oferta ?? a.precio) - (b.precio_oferta ?? b.precio),
+    'precio-desc': (a, b) => (b.precio_oferta ?? b.precio) - (a.precio_oferta ?? a.precio),
+    rapidos: (a, b) => a.duracion_min - b.duracion_min
+  }[orden];
   const filtrados = servicios.filter((s) => (categoria === 'Todos' || s.categoria === categoria)
     && (!soloOfertas || s.precio_oferta != null)
-    && `${s.nombre} ${s.descripcion} ${s.incluye}`.toLowerCase().includes(texto.trim().toLowerCase()));
+    && precio[2](s.precio_oferta ?? s.precio) && tiempo[2](s.duracion_min)
+    && `${s.nombre} ${s.descripcion} ${s.incluye}`.toLowerCase().includes(texto.trim().toLowerCase()))
+    .sort(comparar);
 
   const grupos = categorias.map((c) => [c, filtrados.filter((s) => s.categoria === c)]).filter(([, l]) => l.length);
   const ofertas = servicios.filter((s) => s.precio_oferta != null);
@@ -135,6 +127,7 @@ export default function Servicios() {
 
   return (
     <div className="servicios-pagina">
+      <div className="contenedor migas-arriba"><Migas pasos={[['Servicios']]} /></div>
       <section className="campana servicios-campana" aria-labelledby="t-servicios">
         <Decoracion />
         <div className="contenedor campana__rejilla">
@@ -167,53 +160,65 @@ export default function Servicios() {
         </div>
       </section>
 
-      {cupones.length > 0 && (
-        <section className="contenedor cupones-seccion" aria-labelledby="t-cupones">
-          <div className="seccion__cabeza">
-            <h2 id="t-cupones">Cupones disponibles</h2>
-            <p className="tenue">Escribe el código al reservar y el descuento se aplica solo.</p>
-          </div>
-          <ul className="cupones">{cupones.map((c) => <Cupon key={c.codigo} c={c} />)}</ul>
-        </section>
-      )}
 
       <div id="lista-servicios" className="contenedor servicios-lista-nueva">
-        <div className="servicios-filtros servicios-filtros--nuevo">
-          <div className="filtro-fotos" role="group" aria-label="Categorías">
-            {['Todos', ...categorias].map((c) => {
-              const foto = c === 'Todos' ? servicios[0]?.imagen : servicios.find((s) => s.categoria === c)?.imagen;
-              const n = c === 'Todos' ? servicios.length : servicios.filter((s) => s.categoria === c).length;
-              return (
-                <button key={c} type="button" className="filtro-foto" aria-pressed={categoria === c}
-                        onClick={(e) => {
-                          fijar('categoria', c === 'Todos' ? '' : c);
-                          e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
-                        }}>
-                  <span className="filtro-foto__img"><Foto archivo={foto} alt="" /></span>
-                  <span className="filtro-foto__nombre">{c}</span>
-                  <span className="filtro-foto__n">{n}</span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="servicios-filtros__fila">
-            <label className="buscador buscador--chico">
-              <span className="solo-lector">Buscar servicio</span>
-              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-              <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Busca: pedicure, francesa, parafina…" />
-            </label>
-            <label className="interruptor">
-              <input type="checkbox" role="switch" checked={soloOfertas} onChange={(e) => fijar('ofertas', e.target.checked ? '1' : '')} />
-              <span className="interruptor__pista" aria-hidden="true"><span /></span>
-              <span>Solo ofertas</span>
-            </label>
-            <p className="tenue servicios-filtros__cuenta" aria-live="polite">{filtrados.length} {filtrados.length === 1 ? 'servicio' : 'servicios'}</p>
-          </div>
+        <div className="barra-chips barra-filtros servicios-barra" role="group" aria-label="Filtros y orden">
+          <button type="button" className={`chip-filtro chip-filtro--rayo ${soloOfertas ? 'chip-filtro--activo' : ''}`} aria-pressed={soloOfertas} onClick={() => fijar('ofertas', soloOfertas ? '' : '1')}>
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
+            Solo ofertas
+          </button>
+          <Desplegable etiqueta={<span>Ordenar por: <b>{ORDENES[orden]}</b></span>}>
+            {(cerrar) => (
+              <div className="desplegable__opciones" role="radiogroup" aria-label="Ordenar por">
+                {Object.entries(ORDENES).map(([k, t]) => (
+                  <label key={k} className="casilla"><input type="radio" name="orden-servicios" checked={orden === k} onChange={() => { fijar('orden', k === 'relevancia' ? '' : k); cerrar(); }} /><span>{t}</span></label>
+                ))}
+              </div>
+            )}
+          </Desplegable>
+          <Desplegable etiqueta={categoria !== 'Todos' ? `Categoría: ${categoria}` : 'Categoría'} activo={categoria !== 'Todos'}>
+            {(cerrar) => (
+              <div className="desplegable__opciones" role="radiogroup" aria-label="Categoría">
+                <label className="casilla"><input type="radio" name="cat-servicios" checked={categoria === 'Todos'} onChange={() => { fijar('categoria', ''); cerrar(); }} /><span>Todas</span><span className="casilla__cantidad">{servicios.length}</span></label>
+                {categorias.map((c) => (
+                  <label key={c} className="casilla">
+                    <input type="radio" name="cat-servicios" checked={categoria === c} onChange={() => { fijar('categoria', c); cerrar(); }} />
+                    <span>{c}</span><span className="casilla__cantidad">{servicios.filter((s) => s.categoria === c).length}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </Desplegable>
+          <Desplegable etiqueta={precio === PRECIOS[0] ? 'Precio' : precio[1]} activo={precio !== PRECIOS[0]}>
+            {(cerrar) => (
+              <div className="desplegable__opciones" role="radiogroup" aria-label="Precio">
+                {PRECIOS.map((r) => (
+                  <label key={r[1]} className="casilla"><input type="radio" name="precio-servicios" checked={precio === r} onChange={() => { fijar('precio', r[0]); cerrar(); }} /><span>{r[1]}</span></label>
+                ))}
+              </div>
+            )}
+          </Desplegable>
+          <Desplegable etiqueta={tiempo === DURACIONES[0] ? 'Duración' : tiempo[1]} activo={tiempo !== DURACIONES[0]}>
+            {(cerrar) => (
+              <div className="desplegable__opciones" role="radiogroup" aria-label="Duración">
+                {DURACIONES.map((r) => (
+                  <label key={r[1]} className="casilla"><input type="radio" name="duracion-servicios" checked={tiempo === r} onChange={() => { fijar('duracion', r[0]); cerrar(); }} /><span>{r[1]}</span></label>
+                ))}
+              </div>
+            )}
+          </Desplegable>
+          {hayFiltros && <button type="button" className="chip-filtro chip-filtro--limpiar" onClick={limpiar} title="Quitar todos los filtros"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>Quitar</button>}
+          <label className="buscador buscador--chico barra-filtros__buscar">
+            <span className="solo-lector">Buscar servicio</span>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar servicio…" />
+          </label>
+          <p className="barra-filtros__cuenta" aria-live="polite">{filtrados.length} {filtrados.length === 1 ? 'servicio' : 'servicios'}</p>
         </div>
 
         {error && <p role="alert" className="error">{error}</p>}
         {servicios.length > 0 && filtrados.length === 0 && (
-          <div className="vacio"><p>No hay servicios con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={() => { setTexto(''); setParams({}, { replace: true }); }}>Ver todos</button></div>
+          <div className="vacio"><p>No hay servicios con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>
         )}
 
         {grupos.map(([cat, lista]) => (
@@ -222,7 +227,7 @@ export default function Servicios() {
               <h2 id={`g-${cat}`}>{cat === 'Combos' ? 'Combos y paquetes' : cat}</h2>
               {cat === 'Combos' && <p className="tenue">Varios servicios en una sola cita, a mejor precio.</p>}
             </div>
-            <ul key={`${categoria}-${soloOfertas}-${texto}`} className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
+            <ul key={`${categoria}-${soloOfertas}-${texto}-${orden}-${precio[0]}-${tiempo[0]}`} className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
               {lista.map((s) => <TarjetaServicio key={s.id} s={s} opinion={resumenes.get(s.id)} onOpiniones={setOpiniones} />)}
             </ul>
             {lista.length > 4 && (

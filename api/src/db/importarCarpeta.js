@@ -9,7 +9,7 @@
 import { readdirSync, copyFileSync, statSync } from 'node:fs';
 import { join, extname, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { getDb, UPLOADS_DIR } from './connection.js';
+import { getDb, UPLOADS_DIR } from './conexion.js';
 import { clasificarFoto } from './clasificarFoto.js';
 
 const carpeta = process.argv[2];

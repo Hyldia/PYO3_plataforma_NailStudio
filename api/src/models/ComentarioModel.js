@@ -1,5 +1,5 @@
 // MODELO: comentarios con estrellas de los diseños de la galería y de los servicios.
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 import { FILTRO_ESTRELLAS } from './ResenaModel.js';
 
 export const TIPOS_COMENTARIO = ['foto', 'servicio'];

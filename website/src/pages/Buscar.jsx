@@ -5,6 +5,7 @@ import { dinero } from '../config.js';
 import { useTitulo } from '../lib/hooks.js';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import Foto from '../components/Foto.jsx';
+import Migas from '../components/Migas.jsx';
 
 // Búsqueda general: servicios, productos y fotos de la galería
 export default function Buscar() {
@@ -27,6 +28,7 @@ export default function Buscar() {
   const total = r.servicios.length + r.productos.length + r.fotos.length;
   return (
     <div className="contenedor pagina">
+      <Migas pasos={[['Resultados de búsqueda']]} />
       <header className="pagina__cabeza">
         <h1>Resultados para «{q}»</h1>
         <p className="tenue" aria-live="polite">{r.cargando ? 'Buscando…' : `${total} resultados`}</p>

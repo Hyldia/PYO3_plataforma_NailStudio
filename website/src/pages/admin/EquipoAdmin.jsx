@@ -1,10 +1,12 @@
 // Equipo: agregar, editar, cambiar foto y quitar especialistas, con sus días y horas de trabajo.
+// Cada una tiene además su estación, forma de pago, días libres y usuario para el portal (AjustesEspecialista.jsx).
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
 import Foto from '../../components/Foto.jsx';
 import Modal from '../../components/Modal.jsx';
-import { BotonFoto, ZonaFotos, DIAS_SEMANA, HORAS, formData } from './comunes.jsx';
+import { BotonFoto, ZonaFotos, DIAS_SEMANA, HORAS, formData } from './piezasPanel.jsx';
 import { AvatarSofi, avisarFotoAsistente } from '../../components/ChatAsistente.jsx';
+import AjustesEspecialista from './AjustesEspecialista.jsx';
 
 // Foto de la asistente del chat (Sofi)
 function FotoAsistente({ onAviso }) {
@@ -34,7 +36,7 @@ function FotoAsistente({ onAviso }) {
 const VACIA = { nombre: '', especialidad: '', bio: '', experiencia: '', dias: '1,2,3,4,5', hora_inicio: '09:00', hora_fin: '17:30', activa: 1 };
 const textoDias = (dias = '') => DIAS_SEMANA.filter(([k]) => dias.split(',').includes(k)).map(([, t]) => t).join(' · ');
 
-function Editor({ persona, onCerrar, onGuardado }) {
+export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
   const nueva = !persona.id;
   const [d, setD] = useState({ ...VACIA, ...persona, bio: persona.bio ?? '', experiencia: persona.experiencia ?? '' });
   const [archivo, setArchivo] = useState([]);
@@ -48,14 +50,14 @@ function Editor({ persona, onCerrar, onGuardado }) {
     setEstado({ guardando: true, error: '' });
     try {
       const r = nueva ? await api.admin.crearEspecialista(d) : await api.admin.editarEspecialista(d.id, d);
-      if (archivo[0]) await api.admin.fotoEspecialista(r.id, formData(archivo[0]));
-      onGuardado(nueva ? `${r.nombre} se agregó al equipo.` : 'Cambios guardados.'); onCerrar();
+      const conFoto = archivo[0] ? await api.admin.fotoEspecialista(r.id, formData(archivo[0])) : null;
+      onGuardado(nueva ? `${r.nombre} se agregó al equipo.` : 'Cambios guardados.');
+      if (embebido) { if (conFoto?.foto) setD((x) => ({ ...x, foto: conFoto.foto })); setArchivo([]); setEstado({ guardando: false, error: '', ok: 'Cambios guardados.' }); } else onCerrar();
     } catch (err) { setEstado({ guardando: false, error: err.message }); }
   }
 
   const previa = archivo[0] ? URL.createObjectURL(archivo[0]) : null;
-  return (
-    <Modal titulo={nueva ? 'Agregar especialista' : `Editar a ${persona.nombre}`} onCerrar={onCerrar} ancho>
+  const formulario = (
       <form className="editor-admin" onSubmit={guardar}>
         <div className="editor-admin__previa">
           {(previa || d.foto) && (
@@ -92,26 +94,26 @@ function Editor({ persona, onCerrar, onGuardado }) {
           </div>
           <label className="casilla"><input type="checkbox" checked={Boolean(Number(d.activa))} onChange={(e) => setD({ ...d, activa: e.target.checked ? 1 : 0 })} /><span>Activa (aparece al reservar)</span></label>
           {estado.error && <p role="alert" className="error">{estado.error}</p>}
+          {estado.ok && <p role="status" className="aviso-ok">{estado.ok}</p>}
           <div className="botones">
             <button type="submit" className="boton" disabled={estado.guardando}>{estado.guardando ? 'Guardando…' : nueva ? 'Agregar al equipo' : 'Guardar cambios'}</button>
-            <button type="button" className="boton boton--contorno" onClick={onCerrar}>Cancelar</button>
+            {!embebido && <button type="button" className="boton boton--contorno" onClick={onCerrar}>Cancelar</button>}
           </div>
         </div>
       </form>
-    </Modal>
   );
+  if (embebido) return formulario;
+  return <Modal titulo={nueva ? 'Agregar especialista' : `Editar a ${persona.nombre}`} onCerrar={onCerrar} ancho>{formulario}</Modal>;
 }
 
 export default function EquipoAdmin() {
   const [lista, setLista] = useState([]);
   const [editando, setEditando] = useState(null);
+  const [ajustes, setAjustes] = useState(null);
   const [aviso, setAviso] = useState({ texto: '', error: false });
   const cargar = () => api.admin.equipo().then(setLista).catch((e) => setAviso({ texto: e.message, error: true }));
   useEffect(() => { cargar(); }, []);
 
-  const foto = async (e, archivo) => {
-    try { await api.admin.fotoEspecialista(e.id, formData(archivo)); setAviso({ texto: `Foto de ${e.nombre} actualizada.` }); cargar(); } catch (err) { setAviso({ texto: err.message, error: true }); }
-  };
   const quitar = async (e) => {
     if (!window.confirm(`¿Quitar a ${e.nombre} del equipo?`)) return;
     try {
@@ -124,10 +126,10 @@ export default function EquipoAdmin() {
   return (
     <section aria-labelledby="t-equipo" className="seccion-admin">
       <div className="admin__cabeza">
-        <div><h2 id="t-equipo">Equipo</h2><p className="tenue">Las clientas ven estas fotos, días y horarios al reservar.</p></div>
+        <div><h2 id="t-equipo">Equipo</h2><p className="tenue">Toca <b>«Abrir ficha»</b> para cambiar los datos, el horario, el pago, los días libres o el usuario de cada una.</p></div>
         <button type="button" className="boton" onClick={() => setEditando({})}>+ Agregar especialista</button>
       </div>
-      <FotoAsistente onAviso={setAviso} />
+
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <ul className="admin-tarjetas admin-tarjetas--equipo">
         {lista.map((e, i) => (
@@ -141,15 +143,31 @@ export default function EquipoAdmin() {
               <p className="tenue">{e.especialidad}</p>
               <p className="dias-mini">{DIAS_SEMANA.map(([k, t]) => <span key={k} className={(e.dias || '').split(',').includes(k) ? 'si' : ''}>{t[0]}</span>)}</p>
               <p className="tenue">{e.hora_inicio} – {e.hora_fin} · {e.citas} citas</p>
+              <p className="equipo-admin__datos">
+                <span>{e.estacion || 'Sin estación'}</span>
+                <span>{e.esquema_pago === 'base_comision' ? 'Base + ' : ''}{e.comision} %</span>
+                {e.ausencias_proximas > 0 && <span className="equipo-admin__libres">{e.ausencias_proximas} {e.ausencias_proximas === 1 ? 'día libre' : 'días libres'}</span>}
+                <span className={e.tiene_acceso ? 'equipo-admin__acceso' : 'equipo-admin__sin'}>{e.tiene_acceso ? `Usuario: ${e.usuario}` : 'Sin usuario'}</span>
+              </p>
             </div>
-            <div className="admin-tarjeta__botones">
-              <button type="button" className="boton boton--chico" onClick={() => setEditando(e)}>Editar<span className="solo-lector"> a {e.nombre}</span></button>
-              <BotonFoto etiqueta={`de ${e.nombre}`} texto="Foto" onArchivo={(f) => foto(e, f)} />
-              <button type="button" className="boton boton--chico boton--peligro" onClick={() => quitar(e)} aria-label={`Quitar a ${e.nombre}`}>Quitar</button>
+            <div className="admin-tarjeta__botones equipo-admin__botones">
+              <button type="button" className="boton boton--chico equipo-admin__ficha" onClick={() => setAjustes({ id: e.id, inicio: 'datos' })}>
+                <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13 7 4 4" /></svg>
+                Abrir ficha<span className="solo-lector"> de {e.nombre}</span>
+              </button>
+              <button type="button" className="enlace enlace--boton enlace--chico equipo-admin__quitar" onClick={() => quitar(e)}>Quitar del equipo<span className="solo-lector">: {e.nombre}</span></button>
             </div>
           </li>
         ))}
       </ul>
+      <details className="ajuste-chat">
+        <summary><span><b>Foto de Sofi, la asistente del chat</b><small>La que ven las clientas en el botón del chat</small></span></summary>
+        <FotoAsistente onAviso={setAviso} />
+      </details>
+      {ajustes && lista.find((x) => x.id === ajustes.id) && (
+        <AjustesEspecialista persona={lista.find((x) => x.id === ajustes.id)} inicio={ajustes.inicio} onCerrar={() => setAjustes(null)} onGuardado={cargar}
+          datos={<Editor key={ajustes.id} persona={lista.find((x) => x.id === ajustes.id)} embebido onCerrar={() => setAjustes(null)} onGuardado={(t) => { setAviso({ texto: t }); cargar(); }} />} />
+      )}
       {editando && <Editor persona={editando} onCerrar={() => setEditando(null)} onGuardado={(t) => { setAviso({ texto: t }); cargar(); }} />}
     </section>
   );

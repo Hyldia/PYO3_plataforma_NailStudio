@@ -1,10 +1,11 @@
 // Datos iniciales del salón. Cámbialos por los servicios y precios reales.
 // Las fotos de la galería y de los productos se suben desde /admin.
-import { getDb } from './connection.js';
+import { getDb } from './conexion.js';
 import { cargarDatosEjemplo } from './datosEjemplo.js';
 import { cargarResenasEjemplo } from './resenasEjemplo.js';
 import { cargarComentariosEjemplo } from './comentariosEjemplo.js';
 import { cargarAgendaEjemplo } from './agendaEjemplo.js';
+import { cargarEquipoEjemplo, cargarSolicitudesEjemplo } from './equipoEjemplo.js';
 import { ESPECIALISTAS, VERSION_ESPECIALISTAS } from './especialistasEjemplo.js';
 import { generarCatalogo } from './catalogoProductos.js';
 import { SERVICIOS, CUPONES } from './catalogoServicios.js';
@@ -23,7 +24,9 @@ export function seed({ force = false } = {}) {
     const resenas = cargarResenasEjemplo(db);
     const comentarios = cargarComentariosEjemplo(db);
     const agenda = cargarAgendaEjemplo(db);
-    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda;
+    const pagos = cargarEquipoEjemplo(db);
+    const solicitudes = cargarSolicitudesEjemplo(db);
+    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda || pagos || solicitudes;
   }
 
   db.exec(`
@@ -43,6 +46,9 @@ export function seed({ force = false } = {}) {
   cargarResenasEjemplo(db);
   cargarComentariosEjemplo(db);
   cargarAgendaEjemplo(db);
+  cargarEquipoEjemplo(db);
+  cargarSolicitudesEjemplo(db);
+  db.exec('UPDATE citas SET ejemplo = 1');
   return true;
 }
 

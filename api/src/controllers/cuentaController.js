@@ -1,6 +1,6 @@
 // CONTROLADOR: registro, inicio de sesión (formulario, Google o Facebook) y "Mi cuenta" con direcciones.
 import { UsuarioModel, PROVINCIAS, MAX_DIRECCIONES } from '../models/UsuarioModel.js';
-import { crearEstrategia, configuracionPublica, Contrasenas } from '../patterns/autenticacion.js';
+import { crearEstrategia, configuracionPublica, Contrasenas } from '../patrones/estrategiaAutenticacion.js';
 
 const sesion = (usuario) => ({ token: UsuarioModel.abrirSesion(usuario.id), usuario: UsuarioModel.publico(usuario) });
 

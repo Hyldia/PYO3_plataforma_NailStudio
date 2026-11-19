@@ -1,0 +1,77 @@
+/* Panel: servicios, pagos al equipo, días libres y acceso de cada especialista */
+
+/* ---- Servicios ---- */
+.admin-tarjetas--servicios { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.servicio-admin .admin-tarjeta__foto { position: relative; }
+.servicio-admin__sinfoto { display: grid; place-items: center; width: 100%; height: 100%; min-height: 150px; background: repeating-linear-gradient(135deg, var(--rubor), var(--rubor) 10px, var(--papel-rosa) 10px, var(--papel-rosa) 20px); color: var(--gris); font-weight: 700; }
+.servicio-admin__pct { position: absolute; right: 10px; bottom: 10px; padding: 4px 10px; border-radius: 999px; background: var(--oferta); color: #fff; font-weight: 800; font-size: 0.8rem; box-shadow: 0 6px 14px rgba(224,36,94,0.35); animation: latido 2.4s ease-in-out infinite; }
+.servicio-admin__cat { margin: 0; color: var(--vino-texto); font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.servicio-admin__precio { margin: 4px 0; display: flex; align-items: baseline; gap: 8px; }
+.servicio-admin__precio strong { font-size: 1.15rem; color: var(--tinta); }
+.servicio-admin__precio s { color: var(--apagado); font-size: 0.88rem; }
+.servicio-admin__etiqueta { align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: #FDF1D8; color: #8A5A00; font-size: 0.75rem; font-weight: 800; }
+.servicio-admin__incluye { margin: 6px 0 0; padding-left: 18px; color: var(--gris); font-size: 0.85rem; }
+.cifras-admin__texto { font-size: 1.05rem !important; line-height: 1.25; }
+.casillas-fila { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+
+/* ---- Equipo ---- */
+.equipo-admin__datos { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 0; }
+.equipo-admin__datos span { padding: 2px 9px; border-radius: 999px; background: var(--papel-rosa); color: var(--gris); font-size: 0.74rem; font-weight: 700; }
+.equipo-admin__datos .equipo-admin__acceso { background: #E7F5EC; color: var(--confianza); }
+.equipo-admin__datos .equipo-admin__libres { background: #FDF1D8; color: #8A5A00; }
+.equipo-admin__mas { flex-basis: 100%; }
+
+.ajustes-esp { display: flex; flex-direction: column; gap: 16px; }
+.ajustes-esp__pestanas { display: flex; gap: 6px; padding: 4px; border-radius: 999px; background: var(--rubor); overflow-x: auto; }
+.ajustes-esp__pestanas button { flex: 1 0 auto; padding: 9px 16px; border: none; border-radius: 999px; background: none; color: var(--gris); font: inherit; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.ajustes-esp__pestanas button[aria-selected="true"] { background: var(--papel); color: var(--vino-texto); box-shadow: 0 4px 12px rgba(140,29,75,0.15); }
+.ajustes-esp__form { display: flex; flex-direction: column; gap: 12px; animation: subir-suave 0.35s ease both; }
+.ajustes-esp__form > .boton, .ajustes-esp__form .botones { align-self: flex-start; }
+.ajustes-esp__ejemplo { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--papel-rosa); color: var(--tinta); }
+.ajustes-esp__dias { display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; }
+.ajustes-esp__sub { font-size: 1rem; margin-bottom: 10px; }
+@media (max-width: 760px) { .ajustes-esp__dias { grid-template-columns: 1fr; } }
+.opciones-pago-esp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opciones-pago-esp label { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--linea); background: var(--papel); cursor: pointer; transition: border-color 0.2s, transform 0.2s; }
+.opciones-pago-esp label:hover { transform: translateY(-2px); }
+.opciones-pago-esp label.activo { border-color: var(--vino); background: var(--papel-rosa); }
+.opciones-pago-esp input { position: absolute; opacity: 0; pointer-events: none; }
+.opciones-pago-esp span { color: var(--gris); font-size: 0.85rem; }
+@media (max-width: 520px) { .opciones-pago-esp { grid-template-columns: 1fr; } }
+.tipos-ausencia { display: flex; flex-wrap: wrap; gap: 8px; }
+.tipo-ausencia { position: relative; padding: 8px 14px; border-radius: 999px; border: 2px solid var(--linea); background: var(--papel); font-weight: 700; font-size: 0.88rem; cursor: pointer; }
+.tipo-ausencia input { position: absolute; opacity: 0; pointer-events: none; }
+.tipo-ausencia.activo { border-color: var(--vino); color: var(--vino-texto); background: var(--papel-rosa); }
+.tipo-ausencia:has(input:focus-visible) { outline: 3px solid var(--vino); outline-offset: 2px; }
+.ausencias-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ausencias-lista li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--papel); border: 1px solid var(--linea); border-left: 5px solid var(--vino); animation: subir-suave 0.3s ease both; }
+.ausencias-lista li.tipo-ausencia--vacaciones { border-left-color: #2A7AB8; }
+.ausencias-lista li.tipo-ausencia--incapacidad { border-left-color: #B7791F; }
+.ausencias-lista li.tipo-ausencia--permiso { border-left-color: #6B4FA0; }
+.ausencias-lista__fecha { font-weight: 700; display: inline-block; }
+.ausencias-lista__tipo { color: var(--gris); font-size: 0.86rem; flex: 1; }
+.ausencias-lista button { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--rubor); color: var(--tinta); font-size: 1.1rem; cursor: pointer; }
+.ausencias-lista button:hover { background: var(--error); color: #fff; }
+.acceso-esp__estado { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--rubor); font-weight: 700; }
+.acceso-esp__estado--si { background: #E7F5EC; color: var(--confianza); }
+
+/* ---- Pagos al equipo ---- */
+.nomina-periodo { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; }
+.nomina-resumen { display: grid; grid-template-columns: minmax(240px, 0.8fr) 2fr; gap: 14px; align-items: stretch; }
+.nomina-resumen__pago { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 18px; background: linear-gradient(135deg, #8C1D4B, #C2185B); color: #fff; animation: aparece-pop 0.5s cubic-bezier(.2,1.4,.4,1) both; }
+.nomina-resumen__pago .tenue { color: rgba(255,255,255,0.8); margin: 0; }
+.nomina-resumen__icono { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 16px; background: rgba(255,255,255,0.16); flex-shrink: 0; }
+.nomina-resumen__fecha { margin: 0; font-family: var(--serif); font-size: 1.25rem; font-weight: 600; }
+.nomina-resumen__faltan { display: inline-block; margin: 4px 0 0; padding: 2px 10px; border-radius: 999px; background: rgba(255,255,255,0.2); font-weight: 800; font-size: 0.82rem; }
+.nomina-resumen__faltan--pronto { background: #FFE08A; color: #5C3D00; animation: latido 1.8s ease-in-out infinite; }
+.nomina-resumen__faltan--paso { opacity: 0.75; }
+@media (max-width: 760px) { .nomina-resumen { grid-template-columns: 1fr; } }
+.nomina-tarjeta__foto { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; flex-shrink: 0; display: grid; place-items: center; background: var(--rubor); color: var(--vino-texto); font-weight: 800; font-size: 1.3rem; }
+.nomina-tarjeta__foto img { width: 100%; height: 100%; object-fit: cover; }
+.nomina-tarjeta__sello { padding: 4px 10px; border-radius: 999px; background: #E7F5EC; color: var(--confianza); font-weight: 800; font-size: 0.78rem; white-space: nowrap; }
+.nomina-tarjeta__sello--pendiente { background: #FDF1D8; color: #8A5A00; }
+.nomina-ayuda { padding: 16px 18px; border-radius: 16px; background: var(--papel-rosa); border: 1px dashed var(--linea); }
+.nomina-ayuda p { margin: 4px 0; color: var(--tinta); font-size: 0.92rem; }
+
+html.a11y-oscuro .nomina-tarjeta__sello, html.a11y-oscuro .equipo-admin__datos .equipo-admin__acceso, html.a11y-oscuro .acceso-esp__estado--si { background: #1B3326; color: #8FE0AE; }
+html.a11y-oscuro .nomina-tarjeta__sello--pendiente, html.a11y-oscuro .equipo-admin__datos .equipo-admin__libres, html.a11y-oscuro .servicio-admin__etiqueta { background: #3A2F12; color: #F2CF73; }

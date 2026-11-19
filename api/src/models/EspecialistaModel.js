@@ -1,11 +1,16 @@
 // MODELO: especialistas que atienden a las clientas, con sus días y horas de trabajo.
-import { getDb } from '../db/connection.js';
+import { getDb } from '../db/conexion.js';
 
-const SELECT = `SELECT e.*, (SELECT COUNT(*) FROM citas c WHERE c.especialista_id = e.id AND c.estado != 'cancelada') AS citas FROM especialistas e`;
+const SELECT = `SELECT e.id, e.nombre, e.especialidad, e.foto, e.foto_autor, e.foto_autor_url, e.bio, e.experiencia, e.dias, e.hora_inicio, e.hora_fin, e.activa, e.estacion, e.esquema_pago, e.comision, e.salario_base, e.usuario, (SELECT COUNT(*) FROM citas c WHERE c.especialista_id = e.id AND c.estado != 'cancelada') AS citas FROM especialistas e`;
 
 export const EspecialistaModel = {
-  listar: () => getDb().prepare(`${SELECT} WHERE e.activa = 1 ORDER BY e.id`).all(),
-  listarTodas: () => getDb().prepare(`${SELECT} ORDER BY e.activa DESC, e.id`).all(),
+  // Lo que ven las clientas: sin usuario ni datos de pago
+  listar: () => getDb().prepare(`${SELECT} WHERE e.activa = 1 ORDER BY e.id`).all()
+    .map(({ usuario, esquema_pago, comision, salario_base, ...publico }) => publico),
+  listarTodas: () => getDb().prepare(`${SELECT} ORDER BY e.activa DESC, e.id`).all().map((e) => ({
+    ...e, tiene_acceso: Boolean(e.usuario),
+    ausencias_proximas: getDb().prepare("SELECT COUNT(*) AS n FROM ausencias WHERE especialista_id = ? AND fecha >= date('now', 'localtime')").get(e.id).n
+  })),
   buscarPorId: (id) => getDb().prepare(`${SELECT} WHERE e.id = ?`).get(id),
 
   validar(d) {
@@ -42,9 +47,10 @@ export const EspecialistaModel = {
     return 'borrada';
   },
 
-  // ¿Trabaja ese día? (1 = lunes … 7 = domingo)
+  // ¿Trabaja ese día? (1 = lunes … 7 = domingo). No trabaja si ese día tiene una ausencia (libre, vacaciones…)
   trabajaEl(especialista, fecha) {
     const dia = new Date(`${fecha}T12:00:00`).getDay() || 7;
-    return String(especialista.dias || '').split(',').map(Number).includes(dia);
+    if (!String(especialista.dias || '').split(',').map(Number).includes(dia)) return false;
+    return !getDb().prepare('SELECT 1 FROM ausencias WHERE especialista_id = ? AND fecha = ?').get(especialista.id, fecha);
   }
 };
