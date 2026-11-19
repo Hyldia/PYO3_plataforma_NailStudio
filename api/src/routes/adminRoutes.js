@@ -30,6 +30,7 @@ r.delete('/fotos/:id', fotoController.eliminar);
 r.post('/productos/:id/imagen', subirImagen.single('imagen'), productoAdminController.cambiarImagen);
 r.post('/portadas/:clave', subirImagen.single('imagen'), productoAdminController.fotoPortada);
 r.delete('/portadas/:clave', productoAdminController.quitarFotoPortada);
+r.put('/circulos', productoAdminController.guardarCirculos);
 r.post('/especialistas/:id/foto', subirImagen.single('imagen'), especialistas.fotoEspecialista);
 r.post('/asistente/foto', subirImagen.single('imagen'), asistenteController.subirFoto);
 r.delete('/asistente/foto', asistenteController.quitarFoto);

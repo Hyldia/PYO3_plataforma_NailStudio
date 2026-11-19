@@ -177,6 +177,10 @@ export default function EscaparateTienda({ categorias, children }) {
     }).catch(() => setDatos(null));
   }, []);
   const [muestras, setMuestras] = useState({});
+  const [ocultos, setOcultos] = useState([]);
+  // Círculos que la dueña ocultó en el panel (Productos → Fotos de los círculos)
+  useEffect(() => { api.circulos().then((config) => setOcultos(config.ocultos || [])).catch(() => {}); }, []);
+  const visibles = categorias.filter((categoria) => !ocultos.includes(categoria.valor));
   useEffect(() => {
     if (!categorias.length) return;
     // Primero la foto que la dueña eligió en el panel; si no hay, la del producto más vendido
@@ -191,7 +195,7 @@ export default function EscaparateTienda({ categorias, children }) {
     <>
       <Carrusel ofertas={conFotoPrimero(datos.ofertas)} vendidos={conFotoPrimero(datos.vendidos)} kits={datos.kits} />
       {children}
-      {categorias.length > 0 && <Categorias categorias={categorias} muestras={muestras} />}
+      {visibles.length > 0 && <Categorias categorias={visibles} muestras={muestras} />}
       {datos.ofertas.length > 3 && <FilaRelampago productos={datos.ofertas} />}
     </>
   );

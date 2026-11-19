@@ -6,7 +6,7 @@ import Modal from '../../components/Modal.jsx';
 import ProductoImagen from '../../components/ProductoImagen.jsx';
 import VerMas from '../../components/VerMas.jsx';
 import { BotonFoto, ZonaFotos, formData } from './piezasPanel.jsx';
-import { CATEGORIAS, claveCategoria } from '../../lib/categoriasPortada.js';
+import { CATEGORIAS, claveCategoria, circuloDeTienda } from '../../lib/categoriasPortada.js';
 import { usePorPagina } from '../../lib/hooks.js';
 
 // Fotos de los círculos de categorías que salen en la portada
@@ -25,13 +25,51 @@ function FotosCategorias() {
   // Salida: Nada.
   // Objetivo: Mostrar también los círculos de la tienda.
   useEffect(() => { api.categoriasProductos().then((l) => setTienda(l.map((c) => c.categoria || c.valor || c.nombre || c))).catch(() => {}); }, []);
-  // Juntamos los círculos del Inicio y los de la Tienda (los que comparten categoría usan la misma foto)
-  const delInicio = CATEGORIAS.map((c) => ({ ...c, clave: claveCategoria(c) }));
+  const [circulos, setCirculos] = useState({ ocultos: [], inicioExtra: [] });
+  const [paraAgregar, setParaAgregar] = useState('');
+  useEffect(() => { api.circulos().then(setCirculos).catch(() => {}); }, []);
+  // Juntamos los círculos del Inicio (fijos + agregados) y los de la Tienda; los que comparten categoría usan la misma foto
+  const delInicio = [...CATEGORIAS, ...circulos.inicioExtra.filter((n) => !CATEGORIAS.some((c) => claveCategoria(c) === n)).map(circuloDeTienda)]
+    .map((c) => ({ ...c, clave: claveCategoria(c), agregado: circulos.inicioExtra.includes(claveCategoria(c)) }));
   const lista = [
     ...delInicio.map((c) => ({ ...c, donde: tienda.includes(c.clave) ? 'Inicio y Tienda' : 'Inicio' })),
-    ...tienda.filter((n) => typeof n === 'string' && !delInicio.some((c) => c.clave === n))
-      .map((n) => ({ nombre: n, clave: n, to: `/tienda?categoria=${n}`, tipo: 'caja', color: '#F2C8CF', donde: 'Tienda' }))
+    ...tienda.filter((n) => typeof n === 'string' && !delInicio.some((c) => c.clave === n)).map((n) => ({ ...circuloDeTienda(n), donde: 'Tienda' }))
   ];
+  const sePuedenAgregar = tienda.filter((n) => typeof n === 'string' && !delInicio.some((c) => c.clave === n));
+  // Nombre: guardarCirculos
+  // Descripción: Guarda los cambios de círculos (ocultos o agregados al Inicio).
+  // Entrada: La configuración nueva y el aviso a mostrar.
+  // Salida: Nada.
+  // Objetivo: Agregar o eliminar círculos sin tocar el código.
+  const guardarCirculos = async (nueva, texto) => {
+    try { setCirculos(await api.admin.guardarCirculos(nueva)); setAviso(texto); } catch (error) { setAviso(error.message); }
+  };
+  // Nombre: alternarOculto
+  // Descripción: Oculta o vuelve a mostrar un círculo.
+  // Entrada: El círculo.
+  // Salida: Nada.
+  // Objetivo: Eliminar un círculo de la vista sin borrar los productos.
+  const alternarOculto = (c) => {
+    const oculto = circulos.ocultos.includes(c.clave);
+    guardarCirculos({ ...circulos, ocultos: oculto ? circulos.ocultos.filter((n) => n !== c.clave) : [...circulos.ocultos, c.clave] },
+      oculto ? `«${c.nombre}» se vuelve a mostrar.` : `«${c.nombre}» ya no se muestra en ${c.donde}. Sus productos siguen en la tienda.`);
+  };
+  // Nombre: agregarAlInicio
+  // Descripción: Agrega al Inicio el círculo de una categoría de la tienda.
+  // Entrada: Nada (usa la categoría elegida en la lista).
+  // Salida: Nada.
+  // Objetivo: Agregar círculos nuevos.
+  const agregarAlInicio = () => {
+    if (!paraAgregar) return;
+    guardarCirculos({ ...circulos, inicioExtra: [...circulos.inicioExtra, paraAgregar] }, `«${paraAgregar}» ahora también sale en el Inicio.`);
+    setParaAgregar('');
+  };
+  // Nombre: quitarDelInicio
+  // Descripción: Quita del Inicio un círculo que se había agregado.
+  // Entrada: El círculo.
+  // Salida: Nada.
+  // Objetivo: Deshacer un círculo agregado.
+  const quitarDelInicio = (c) => guardarCirculos({ ...circulos, inicioExtra: circulos.inicioExtra.filter((n) => n !== c.clave) }, `«${c.nombre}» ya no sale en el Inicio.`);
   // Nombre: cargar
   // Descripción: Carga las portadas.
   // Entrada: Nada.
@@ -56,17 +94,36 @@ function FotosCategorias() {
   return (
     <details className="portadas-admin">
       <summary>
-        <span><b>Fotos de los círculos de categorías</b><small>Los círculos de «Compra por categoría» del Inicio y de la Tienda. Toca «Cambiar» para poner tu propia foto.</small></span>
+        <span><b>Fotos de los círculos de categorías</b><small>Los círculos de «Compra por categoría» del Inicio y de la Tienda. Cambia la foto, oculta un círculo o agrega uno nuevo.</small></span>
       </summary>
       {aviso && <p role="status" className="aviso-ok">{aviso}</p>}
-      <ul>
+      <div className="portadas-admin__agregar">
+        <label htmlFor="circulo-nuevo"><b>Agregar un círculo al Inicio</b><small>Elige una categoría de la tienda que todavía no sale en el Inicio.</small></label>
+        <select id="circulo-nuevo" value={paraAgregar} onChange={(evento) => setParaAgregar(evento.target.value)} disabled={!sePuedenAgregar.length}>
+          <option value="">{sePuedenAgregar.length ? 'Elegir categoría' : 'Ya están todas en el Inicio'}</option>
+          {sePuedenAgregar.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+        <button type="button" className="boton boton--chico" onClick={agregarAlInicio} disabled={!paraAgregar}>+ Agregar</button>
+        <p className="portadas-admin__nota">¿Una categoría nueva? Crea un producto abajo con el nombre de la categoría nueva: su círculo aparece solo en la Tienda.</p>
+      </div>
+      <ul style={{ '--tarjetas': [5, 4, 6, 3].find((columnas) => lista.length % columnas === 0) || 5 }}>
         {lista.map((c) => (
-          <li key={c.clave}>
+          <li key={c.clave} className={`portada-tarjeta ${circulos.ocultos.includes(c.clave) ? 'portada-tarjeta--oculta' : ''}`}>
+            <span className={`portada-tarjeta__lugar portada-tarjeta__lugar--${circulos.ocultos.includes(c.clave) ? 'oculto' : c.donde === 'Tienda' ? 'tienda' : 'inicio'}`}>
+              {circulos.ocultos.includes(c.clave) ? 'Oculto' : c.donde}
+            </span>
             <span className="portadas-admin__circulo"><ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color, imagen: portadas[c.clave] || null }} /></span>
-            <p>{c.nombre}</p>
-            <small className="portadas-admin__donde">{c.donde}</small>
-            <BotonFoto texto="Cambiar" etiqueta={`del círculo ${c.nombre}`} onArchivo={(f) => subir(c, f)} />
-            <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => quitar(c)}>Usar la automática</button>
+            <p className="portada-tarjeta__nombre">{c.nombre}</p>
+            <div className="portada-tarjeta__acciones">
+              <BotonFoto texto="Cambiar foto" etiqueta={`del círculo ${c.nombre}`} clase="portada-tarjeta__boton portada-tarjeta__boton--principal" onArchivo={(f) => subir(c, f)} />
+              <div className="portada-tarjeta__fila">
+                <button type="button" className="portada-tarjeta__boton" onClick={() => quitar(c)} title="Volver a la foto del producto más vendido">Automática</button>
+                <button type="button" className={`portada-tarjeta__boton ${circulos.ocultos.includes(c.clave) ? 'portada-tarjeta__boton--mostrar' : 'portada-tarjeta__boton--ocultar'}`}
+                        onClick={() => (c.agregado ? quitarDelInicio(c) : alternarOculto(c))}>
+                  {c.agregado ? 'Quitar' : circulos.ocultos.includes(c.clave) ? 'Mostrar' : 'Ocultar'}
+                </button>
+              </div>
+            </div>
           </li>
         ))}
       </ul>

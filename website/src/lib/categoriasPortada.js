@@ -20,3 +20,18 @@ export const CATEGORIAS = [
 // Salida: La clave.
 // Objetivo: Guardar su foto de portada.
 export const claveCategoria = (c) => c.clave || decodeURIComponent(c.to.split('categoria=')[1] || '');
+
+// Nombre: circuloDeTienda
+// Descripción: Arma un círculo para una categoría de la tienda que no está en la lista fija.
+// Entrada: El nombre de la categoría.
+// Salida: El círculo (nombre, dibujo, color y enlace).
+// Objetivo: Poder agregar al Inicio cualquier categoría de la tienda.
+export const circuloDeTienda = (nombre) => ({ nombre, clave: nombre, tipo: 'caja', color: '#F2C8CF', to: `/tienda?categoria=${nombre}` });
+
+// Nombre: circulosDelInicio
+// Descripción: Lista final de círculos del Inicio: los fijos más los agregados, sin los ocultos.
+// Entrada: { ocultos, inicioExtra } guardado por la dueña en el panel.
+// Salida: La lista de círculos.
+// Objetivo: Que la dueña agregue o elimine círculos sin tocar el código.
+export const circulosDelInicio = ({ ocultos = [], inicioExtra = [] } = {}) => [...CATEGORIAS, ...inicioExtra.filter((n) => !CATEGORIAS.some((c) => claveCategoria(c) === n)).map(circuloDeTienda)]
+  .filter((c) => !ocultos.includes(claveCategoria(c)));

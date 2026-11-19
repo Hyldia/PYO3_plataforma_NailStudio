@@ -9,7 +9,7 @@ import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import ProductoImagen from '../components/ProductoImagen.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import Decoracion from '../components/Decoracion.jsx';
-import { CATEGORIAS, claveCategoria } from '../lib/categoriasPortada.js';
+import { circulosDelInicio, claveCategoria } from '../lib/categoriasPortada.js';
 import CarruselAuto from '../components/CarruselAuto.jsx';
 
 
@@ -59,6 +59,7 @@ export default function Inicio() {
   useTitulo('');
   const [ofertas, setOfertas] = useState([]);
   const [portadas, setPortadas] = useState({});
+  const [circulos, setCirculos] = useState(() => circulosDelInicio());
   const [vendidosTodos, setVendidos] = useState([]);
   const [paginaVendidos, setPaginaVendidos] = useState(1);
   const vendidos = vendidosTodos.slice((paginaVendidos - 1) * PRODUCTOS_POR_PAGINA, paginaVendidos * PRODUCTOS_POR_PAGINA);
@@ -67,6 +68,8 @@ export default function Inicio() {
   const [aviso, setAviso] = useState('');
 
   useEffect(() => { api.portadas().then(setPortadas).catch(() => {}); }, []);
+  // Círculos que la dueña eligió en el panel (Productos → Fotos de los círculos)
+  useEffect(() => { api.circulos().then((config) => setCirculos(circulosDelInicio(config))).catch(() => {}); }, []);
 
   useEffect(() => {
     api.productos({ ofertas: '1', orden: 'descuento', limite: 12 }).then(setOfertas).catch(() => {});
@@ -138,8 +141,8 @@ export default function Inicio() {
       {/* Compra por categoría */}
       <section className="contenedor categorias" aria-labelledby="t-categorias">
         <h2 id="t-categorias" className="solo-lector">Compra por categoría</h2>
-        <ul className="categorias__lista">
-          {CATEGORIAS.map((c, n) => (
+        <ul className="categorias__lista" style={{ '--circulos': circulos.length > 10 ? Math.ceil(circulos.length / 2) : circulos.length, '--circulos-movil': [5, 4, 3].find((columnas) => circulos.length % columnas === 0) || 5 }}>
+          {circulos.map((c, n) => (
             <li key={c.nombre} className="categoria-circulo" style={{ '--n': n }}>
               <Link to={c.to}>
                 <span className="categoria-circulo__aro" aria-hidden="true">

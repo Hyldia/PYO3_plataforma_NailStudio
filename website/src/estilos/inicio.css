@@ -105,3 +105,6 @@
 .hombres__secundario:hover { text-decoration: underline; }
 .hombres .carrusel-auto { min-width: 0; color: var(--tinta); }
 @media (max-width: 900px) { .hombres { grid-template-columns: 1fr; padding: 20px; } }
+/* Círculos del Inicio: tantas columnas como círculos haya (la dueña puede agregar o quitar), siempre en filas completas */
+.categorias__lista { grid-template-columns: repeat(var(--circulos, 10), minmax(0, 1fr)); }
+@media (max-width: 1000px) { .categorias__lista { grid-template-columns: repeat(var(--circulos-movil, 5), minmax(0, 1fr)); } }

@@ -61,6 +61,13 @@ export const productoAdminController = {
   },
 
   // Foto del círculo de una categoría en la portada (se guarda en ajustes como «portada:<categoría>»)
+  // Nombre: guardarCirculos
+  // Descripción: Guarda qué círculos de categorías se ocultan o se agregan al Inicio.
+  // Entrada: { ocultos, inicioExtra } en el cuerpo.
+  // Salida: Lo guardado.
+  // Objetivo: Agregar o eliminar círculos desde el panel.
+  guardarCirculos: (req, res) => res.json(AjustesModel.guardarCirculos(req.body)),
+
   // Nombre: fotoPortada
   // Descripción: Cambia la foto de portada de una categoría.
   // Entrada: La categoría y la foto.

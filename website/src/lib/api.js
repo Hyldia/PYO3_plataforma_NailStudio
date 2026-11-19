@@ -291,6 +291,12 @@ export const api = {
   // Salida: Las fotos.
   // Objetivo: Decorar categorías.
   portadas: () => pedir('/productos/portadas'),
+  // Nombre: circulos
+  // Descripción: Pide qué círculos de categorías están ocultos y cuáles se agregaron al Inicio.
+  // Entrada: Nada.
+  // Salida: { ocultos, inicioExtra }.
+  // Objetivo: Mostrar solo los círculos que eligió la dueña.
+  circulos: () => pedir('/productos/circulos'),
   // Nombre: productosPorIds
   // Descripción: Pide productos por número.
   // Entrada: Los números.
@@ -512,6 +518,12 @@ export const api = {
     // Salida: Nada.
     // Objetivo: Volver a la automática.
     quitarFotoPortada: (clave) => pedir(`/admin/portadas/${encodeURIComponent(clave)}`, { method: 'DELETE', admin: true }),
+    // Nombre: guardarCirculos
+    // Descripción: Guarda los círculos ocultos y los agregados al Inicio.
+    // Entrada: { ocultos, inicioExtra }.
+    // Salida: Lo guardado.
+    // Objetivo: Agregar o eliminar círculos desde el panel.
+    guardarCirculos: (datos) => pedir('/admin/circulos', { method: 'PUT', body: datos, admin: true }),
     // Nombre: avisos
     // Descripción: Pide los avisos de la campanita.
     // Entrada: Nada.

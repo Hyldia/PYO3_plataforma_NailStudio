@@ -21,6 +21,7 @@ r.get('/especialistas', catalogoController.listarEspecialistas);
 r.get('/productos', catalogoController.listarProductos);
 r.get('/productos/categorias', catalogoController.listarCategoriasProductos);
 r.get('/productos/portadas', detalleController.portadas);
+r.get('/productos/circulos', detalleController.circulos);
 r.get('/productos/:id', detalleController.producto);
 r.get('/productos/:id/relacionados', detalleController.productosRelacionados);
 r.get('/productos/:id/resenas', resenaController.listar);

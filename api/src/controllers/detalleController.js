@@ -1,4 +1,5 @@
 // CONTROLADOR: páginas de detalle (diseño de la galería y producto de la tienda) con relacionados.
+import { AjustesModel } from '../models/AjustesModel.js';
 import { FotoModel } from '../models/FotoModel.js';
 import { ProductoModel } from '../models/ProductoModel.js';
 
@@ -37,6 +38,12 @@ export const detalleController = {
   // Salida: Una foto por categoría.
   // Objetivo: Decorar "Compra por categoría".
   portadas: (req, res) => res.json(ProductoModel.portadas()),
+  // Nombre: circulos
+  // Descripción: Entrega qué círculos de categorías se ocultan y cuáles se agregaron al Inicio.
+  // Entrada: Nada.
+  // Salida: { ocultos, inicioExtra }.
+  // Objetivo: Mostrar solo los círculos que eligió la dueña.
+  circulos: (req, res) => res.json(AjustesModel.circulos()),
   // Nombre: productosRelacionados
   // Descripción: Trae productos parecidos.
   // Entrada: El número del producto.
