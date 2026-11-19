@@ -18,6 +18,7 @@ import { CATEGORIAS, claveCategoria } from '../lib/categoriasPortada.js';
 // Salida: La flecha.
 // Objetivo: Botones.
 const Flecha = () => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>;
+const PRODUCTOS_POR_PAGINA = 10;
 
 // Nombre: TarjetaServicioMini
 // Descripción: Muestra un servicio pequeño.
@@ -58,7 +59,7 @@ export default function Inicio() {
   const [portadas, setPortadas] = useState({});
   const [vendidosTodos, setVendidos] = useState([]);
   const [paginaVendidos, setPaginaVendidos] = useState(1);
-  const vendidos = vendidosTodos.slice((paginaVendidos - 1) * 20, paginaVendidos * 20);
+  const vendidos = vendidosTodos.slice((paginaVendidos - 1) * PRODUCTOS_POR_PAGINA, paginaVendidos * PRODUCTOS_POR_PAGINA);
   const [servicios, setServicios] = useState([]);
   const [fotos, setFotos] = useState([]);
   const [aviso, setAviso] = useState('');
@@ -189,8 +190,8 @@ export default function Inicio() {
             </h2>
             <Link to="/servicios?ofertas=1" className="enlace-flecha">Ver todos <Flecha /></Link>
           </div>
-          <ul className="productos-rejilla">
-            {serviciosOferta.slice(0, 6).map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
+          <ul className="inicio-carrusel carrusel-scroll">
+            {serviciosOferta.map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
           </ul>
         </section>
       )}
@@ -202,8 +203,8 @@ export default function Inicio() {
             <h2 id="t-combos">Combos para consentirte</h2>
             <Link to="/servicios?categoria=Combos" className="enlace-flecha">Ver combos <Flecha /></Link>
           </div>
-          <ul className="productos-rejilla">
-            {combos.slice(0, 6).map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
+          <ul className="inicio-carrusel carrusel-scroll">
+            {combos.map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
           </ul>
         </section>
       )}
@@ -217,7 +218,7 @@ export default function Inicio() {
         <ul className="productos-rejilla productos-rejilla--grande">
           {vendidos.map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
         </ul>
-        <VerMas pagina={paginaVendidos} paginas={Math.ceil(vendidosTodos.length / 20)}
+        <VerMas pagina={paginaVendidos} paginas={Math.ceil(vendidosTodos.length / PRODUCTOS_POR_PAGINA)}
                 onCambiar={(n) => {
                   setPaginaVendidos(n);
                   requestAnimationFrame(() => {
@@ -237,7 +238,7 @@ export default function Inicio() {
             <h2 id="t-galeria">Diseños favoritos de nuestras clientas</h2>
             <Link to="/galeria" className="enlace-flecha">Ver galería <Flecha /></Link>
           </div>
-          <ul className="mosaico">
+          <ul className="mosaico inicio-carrusel carrusel-scroll">
             {fotos.map((f, i) => (
               <li key={f.id}>
                 <Link to={`/galeria/${f.id}`} className="mosaico__boton">

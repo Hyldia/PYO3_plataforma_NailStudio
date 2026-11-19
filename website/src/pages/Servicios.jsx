@@ -302,7 +302,7 @@ export default function Servicios() {
               <h2 id={`g-${cat}`}>{cat === 'Combos' ? 'Combos y paquetes' : cat}</h2>
               {cat === 'Combos' && <p className="tenue">Varios servicios en una sola cita, a mejor precio.</p>}
             </div>
-            <ul key={`${categoria}-${soloOfertas}-${texto}-${orden}-${precio[0]}-${tiempo[0]}`} className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
+            <ul key={`${categoria}-${soloOfertas}-${texto}-${orden}-${precio[0]}-${tiempo[0]}`} className={`servicios-rejilla servicios-rejilla--nueva carrusel-scroll ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
               {lista.map((s) => <TarjetaServicio key={s.id} s={s} opinion={resumenes.get(s.id)} onOpiniones={setOpiniones} />)}
             </ul>
             {lista.length > 4 && (

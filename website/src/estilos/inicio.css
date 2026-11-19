@@ -60,6 +60,8 @@
 .dos-columnas { align-items: start; }
 .dos-columnas .productos-rejilla--tres { align-items: stretch; }
 .seccion-tienda .mas { padding-top: 28px; }
+.inicio-carrusel { list-style: none; margin: 0; padding: 6px 2px 12px; display: flex; gap: 16px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; }
+.inicio-carrusel > li { flex: 0 0 clamp(220px, 28vw, 280px); min-width: 0; scroll-snap-align: start; }
 
 /* Compra por categoría: los 9 círculos siempre caben (sin barra para moverse) */
 .categorias__lista { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 10px; overflow: visible; }

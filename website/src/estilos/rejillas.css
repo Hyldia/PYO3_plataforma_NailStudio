@@ -38,6 +38,10 @@
 .paginacion__flecha { font-size: 1.55rem; line-height: 1; }
 .paginacion__boton:disabled { opacity: 0.45; cursor: not-allowed; }
 .paginacion__puntos { width: 24px; text-align: center; color: var(--gris); }
+.carrusel-scroll { scrollbar-width: thin; scrollbar-color: var(--vino) var(--papel-rosa); }
+.carrusel-scroll::-webkit-scrollbar { height: 8px; }
+.carrusel-scroll::-webkit-scrollbar-track { background: var(--papel-rosa); border-radius: 999px; }
+.carrusel-scroll::-webkit-scrollbar-thumb { background: var(--vino); border-radius: 999px; }
 /* Tarjetas fantasma mientras cargan más */
 .tarjeta-fantasma { border-radius: 14px; overflow: hidden; background: var(--superficie); border: 1px solid var(--linea); }
 .tarjeta-fantasma > span { display: block; background: linear-gradient(90deg, var(--rubor) 0%, #fff 50%, var(--rubor) 100%); background-size: 200% 100%; animation: fantasma 1.2s ease-in-out infinite; }
