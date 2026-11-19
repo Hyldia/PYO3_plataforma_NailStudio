@@ -12,6 +12,11 @@ import { SERVICIOS, CUPONES } from './catalogoServicios.js';
 import { FOTOS_MUESTRA, IMAGENES_PRODUCTOS, VERSION_FOTOS } from './fotosMuestra.js';
 import { pathToFileURL } from 'node:url';
 
+// Nombre: seed
+// Descripción: Llena la base de datos con todo lo inicial.
+// Entrada: Si se debe forzar o no.
+// Salida: Nada.
+// Objetivo: Tener el sitio listo para usar.
 export function seed({ force = false } = {}) {
   const db = getDb();
   const yaHayDatos = db.prepare('SELECT COUNT(*) AS n FROM servicios').get().n > 0;
@@ -53,6 +58,11 @@ export function seed({ force = false } = {}) {
 }
 
 // Equipo del salón: actualiza las que existen (por nombre) y agrega las nuevas, una vez por versión
+// Nombre: cargarEspecialistas
+// Descripción: Carga las especialistas.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Tener el equipo inicial.
 function cargarEspecialistas(db) {
   const actual = Number(db.prepare("SELECT valor FROM ajustes WHERE clave = 'version_especialistas'").get()?.valor || 0);
   if (actual >= VERSION_ESPECIALISTAS) return false;
@@ -70,6 +80,11 @@ function cargarEspecialistas(db) {
 
 // Carga las fotos de muestra nuevas una sola vez por versión.
 // Si el salón borra una foto de muestra, no vuelve a aparecer.
+// Nombre: cargarFotosMuestra
+// Descripción: Carga las fotos de muestra de la galería.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Tener diseños para mostrar.
 function cargarFotosMuestra(db) {
   const actual = Number(db.prepare("SELECT valor FROM ajustes WHERE clave = 'version_fotos'").get()?.valor || 0);
   if (actual >= VERSION_FOTOS) return false;
@@ -92,6 +107,11 @@ function cargarFotosMuestra(db) {
 
 // Catálogo de la tienda (~470 productos). Se carga una vez por versión y no duplica productos por nombre.
 const VERSION_CATALOGO = 6;
+// Nombre: cargarCatalogo
+// Descripción: Carga el catálogo de productos.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Tener la tienda llena.
 function cargarCatalogo(db) {
   const actual = Number(db.prepare("SELECT valor FROM ajustes WHERE clave = 'version_catalogo'").get()?.valor || 0);
   if (actual >= VERSION_CATALOGO) return false;
@@ -126,6 +146,11 @@ function cargarCatalogo(db) {
 // Carta de servicios, combos y cupones (catalogoServicios.js). Actualiza los servicios
 // que ya existen por nombre (sin cambiar su id, así las citas viejas siguen bien) y agrega los nuevos.
 const VERSION_SERVICIOS = 2;
+// Nombre: cargarServicios
+// Descripción: Carga la carta de servicios.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Tener los servicios.
 function cargarServicios(db) {
   const actual = Number(db.prepare("SELECT valor FROM ajustes WHERE clave = 'version_servicios'").get()?.valor || 0);
   if (actual >= VERSION_SERVICIOS) return false;
@@ -145,14 +170,34 @@ function cargarServicios(db) {
 }
 
 // Descuentos, estrellas, reseñas y unidades vendidas de ejemplo (siempre los mismos, por id)
+// Nombre: marcarAgotados
+// Descripción: Marca algunos productos como agotados.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Que se vea cómo luce un agotado.
 function marcarAgotados(db) {
+  // Nombre: azar
+  // Descripción: Da un número fijo "al azar" para un producto.
+  // Entrada: El número del producto.
+  // Salida: Un número entre 0 y 1.
+  // Objetivo: Que los datos no cambien al reiniciar.
   const azar = (id) => { const x = Math.sin(id * 7919 + 104729) * 233280; return x - Math.floor(x); };
   const upd = db.prepare('UPDATE productos SET stock = 0 WHERE id = ?');
   db.prepare("SELECT id FROM productos WHERE nombre != 'Press-on personalizado con tu diseño'").all()
     .forEach(({ id }) => { if (azar(id) < 0.07) upd.run(id); });
 }
 
+// Nombre: darDatosDeVenta
+// Descripción: Da ventas y estrellas de ejemplo a los productos.
+// Entrada: La base de datos y qué productos.
+// Salida: Nada.
+// Objetivo: Que haya "más vendidos".
 function darDatosDeVenta(db, ids = null) {
+  // Nombre: azar
+  // Descripción: Da un número fijo "al azar" para un producto.
+  // Entrada: El producto y un número extra.
+  // Salida: Un número entre 0 y 1.
+  // Objetivo: Variar las ventas de ejemplo.
   const azar = (id, n) => { const x = Math.sin(id * 9301 + n * 49297) * 233280; return x - Math.floor(x); };
   const todos = db.prepare('SELECT id, precio FROM productos').all();
   const productos = ids ? todos.filter((p) => ids.includes(p.id)) : todos;

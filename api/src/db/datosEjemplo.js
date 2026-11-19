@@ -15,15 +15,55 @@ const NOTAS = [null, null, null, null, 'Tengo una uña quebrada en la mano derec
   'Traigo foto de referencia en el celular.', 'Es mi cumpleaños, quiero algo especial.'];
 
 // Generador pseudoaleatorio con semilla: siempre produce los mismos datos
+// Nombre: crearAzar
+// Descripción: Crea un generador de azar con semilla.
+// Entrada: Una semilla.
+// Salida: Funciones para elegir al azar.
+// Objetivo: Datos de ejemplo repetibles.
 function crearAzar(semilla) {
   let s = semilla;
+  // Nombre: r
+  // Descripción: Da un número al azar (siempre la misma serie).
+  // Entrada: Nada.
+  // Salida: Un número entre 0 y 1.
+  // Objetivo: Crear datos de ejemplo iguales cada vez.
   const r = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  // Nombre: entero
+  // Descripción: Da un número entero al azar entre dos valores.
+  // Entrada: El mínimo y el máximo.
+  // Salida: Un número.
+  // Objetivo: Variar los datos de ejemplo.
+  // Nombre: elegir
+  // Descripción: Elige un elemento al azar de una lista.
+  // Entrada: La lista.
+  // Salida: Un elemento.
+  // Objetivo: Variar los datos de ejemplo.
+  // Nombre: prob
+  // Descripción: Decide al azar si algo pasa.
+  // Entrada: La probabilidad (0 a 1).
+  // Salida: Sí o no.
+  // Objetivo: Variar los datos de ejemplo.
   return { r, entero: (a, b) => a + Math.floor(r() * (b - a + 1)), elegir: (l) => l[Math.floor(r() * l.length)], prob: (p) => r() < p };
 }
 
+// Nombre: aISO
+// Descripción: Convierte una fecha a texto año-mes-día.
+// Entrada: La fecha.
+// Salida: El texto de la fecha.
+// Objetivo: Guardar fechas en la base de datos.
 const aISO = (d) => d.toISOString().slice(0, 10);
+// Nombre: fechaHora
+// Descripción: Convierte una fecha a texto con hora.
+// Entrada: La fecha.
+// Salida: El texto con fecha y hora.
+// Objetivo: Guardar fechas en la base de datos.
 const fechaHora = (d) => d.toISOString().slice(0, 19).replace('T', ' ');
 
+// Nombre: cargarDatosEjemplo
+// Descripción: Llena pedidos y ventas de ejemplo.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Que el panel tenga datos para probar.
 export function cargarDatosEjemplo(db) {
   const hecho = db.prepare("SELECT valor FROM ajustes WHERE clave = 'datos_ejemplo'").get();
   if (hecho || db.prepare('SELECT COUNT(*) AS n FROM citas').get().n > 0) return false;
@@ -56,6 +96,11 @@ export function cargarDatosEjemplo(db) {
   const ocupado = new Set();
   const hoy = new Date(); hoy.setHours(12, 0, 0, 0);
   const METODOS = [['SINPE Móvil', 0.55], ['Tarjeta', 0.25], ['Pago en el salón', 0.2]];
+  // Nombre: metodoAzar
+  // Descripción: Elige al azar una forma de pago.
+  // Entrada: Nada.
+  // Salida: La forma de pago.
+  // Objetivo: Variar los pedidos de ejemplo.
   const metodoAzar = () => { let x = az.r(); for (const [m, p] of METODOS) { if ((x -= p) < 0) return m; } return 'SINPE Móvil'; };
 
   db.transaction(() => {

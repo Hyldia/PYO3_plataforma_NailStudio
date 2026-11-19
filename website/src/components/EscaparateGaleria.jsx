@@ -8,6 +8,11 @@ import Contador from './Contador.jsx';
 import { miles } from './TarjetaDiseno.jsx';
 import { useResumenes } from '../lib/resumenesOpiniones.js';
 
+// Nombre: HistoriasCategorias
+// Descripción: Muestra las categorías en círculos.
+// Entrada: Opciones y elegidas.
+// Salida: Los círculos.
+// Objetivo: Filtrar la galería.
 export function HistoriasCategorias({ opciones, activas, onElegir }) {
   const [portadas, setPortadas] = useState({});
   useEffect(() => {
@@ -43,6 +48,11 @@ export function HistoriasCategorias({ opciones, activas, onElegir }) {
   );
 }
 
+// Nombre: EscaparateGaleria
+// Descripción: Muestra la portada y tendencias de la galería.
+// Entrada: El total de diseños.
+// Salida: La portada.
+// Objetivo: Inspirar a la clienta.
 export default function EscaparateGaleria({ total }) {
   const [top, setTop] = useState([]);
   const resumenes = [...useResumenes('foto').values()];

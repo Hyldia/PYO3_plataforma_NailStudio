@@ -8,7 +8,17 @@
 // Subir este número cuando se agreguen fotos nuevas a la lista
 export const VERSION_FOTOS = 2;
 
+// Nombre: U
+// Descripción: Arma el enlace de una foto de Unsplash.
+// Entrada: El código de la foto.
+// Salida: El enlace completo.
+// Objetivo: Usar fotos reales.
 const U = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&q=70`;
+// Nombre: autor
+// Descripción: Arma los datos del autor de una foto.
+// Entrada: Nombre y usuario.
+// Salida: Los datos del autor.
+// Objetivo: Dar crédito al fotógrafo.
 const autor = (nombre, usuario) => ({ autor: nombre, autor_url: `https://unsplash.com/@${usuario}?utm_source=naile&utm_medium=referral` });
 
 export const FOTOS_MUESTRA = [

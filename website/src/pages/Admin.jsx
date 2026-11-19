@@ -20,10 +20,20 @@ const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
 const COLORES = ['Nude', 'Rosa', 'Rojo', 'Vino', 'Morado', 'Azul', 'Verde', 'Negro', 'Blanco', 'Dorado', 'Multicolor'];
 const ACABADOS = ['Brillante', 'Mate', 'Chrome', 'Glitter'];
 
+// Nombre: Entrar
+// Descripción: Muestra la entrada al panel.
+// Entrada: Qué hacer al entrar.
+// Salida: El formulario.
+// Objetivo: Pedir la contraseña.
 function Entrar({ onEntrar }) {
   const [clave, setClave] = useState('');
   const [error, setError] = useState('');
   const [ver, setVer] = useState(false);
+  // Nombre: entrar
+  // Descripción: Envía la contraseña.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Entrar al panel.
   const entrar = async (e) => {
     e.preventDefault();
     try {
@@ -48,6 +58,11 @@ function Entrar({ onEntrar }) {
   );
 }
 
+// Nombre: Elegir
+// Descripción: Muestra una lista para elegir.
+// Entrada: Etiqueta, opciones y valor.
+// Salida: La lista.
+// Objetivo: Formularios del panel.
 const Elegir = ({ id, etiqueta, opciones, valor, onCambio, vacio = true }) => (
   <div className="campo">
     <label htmlFor={id}>{etiqueta}</label>
@@ -58,6 +73,11 @@ const Elegir = ({ id, etiqueta, opciones, valor, onCambio, vacio = true }) => (
   </div>
 );
 
+// Nombre: Galeria
+// Descripción: Muestra la administración de la galería.
+// Entrada: Nada.
+// Salida: La sección.
+// Objetivo: Subir y editar diseños.
 function Galeria() {
   const VACIO = { titulo: '', descripcion: '', categoria: 'Manicure', forma: '', color: '', acabado: '', etiquetas: '', destacada: false, precio: '' };
   const [datos, setDatos] = useState(VACIO);
@@ -72,6 +92,11 @@ function Galeria() {
   const [subiendoAbierto, setSubiendoAbierto] = useState(false);
 
   // Trae todas las fotos (el servidor entrega de a 100)
+  // Nombre: cargar
+  // Descripción: Carga los diseños.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar la lista.
   const cargar = async () => {
     const todas = [];
     for (let pagina = 1; pagina < 30; pagina++) {
@@ -83,6 +108,11 @@ function Galeria() {
   };
   useEffect(() => { cargar(); }, []);
 
+  // Nombre: subir
+  // Descripción: Sube diseños nuevos.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Agregar a la galería.
   async function subir(e) {
     e.preventDefault();
     if (!archivos.length) return setEstado({ subiendo: false, mensaje: '', error: 'Elige al menos una imagen.' });
@@ -99,6 +129,11 @@ function Galeria() {
     } catch (err) { setEstado({ subiendo: false, mensaje: '', error: err.message }); }
   }
 
+  // Nombre: guardarEdicion
+  // Descripción: Guarda cambios de un diseño.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Editar la galería.
   async function guardarEdicion(e) {
     e.preventDefault();
     await api.admin.editarFoto(editando.id, editando);
@@ -106,11 +141,21 @@ function Galeria() {
     setEditando(null); setNuevaFoto(null); cargar();
   }
 
+  // Nombre: borrar
+  // Descripción: Borra un diseño.
+  // Entrada: El diseño.
+  // Salida: Nada.
+  // Objetivo: Quitar de la galería.
   async function borrar(f) {
     if (!window.confirm(`¿Borrar la foto «${f.titulo}»? No se puede deshacer.`)) return;
     await api.admin.borrarFoto(f.id); cargar();
   }
 
+  // Nombre: camposFoto
+  // Descripción: Muestra los campos de un diseño.
+  // Entrada: Datos, función y prefijo.
+  // Salida: Los campos.
+  // Objetivo: Repetir el formulario.
   const camposFoto = (d, set, prefijo) => (
     <>
       <div className="campo"><label htmlFor={`${prefijo}-titulo`}>Título</label><input id={`${prefijo}-titulo`} value={d.titulo} onChange={(e) => set({ ...d, titulo: e.target.value })} placeholder="Ej.: Francesa almendra con brillo" /></div>
@@ -236,6 +281,11 @@ const ICONOS = {
   contrasena: <><rect x="4" y="10.5" width="16" height="10.5" rx="2.5" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /><circle cx="12" cy="15.5" r="1.4" /></>
 };
 
+// Nombre: Admin
+// Descripción: Muestra el panel de la dueña.
+// Entrada: Nada.
+// Salida: El panel.
+// Objetivo: Administrar el salón.
 export default function Admin() {
   useTitulo('Panel del salón');
   const [dentro, setDentro] = useState(false);
@@ -246,6 +296,11 @@ export default function Admin() {
 
   if (!dentro) return <div className="contenedor pagina"><Entrar onEntrar={(ini) => { setDentro(true); setInicial(ini); }} /></div>;
   const Seccion = SECCIONES[seccion][1];
+  // Nombre: salir
+  // Descripción: Cierra la sesión del panel.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Salir.
   const salir = async () => { await api.admin.salir().catch(() => {}); sesionAdmin.cerrar(); setDentro(false); };
 
   return (

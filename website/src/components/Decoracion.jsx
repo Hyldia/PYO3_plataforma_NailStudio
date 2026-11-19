@@ -1,5 +1,10 @@
 // Adornos flotantes para las portadas de color: frascos de esmalte, destellos y corazones.
 // Son decorativos (aria-hidden) y se quedan quietos si la persona pidió reducir movimiento.
+// Nombre: Frasco
+// Descripción: Dibuja un frasco de esmalte.
+// Entrada: El color.
+// Salida: El dibujo.
+// Objetivo: Decorar las portadas.
 const Frasco = ({ color }) => (
   <svg viewBox="0 0 40 60" width="100%" height="100%">
     <rect x="15" y="2" width="10" height="20" rx="3" fill="#2A1720" />
@@ -7,9 +12,19 @@ const Frasco = ({ color }) => (
     <rect x="10" y="27" width="5" height="22" rx="2.5" fill="#fff" opacity=".45" />
   </svg>
 );
+// Nombre: Destello
+// Descripción: Dibuja un destello.
+// Entrada: Nada.
+// Salida: El dibujo.
+// Objetivo: Decorar las portadas.
 const Destello = () => (
   <svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 0c.8 6.4 2.8 9.6 12 12-9.2 2.4-11.2 5.6-12 12-.8-6.4-2.8-9.6-12-12C9.2 9.6 11.2 6.4 12 0z" fill="#FFE3EC" /></svg>
 );
+// Nombre: Corazon
+// Descripción: Dibuja un corazón.
+// Entrada: Nada.
+// Salida: El dibujo.
+// Objetivo: Decorar las portadas.
 const Corazon = () => (
   <svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z" fill="#F7A8C4" /></svg>
 );
@@ -24,6 +39,11 @@ const ADORNOS = [
   { tipo: 'corazon', x: '40%', y: '18%', t: 16, d: 2.4 }
 ];
 
+// Nombre: Decoracion
+// Descripción: Pone adornos animados de fondo.
+// Entrada: Nada.
+// Salida: Los adornos.
+// Objetivo: Que las portadas se vean bonitas.
 export default function Decoracion() {
   return (
     <div className="adornos" aria-hidden="true">

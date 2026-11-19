@@ -31,8 +31,18 @@ const TITULOS = {
   ombre: 'Degradado', glitter: 'Glitter', chrome: 'Chrome', pedicure: 'Pedicure', stiletto: 'Stiletto', almond: 'Almendra'
 };
 
+// Nombre: buscar
+// Descripción: Busca la primera palabra que calza en una lista.
+// Entrada: La lista y el texto.
+// Salida: Lo encontrado o nada.
+// Objetivo: Clasificar fotos.
 const buscar = (lista, texto) => (lista.find(([, re]) => re.test(texto)) || [null])[0];
 
+// Nombre: clasificarFoto
+// Descripción: Adivina tipo, forma, color y acabado de una foto.
+// Entrada: La descripción y etiquetas.
+// Salida: La clasificación.
+// Objetivo: Ordenar la galería sola.
 export function clasificarFoto(descripcion = '', etiquetas = []) {
   const texto = `${descripcion} ${etiquetas.join(' ')}`.toLowerCase();
   const r = {

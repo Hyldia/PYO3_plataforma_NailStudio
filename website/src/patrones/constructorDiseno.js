@@ -48,17 +48,42 @@ export const DISENO_INICIAL = {
 };
 
 export class DisenoBuilder {
+  // Nombre: constructor
+  // Descripción: Empieza un diseño.
+  // Entrada: El diseño base.
+  // Salida: Nada.
+  // Objetivo: Armar el diseño (Builder).
   constructor(base = DISENO_INICIAL) { this.d = { ...base }; }
+  // Nombre: con
+  // Descripción: Cambia una parte del diseño.
+  // Entrada: El campo y el valor.
+  // Salida: El constructor.
+  // Objetivo: Armar el diseño.
   con(campo, valor) { this.d[campo] = valor; return this; }
+  // Nombre: build
+  // Descripción: Termina el diseño con su precio.
+  // Entrada: Nada.
+  // Salida: El diseño.
+  // Objetivo: Usarlo en la página.
   build() { return { ...this.d, precio: calcularRecargo(this.d) }; }
 }
 
+// Nombre: calcularRecargo
+// Descripción: Calcula el costo extra del diseño.
+// Entrada: El diseño.
+// Salida: El monto.
+// Objetivo: Cobrar lo justo.
 export function calcularRecargo(d) {
   if (d.unas) return calcularDiseno(d).total;
   return PRECIO.largo[d.largo] + PRECIO.acabado[d.acabado]
     + PRECIO.decoracion[d.decoracion] + (d.acento ? PRECIO.acento : 0);
 }
 
+// Nombre: describir
+// Descripción: Describe el diseño en palabras.
+// Entrada: El diseño.
+// Salida: El texto.
+// Objetivo: Mostrarlo en el carrito.
 export function describir(d) {
   if (d.unas) {
     const nombres = [...new Set(d.unas.map((u) => esmalte(u.esmalte)?.nombre).filter(Boolean))];
@@ -71,6 +96,16 @@ export function describir(d) {
   return partes.join(', ');
 }
 
+// Nombre: hexDe
+// Descripción: Da el color en código de un esmalte.
+// Entrada: El nombre.
+// Salida: El color.
+// Objetivo: Pintar las uñas.
 export const hexDe = (nombre) => (COLORES.find((c) => c.nombre === nombre) || ESMALTES.find((e) => e.nombre === nombre) || COLORES[0]).hex;
 // Diseños guardados con nombres viejos siguen funcionando
+// Nombre: normalizar
+// Descripción: Completa un diseño con lo que falte.
+// Entrada: El diseño.
+// Salida: El diseño completo.
+// Objetivo: Evitar datos vacíos.
 export const normalizar = (d) => ({ ...DISENO_INICIAL, ...d, unas: Array.isArray(d.unas) && d.unas.length === 5 ? d.unas : DISENO_INICIAL.unas, forma: OPCIONES.forma.includes(d.forma) ? d.forma : 'Almendra', acabado: OPCIONES.acabado.includes(d.acabado) ? d.acabado : 'Brillante', decoracion: OPCIONES.decoracion.includes(d.decoracion) ? d.decoracion : 'Ninguna' });

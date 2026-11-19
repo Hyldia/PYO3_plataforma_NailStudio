@@ -26,6 +26,11 @@ const USO = {
   caja: ['Abre y usa según lo necesites.', 'Guarda en un lugar seco.', 'Mantén fuera del alcance de los niños.']
 };
 
+// Nombre: fichaProducto
+// Descripción: Arma la ficha técnica de un producto.
+// Entrada: El producto.
+// Salida: Los datos de la ficha.
+// Objetivo: Mostrar detalles.
 export function fichaProducto(p) {
   const contenido = p.descripcion?.match(CONTENIDO)?.[1];
   const detalles = [
@@ -41,4 +46,9 @@ export function fichaProducto(p) {
 }
 
 // Nombre de la opción en las variantes: tono para los colores, opción para lo demás
+// Nombre: etiquetaVariante
+// Descripción: Dice cómo se llama la variante (tono o tamaño).
+// Entrada: El producto.
+// Salida: El texto.
+// Objetivo: Elegir variantes.
 export const etiquetaVariante = (p) => (/Esmaltes|Bases|Acrílico|Decoración/.test(p.categoria) ? 'Tono' : /Cuidado|Pedicure/.test(p.categoria) ? 'Aroma' : 'Opción');

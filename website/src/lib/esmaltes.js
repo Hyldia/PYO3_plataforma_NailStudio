@@ -20,14 +20,34 @@ const FAMILIAS = [
   { familia: 'Jelly', tipo: 'Jelly', h: [0, 360], s: [60, 70], l: [72, 62], hs: [345, 0, 25, 50, 140, 200, 270, 320, 15, 180], nombres: ['Jelly rosa', 'Jelly rojo', 'Jelly naranja', 'Jelly ámbar', 'Jelly verde', 'Jelly azul', 'Jelly lila', 'Jelly fucsia', 'Jelly nude', 'Jelly turquesa'] }
 ];
 
+// Nombre: hsl
+// Descripción: Convierte un color HSL a hexadecimal.
+// Entrada: Tono, saturación y luz.
+// Salida: El color.
+// Objetivo: Crear esmaltes.
 const hsl = (h, s, l) => {
   s /= 100; l /= 100;
+  // Nombre: k
+  // Descripción: Calcula una parte del cambio de color.
+  // Entrada: Un número.
+  // Salida: Un número.
+  // Objetivo: Convertir colores.
   const k = (n) => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
+  // Nombre: f
+  // Descripción: Calcula un canal de color.
+  // Entrada: Un número.
+  // Salida: Un valor de 0 a 255.
+  // Objetivo: Convertir colores.
   const f = (n) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
   return `#${[f(0), f(8), f(4)].map((x) => x.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
 };
 
+// Nombre: generar
+// Descripción: Crea la lista de esmaltes.
+// Entrada: Nada.
+// Salida: Los esmaltes.
+// Objetivo: Tener colores para elegir.
 function generar() {
   const lista = [];
   FAMILIAS.forEach((f) => {
@@ -47,6 +67,11 @@ function generar() {
 
 export const ESMALTES = generar();
 export const FAMILIAS_ESMALTE = FAMILIAS.map((f) => f.familia);
+// Nombre: esmalte
+// Descripción: Busca un esmalte por código.
+// Entrada: El código.
+// Salida: El esmalte o nada.
+// Objetivo: Saber el color.
 export const esmalte = (codigo) => ESMALTES.find((e) => e.codigo === codigo);
 // Los esmaltes especiales cuestan un poco más por uña
 export const EXTRA_TIPO = { Cremoso: 0, Jelly: 200, 'Neón': 300, Glitter: 300, 'Metálico': 400 };
@@ -70,6 +95,11 @@ export const PRECIO_DISENO = {
 };
 
 // Recargo del diseño uña por uña. Devuelve el total y las líneas para mostrar el desglose.
+// Nombre: calcularDiseno
+// Descripción: Calcula precio y tiempo de un diseño.
+// Entrada: El diseño.
+// Salida: Precio y minutos.
+// Objetivo: Mostrar cuánto cuesta.
 export function calcularDiseno(d) {
   const lineas = [];
   const largo = PRECIO_DISENO.largo[d.largo] || 0;

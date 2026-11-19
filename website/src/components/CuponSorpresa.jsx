@@ -12,18 +12,53 @@ import { dinero } from '../config.js';
 const CLAVE = 'ahnails-cupones-vistos';
 const SESION = 'ahnails-cupones-sesion';
 const SIN_CUPON = ['/admin', '/equipo', '/finalizar-compra'];
+// Nombre: vistos
+// Descripción: Lee los cupones ya mostrados.
+// Entrada: Nada.
+// Salida: Los cupones vistos.
+// Objetivo: No repetirlos.
 const vistos = () => { try { return JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch { return {}; } };
+// Nombre: enSesion
+// Descripción: Cuenta los cupones de esta visita.
+// Entrada: Nada.
+// Salida: La cantidad.
+// Objetivo: No mostrar demasiados.
 const enSesion = () => { try { return Number(sessionStorage.getItem(SESION)) || 0; } catch { return 0; } };
+// Nombre: marcar
+// Descripción: Marca un cupón como mostrado.
+// Entrada: El código.
+// Salida: Nada.
+// Objetivo: No repetirlo.
 function marcar(codigo) {
   try {
     const v = vistos(); v[codigo] = Date.now(); localStorage.setItem(CLAVE, JSON.stringify(v));
     sessionStorage.setItem(SESION, String(enSesion() + 1));
   } catch { /* sin almacenamiento */ }
 }
+// Nombre: disponible
+// Descripción: Revisa si un cupón se puede mostrar.
+// Entrada: El cupón.
+// Salida: Sí o no.
+// Objetivo: No repetirlo pronto.
 const disponible = (c) => !vistos()[c.codigo] || Date.now() - vistos()[c.codigo] > 3 * 86400000;
+// Nombre: azar
+// Descripción: Elige uno al azar.
+// Entrada: La lista.
+// Salida: Un elemento.
+// Objetivo: Sorprender.
 const azar = (lista) => lista[Math.floor(Math.random() * lista.length)];
+// Nombre: valor
+// Descripción: Escribe el valor del cupón.
+// Entrada: El cupón.
+// Salida: El texto (10 % o ₡2 000).
+// Objetivo: Mostrar el descuento.
 const valor = (c) => (c.tipo === 'porcentaje' ? `${c.valor} %` : dinero(c.valor));
 
+// Nombre: CuponSorpresa
+// Descripción: Muestra el cupón sorpresa.
+// Entrada: Nada.
+// Salida: El aviso del cupón.
+// Objetivo: Regalar descuentos en ciertos momentos.
 export default function CuponSorpresa() {
   const { pathname } = useLocation();
   const carrito = useCarrito();
@@ -40,6 +75,11 @@ export default function CuponSorpresa() {
   }, []);
 
   // Muestra un cupón si se puede (no en el panel, no encima de otra ventana, máximo dos por visita)
+  // Nombre: mostrar
+  // Descripción: Muestra un cupón si se puede.
+  // Entrada: El cupón y el intento.
+  // Salida: Sí o no.
+  // Objetivo: No tapar otras ventanas.
   const mostrar = (c, intento = 0) => {
     if (!c || cupon || oculto || enSesion() >= 2 || !disponible(c)) return false;
     // Si hay una ventana abierta, espera a que se cierre (lo intenta unas veces)
@@ -78,6 +118,11 @@ export default function CuponSorpresa() {
   }, [cupon]);
 
   if (!cupon || oculto) return null;
+  // Nombre: copiar
+  // Descripción: Copia el código del cupón.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Pegarlo al pagar.
   const copiar = async () => { try { await navigator.clipboard.writeText(cupon.codigo); setCopiado(true); } catch { /* sin portapapeles */ } };
   return (
     <aside className="cupon-sorpresa" role="status" aria-live="polite" aria-label="Cupón de regalo">

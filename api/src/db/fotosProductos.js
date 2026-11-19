@@ -17,6 +17,11 @@ const TODAS = process.argv.includes('--todas');
 const REVISAR = process.argv.includes('--revisar');
 
 // Revisa una por una las fotos guardadas: si ya no abren, se borran para ponerles otra
+// Nombre: revisarRotas
+// Descripción: Revisa qué fotos de productos ya no abren.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Cambiar fotos rotas.
 async function revisarRotas(db) {
   const conFoto = db.prepare("SELECT id, imagen FROM productos WHERE imagen LIKE 'http%'").all();
   const quitar = db.prepare('UPDATE productos SET imagen = NULL, imagen_autor = NULL, imagen_autor_url = NULL WHERE id = ?');
@@ -83,8 +88,18 @@ const COLORES = [
   [/plateado|chrome|cromo/i, ['silver', 'chrome', 'metallic']]
 ];
 
+// Nombre: descripcion
+// Descripción: Junta la descripción de una foto.
+// Entrada: La foto de Unsplash.
+// Salida: El texto en minúscula.
+// Objetivo: Comparar fotos con productos.
 const descripcion = (f) => `${f.alt_description || ''} ${f.description || ''}`.toLowerCase();
 
+// Nombre: puntajeColor
+// Descripción: Puntúa qué tanto calza el color de una foto.
+// Entrada: El nombre del producto y la foto.
+// Salida: Un puntaje.
+// Objetivo: Elegir la mejor foto.
 function puntajeColor(nombre, foto) {
   const texto = descripcion(foto);
   const regla = COLORES.find(([re]) => re.test(nombre));
@@ -92,6 +107,11 @@ function puntajeColor(nombre, foto) {
   return regla[1].some((w) => texto.includes(w)) ? 2 : 0;
 }
 
+// Nombre: main
+// Descripción: Busca y guarda fotos reales para los productos.
+// Entrada: Nada (usa tu clave de Unsplash).
+// Salida: Nada.
+// Objetivo: Que la tienda tenga fotos reales.
 async function main() {
   const db = getDb();
   if (REVISAR) await revisarRotas(db);

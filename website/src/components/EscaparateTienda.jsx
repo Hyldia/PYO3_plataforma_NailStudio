@@ -9,14 +9,39 @@ import CuentaRegresiva from './CuentaRegresiva.jsx';
 import BotonFavorito from './BotonFavorito.jsx';
 import { useVistaRapida } from '../context/VistaRapidaContext.jsx';
 
+// Nombre: conFotoPrimero
+// Descripción: Pone primero los productos con foto.
+// Entrada: La lista.
+// Salida: La lista ordenada.
+// Objetivo: Que se vea más bonito.
 const conFotoPrimero = (l) => [...l].sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen));
+// Nombre: pct
+// Descripción: Calcula el porcentaje de descuento.
+// Entrada: El producto.
+// Salida: El porcentaje.
+// Objetivo: Mostrar cuánto ahorra.
 const pct = (p) => (p.precio_anterior ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0);
+// Nombre: lista
+// Descripción: Saca la lista de productos de la respuesta.
+// Entrada: La respuesta.
+// Salida: La lista.
+// Objetivo: Trabajar con la lista.
 const lista = (r) => r.productos || r;
 
+// Nombre: Flecha
+// Descripción: Dibuja una flecha.
+// Entrada: La dirección.
+// Salida: La flecha.
+// Objetivo: Botones de mover.
 function Flecha({ dir = 1 }) {
   return <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d={dir > 0 ? 'm9 5 7 7-7 7' : 'm15 5-7 7 7 7'} /></svg>;
 }
 
+// Nombre: Carrusel
+// Descripción: Muestra el anuncio que cambia solo.
+// Entrada: Ofertas, vendidos y kits.
+// Salida: El carrusel.
+// Objetivo: Destacar lo mejor arriba.
 function Carrusel({ ofertas, vendidos, kits }) {
   const [i, setI] = useState(0);
   const [pausa, setPausa] = useState(false);
@@ -68,6 +93,11 @@ function Carrusel({ ofertas, vendidos, kits }) {
   );
 }
 
+// Nombre: Categorias
+// Descripción: Muestra las categorías de la tienda.
+// Entrada: Categorías y fotos.
+// Salida: Los círculos.
+// Objetivo: Comprar por categoría.
 function Categorias({ categorias, muestras }) {
   return (
     <section className="cat-circulos" aria-labelledby="t-cat-circ">
@@ -87,6 +117,11 @@ function Categorias({ categorias, muestras }) {
   );
 }
 
+// Nombre: FilaRelampago
+// Descripción: Muestra las ofertas relámpago.
+// Entrada: Los productos.
+// Salida: La fila.
+// Objetivo: Destacar ofertas.
 function FilaRelampago({ productos }) {
   const ref = useRef(null);
   const vista = useVistaRapida();
@@ -123,6 +158,11 @@ function FilaRelampago({ productos }) {
   );
 }
 
+// Nombre: EscaparateTienda
+// Descripción: Muestra la portada de la tienda.
+// Entrada: Las categorías y los filtros.
+// Salida: La portada.
+// Objetivo: Presentar la tienda.
 export default function EscaparateTienda({ categorias, children }) {
   const [datos, setDatos] = useState(null);
   useEffect(() => {

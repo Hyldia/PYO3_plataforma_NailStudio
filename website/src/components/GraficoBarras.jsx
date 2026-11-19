@@ -5,11 +5,21 @@ import { useEffect, useId, useRef, useState } from 'react';
 const corto = new Intl.NumberFormat('es-CR', { notation: 'compact', maximumFractionDigits: 1 });
 
 // Barra con las puntas de arriba redondeadas (4 px) y la base recta sobre el eje
+// Nombre: barraVertical
+// Descripción: Dibuja una barra vertical con punta redonda.
+// Entrada: Posición y medidas.
+// Salida: El trazo.
+// Objetivo: Gráficos bonitos.
 function barraVertical(x, y, ancho, alto) {
   if (alto <= 0) return '';
   const r = Math.min(4, ancho / 2, alto);
   return `M${x},${y + alto}V${y + r}Q${x},${y} ${x + r},${y}H${x + ancho - r}Q${x + ancho},${y} ${x + ancho},${y + r}V${y + alto}Z`;
 }
+// Nombre: barraHorizontal
+// Descripción: Dibuja una barra horizontal con punta redonda.
+// Entrada: Posición y medidas.
+// Salida: El trazo.
+// Objetivo: Gráficos bonitos.
 function barraHorizontal(x, y, largo, grosor) {
   if (largo <= 0) return '';
   const r = Math.min(4, grosor / 2, largo);
@@ -17,6 +27,11 @@ function barraHorizontal(x, y, largo, grosor) {
 }
 
 // Escala "bonita": 0, 25 000, 50 000…
+// Nombre: escala
+// Descripción: Calcula las marcas del eje.
+// Entrada: El valor más alto.
+// Salida: Las marcas.
+// Objetivo: Gráficos fáciles de leer.
 function escala(max) {
   if (max <= 0) return { tope: 1, marcas: [0, 1] };
   const paso0 = max / 4;
@@ -28,6 +43,11 @@ function escala(max) {
 
 // Mide cuánto ocupa un texto en pantalla, para que los nombres nunca se salgan de la gráfica
 let lienzoMedidas = null;
+// Nombre: medirTexto
+// Descripción: Calcula el ancho de un texto.
+// Entrada: El texto y tamaño.
+// Salida: El ancho.
+// Objetivo: Que los textos no se salgan.
 function medirTexto(texto, tam = 12.5) {
   try {
     lienzoMedidas ||= document.createElement('canvas').getContext('2d');
@@ -35,6 +55,11 @@ function medirTexto(texto, tam = 12.5) {
     return lienzoMedidas.measureText(texto).width;
   } catch { return texto.length * 7; }
 }
+// Nombre: recortar
+// Descripción: Corta un texto largo.
+// Entrada: El texto y el máximo.
+// Salida: El texto corto.
+// Objetivo: Que quepa en el gráfico.
 function recortar(texto, maximo) {
   if (medirTexto(texto) <= maximo) return texto;
   let t = texto;
@@ -42,6 +67,11 @@ function recortar(texto, maximo) {
   return `${t.trim()}…`;
 }
 
+// Nombre: usarAncho
+// Descripción: Mide el ancho disponible.
+// Entrada: Nada.
+// Salida: El ancho y la caja.
+// Objetivo: Ajustar el gráfico a la pantalla.
 function usarAncho() {
   const ref = useRef(null);
   const [ancho, setAncho] = useState(640);
@@ -55,6 +85,11 @@ function usarAncho() {
 }
 
 // Copia la gráfica con sus colores reales y la dibuja en un lienzo para guardarla como PNG
+// Nombre: descargarPng
+// Descripción: Descarga el gráfico como imagen.
+// Entrada: El gráfico, título y archivo.
+// Salida: Nada.
+// Objetivo: Guardar el gráfico.
 async function descargarPng(svg, titulo, archivo, series = null) {
   const copia = svg.cloneNode(true);
   const originales = svg.querySelectorAll('*');
@@ -79,6 +114,11 @@ async function descargarPng(svg, titulo, archivo, series = null) {
   // Leyenda de colores a la derecha del título
   if (series) {
     const raiz = getComputedStyle(document.documentElement);
+    // Nombre: real
+    // Descripción: Convierte un color variable en color real.
+    // Entrada: El color.
+    // Salida: El color.
+    // Objetivo: Que la imagen salga con color.
     const real = (c) => (c.startsWith('var(') ? raiz.getPropertyValue(c.slice(4, -1)).trim() : c);
     ctx.font = '600 12px Poppins, system-ui, sans-serif';
     let x = width + margen;
@@ -98,7 +138,17 @@ async function descargarPng(svg, titulo, archivo, series = null) {
   a.click();
 }
 
+// Nombre: descargarCsv
+// Descripción: Descarga los datos en una hoja CSV.
+// Entrada: Filas, columnas y archivo.
+// Salida: Nada.
+// Objetivo: Abrir los datos en Excel.
 function descargarCsv(filas, columnas, archivo) {
+  // Nombre: celda
+  // Descripción: Prepara una celda para el CSV.
+  // Entrada: El valor.
+  // Salida: El texto.
+  // Objetivo: Que el archivo no se dañe.
   const celda = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const texto = [columnas.map((c) => celda(c.titulo)).join(';'), ...filas.map((f) => columnas.map((c) => celda(c.valor(f))).join(';'))].join('\r\n');
   // El BOM y el punto y coma hacen que Excel en español lo abra bien
@@ -109,6 +159,11 @@ function descargarCsv(filas, columnas, archivo) {
 
 // Colores de las series (definidos en estilos/panel-graficas.css, con su versión para modo oscuro).
 // Revisados para que se distingan también con daltonismo. El color sigue a cada persona o cosa, no a su puesto.
+// Nombre: colorSerie
+// Descripción: Da el color de una serie.
+// Entrada: El número de serie.
+// Salida: El color.
+// Objetivo: Usar varios colores.
 export const colorSerie = (n) => `var(--serie-${(((n - 1) % 8) + 8) % 8 + 1})`;
 
 /**
@@ -116,6 +171,11 @@ export const colorSerie = (n) => `var(--serie-${(((n - 1) % 8) + 8) % 8 + 1})`;
  * tipo: 'columnas' (por día) o 'horizontal' (ranking con nombres)
  * series: [{ clave, nombre, color }] para apilar varias partes en cada columna (ej.: servicios + tienda)
  */
+// Nombre: GraficoBarras
+// Descripción: Muestra un gráfico de barras.
+// Entrada: Título, datos y tipo.
+// Salida: El gráfico.
+// Objetivo: Ver números de forma clara.
 export default function GraficoBarras({ titulo, descripcion, datos, tipo = 'columnas', formato = (v) => String(v), nombreValor = 'Valor', archivo = 'grafica', etiquetaCorta, series = null }) {
   const [contenedor, ancho] = usarAncho();
   const svgRef = useRef(null);
@@ -125,8 +185,23 @@ export default function GraficoBarras({ titulo, descripcion, datos, tipo = 'colu
   const max = Math.max(0, ...datos.map((d) => d.valor));
   const vacio = !datos.length || max === 0;
 
+  // Nombre: valor
+  // Descripción: Da la etiqueta de una fila.
+  // Entrada: La fila.
+  // Salida: El texto.
+  // Objetivo: Armar el CSV.
   const columnasCsv = [{ titulo: tipo === 'columnas' ? 'Día' : 'Nombre', valor: (d) => d.etiqueta },
+    // Nombre: valor
+    // Descripción: Da el valor de una serie.
+    // Entrada: La fila.
+    // Salida: El valor.
+    // Objetivo: Armar el CSV.
     ...(series || []).map((sr) => ({ titulo: sr.nombre, valor: (d) => d.partes?.[sr.clave] ?? 0 })),
+    // Nombre: valor
+    // Descripción: Da el valor de una fila.
+    // Entrada: La fila.
+    // Salida: El valor.
+    // Objetivo: Armar el CSV.
     { titulo: nombreValor, valor: (d) => d.valor }];
 
   let contenido = null;
@@ -138,6 +213,11 @@ export default function GraficoBarras({ titulo, descripcion, datos, tipo = 'colu
     const area = ancho - izq - der;
     const hueco = area / datos.length;
     const grosor = Math.max(3, Math.min(28, hueco * 0.62));
+    // Nombre: y
+    // Descripción: Calcula la altura de un valor.
+    // Entrada: El valor.
+    // Salida: La posición.
+    // Objetivo: Dibujar columnas.
     const y = (v) => arriba + (alto - arriba - abajo) * (1 - v / tope);
     const cada = Math.ceil(datos.length / Math.max(1, Math.floor(area / 46)));
     contenido = (
@@ -178,6 +258,11 @@ export default function GraficoBarras({ titulo, descripcion, datos, tipo = 'colu
     const masLargo = Math.max(...datos.map((d) => medirTexto(d.etiqueta)));
     const izq = Math.min(ancho * 0.42, Math.max(70, masLargo + 18));
     const der = Math.max(...datos.map((d) => medirTexto(formato(d.valor), 12))) + 18;
+    // Nombre: largo
+    // Descripción: Calcula el largo de una barra.
+    // Entrada: El valor.
+    // Salida: El largo.
+    // Objetivo: Dibujar barras.
     const largo = (v) => ((ancho - izq - der) * v) / max;
     contenido = datos.map((d, i) => {
       const y = 4 + i * fila;

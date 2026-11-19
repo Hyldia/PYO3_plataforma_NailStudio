@@ -6,15 +6,35 @@ import ProductoImagen from './ProductoImagen.jsx';
 
 // Carrito que se abre a la derecha solo cuando se toca el ícono del carrito (en pantallas anchas).
 // En celular y tablet el ícono lleva directo a la página del carrito.
+// Nombre: abrirCarritoLateral
+// Descripción: Abre o cierra el carrito lateral.
+// Entrada: Nada.
+// Salida: Nada.
+// Objetivo: Ver el carrito desde cualquier lado.
 export const abrirCarritoLateral = () => window.dispatchEvent(new Event('carrito:alternar'));
+// Nombre: enlaceArticulo
+// Descripción: Da el enlace de un artículo del carrito.
+// Entrada: El artículo.
+// Salida: La dirección.
+// Objetivo: Volver a verlo.
 export const enlaceArticulo = (i) => (i.tipo === 'cita' ? (i.fotoRefId ? `/galeria/${i.fotoRefId}` : '/servicios') : i.fotoId ? `/galeria/${i.fotoId}` : `/tienda/${i.productoId ?? i.id}`);
 
+// Nombre: CarritoLateral
+// Descripción: Muestra el carrito lateral.
+// Entrada: Nada.
+// Salida: El panel del carrito.
+// Objetivo: Revisar la compra.
 export default function CarritoLateral() {
   const carrito = useCarrito();
   const { pathname } = useLocation();
   const irA = useNavigate();
   const [abierto, setAbierto] = useState(false);
   useEffect(() => {
+    // Nombre: alternar
+    // Descripción: Abre o cierra el carrito.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Mostrar u ocultar.
     const alternar = () => setAbierto((a) => !a);
     window.addEventListener('carrito:alternar', alternar);
     return () => window.removeEventListener('carrito:alternar', alternar);
@@ -23,6 +43,11 @@ export default function CarritoLateral() {
   useEffect(() => { setAbierto(false); }, [pathname]);
   useEffect(() => {
     if (!abierto) return undefined;
+    // Nombre: tecla
+    // Descripción: Cierra el carrito con Escape.
+    // Entrada: La tecla.
+    // Salida: Nada.
+    // Objetivo: Usar con teclado.
     const tecla = (e) => { if (e.key === 'Escape') setAbierto(false); };
     window.addEventListener('keydown', tecla);
     return () => window.removeEventListener('keydown', tecla);

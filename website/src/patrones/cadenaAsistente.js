@@ -5,32 +5,92 @@
 import { SALON, dinero, enlaceWhatsApp } from '../config.js';
 
 // Quita tildes y mayúsculas para comparar ("¿Cuánto cuesta?" → "cuanto cuesta")
+// Nombre: normalizar
+// Descripción: Quita tildes y pasa a minúscula.
+// Entrada: El texto.
+// Salida: El texto limpio.
+// Objetivo: Entender preguntas.
 export const normalizar = (t = '') => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[¿?¡!.,;:]/g, ' ').replace(/\s+/g, ' ').trim();
+// Nombre: tiene
+// Descripción: Revisa si un texto tiene alguna palabra.
+// Entrada: El texto y las palabras.
+// Salida: Sí o no.
+// Objetivo: Entender preguntas.
 const tiene = (texto, palabras) => palabras.some((p) => texto.includes(p));
 
 class Manejador {
   siguiente = null;
+  // Nombre: enlazar
+  // Descripción: Une con el siguiente que responde.
+  // Entrada: El siguiente.
+  // Salida: El siguiente.
+  // Objetivo: Armar la cadena de respuestas.
   enlazar(m) { this.siguiente = m; return m; }
+  // Nombre: atender
+  // Descripción: Responde o pasa la pregunta al siguiente.
+  // Entrada: La pregunta y datos.
+  // Salida: La respuesta.
+  // Objetivo: Que la asistente conteste (Chain of Responsibility).
   async atender(texto, ctx) {
     if (this.entiende(texto, ctx)) return this.responder(texto, ctx);
     return this.siguiente ? this.siguiente.atender(texto, ctx) : null;
   }
+  // Nombre: entiende
+  // Descripción: Dice si entiende la pregunta (no por defecto).
+  // Entrada: Nada.
+  // Salida: No.
+  // Objetivo: Base de la cadena.
   entiende() { return false; }
 }
 
 // Crea un manejador a partir de palabras clave y una función que arma la respuesta
+// Nombre: regla
+// Descripción: Crea una regla de respuesta.
+// Entrada: Palabras, respuesta y condición.
+// Salida: La regla.
+// Objetivo: Agregar respuestas fácil.
 const regla = (palabras, responder, extra = () => true) => new (class extends Manejador {
+  // Nombre: entiende
+  // Descripción: Revisa si la regla entiende la pregunta.
+  // Entrada: La pregunta y datos.
+  // Salida: Sí o no.
+  // Objetivo: Elegir la respuesta.
   entiende(t, ctx) { return tiene(t, palabras) && extra(t, ctx); }
+  // Nombre: responder
+  // Descripción: Da la respuesta de la regla.
+  // Entrada: La pregunta y datos.
+  // Salida: La respuesta.
+  // Objetivo: Contestar.
   responder(t, ctx) { return responder(t, ctx); }
 })();
 
+// Nombre: horario
+// Descripción: Escribe el horario del salón.
+// Entrada: Nada.
+// Salida: El texto.
+// Objetivo: Responder horarios.
 const horario = () => SALON.horario.map((h) => `• ${h.dias}: ${h.horas}`).join('\n');
 
 // Busca un servicio por nombre dentro de la pregunta ("cuanto cuesta el acrilico")
+// Nombre: servicioMencionado
+// Descripción: Busca qué servicio se mencionó.
+// Entrada: La pregunta y los servicios.
+// Salida: El servicio o nada.
+// Objetivo: Responder precios.
 function servicioMencionado(t, servicios) {
   // Se compara por raíces de las palabras ("acrilico" encuentra "Uñas acrílicas")
+  // Nombre: raiz
+  // Descripción: Saca la raíz de una palabra.
+  // Entrada: La palabra.
+  // Salida: La raíz.
+  // Objetivo: Entender variaciones.
   const raiz = (p) => p.slice(0, Math.min(6, p.length - 1));
   const VACIAS = ['que', 'del', 'las', 'los', 'una', 'uno', 'por', 'con', 'para', 'cuanto', 'cuesta', 'precio', 'vale', 'unas'];
+  // Nombre: util
+  // Descripción: Revisa si una palabra sirve para buscar.
+  // Entrada: La palabra.
+  // Salida: Sí o no.
+  // Objetivo: Ignorar palabras vacías.
   const util = (p) => p.length >= 3 && !VACIAS.includes(p);
   const raices = t.split(' ').filter(util).map(raiz);
   let mejor = null;
@@ -44,6 +104,11 @@ function servicioMencionado(t, servicios) {
   return mejor;
 }
 
+// Nombre: crearCadena
+// Descripción: Arma la cadena de respuestas.
+// Entrada: Nada.
+// Salida: El primer eslabón.
+// Objetivo: Que la asistente responda.
 export function crearCadena() {
   const saludo = regla(['hola', 'buenas', 'buenos dias', 'buenas tardes', 'buenas noches', 'hey', 'saludos'], () => ({
     texto: `¡Hola! Qué gusto saludarte. Soy Sofi, la asistente virtual de ${SALON.nombre}. ¿En qué te ayudo hoy?`,
@@ -158,7 +223,17 @@ export function crearCadena() {
 
   // Siempre responde: no entendí, pero ofrezco ayuda real
   const respaldo = new (class extends Manejador {
+    // Nombre: entiende
+    // Descripción: Siempre entiende (último recurso).
+    // Entrada: Nada.
+    // Salida: Sí.
+    // Objetivo: Nunca quedarse sin respuesta.
     entiende() { return true; }
+    // Nombre: responder
+    // Descripción: Responde cuando nadie más entendió.
+    // Entrada: Nada.
+    // Salida: La respuesta.
+    // Objetivo: Ofrecer ayuda.
     responder() {
       return {
         texto: 'Mmm, no estoy segura de haber entendido. Puedo ayudarte con citas, precios, horario, pagos, envíos y cupones. Si prefieres, te comunico con una persona del salón por WhatsApp.',

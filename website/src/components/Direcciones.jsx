@@ -8,13 +8,28 @@ export const PROVINCIAS = ['San José', 'Alajuela', 'Cartago', 'Heredia', 'Guana
 export const MAX_DIRECCIONES = 3;
 const ETIQUETAS = ['Casa', 'Trabajo', 'Otra'];
 
+// Nombre: FormularioDireccion
+// Descripción: Muestra el formulario de dirección.
+// Entrada: La dirección y qué hacer al terminar.
+// Salida: El formulario.
+// Objetivo: Agregar o editar direcciones.
 export function FormularioDireccion({ inicial, onCerrar, onGuardada }) {
   const { usuario, setDirecciones, direcciones } = useUsuario();
   const nueva = !inicial?.id;
   const [d, setD] = useState({ etiqueta: 'Casa', destinatario: usuario?.nombre || '', telefono: usuario?.telefono || '', provincia: '', canton: '', distrito: '', senas: '', principal: false, ...inicial });
   const [estado, setEstado] = useState({ guardando: false, error: '' });
+  // Nombre: set
+  // Descripción: Guarda lo que se escribe en un campo.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Llenar el formulario.
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
 
+  // Nombre: guardar
+  // Descripción: Guarda la dirección.
+  // Entrada: El envío del formulario.
+  // Salida: Nada.
+  // Objetivo: Tenerla para envíos.
   async function guardar(e) {
     e.preventDefault();
     setEstado({ guardando: true, error: '' });
@@ -61,15 +76,30 @@ export function FormularioDireccion({ inicial, onCerrar, onGuardada }) {
 }
 
 // Tarjetas de direcciones. Con "elegida" + "onElegir" sirven para escoger a dónde enviar.
+// Nombre: ListaDirecciones
+// Descripción: Muestra las direcciones guardadas.
+// Entrada: La elegida y qué hacer al elegir.
+// Salida: La lista.
+// Objetivo: Elegir dónde enviar.
 export function ListaDirecciones({ elegida, onElegir }) {
   const { direcciones, setDirecciones } = useUsuario();
   const [editando, setEditando] = useState(null);
   const [error, setError] = useState('');
 
+  // Nombre: borrar
+  // Descripción: Borra una dirección.
+  // Entrada: La dirección.
+  // Salida: Nada.
+  // Objetivo: Quitarla.
   const borrar = async (dir) => {
     if (!window.confirm(`¿Borrar la dirección «${dir.etiqueta}»?`)) return;
     try { setDirecciones(await api.cuenta.borrarDireccion(dir.id)); if (elegida === dir.id) onElegir?.(null); } catch (e) { setError(e.message); }
   };
+  // Nombre: principal
+  // Descripción: Marca la dirección principal.
+  // Entrada: La dirección.
+  // Salida: Nada.
+  // Objetivo: Usarla por defecto.
   const principal = async (dir) => { try { setDirecciones(await api.cuenta.principal(dir.id)); } catch (e) { setError(e.message); } };
 
   return (

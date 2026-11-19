@@ -6,9 +6,19 @@ import { dinero } from '../../config.js';
 import Foto from '../../components/Foto.jsx';
 import { fechaLarga, isoLocal } from './piezasPanel.jsx';
 
+// Nombre: diasFaltan
+// Descripción: Cuenta cuántos días faltan.
+// Entrada: La fecha.
+// Salida: Los días.
+// Objetivo: Avisar el próximo pago.
 const diasFaltan = (f) => Math.round((new Date(`${f}T12:00:00`) - new Date(`${isoLocal(new Date())}T12:00:00`)) / 86400000);
 const TIPO = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Incapacidad', permiso: 'Permiso' };
 
+// Nombre: PagosEquipo
+// Descripción: Muestra los pagos del equipo.
+// Entrada: Nada.
+// Salida: La sección.
+// Objetivo: Hacer la planilla.
 export default function PagosEquipo() {
   const [datos, setDatos] = useState(null);
   const [periodo, setPeriodo] = useState({});
@@ -16,6 +26,11 @@ export default function PagosEquipo() {
   const [bajando, setBajando] = useState(false);
   const [abierta, setAbierta] = useState(null);
 
+  // Nombre: cargar
+  // Descripción: Carga los pagos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar la tabla.
   const cargar = () => api.admin.nomina(periodo).then((d) => { setDatos(d); setError(''); }).catch((e) => setError(e.message));
   useEffect(() => { cargar(); }, [periodo]);
 
@@ -28,19 +43,39 @@ export default function PagosEquipo() {
     porMarcar: datos.equipo.reduce((s, e) => s + e.porMarcar, 0)
   } : null), [datos]);
 
+  // Nombre: marcarAtendidas
+  // Descripción: Marca citas pasadas como atendidas.
+  // Entrada: La especialista o todas.
+  // Salida: Nada.
+  // Objetivo: Que cuenten para el pago.
   const marcarAtendidas = async (e = null) => {
     const n = e ? e.porMarcar : totales.porMarcar;
     if (!window.confirm(`¿Marcar como atendidas ${n} ${n === 1 ? 'cita' : 'citas'} de días que ya pasaron${e ? ` de ${e.nombre}` : ''}? Hazlo solo si de verdad se atendieron.`)) return;
     try { await api.admin.marcarAtendidas({ desde: p.desde, hasta: p.hasta, especialistaId: e?.id }); cargar(); } catch (err) { setError(err.message); }
   };
 
+  // Nombre: pagar
+  // Descripción: Marca un pago como hecho.
+  // Entrada: La especialista.
+  // Salida: Nada.
+  // Objetivo: Registrar.
   const pagar = async (e) => {
     try { await api.admin.marcarPagado(e.id, { desde: p.desde, hasta: p.hasta }); cargar(); } catch (err) { setError(err.message); }
   };
+  // Nombre: deshacer
+  // Descripción: Deshace un pago.
+  // Entrada: La especialista.
+  // Salida: Nada.
+  // Objetivo: Corregir.
   const deshacer = async (e) => {
     if (!window.confirm(`¿Quitar la marca de pagado a ${e.nombre}?`)) return;
     try { await api.admin.quitarPagado(e.id, { desde: p.desde, hasta: p.hasta }); cargar(); } catch (err) { setError(err.message); }
   };
+  // Nombre: descargar
+  // Descripción: Descarga la planilla.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Guardarla en Excel.
   const descargar = async () => { setBajando(true); try { await api.admin.descargarNomina({ desde: p.desde, hasta: p.hasta }); } catch (e) { setError(e.message); } setBajando(false); };
   const esActual = p && datos.actual.desde === p.desde && datos.actual.hasta === p.hasta;
   const esAnterior = p && datos.anterior.desde === p.desde && datos.anterior.hasta === p.hasta;

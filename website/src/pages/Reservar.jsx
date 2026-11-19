@@ -18,12 +18,37 @@ const MES = new Intl.DateTimeFormat('es-CR', { month: 'short' });
 const LARGA = new Intl.DateTimeFormat('es-CR', { weekday: 'long', day: 'numeric', month: 'long' });
 const CORTA = new Intl.DateTimeFormat('es-CR', { weekday: 'short', day: 'numeric', month: 'short' });
 const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+// Nombre: aISO
+// Descripción: Convierte una fecha a texto año-mes-día.
+// Entrada: La fecha.
+// Salida: El texto.
+// Objetivo: Trabajar con fechas.
 const aISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+// Nombre: deISO
+// Descripción: Convierte un texto a fecha.
+// Entrada: El texto.
+// Salida: La fecha.
+// Objetivo: Trabajar con fechas.
 const deISO = (iso) => new Date(`${iso}T12:00:00`);
+// Nombre: sinPunto
+// Descripción: Quita los puntos de un texto.
+// Entrada: El texto.
+// Salida: El texto limpio.
+// Objetivo: Fechas más cortas.
 const sinPunto = (t) => t.replace(/\./g, '');
+// Nombre: trabaja
+// Descripción: Revisa si una especialista trabaja ese día.
+// Entrada: La especialista y la fecha.
+// Salida: Sí o no.
+// Objetivo: Mostrar días válidos.
 const trabaja = (e, iso) => !e || String(e.dias || '').split(',').map(Number).includes(deISO(iso).getDay() || 7);
 
 // Próximos 14 días en que abre el salón (domingo cerrado)
+// Nombre: proximosDias
+// Descripción: Lista los próximos días.
+// Entrada: Nada.
+// Salida: Los días.
+// Objetivo: Elegir fecha.
 function proximosDias() {
   const dias = []; const d = new Date();
   while (dias.length < 14) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0) dias.push(new Date(d)); }
@@ -31,6 +56,11 @@ function proximosDias() {
 }
 
 // Especialista recomendada según el tipo de servicio (por su especialidad)
+// Nombre: recomendada
+// Descripción: Revisa si la especialista es experta en ese servicio.
+// Entrada: La especialista y el servicio.
+// Salida: Sí o no.
+// Objetivo: Recomendarla.
 function recomendada(e, s) {
   if (!s) return false;
   const esp = e.especialidad.toLowerCase();
@@ -41,12 +71,22 @@ function recomendada(e, s) {
 }
 
 const COLORES = ['#C2507C', '#8C1D4B', '#E0245E', '#B07A8C', '#9C4A6A'];
+// Nombre: Retrato
+// Descripción: Muestra la foto de una especialista.
+// Entrada: La especialista y el tamaño.
+// Salida: La foto.
+// Objetivo: Conocerla.
 const Retrato = ({ e, i = 0, grande = false }) => (
   <span className={`retrato ${grande ? 'retrato--grande' : ''}`} style={{ '--color': COLORES[i % COLORES.length] }} aria-hidden="true">
     {e.foto ? <Foto archivo={e.foto} alt="" /> : e.nombre[0]}
   </span>
 );
 
+// Nombre: Reservar
+// Descripción: Muestra la página para reservar.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Reservar una cita.
 export default function Reservar() {
   useTitulo('Reservar cita');
   const [params] = useSearchParams();
@@ -99,6 +139,11 @@ export default function Reservar() {
   const especialista = especialistas.find((e) => e.id === sel.especialistaId);
   const indiceEsp = especialistas.findIndex((e) => e.id === sel.especialistaId);
   const recargo = reserva.diseno?.precio || 0;
+  // Nombre: precio
+  // Descripción: Da el precio de un servicio.
+  // Entrada: El servicio.
+  // Salida: El precio.
+  // Objetivo: Mostrar el total.
   const precio = (s) => (s ? (s.precio_oferta ?? s.precio) : 0);
   const servicioAcomp = servicios.find((s) => s.id === acompana.servicioId);
   // Con la misma especialista, la acompañante va en la siguiente hora libre del mismo día
@@ -119,22 +164,42 @@ export default function Reservar() {
     : paso === 1 ? (sel.hora ? 'Continuar' : 'Elige una hora')
       : agregando ? 'Agregando…' : acompana.activo && !acompanaLista ? 'Completa la cita de tu acompañante' : `Agregar al carrito (${acompana.activo ? 2 : 1} ${acompana.activo ? 'citas' : 'cita'})`;
 
+  // Nombre: elegirServicio
+  // Descripción: Elige un servicio.
+  // Entrada: El número.
+  // Salida: Nada.
+  // Objetivo: Armar la reserva.
   function elegirServicio(id) {
     setSel({ ...sel, servicioId: id });
     if (!sel.especialistaId) setTimeout(() => refEspecialistas.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
   }
 
+  // Nombre: elegirEspecialista
+  // Descripción: Elige una especialista.
+  // Entrada: La especialista.
+  // Salida: Nada.
+  // Objetivo: Armar la reserva.
   function elegirEspecialista(e) {
     const primerDia = dias.find((d) => trabaja(e, aISO(d)));
     setSel({ ...sel, especialistaId: e.id, hora: null, fecha: trabaja(e, sel.fecha) ? sel.fecha : aISO(primerDia || dias[0]) });
   }
 
   // Desde la ficha: tocar una hora libre la elige y pasa a fecha y hora
+  // Nombre: elegirDeAgenda
+  // Descripción: Elige día y hora de la agenda.
+  // Entrada: La fecha y la hora.
+  // Salida: Nada.
+  // Objetivo: Armar la reserva.
   function elegirDeAgenda(fecha, hora) {
     setSel((s) => ({ ...s, fecha, hora }));
     if (servicio) { setPaso(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   }
 
+  // Nombre: agregarAlCarrito
+  // Descripción: Agrega la cita al carrito.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Pagarla con otras cosas.
   async function agregarAlCarrito() {
     setAgregando(true);
     setError('');
@@ -143,6 +208,11 @@ export default function Reservar() {
       let disenoId = null;
       if (reserva.diseno) disenoId = (await api.guardarDiseno({ ...reserva.diseno, notas, fotoRefId: reserva.fotoRef?.id })).id;
       const disenoTexto = reserva.diseno ? describir(reserva.diseno) : reserva.fotoRef?.titulo || null;
+      // Nombre: base
+      // Descripción: Arma los datos de una cita.
+      // Entrada: Servicio, especialista, hora y extra.
+      // Salida: La cita.
+      // Objetivo: Guardarla en el carrito.
       const base = (s, e, hora, extra) => ({
         id: `cita-${s.id}`, nombre: s.nombre, precio: precio(s) + (extra.recargo || 0), precio_anterior: s.precio_oferta != null ? s.precio + (extra.recargo || 0) : null,
         imagen: extra.imagen || s.imagen, servicioId: s.id, especialistaId: e.id, especialistaNombre: e.nombre,
@@ -164,6 +234,11 @@ export default function Reservar() {
     }
   }
 
+  // Nombre: enviar
+  // Descripción: Envía la reserva.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Ir a pagar.
   function enviar(e) {
     e.preventDefault();
     if (!puedeSeguir) return;

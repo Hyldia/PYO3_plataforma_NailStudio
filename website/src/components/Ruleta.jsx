@@ -21,6 +21,11 @@ const LLEGADA = 'ahnails-llegada';
 const VECES = 'ahnails-ruleta-veces';
 const PRIMERA = 8000;      // la primera vez: a los 8 segundos de entrar
 const PASO = 2 * 60000;    // luego espera 2 min, después 4, después 6…
+// Nombre: llegada
+// Descripción: Da la hora en que entró a la página.
+// Entrada: Nada.
+// Salida: La hora de llegada.
+// Objetivo: Contar el tiempo en el sitio.
 const llegada = () => {
   try {
     let t = Number(sessionStorage.getItem(LLEGADA));
@@ -28,22 +33,72 @@ const llegada = () => {
     return t;
   } catch { return Date.now(); }
 };
+// Nombre: vecesVista
+// Descripción: Cuenta cuántas veces se abrió la ruleta.
+// Entrada: Nada.
+// Salida: La cantidad.
+// Objetivo: Saber cuándo abrir la siguiente.
 const vecesVista = () => { try { return Number(sessionStorage.getItem(VECES)) || 0; } catch { return 0; } };
+// Nombre: sumarVista
+// Descripción: Suma una vez a la ruleta.
+// Entrada: Nada.
+// Salida: Nada.
+// Objetivo: Llevar la cuenta.
 const sumarVista = () => { try { sessionStorage.setItem(VECES, String(vecesVista() + 1)); } catch { /* sin almacenamiento */ } };
 // Momento (desde que entró) en que toca abrirla por vez número n: 8 s, 8 s + 2 min, 8 s + 2 + 4 min…
+// Nombre: momento
+// Descripción: Calcula cuándo toca abrir la ruleta.
+// Entrada: El número de vez.
+// Salida: Los milisegundos.
+// Objetivo: 8 s, luego +2, +4, +6 min.
 const momento = (n) => PRIMERA + PASO * (n * (n + 1)) / 2;
+// Nombre: vecesSesion
+// Descripción: Cuenta los avisos de esta visita.
+// Entrada: Nada.
+// Salida: La cantidad.
+// Objetivo: No molestar de más.
 const vecesSesion = () => { try { return Number(sessionStorage.getItem(SESION)) || 0; } catch { return 0; } };
+// Nombre: sumarSesion
+// Descripción: Suma un aviso.
+// Entrada: Nada.
+// Salida: Nada.
+// Objetivo: Llevar la cuenta.
 const sumarSesion = () => { try { sessionStorage.setItem(SESION, String(vecesSesion() + 1)); } catch { /* sin almacenamiento */ } };
+// Nombre: leer
+// Descripción: Lee lo guardado de la ruleta.
+// Entrada: Nada.
+// Salida: Los datos.
+// Objetivo: Recordar el premio.
 const leer = () => { try { return JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch { return {}; } };
+// Nombre: guardar
+// Descripción: Guarda datos de la ruleta.
+// Entrada: Los datos nuevos.
+// Salida: Nada.
+// Objetivo: Recordar el premio.
 const guardar = (v) => { try { localStorage.setItem(CLAVE, JSON.stringify({ ...leer(), ...v })); } catch { /* sin almacenamiento */ } };
 // El último premio ganado (para ofrecerlo en el pago)
+// Nombre: premioGuardado
+// Descripción: Da el premio ganado si sigue vigente.
+// Entrada: Nada.
+// Salida: El premio o nada.
+// Objetivo: Mostrarlo de nuevo.
 export const premioGuardado = () => { const v = leer(); return v.premio && Date.now() - v.cuando < 7 * 86400000 ? v.premio : null; };
 
+// Nombre: punto
+// Descripción: Calcula un punto en el círculo.
+// Entrada: El ángulo y el radio.
+// Salida: La posición.
+// Objetivo: Dibujar la ruleta.
 function punto(angulo, r) {
   const a = ((angulo - 90) * Math.PI) / 180;
   return [200 + r * Math.cos(a), 200 + r * Math.sin(a)];
 }
 
+// Nombre: Rueda
+// Descripción: Dibuja la rueda de premios.
+// Entrada: Premios, giro y si está girando.
+// Salida: La rueda.
+// Objetivo: Ver la ruleta.
 function Rueda({ premios, giro, girando }) {
   const n = premios.length;
   const paso = 360 / n;
@@ -83,6 +138,11 @@ function Rueda({ premios, giro, girando }) {
   );
 }
 
+// Nombre: Confeti
+// Descripción: Dibuja confeti.
+// Entrada: Nada.
+// Salida: El confeti.
+// Objetivo: Celebrar el premio.
 function Confeti() {
   return (
     <div className="confeti" aria-hidden="true">
@@ -93,6 +153,11 @@ function Confeti() {
   );
 }
 
+// Nombre: Ruleta
+// Descripción: Muestra la ruleta de premios.
+// Entrada: Nada.
+// Salida: La ventana de la ruleta.
+// Objetivo: Regalar premios a las clientas.
 export default function Ruleta() {
   const { pathname } = useLocation();
   const irA = useNavigate();
@@ -111,9 +176,19 @@ export default function Ruleta() {
   const carrito = useCarrito();
   const cantidadAntes = useRef(null);
   const oculta = PAGINAS_SIN_RULETA.some((p) => pathname.startsWith(p));
+  // Nombre: yaGiro
+  // Descripción: Revisa si ya giró hace poco.
+  // Entrada: Nada.
+  // Salida: Sí o no.
+  // Objetivo: No repetir el giro.
   const yaGiro = () => { const v = leer(); return v.premio && Date.now() - v.cuando < ESPERA; };
 
   // Saca el regalo a la vista unos segundos (máximo dos veces por visita y nunca encima de otra ventana)
+  // Nombre: ofrecer
+  // Descripción: Muestra el aviso del regalo.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Invitar a girar.
   const ofrecer = () => {
     if (oculta || yaGiro() || vecesSesion() >= 2 || document.querySelector('dialog[open]')) return;
     sumarSesion(); setAviso(true);
@@ -138,6 +213,11 @@ export default function Ruleta() {
   useEffect(() => {
     if (oculta || !premios.length) return undefined;
     const falta = Math.max(1500, momento(turno) - (Date.now() - llegada()));
+    // Nombre: abrir
+    // Descripción: Abre la ruleta si no hay otra ventana.
+    // Entrada: El intento.
+    // Salida: Nada.
+    // Objetivo: Mostrarla en su momento.
     const abrir = (intento = 0) => {
       // Si hay otra ventana abierta, espera a que la cierren
       if (document.querySelector('dialog[open]')) { if (intento < 30) temporizador.current = setTimeout(() => abrir(intento + 1), 4000); return; }
@@ -149,6 +229,11 @@ export default function Ruleta() {
 
   if (!premios.length || oculta) return null;
 
+  // Nombre: girar
+  // Descripción: Gira la ruleta.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Dar el premio.
   async function girar() {
     if (girando) return;
     setError(''); setCopiado(false);
@@ -168,6 +253,11 @@ export default function Ruleta() {
     }, 5600);
   }
 
+  // Nombre: copiar
+  // Descripción: Copia el código del premio.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Pegarlo al pagar.
   const copiar = async () => {
     try { await navigator.clipboard.writeText(resultado.codigo); setCopiado(true); } catch { /* sin portapapeles */ }
   };

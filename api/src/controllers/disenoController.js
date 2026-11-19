@@ -3,8 +3,18 @@ import { DisenoModel } from '../models/DisenoModel.js';
 import { DisenoBuilder, OPCIONES } from '../patrones/constructorDiseno.js';
 
 export const disenoController = {
+  // Nombre: opciones
+  // Descripción: Entrega las opciones del diseñador de uñas.
+  // Entrada: Nada.
+  // Salida: Colores, formas y acabados.
+  // Objetivo: Llenar el diseñador.
   opciones: (req, res) => res.json(OPCIONES),
 
+  // Nombre: crear
+  // Descripción: Guarda un diseño hecho por la clienta.
+  // Entrada: El diseño elegido.
+  // Salida: El diseño guardado con su precio.
+  // Objetivo: Poder reservarlo o comprarlo.
   crear(req, res) {
     const b = req.body;
     const diseno = new DisenoBuilder()

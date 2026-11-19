@@ -29,13 +29,33 @@ export const SALON = {
 };
 
 const formato = new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', maximumFractionDigits: 0 });
+// Nombre: dinero
+// Descripción: Escribe un monto en colones.
+// Entrada: El monto.
+// Salida: El texto (₡5 000).
+// Objetivo: Mostrar precios.
 export const dinero = (monto) => formato.format(monto ?? 0);
 
 // Las fotos subidas desde el panel viven en /uploads; las de bancos gratuitos son URL completas
+// Nombre: urlFoto
+// Descripción: Da la dirección completa de una foto.
+// Entrada: El archivo.
+// Salida: La dirección.
+// Objetivo: Mostrar fotos.
 export const urlFoto = (archivo) => (!archivo ? null : archivo.startsWith('http') ? archivo : `/uploads/${archivo}`);
+// Nombre: enlaceWhatsApp
+// Descripción: Arma el enlace de WhatsApp del salón.
+// Entrada: El texto.
+// Salida: El enlace.
+// Objetivo: Escribirle al salón.
 export const enlaceWhatsApp = (texto = '') => `https://wa.me/${SALON.whatsapp}${texto ? `?text=${encodeURIComponent(texto)}` : ''}`;
 
 // Campaña del banner principal según el mes (cámbienla cuando quieran)
+// Nombre: campanaActual
+// Descripción: Dice qué campaña hay según la fecha.
+// Entrada: La fecha.
+// Salida: La campaña.
+// Objetivo: Cambiar anuncios solos.
 export function campanaActual(fecha = new Date()) {
   const mes = fecha.getMonth() + 1;
   if (mes === 11) return { antes: 'Ofertas de', titulo: 'BLACK FRIDAY', tema: 'oscuro' };

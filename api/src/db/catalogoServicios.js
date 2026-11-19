@@ -1,6 +1,11 @@
 // Carta de servicios del salón, combos y cupones. Precios en colones, de referencia:
 // cámbienlos por los reales. Las fotos son de Unsplash (se pueden cambiar por fotos del salón).
 
+// Nombre: U
+// Descripción: Arma el enlace de una foto de Unsplash.
+// Entrada: El código de la foto.
+// Salida: El enlace completo.
+// Objetivo: Usar fotos reales.
 const U = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=70`;
 const F = {
   rosa: U('1519014816548-bf5fe059798b'), salon: U('1632345031435-8727f6897d53'), proceso: U('1693776529070-2cdea397595b'),
@@ -14,6 +19,11 @@ const F = {
 };
 
 // [nombre, categoria, descripcion, incluye[], duracion, precio, precioOferta|null, etiqueta|null, imagen, esCombo]
+// Nombre: S
+// Descripción: Arma un servicio de la carta.
+// Entrada: Sus datos.
+// Salida: El servicio listo.
+// Objetivo: Escribir la carta más corto.
 const S = (nombre, categoria, descripcion, incluye, duracion_min, precio, precio_oferta, etiqueta, imagen, es_combo = 0) =>
   ({ nombre, categoria, descripcion, incluye: incluye.join('|'), duracion_min, precio, precio_oferta, etiqueta, imagen, es_combo, destacado: etiqueta === 'Más pedido' ? 1 : 0 });
 

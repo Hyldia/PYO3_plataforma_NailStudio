@@ -13,6 +13,11 @@ mkdirSync(UPLOADS_DIR, { recursive: true });
 
 let instancia = null;
 
+// Nombre: getDb
+// Descripción: Abre la base de datos una sola vez.
+// Entrada: Nada.
+// Salida: La conexión a la base de datos.
+// Objetivo: Que todo use la misma conexión.
 export function getDb() {
   if (!instancia) {
     mkdirSync(dirname(DB_PATH), { recursive: true });
@@ -26,6 +31,11 @@ export function getDb() {
 }
 
 // Agrega columnas nuevas a bases de datos creadas con una versión anterior
+// Nombre: migrar
+// Descripción: Actualiza la base de datos a la versión nueva.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Agregar tablas y columnas sin perder datos.
 function migrar(db) {
   const columnas = db.prepare('PRAGMA table_info(fotos)').all().map((c) => c.name);
   if (!columnas.includes('autor')) db.exec('ALTER TABLE fotos ADD COLUMN autor TEXT');
@@ -34,6 +44,11 @@ function migrar(db) {
   if (!colProd.includes('color')) db.exec('ALTER TABLE productos ADD COLUMN color TEXT');
   if (!colProd.includes('tipo')) db.exec('ALTER TABLE productos ADD COLUMN tipo TEXT');
   if (!colProd.includes('imagen_autor')) db.exec('ALTER TABLE productos ADD COLUMN imagen_autor TEXT');
+  // Nombre: agregar
+  // Descripción: Agrega una columna si falta.
+  // Entrada: La tabla, la columna y su tipo.
+  // Salida: Nada.
+  // Objetivo: Actualizar sin errores.
   const agregar = (tabla, col, tipo) => {
     if (!db.prepare(`PRAGMA table_info(${tabla})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${tabla} ADD COLUMN ${col} ${tipo}`);
   };

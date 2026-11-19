@@ -13,6 +13,11 @@ const CLAVE = claveUnsplash();
 const TODAS = process.argv.includes('--todas');
 const BUSQUEDAS = ['nail technician', 'manicurist', 'nail artist', 'beautician portrait'];
 
+// Nombre: main
+// Descripción: Descarga fotos de Unsplash para las especialistas.
+// Entrada: Nada (usa tu clave de Unsplash).
+// Salida: Nada.
+// Objetivo: Que el equipo tenga foto.
 async function main() {
   const db = getDb();
   const lista = db.prepare(`SELECT id, nombre FROM especialistas ${TODAS ? '' : 'WHERE foto IS NULL'} ORDER BY id`).all();

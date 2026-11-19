@@ -12,6 +12,11 @@ const ORDEN = {
 };
 
 export const ProductoModel = {
+  // Nombre: buscar
+  // Descripción: Busca productos con filtros.
+  // Entrada: Búsqueda, categoría, precio y orden.
+  // Salida: Los productos.
+  // Objetivo: Mostrar la tienda.
   buscar({ q, categoria, min, max, disponibles, ofertas, orden, limite, ids } = {}) {
     const where = ['oculto = 0'];
     const p = {};
@@ -29,11 +34,31 @@ export const ProductoModel = {
     const sql = `SELECT * FROM productos ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY ${ORDEN[orden] || ORDEN.relevancia}${Number(limite) > 0 ? ` LIMIT ${Math.min(Number(limite), 100)}` : ''}`;
     return getDb().prepare(sql).all(p);
   },
+  // Nombre: categorias
+  // Descripción: Cuenta productos por categoría.
+  // Entrada: Nada.
+  // Salida: Las categorías.
+  // Objetivo: Llenar filtros.
   categorias: () => getDb().prepare('SELECT categoria AS valor, COUNT(*) AS cantidad FROM productos WHERE oculto = 0 GROUP BY categoria ORDER BY categoria').all(),
+  // Nombre: buscarPorId
+  // Descripción: Busca un producto.
+  // Entrada: El número.
+  // Salida: El producto o nada.
+  // Objetivo: Ver un producto.
   buscarPorId: (id) => getDb().prepare('SELECT * FROM productos WHERE id = ?').get(id),
+  // Nombre: buscarPorNombre
+  // Descripción: Busca un producto por nombre.
+  // Entrada: El nombre.
+  // Salida: El producto o nada.
+  // Objetivo: Evitar productos repetidos.
   buscarPorNombre: (nombre) => getDb().prepare('SELECT * FROM productos WHERE nombre = ?').get(nombre),
 
   // Productos de la misma categoría, primero los del mismo tipo y los más vendidos
+  // Nombre: relacionados
+  // Descripción: Busca productos parecidos.
+  // Entrada: El número y cuántos.
+  // Salida: Una lista.
+  // Objetivo: Sugerir compras.
   relacionados(id, limite = 12) {
     const p = this.buscarPorId(id);
     if (!p) return [];
@@ -42,6 +67,11 @@ export const ProductoModel = {
   },
 
   // Variantes: el mismo producto en otros colores o tonos ("Esmalte gel Rojo", "Esmalte gel Nude"...)
+  // Nombre: variantes
+  // Descripción: Busca otros tonos o tamaños del producto.
+  // Entrada: El número.
+  // Salida: Las variantes.
+  // Objetivo: Elegir color o tamaño.
   variantes(id) {
     const p = this.buscarPorId(id);
     if (!p) return [];
@@ -56,6 +86,11 @@ export const ProductoModel = {
     return lista.map((v, i) => ({ ...v, variante: palabras[i].slice(comun).join(' ') }));
   },
   // ----- Panel del salón -----
+  // Nombre: validar
+  // Descripción: Revisa los datos de un producto.
+  // Entrada: Los datos.
+  // Salida: Un error o nada.
+  // Objetivo: Evitar datos inválidos.
   validar(d) {
     if (!d.nombre || String(d.nombre).trim().length < 2) return 'Escribe el nombre del producto.';
     if (!d.categoria) return 'Elige la categoría.';
@@ -64,23 +99,43 @@ export const ProductoModel = {
     if (!(Number(d.stock) >= 0)) return 'El stock no puede ser negativo.';
     return null;
   },
+  // Nombre: normalizar
+  // Descripción: Ordena los datos de un producto.
+  // Entrada: Los datos.
+  // Salida: Los datos limpios.
+  // Objetivo: Guardar siempre igual.
   normalizar: (d) => ({
     nombre: String(d.nombre).trim().slice(0, 120), descripcion: d.descripcion ? String(d.descripcion).trim().slice(0, 500) : null,
     categoria: String(d.categoria).trim(), marca: d.marca ? String(d.marca).trim().slice(0, 60) : null,
     precio: Math.round(Number(d.precio)), precio_anterior: d.precio_anterior ? Math.round(Number(d.precio_anterior)) : null,
     stock: Math.floor(Number(d.stock) || 0), color: d.color || null, tipo: d.tipo || null
   }),
+  // Nombre: crear
+  // Descripción: Crea un producto.
+  // Entrada: Los datos.
+  // Salida: El producto.
+  // Objetivo: Agregar a la tienda.
   crear(d) {
     const r = getDb().prepare(`INSERT INTO productos (nombre, descripcion, categoria, marca, precio, precio_anterior, stock, color, tipo)
       VALUES (@nombre, @descripcion, @categoria, @marca, @precio, @precio_anterior, @stock, @color, @tipo)`).run(d);
     return this.buscarPorId(r.lastInsertRowid);
   },
+  // Nombre: actualizar
+  // Descripción: Actualiza un producto.
+  // Entrada: El número y los datos.
+  // Salida: El producto.
+  // Objetivo: Editar la tienda.
   actualizar(id, d) {
     getDb().prepare(`UPDATE productos SET nombre = @nombre, descripcion = @descripcion, categoria = @categoria, marca = @marca,
       precio = @precio, precio_anterior = @precio_anterior, stock = @stock, color = COALESCE(@color, color), tipo = COALESCE(@tipo, tipo) WHERE id = @id`).run({ ...d, id });
     return this.buscarPorId(id);
   },
   // Si el producto ya está en pedidos, no se borra (se perdería el historial): se oculta de la tienda
+  // Nombre: eliminar
+  // Descripción: Elimina un producto.
+  // Entrada: El número.
+  // Salida: Nada.
+  // Objetivo: Quitar de la tienda.
   eliminar(id) {
     const db = getDb();
     const usado = db.prepare('SELECT 1 FROM pedido_items WHERE producto_id = ? LIMIT 1').get(id);
@@ -88,5 +143,10 @@ export const ProductoModel = {
     db.prepare('DELETE FROM productos WHERE id = ?').run(id);
     return 'borrado';
   },
+  // Nombre: cambiarImagen
+  // Descripción: Cambia la foto de un producto.
+  // Entrada: El número y la foto.
+  // Salida: Nada.
+  // Objetivo: Actualizar la foto.
   cambiarImagen: (id, imagen) => getDb().prepare('UPDATE productos SET imagen = ?, imagen_autor = NULL, imagen_autor_url = NULL WHERE id = ?').run(imagen, id)
 };

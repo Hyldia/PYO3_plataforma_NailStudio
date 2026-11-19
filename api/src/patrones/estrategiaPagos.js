@@ -3,6 +3,11 @@
 // Los cobros son simulados; aquí se conectaría la pasarela real del banco.
 
 // Algoritmo de Luhn: el dígito verificador que traen todas las tarjetas
+// Nombre: luhnValido
+// Descripción: Revisa si un número de tarjeta es válido.
+// Entrada: El número.
+// Salida: Sí o no.
+// Objetivo: Evitar tarjetas mal escritas.
 export function luhnValido(numero) {
   let suma = 0;
   [...numero].reverse().forEach((c, i) => {
@@ -12,12 +17,22 @@ export function luhnValido(numero) {
   });
   return suma % 10 === 0;
 }
+// Nombre: marcaTarjeta
+// Descripción: Dice la marca de la tarjeta.
+// Entrada: El número.
+// Salida: Visa, Mastercard u otra.
+// Objetivo: Mostrar la marca.
 export const marcaTarjeta = (n) => (/^4/.test(n) ? 'Visa' : /^(5[1-5]|2[2-7])/.test(n) ? 'Mastercard' : /^3[47]/.test(n) ? 'American Express' : 'Tarjeta');
 
 class PagoTarjeta {
   nombre = 'Tarjeta';
   // Simulación de pasarela: no se guarda el número ni el CVV, solo la marca y los últimos 4 dígitos.
   // Para cobrar de verdad, aquí se llama a la pasarela del banco (la página nunca debe guardar tarjetas).
+  // Nombre: cobrar
+  // Descripción: Cobra con tarjeta.
+  // Entrada: El monto y la tarjeta.
+  // Salida: El resultado del cobro.
+  // Objetivo: Pagar con tarjeta.
   cobrar(monto, datos = {}) {
     const numero = String(datos.numero || '').replace(/\D/g, '');
     if (!/^\d{13,19}$/.test(numero) || !luhnValido(numero)) return { ok: false, mensaje: 'Revisa el número de tarjeta: no es válido.' };
@@ -33,6 +48,11 @@ class PagoTarjeta {
 
 class PagoSinpe {
   nombre = 'SINPE Móvil';
+  // Nombre: cobrar
+  // Descripción: Registra un pago por SINPE.
+  // Entrada: El monto y el comprobante.
+  // Salida: El resultado.
+  // Objetivo: Pagar con SINPE.
   cobrar(monto, datos = {}) {
     const comprobante = String(datos.comprobante || '').trim();
     if (!/^\d{6,25}$/.test(comprobante)) return { ok: false, mensaje: 'Escribe el número de comprobante de SINPE Móvil (solo números).' };
@@ -43,11 +63,21 @@ class PagoSinpe {
 
 class PagoEnSalon {
   nombre = 'Pago en el salón';
+  // Nombre: cobrar
+  // Descripción: Deja el pago para el salón.
+  // Entrada: Nada.
+  // Salida: El resultado.
+  // Objetivo: Pagar en efectivo al llegar.
   cobrar() { return { ok: true, referencia: 'EN-SALON', cobrado: 0, requiereVerificacion: true }; }
 }
 
 const METODOS = { tarjeta: PagoTarjeta, sinpe: PagoSinpe, salon: PagoEnSalon };
 
+// Nombre: crearMetodoPago
+// Descripción: Elige la forma de pago.
+// Entrada: El tipo de pago.
+// Salida: El método correcto.
+// Objetivo: Cobrar de varias formas (Strategy).
 export function crearMetodoPago(tipo) {
   const Clase = METODOS[tipo];
   if (!Clase) throw new Error(`Método de pago no soportado: ${tipo}`);

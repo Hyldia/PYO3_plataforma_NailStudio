@@ -23,6 +23,11 @@ export const TONOS_FOTO = [
   { nombre: 'Oscura', color: '#5A321F', modo: 'multiply', fuerza: 0.85 }
 ];
 
+// Nombre: ManoFoto
+// Descripción: Muestra una mano en foto con el diseño.
+// Entrada: Diseño, tono y uña elegida.
+// Salida: La mano.
+// Objetivo: Ver el diseño real.
 export default function ManoFoto({ diseno, tono = TONOS_FOTO[1], seleccionada = null, onElegir }) {
   return (
     <div className="mano-foto">

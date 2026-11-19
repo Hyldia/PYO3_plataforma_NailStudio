@@ -7,12 +7,27 @@ import { fechaLarga, isoLocal } from './piezasPanel.jsx';
 
 const TIPOS = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Incapacidad', permiso: 'Permiso' };
 
+// Nombre: Pago
+// Descripción: Muestra la forma de pago de una especialista.
+// Entrada: La persona.
+// Salida: El formulario.
+// Objetivo: Configurar su pago.
 function Pago({ persona, onGuardado }) {
   const [d, setD] = useState({ estacion: persona.estacion || '', esquema_pago: persona.esquema_pago || 'comision', comision: persona.comision ?? 40, salario_base: persona.salario_base || '' });
   const [estado, setEstado] = useState({ texto: '', error: false });
+  // Nombre: set
+  // Descripción: Guarda lo que se escribe en un campo.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Llenar el formulario.
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
   const ejemplo = 100000;
   const ganaria = Math.round(ejemplo * (Number(d.comision) || 0) / 100) + (d.esquema_pago === 'base_comision' ? Number(d.salario_base) || 0 : 0);
+  // Nombre: guardar
+  // Descripción: Guarda la forma de pago.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Calcular su pago.
   const guardar = async (e) => {
     e.preventDefault();
     try { await api.admin.pagoEspecialista(persona.id, d); setEstado({ texto: 'Guardado.' }); onGuardado(); } catch (err) { setEstado({ texto: err.message, error: true }); }
@@ -38,15 +53,35 @@ function Pago({ persona, onGuardado }) {
   );
 }
 
+// Nombre: DiasLibres
+// Descripción: Muestra los días libres de una especialista.
+// Entrada: La persona.
+// Salida: La sección.
+// Objetivo: Manejar sus libres.
 function DiasLibres({ persona, onGuardado }) {
   const hoy = isoLocal(new Date());
   const [lista, setLista] = useState([]);
   const [d, setD] = useState({ desde: hoy, hasta: hoy, tipo: 'libre', motivo: '' });
   const [estado, setEstado] = useState({ texto: '', error: false });
+  // Nombre: cargar
+  // Descripción: Carga los libres.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar la lista.
   const cargar = () => api.admin.ausencias(persona.id).then((r) => setLista(r.ausencias.filter((a) => a.fecha >= hoy))).catch(() => {});
   useEffect(() => { cargar(); }, []);
+  // Nombre: set
+  // Descripción: Guarda lo que se escribe en un campo.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Llenar el formulario.
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value, ...(k === 'desde' && e.target.value > d.hasta ? { hasta: e.target.value } : {}) });
 
+  // Nombre: agregar
+  // Descripción: Agrega días libres.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Registrar libres.
   const agregar = async (e) => {
     e.preventDefault();
     try {
@@ -55,6 +90,11 @@ function DiasLibres({ persona, onGuardado }) {
       cargar(); onGuardado();
     } catch (err) { setEstado({ texto: err.message, error: true }); }
   };
+  // Nombre: borrar
+  // Descripción: Borra un día libre.
+  // Entrada: La ausencia.
+  // Salida: Nada.
+  // Objetivo: Corregir.
   const borrar = async (a) => { await api.admin.borrarAusencia(persona.id, a.id).catch(() => {}); cargar(); onGuardado(); };
 
   return (
@@ -90,12 +130,22 @@ function DiasLibres({ persona, onGuardado }) {
   );
 }
 
+// Nombre: Acceso
+// Descripción: Muestra el acceso al portal de una especialista.
+// Entrada: La persona.
+// Salida: El formulario.
+// Objetivo: Darle usuario y contraseña.
 function Acceso({ persona, onGuardado }) {
   const [usuario, setUsuario] = useState(persona.usuario || persona.nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, ''));
   const [clave, setClave] = useState('');
   const [ver, setVer] = useState(false);
   const [estado, setEstado] = useState({ texto: '', error: false });
   const tiene = Boolean(persona.usuario);
+  // Nombre: guardar
+  // Descripción: Guarda el acceso.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Darle entrada.
   const guardar = async (e) => {
     e.preventDefault();
     try {
@@ -104,11 +154,21 @@ function Acceso({ persona, onGuardado }) {
       setClave(''); onGuardado();
     } catch (err) { setEstado({ texto: err.message, error: true }); }
   };
+  // Nombre: quitar
+  // Descripción: Quita el acceso.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Bloquear.
   const quitar = async () => {
     if (!window.confirm(`¿Quitarle el acceso a ${persona.nombre}? Ya no podrá entrar al portal.`)) return;
     await api.admin.quitarAcceso(persona.id).catch(() => {});
     setEstado({ texto: 'Acceso quitado.' }); onGuardado();
   };
+  // Nombre: sugerir
+  // Descripción: Sugiere un usuario.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ahorrar tiempo.
   const sugerir = () => {
     const letras = 'abcdefghjkmnpqrstuvwxyz';
     const r = crypto.getRandomValues(new Uint32Array(10));
@@ -139,6 +199,11 @@ function Acceso({ persona, onGuardado }) {
 
 const PESTANAS = { datos: ['Datos, foto y horario', 'Nombre, especialidad, foto y días que trabaja'], pago: ['Pago y estación', 'Dónde se ubica y cuánto gana'], dias: ['Días libres', 'Vacaciones, permisos e incapacidades'], acceso: ['Usuario y contraseña', 'Para que entre a ver sus citas'] };
 
+// Nombre: AjustesEspecialista
+// Descripción: Muestra la ficha completa de una especialista.
+// Entrada: La persona y la pestaña.
+// Salida: La ficha.
+// Objetivo: Todo de ella en un lugar.
 export default function AjustesEspecialista({ persona, inicio = 'datos', onCerrar, onGuardado, datos }) {
   const [pestana, setPestana] = useState(inicio);
   return (

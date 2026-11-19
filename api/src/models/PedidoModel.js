@@ -2,6 +2,11 @@
 import { getDb } from '../db/conexion.js';
 
 export const PedidoModel = {
+  // Nombre: validarCliente
+  // Descripción: Revisa los datos de quien compra.
+  // Entrada: Los datos.
+  // Salida: Un error o nada.
+  // Objetivo: No guardar pedidos incompletos.
   validarCliente(cliente = {}) {
     if (!cliente.nombre || !/^[\d\s+-]{8,15}$/.test(cliente.telefono || '')) {
       return 'Escribe tu nombre y un teléfono para avisarte cuando el pedido esté listo.';
@@ -10,6 +15,11 @@ export const PedidoModel = {
   },
 
   // Transacción: si un producto no tiene stock, no se guarda nada.
+  // Nombre: crear
+  // Descripción: Guarda un pedido.
+  // Entrada: La clienta, productos y pago.
+  // Salida: El pedido.
+  // Objetivo: Registrar la venta.
   crear(cliente, lineas, metodoPago, extra = {}) {
     const db = getDb();
     const tx = db.transaction(() => {
@@ -34,6 +44,11 @@ export const PedidoModel = {
   },
 
   // Panel: pedidos con filtros (fechas, nombre/teléfono/número, estado y forma de pago)
+  // Nombre: listarAdmin
+  // Descripción: Lista pedidos con filtros.
+  // Entrada: Fechas, búsqueda y estado.
+  // Salida: Los pedidos y totales.
+  // Objetivo: Atender pedidos.
   listarAdmin({ desde, hasta, q, estado, pago } = {}) {
     const where = [];
     const p = {};
@@ -51,9 +66,19 @@ export const PedidoModel = {
       FROM pedidos p ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY p.creado_en DESC, p.id DESC LIMIT 1000`).all(p);
   },
+  // Nombre: buscarPorId
+  // Descripción: Busca un pedido.
+  // Entrada: El número.
+  // Salida: El pedido o nada.
+  // Objetivo: Ver un pedido.
   buscarPorId: (id) => getDb().prepare(`SELECT p.*, (SELECT GROUP_CONCAT(pi.cantidad || ' × ' || pr.nombre, ', ') FROM pedido_items pi JOIN productos pr ON pr.id = pi.producto_id WHERE pi.pedido_id = p.id) AS detalle FROM pedidos p WHERE p.id = ?`).get(id),
 
   // Cambia el estado; si se cancela, el stock vuelve a la tienda (todo en una transacción)
+  // Nombre: cambiarEstado
+  // Descripción: Cambia el estado de un pedido.
+  // Entrada: El pedido, estado y notas.
+  // Salida: El pedido.
+  // Objetivo: Seguir su avance.
   cambiarEstado(id, estado, { retiradoPor, notas } = {}) {
     const db = getDb();
     db.transaction(() => {
@@ -67,6 +92,11 @@ export const PedidoModel = {
     return this.buscarPorId(id);
   },
 
+  // Nombre: listarRecientes
+  // Descripción: Lista los pedidos recientes.
+  // Entrada: Nada.
+  // Salida: Los pedidos.
+  // Objetivo: Ver lo último vendido.
   listarRecientes: () => getDb().prepare(`
     SELECT p.*, GROUP_CONCAT(pi.cantidad || ' × ' || pr.nombre || COALESCE(' (' || pi.detalle || ')', ''), ', ') AS detalle
     FROM pedidos p JOIN pedido_items pi ON pi.pedido_id = p.id JOIN productos pr ON pr.id = pi.producto_id

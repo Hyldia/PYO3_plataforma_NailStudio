@@ -5,6 +5,11 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useState } f
 const CarritoContext = createContext(null);
 const CLAVE = 'naile-carrito';
 
+// Nombre: reducer
+// Descripción: Cambia el carrito según la acción.
+// Entrada: Los artículos y la acción.
+// Salida: Los artículos nuevos.
+// Objetivo: Manejar el carrito en un solo lugar.
 function reducer(items, accion) {
   switch (accion.tipo) {
     case 'agregar': {
@@ -50,6 +55,11 @@ function reducer(items, accion) {
   }
 }
 
+// Nombre: cargar
+// Descripción: Lee el carrito guardado.
+// Entrada: Nada.
+// Salida: Los artículos.
+// Objetivo: No perder el carrito.
 function cargar() {
   try {
     // Carritos guardados con la versión anterior no tenían "clave"
@@ -57,6 +67,11 @@ function cargar() {
   } catch { return []; }
 }
 
+// Nombre: CarritoProvider
+// Descripción: Comparte el carrito con todo el sitio.
+// Entrada: Las páginas.
+// Salida: El proveedor del carrito.
+// Objetivo: Usar el carrito en todas partes.
 export function CarritoProvider({ children }) {
   const [items, dispatch] = useReducer(reducer, [], cargar);
 
@@ -70,6 +85,16 @@ export function CarritoProvider({ children }) {
   const valor = useMemo(() => {
     const elegidos = items.filter((i) => i.seleccionado !== false && i.stock !== 0);
     return {
+    // Nombre: abrir
+    // Descripción: Abre el carrito.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Mostrarlo.
+    // Nombre: cerrar
+    // Descripción: Cierra el carrito.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Ocultarlo.
     items, elegidos, abierto, abrir: () => setAbierto(true), cerrar: () => setAbierto(false),
     cantidad: items.reduce((s, i) => s + i.cantidad, 0),
     total: items.reduce((s, i) => s + i.cantidad * i.precio, 0),
@@ -78,23 +103,73 @@ export function CarritoProvider({ children }) {
     totalElegido: elegidos.reduce((s, i) => s + i.cantidad * i.precio, 0),
     totalSinDescuento: elegidos.reduce((s, i) => s + i.cantidad * (i.precio_anterior || i.precio), 0),
     ultimo,
+    // Nombre: agregar
+    // Descripción: Agrega algo al carrito.
+    // Entrada: El producto y sus opciones.
+    // Salida: Nada.
+    // Objetivo: Comprar.
     agregar: (producto, opciones) => {
       dispatch({ tipo: 'agregar', producto, opciones });
       setUltimo({ nombre: producto.nombre, detalle: opciones?.detalle, marca: Date.now() });
     },
+    // Nombre: cambiar
+    // Descripción: Suma o resta cantidad.
+    // Entrada: El artículo y cuánto.
+    // Salida: Nada.
+    // Objetivo: Cambiar cantidades.
     cambiar: (clave, delta) => dispatch({ tipo: 'cambiar', clave, delta }),
+    // Nombre: fijar
+    // Descripción: Pone una cantidad exacta.
+    // Entrada: El artículo y la cantidad.
+    // Salida: Nada.
+    // Objetivo: Cambiar cantidades.
     fijar: (clave, cantidad) => dispatch({ tipo: 'cambiar', clave, fijar: Number(cantidad) }),
+    // Nombre: seleccionar
+    // Descripción: Marca o desmarca un artículo.
+    // Entrada: El artículo y sí o no.
+    // Salida: Nada.
+    // Objetivo: Elegir qué pagar.
     seleccionar: (clave, valor) => dispatch({ tipo: 'seleccionar', clave, valor }),
+    // Nombre: seleccionarTodo
+    // Descripción: Marca o desmarca todo.
+    // Entrada: Sí o no.
+    // Salida: Nada.
+    // Objetivo: Elegir todo de una vez.
     seleccionarTodo: (valor) => dispatch({ tipo: 'seleccionar', valor }),
+    // Nombre: quitar
+    // Descripción: Quita un artículo.
+    // Entrada: El artículo.
+    // Salida: Nada.
+    // Objetivo: Sacarlo del carrito.
     quitar: (clave) => dispatch({ tipo: 'quitar', clave }),
+    // Nombre: quitarSeleccionados
+    // Descripción: Quita los marcados.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Limpiar varios a la vez.
     quitarSeleccionados: () => dispatch({ tipo: 'quitarSeleccionados' }),
+    // Nombre: refrescar
+    // Descripción: Actualiza precios y stock.
+    // Entrada: Los productos.
+    // Salida: Nada.
+    // Objetivo: Tener datos al día.
     refrescar: (productos) => dispatch({ tipo: 'refrescar', productos }),
+    // Nombre: agregarCitas
+    // Descripción: Agrega citas al carrito.
+    // Entrada: Las citas.
+    // Salida: Nada.
+    // Objetivo: Pagar citas con productos.
     agregarCitas: (citas) => {
       dispatch({ tipo: 'agregarCitas', citas });
       setUltimo({ nombre: citas.length > 1 ? `${citas.length} citas` : `Cita: ${citas[0].nombre}`, detalle: `${citas[0].fechaTexto}, ${citas[0].hora}`, marca: Date.now() });
     },
     productosElegidos: elegidos.filter((i) => i.tipo !== 'cita'),
     citasElegidas: elegidos.filter((i) => i.tipo === 'cita'),
+    // Nombre: vaciar
+    // Descripción: Vacía el carrito.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Empezar de cero.
     vaciar: () => dispatch({ tipo: 'vaciar' })
   };
   }, [items, abierto, ultimo]);
@@ -102,4 +177,9 @@ export function CarritoProvider({ children }) {
   return <CarritoContext.Provider value={valor}>{children}</CarritoContext.Provider>;
 }
 
+// Nombre: useCarrito
+// Descripción: Usa el carrito en una página.
+// Entrada: Nada.
+// Salida: El carrito.
+// Objetivo: Leer o cambiar el carrito.
 export const useCarrito = () => useContext(CarritoContext);

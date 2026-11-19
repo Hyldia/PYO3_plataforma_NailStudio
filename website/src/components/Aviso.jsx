@@ -3,6 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useCarrito } from '../context/CarritoContext.jsx';
 
 // Mensaje flotante cuando se agrega algo al carrito (también lo anuncia el lector de pantalla)
+// Nombre: Aviso
+// Descripción: Muestra mensajes cortos de aviso.
+// Entrada: Nada.
+// Salida: El aviso.
+// Objetivo: Confirmar acciones.
 export default function Aviso() {
   const { ultimo } = useCarrito();
   const irA = useNavigate();

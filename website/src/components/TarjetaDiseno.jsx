@@ -8,11 +8,26 @@ import CuentaRegresiva from './CuentaRegresiva.jsx';
 import BotonFavorito from './BotonFavorito.jsx';
 import { useResumenes } from '../lib/resumenesOpiniones.js';
 
+// Nombre: miles
+// Descripción: Escribe números grandes cortos (1,2 mil).
+// Entrada: El número.
+// Salida: El texto.
+// Objetivo: Leer fácil.
 export const miles = (n) => (n >= 1000 ? `${(n / 1000).toLocaleString('es-CR', { maximumFractionDigits: 1 })} mil` : String(n));
 // Porcentaje de opiniones positivas de ejemplo, siempre el mismo para cada foto
+// Nombre: positivo
+// Descripción: Da un porcentaje de "les gustó".
+// Entrada: El número del diseño.
+// Salida: Un porcentaje.
+// Objetivo: Mostrar aprobación.
 export const positivo = (id) => 90 + ((id * 7) % 10);
 
 // Agrega el diseño como press-on al carrito (forma de la foto y largo medio)
+// Nombre: useAgregarPresson
+// Descripción: Agrega un diseño en press-on al carrito.
+// Entrada: Nada.
+// Salida: Una función para agregar.
+// Objetivo: Comprar diseños.
 export function useAgregarPresson() {
   const carrito = useCarrito();
   return (foto, { forma, largo = 'Medio', presson } = {}) => {
@@ -29,11 +44,21 @@ export function useAgregarPresson() {
 
 // Tarjeta de diseño al estilo de resultados de una tienda en línea.
 // "Reservar" lleva a la reserva con este diseño (un diseño por persona).
+// Nombre: TarjetaDiseno
+// Descripción: Muestra la tarjeta de un diseño.
+// Entrada: El diseño y su posición.
+// Salida: La tarjeta.
+// Objetivo: Ver la galería.
 export default function TarjetaDiseno({ foto, indice = 0 }) {
   const { actualizar } = useReserva();
   const irA = useNavigate();
   const vistaRapida = useVistaRapida();
   const popular = foto.puesto && foto.puesto <= 3 && foto.vistas > 0;
+  // Nombre: reservar
+  // Descripción: Reserva el diseño.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ir a reservar ese diseño.
   const reservar = () => { actualizar({ fotoRef: foto, diseno: null }); irA(foto.servicio_id ? `/reservar?servicio=${foto.servicio_id}` : '/reservar'); };
   const datos = [foto.forma, foto.color, foto.acabado].filter(Boolean);
   const opinion = useResumenes('foto').get(foto.id);

@@ -5,14 +5,39 @@ export const DIAS_SEMANA = [['1', 'Lun'], ['2', 'Mar'], ['3', 'Mié'], ['4', 'Ju
 export const HORAS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:30', '14:30', '15:30', '16:30', '17:30', '18:30'];
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+// Nombre: fechaLarga
+// Descripción: Escribe una fecha larga.
+// Entrada: La fecha.
+// Salida: El texto.
+// Objetivo: Leer fácil.
 export const fechaLarga = (f) => { const d = new Date(`${f}T12:00:00`); return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`; };
+// Nombre: nombreMes
+// Descripción: Escribe el nombre del mes.
+// Entrada: El mes.
+// Salida: El texto.
+// Objetivo: Leer fácil.
 export const nombreMes = (mes) => { const [a, m] = mes.split('-').map(Number); return `${MESES[m - 1]} ${a}`; };
+// Nombre: isoLocal
+// Descripción: Convierte una fecha a texto año-mes-día.
+// Entrada: La fecha.
+// Salida: El texto.
+// Objetivo: Trabajar con fechas.
 export const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+// Nombre: Whats
+// Descripción: Dibuja el ícono de WhatsApp.
+// Entrada: Nada.
+// Salida: El ícono.
+// Objetivo: Botones de mensaje.
 const Whats = () => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.3z" /></svg>;
 export { Whats };
 
 // Un mensaje listo para enviar: se puede retocar el texto antes de abrir WhatsApp
+// Nombre: TarjetaMensaje
+// Descripción: Muestra un mensaje listo para WhatsApp.
+// Entrada: El mensaje y qué hacer al enviar.
+// Salida: La tarjeta.
+// Objetivo: Enviar avisos.
 export function TarjetaMensaje({ mensaje, nombre, onEnviado }) {
   const [texto, setTexto] = useState(mensaje.texto);
   const [enviado, setEnviado] = useState(false);
@@ -35,8 +60,18 @@ export function TarjetaMensaje({ mensaje, nombre, onEnviado }) {
 }
 
 // Zona para elegir o arrastrar imágenes, con vista previa
+// Nombre: ZonaFotos
+// Descripción: Muestra la zona para soltar fotos.
+// Entrada: Archivos y opciones.
+// Salida: La zona.
+// Objetivo: Subir fotos fácil.
 export function ZonaFotos({ archivos, onCambio, multiple = true, id = 'zona-fotos', texto }) {
   const [encima, setEncima] = useState(false);
+  // Nombre: tomar
+  // Descripción: Toma solo las imágenes válidas.
+  // Entrada: La lista de archivos.
+  // Salida: Nada.
+  // Objetivo: No subir otros archivos.
   const tomar = (lista) => onCambio([...lista].filter((f) => /^image\/(jpeg|png|webp)$/.test(f.type)).slice(0, multiple ? 20 : 1));
   return (
     <div className={`zona-fotos ${encima ? 'zona-fotos--encima' : ''} ${archivos.length ? 'zona-fotos--llena' : ''}`}
@@ -67,6 +102,11 @@ export function ZonaFotos({ archivos, onCambio, multiple = true, id = 'zona-foto
 }
 
 // Botón "Cambiar foto" que abre el selector de archivos
+// Nombre: BotonFoto
+// Descripción: Muestra un botón para elegir foto.
+// Entrada: Qué hacer y el texto.
+// Salida: El botón.
+// Objetivo: Cambiar fotos.
 export function BotonFoto({ onArchivo, texto = 'Cambiar foto', etiqueta, clase = 'boton boton--contorno boton--chico' }) {
   return (
     <label className={`${clase} subir`}>
@@ -76,4 +116,9 @@ export function BotonFoto({ onArchivo, texto = 'Cambiar foto', etiqueta, clase =
   );
 }
 
+// Nombre: formData
+// Descripción: Prepara una foto para enviarla.
+// Entrada: El archivo.
+// Salida: El paquete para enviar.
+// Objetivo: Subir fotos.
 export const formData = (archivo) => { const fd = new FormData(); fd.append('imagen', archivo); return fd; };

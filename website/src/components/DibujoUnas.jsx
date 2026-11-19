@@ -10,6 +10,11 @@ export const TONOS_PIEL = [
   { nombre: 'Morena', hex: '#9A6447' }, { nombre: 'Oscura', hex: '#6B402B' }
 ];
 
+// Nombre: contorno
+// Descripción: Dibuja el contorno de una uña.
+// Entrada: La forma y el largo.
+// Salida: El trazo.
+// Objetivo: Dibujar cada forma de uña.
 function contorno(forma, t) {
   const base = 'V100 C52 112 42 116 30 116 C18 116 8 112 8 100Z';
   switch (forma) {
@@ -26,8 +31,18 @@ function contorno(forma, t) {
 }
 
 // Un color que contraste con el elegido, para puntas, puntos y flores
+// Nombre: claro
+// Descripción: Revisa si un color es claro.
+// Entrada: El color.
+// Salida: Sí o no.
+// Objetivo: Elegir brillos que se noten.
 const claro = (hex) => { const n = parseInt(hex.slice(1), 16); return ((n >> 16) * 0.3 + ((n >> 8) & 255) * 0.59 + (n & 255) * 0.11) > 170; };
 
+// Nombre: Una
+// Descripción: Dibuja una uña con su diseño.
+// Entrada: El diseño y su posición.
+// Salida: La uña.
+// Objetivo: Ver el diseño.
 export function Una({ d, acento = false, ...pos }) {
   const id = useId().replace(/:/g, '');
   const t = 40 - LARGO[d.largo];
@@ -36,6 +51,11 @@ export function Una({ d, acento = false, ...pos }) {
   const deco = acento ? 'Pedrería' : d.decoracion;
   const contraste = claro(color) ? '#C2187A' : '#FFFFFF';
   const punta = d.color === 'Blanco' || d.color === 'Milky white' ? '#E8B4BC' : '#FFFFFF';
+  // Nombre: R
+  // Descripción: Dibuja un rectángulo de fondo.
+  // Entrada: Sus medidas.
+  // Salida: El rectángulo.
+  // Objetivo: Pintar la uña.
   const R = (props) => <rect x="0" y="-20" width="60" height="140" {...props} />;
 
   return (
@@ -117,6 +137,11 @@ export function Una({ d, acento = false, ...pos }) {
 }
 
 // Datos para dibujar una uña concreta del diseño (uña por uña)
+// Nombre: datosUna
+// Descripción: Da el diseño de una uña.
+// Entrada: El diseño y el número de uña.
+// Salida: Los datos de esa uña.
+// Objetivo: Diseñar uña por uña.
 export const datosUna = (diseno, i) => {
   const u = diseno.unas?.[i];
   if (!u) return diseno;
@@ -132,6 +157,11 @@ export const datosUna = (diseno, i) => {
   };
 };
 
+// Nombre: MuestraUnas
+// Descripción: Muestra cinco uñas con el diseño.
+// Entrada: El diseño.
+// Salida: El dibujo.
+// Objetivo: Vista previa rápida.
 export default function MuestraUnas({ diseno }) {
   return (
     <div className="muestra-unas">
@@ -150,6 +180,11 @@ const DEDOS = [
   { nombre: 'índice', x: 296, top: 96, w: 50, largo: 215 }
 ];
 
+// Nombre: Dedo
+// Descripción: Dibuja un dedo con su uña.
+// Entrada: Dedo, diseño, piel y acento.
+// Salida: El dedo.
+// Objetivo: Armar la mano.
 function Dedo({ dedo, d, piel, acento }) {
   const { x, top, w, largo } = dedo;
   const H = w * 130 / 60;
@@ -165,6 +200,11 @@ function Dedo({ dedo, d, piel, acento }) {
   );
 }
 
+// Nombre: ManoPrevia
+// Descripción: Dibuja una mano completa.
+// Entrada: El diseño y el tono de piel.
+// Salida: La mano.
+// Objetivo: Ver cómo queda.
 export function ManoPrevia({ diseno, piel = TONOS_PIEL[1].hex }) {
   return (
     <svg viewBox="0 -40 420 470" className="mano-previa" role="img" aria-label="Vista previa del diseño en una mano">

@@ -12,8 +12,18 @@ import Decoracion from '../components/Decoracion.jsx';
 import { CATEGORIAS, claveCategoria } from '../lib/categoriasPortada.js';
 
 
+// Nombre: Flecha
+// Descripción: Dibuja una flecha.
+// Entrada: Nada.
+// Salida: La flecha.
+// Objetivo: Botones.
 const Flecha = () => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>;
 
+// Nombre: TarjetaServicioMini
+// Descripción: Muestra un servicio pequeño.
+// Entrada: El servicio.
+// Salida: La tarjeta.
+// Objetivo: Destacar servicios.
 function TarjetaServicioMini({ s }) {
   const descuento = s.precio_oferta != null ? Math.round((1 - s.precio_oferta / s.precio) * 100) : 0;
   return (
@@ -37,6 +47,11 @@ function TarjetaServicioMini({ s }) {
   );
 }
 
+// Nombre: Inicio
+// Descripción: Muestra la página de inicio.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Presentar el salón.
 export default function Inicio() {
   useTitulo('');
   const [ofertas, setOfertas] = useState([]);
@@ -59,6 +74,11 @@ export default function Inicio() {
 
   const serviciosOferta = servicios.filter((s) => s.precio_oferta != null);
   const combos = servicios.filter((s) => s.es_combo);
+  // Nombre: agregado
+  // Descripción: Avisa que se agregó al carrito.
+  // Entrada: El producto.
+  // Salida: Nada.
+  // Objetivo: Confirmar la acción.
   const agregado = (p) => setAviso(`${p.nombre} se agregó al carrito.`);
   const maxDescuento = Math.max(0, ...ofertas.map((p) => Math.round((1 - p.precio / p.precio_anterior) * 100)));
   const campana = campanaActual();

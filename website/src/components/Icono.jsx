@@ -9,6 +9,11 @@ const TRAZOS = {
   alerta: <><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.2v.3" /></>
 };
 
+// Nombre: Icono
+// Descripción: Dibuja un ícono por nombre.
+// Entrada: Nombre y tamaño.
+// Salida: El ícono.
+// Objetivo: Usar íconos en vez de emojis.
 export default function Icono({ nombre, tam = 18, className = '' }) {
   return (
     <svg aria-hidden="true" width={tam} height={tam} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className={`icono ${className}`}>

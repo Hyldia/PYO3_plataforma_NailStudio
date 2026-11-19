@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import Logo from './Logo.jsx';
 import { SALON, enlaceWhatsApp } from '../config.js';
 
+// Nombre: I
+// Descripción: Dibuja un ícono del pie.
+// Entrada: El dibujo.
+// Salida: El ícono.
+// Objetivo: Decorar el pie.
 const I = ({ children }) => <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>;
 const REDES = [
   { clave: 'instagram', nombre: 'Instagram', icono: <I><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" /></I> },
@@ -18,10 +23,20 @@ const COLUMNAS = [
 
 const PAGOS = ['SINPE Móvil', 'Tarjeta de débito', 'Tarjeta de crédito', 'Efectivo en el salón'];
 
+// Nombre: Pie
+// Descripción: Muestra el pie de página.
+// Entrada: Nada.
+// Salida: El pie.
+// Objetivo: Datos y enlaces útiles.
 export default function Pie() {
   // Botón "Arriba" que aparece al bajar en la página
   const [arriba, setArriba] = useState(false);
   useEffect(() => {
+    // Nombre: ver
+    // Descripción: Revisa si se bajó mucho.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Mostrar "volver arriba".
     const ver = () => setArriba(window.scrollY > 900);
     window.addEventListener('scroll', ver, { passive: true });
     return () => window.removeEventListener('scroll', ver);

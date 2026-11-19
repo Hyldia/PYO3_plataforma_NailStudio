@@ -4,8 +4,18 @@ import { dinero } from '../config.js';
 import ProductoImagen from './ProductoImagen.jsx';
 import BotonFavorito from './BotonFavorito.jsx';
 
+// Nombre: miles
+// Descripción: Escribe números grandes cortos.
+// Entrada: El número.
+// Salida: El texto.
+// Objetivo: Leer fácil.
 const miles = (n) => (n >= 1000 ? `${(n / 1000).toLocaleString('es-CR', { maximumFractionDigits: 1 })} mil` : String(n));
 
+// Nombre: Estrellas
+// Descripción: Muestra estrellas y cantidad de reseñas.
+// Entrada: Valor y cantidad.
+// Salida: Las estrellas.
+// Objetivo: Ver calificaciones.
 function Estrellas({ valor, resenas }) {
   const llenas = Math.round(valor);
   return (
@@ -17,11 +27,21 @@ function Estrellas({ valor, resenas }) {
 }
 
 // Tarjeta de producto al estilo de las tiendas en línea: foto, descuento, precio, estrellas y vendidos
+// Nombre: TarjetaProducto
+// Descripción: Muestra la tarjeta de un producto.
+// Entrada: El producto y su puesto.
+// Salida: La tarjeta.
+// Objetivo: Ver la tienda.
 export default function TarjetaProducto({ p, puesto, oferta = false }) {
   const vistaRapida = useVistaRapida();
   const descuento = p.precio_anterior ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0;
   const pocos = p.stock > 0 && p.stock < 10;
   // Como en las tiendas grandes: el carrito abre la vista previa para elegir tono y cantidad
+  // Nombre: agregar
+  // Descripción: Abre la vista rápida del producto.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Agregar sin salir de la página.
   const agregar = () => vistaRapida({ tipo: 'producto', id: p.id });
 
   return (

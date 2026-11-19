@@ -6,6 +6,11 @@ import { MensajeModel } from '../models/MensajeModel.js';
 
 export const eventos = new EventEmitter();
 
+// Nombre: restarHoras
+// Descripción: Resta horas a una fecha y hora.
+// Entrada: La fecha, la hora y cuántas horas.
+// Salida: La fecha y hora nueva.
+// Objetivo: Programar recordatorios.
 function restarHoras(fecha, hora, horas) {
   const d = new Date(`${fecha}T${hora}:00`);
   d.setHours(d.getHours() - horas);

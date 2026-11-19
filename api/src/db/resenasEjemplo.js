@@ -43,15 +43,50 @@ const POR_TIPO = {
   empujador: [[5, 'Muy cómodo de usar.'], [4, 'Cumple su función.']]
 };
 
+// Nombre: crearAzar
+// Descripción: Crea un generador de azar con semilla.
+// Entrada: Una semilla.
+// Salida: Funciones para elegir al azar.
+// Objetivo: Datos de ejemplo repetibles.
 function crearAzar(semilla) {
   let s = semilla;
+  // Nombre: r
+  // Descripción: Da un número al azar (siempre la misma serie).
+  // Entrada: Nada.
+  // Salida: Un número entre 0 y 1.
+  // Objetivo: Crear datos de ejemplo iguales cada vez.
   const r = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  // Nombre: entero
+  // Descripción: Da un número entero al azar entre dos valores.
+  // Entrada: El mínimo y el máximo.
+  // Salida: Un número.
+  // Objetivo: Variar las reseñas.
+  // Nombre: elegir
+  // Descripción: Elige un elemento al azar de una lista.
+  // Entrada: La lista.
+  // Salida: Un elemento.
+  // Objetivo: Variar las reseñas.
   return { r, entero: (a, b) => a + Math.floor(r() * (b - a + 1)), elegir: (l) => l[Math.floor(r() * l.length)] };
 }
 
+// Nombre: corto
+// Descripción: Acorta un nombre (María G.).
+// Entrada: El nombre completo.
+// Salida: El nombre corto.
+// Objetivo: Cuidar la privacidad en reseñas.
 const corto = (nombre) => { const [n, a] = nombre.split(' '); return a ? `${n} ${a[0]}.` : n; };
+// Nombre: fecha
+// Descripción: Da una fecha de hace unos días.
+// Entrada: Cuántos días atrás.
+// Salida: La fecha.
+// Objetivo: Fechar las reseñas de ejemplo.
 const fecha = (diasAtras) => new Date(Date.now() - diasAtras * 86400000).toISOString().slice(0, 19).replace('T', ' ');
 
+// Nombre: cargarResenasEjemplo
+// Descripción: Llena reseñas de ejemplo.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Que se vean opiniones al probar.
 export function cargarResenasEjemplo(db) {
   if (db.prepare("SELECT valor FROM ajustes WHERE clave = 'resenas_ejemplo'").get()) return false;
   const az = crearAzar(20261114);
@@ -59,6 +94,11 @@ export function cargarResenasEjemplo(db) {
     VALUES (?, ?, ?, ?, ?, ?, 1, ?)`);
   // Primero las estrellas (la mayoría 5 y 4, como en una tienda que vende bien) y luego un comentario que les corresponda
   const BAJAS = [[2, 'No me duró lo que esperaba.'], [2, 'El empaque llegó un poco dañado, el producto bien.'], [1, 'No era lo que buscaba.']];
+  // Nombre: comentario
+  // Descripción: Arma un comentario según el tipo de reseña.
+  // Entrada: El tipo (buena, regular...).
+  // Salida: El texto del comentario.
+  // Objetivo: Que las reseñas suenen reales.
   const comentario = (tipo) => {
     const x = az.r();
     const estrellas = x < 0.64 ? 5 : x < 0.88 ? 4 : x < 0.96 ? 3 : x < 0.99 ? 2 : 1;

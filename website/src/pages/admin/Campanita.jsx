@@ -7,19 +7,44 @@ import { fechaLarga } from './piezasPanel.jsx';
 
 const TIPO = { libre: 'día libre', vacaciones: 'vacaciones', incapacidad: 'incapacidad', permiso: 'permiso' };
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
+// Nombre: corta
+// Descripción: Escribe una fecha corta (5 may).
+// Entrada: La fecha.
+// Salida: El texto.
+// Objetivo: Avisos cortos.
 const corta = (f) => `${Number(f.slice(8))} ${MESES[Number(f.slice(5, 7)) - 1]}`;
 
+// Nombre: Campanita
+// Descripción: Muestra la campanita de avisos.
+// Entrada: Sección y cómo ir.
+// Salida: La campanita.
+// Objetivo: Ver pendientes sin estorbar.
 export default function Campanita({ seccion, onIr }) {
   const [avisos, setAvisos] = useState(null);
   const [abierta, setAbierta] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const caja = useRef(null);
+  // Nombre: cargar
+  // Descripción: Carga los avisos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Tener avisos al día.
   const cargar = () => api.admin.avisos().then(setAvisos).catch(() => {});
 
   useEffect(() => { cargar(); const t = setInterval(cargar, 60000); return () => clearInterval(t); }, []);
   useEffect(() => { cargar(); }, [seccion]);
   useEffect(() => {
+    // Nombre: fuera
+    // Descripción: Cierra al tocar afuera.
+    // Entrada: El clic.
+    // Salida: Nada.
+    // Objetivo: No estorbar.
     const fuera = (e) => { if (caja.current && !caja.current.contains(e.target)) setAbierta(false); };
+    // Nombre: esc
+    // Descripción: Cierra con Escape.
+    // Entrada: La tecla.
+    // Salida: Nada.
+    // Objetivo: Usar con teclado.
     const esc = (e) => { if (e.key === 'Escape') setAbierta(false); };
     document.addEventListener('pointerdown', fuera); document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('pointerdown', fuera); document.removeEventListener('keydown', esc); };
@@ -28,6 +53,11 @@ export default function Campanita({ seccion, onIr }) {
   if (!avisos) return null;
   const total = avisos.solicitudes.length + (avisos.pedidosNuevos ? 1 : 0) + (avisos.citasSinMarcar ? 1 : 0) + (avisos.citasPorConfirmar ? 1 : 0);
 
+  // Nombre: resolver
+  // Descripción: Aprueba o rechaza un libre.
+  // Entrada: El aviso y la respuesta.
+  // Salida: Nada.
+  // Objetivo: Responder rápido.
   const resolver = async (x, aprobar) => {
     const respuesta = aprobar ? '' : window.prompt(`¿Quieres decirle algo a ${x.nombre}? (opcional)`, 'Ese día tenemos mucha agenda, ¿podemos buscar otro?');
     if (respuesta === null) return;
@@ -37,6 +67,11 @@ export default function Campanita({ seccion, onIr }) {
       cargar();
     } catch (e) { setMensaje(e.message); }
   };
+  // Nombre: ir
+  // Descripción: Va a una sección del panel.
+  // Entrada: La sección.
+  // Salida: Nada.
+  // Objetivo: Atender el aviso.
   const ir = (s) => { setAbierta(false); onIr(s); };
 
   return (

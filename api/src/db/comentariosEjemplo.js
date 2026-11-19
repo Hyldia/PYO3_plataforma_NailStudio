@@ -22,13 +22,43 @@ const TEXTOS = {
   }
 };
 
+// Nombre: azar
+// Descripción: Crea un generador de azar con semilla.
+// Entrada: Una semilla.
+// Salida: Funciones para elegir al azar.
+// Objetivo: Datos de ejemplo repetibles.
 function azar(semilla) {
   let s = semilla;
+  // Nombre: r
+  // Descripción: Da un número al azar (siempre la misma serie).
+  // Entrada: Nada.
+  // Salida: Un número entre 0 y 1.
+  // Objetivo: Crear datos de ejemplo iguales cada vez.
   const r = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  // Nombre: elegir
+  // Descripción: Elige un elemento al azar de una lista.
+  // Entrada: La lista.
+  // Salida: Un elemento.
+  // Objetivo: Variar los comentarios de ejemplo.
+  // Nombre: entero
+  // Descripción: Da un número entero al azar entre dos valores.
+  // Entrada: El mínimo y el máximo.
+  // Salida: Un número.
+  // Objetivo: Variar los datos de ejemplo.
   return { r, elegir: (l) => l[Math.floor(r() * l.length)], entero: (a, b) => a + Math.floor(r() * (b - a + 1)) };
 }
+// Nombre: fecha
+// Descripción: Da una fecha de hace unos días.
+// Entrada: Cuántos días atrás.
+// Salida: La fecha.
+// Objetivo: Fechar los comentarios de ejemplo.
 const fecha = (dias) => new Date(Date.now() - dias * 86400000).toISOString().slice(0, 19).replace('T', ' ');
 
+// Nombre: cargarComentariosEjemplo
+// Descripción: Llena comentarios de ejemplo.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Que se vean opiniones al probar.
 export function cargarComentariosEjemplo(db) {
   // Cupones de la ruleta (no se muestran en la lista pública)
   const cupon = db.prepare(`INSERT OR IGNORE INTO cupones (codigo, descripcion, tipo, valor, minimo, vence, solo_combos, publico)
@@ -39,6 +69,11 @@ export function cargarComentariosEjemplo(db) {
   if (db.prepare("SELECT valor FROM ajustes WHERE clave = 'comentarios_ejemplo'").get()) return false;
   const az = azar(1115);
   const ins = db.prepare('INSERT INTO comentarios (tipo, ref_id, nombre, estrellas, comentario, ejemplo, creada_en) VALUES (?, ?, ?, ?, ?, 1, ?)');
+  // Nombre: estrellas
+  // Descripción: Elige cuántas estrellas da un comentario.
+  // Entrada: Nada.
+  // Salida: De 1 a 5 estrellas.
+  // Objetivo: Que haya más buenas que malas.
   const estrellas = () => { const x = az.r(); return x < 0.5 ? 5 : x < 0.72 ? 4 : x < 0.86 ? 3 : x < 0.95 ? 2 : 1; };
   db.transaction(() => {
     [['foto', 'fotos', 2, 6], ['servicio', 'servicios', 4, 10]].forEach(([tipo, tabla, min, max]) => {

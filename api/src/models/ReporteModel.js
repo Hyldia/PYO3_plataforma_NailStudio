@@ -4,6 +4,11 @@ import { getDb } from '../db/conexion.js';
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
 export const ReporteModel = {
+  // Nombre: periodo
+  // Descripción: Calcula el periodo del reporte.
+  // Entrada: Las fechas pedidas.
+  // Salida: Desde y hasta.
+  // Objetivo: Hacer reportes por fechas.
   periodo(q = {}) {
     const hoy = new Date();
     const hasta = FECHA.test(q.hasta || '') ? q.hasta : hoy.toISOString().slice(0, 10);
@@ -11,6 +16,11 @@ export const ReporteModel = {
     const desde = FECHA.test(q.desde || '') && q.desde <= hasta ? q.desde : d.toISOString().slice(0, 10);
     return { desde, hasta };
   },
+  // Nombre: generar
+  // Descripción: Arma el reporte del negocio.
+  // Entrada: El periodo.
+  // Salida: Ventas, citas, servicios y equipo.
+  // Objetivo: Ver cómo va el salón.
   generar({ desde, hasta }) {
     const db = getDb();
     const p = { desde, hasta };

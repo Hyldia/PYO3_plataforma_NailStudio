@@ -15,8 +15,18 @@ import { useAgregarPresson, miles, positivo } from '../components/TarjetaDiseno.
 import { etiquetaVariante } from '../lib/fichaProducto.js';
 
 const Contexto = createContext(() => {});
+// Nombre: useVistaRapida
+// Descripción: Usa la vista rápida en una página.
+// Entrada: Nada.
+// Salida: La función para abrirla.
+// Objetivo: Ver sin salir de la página.
 export const useVistaRapida = () => useContext(Contexto);
 
+// Nombre: VistaProducto
+// Descripción: Muestra un producto en ventana.
+// Entrada: El producto y cómo cerrar.
+// Salida: La ventana.
+// Objetivo: Agregar rápido.
 function VistaProducto({ id, cerrar }) {
   const [p, setP] = useState(null);
   const [cantidad, setCantidad] = useState(1);
@@ -83,6 +93,11 @@ function VistaProducto({ id, cerrar }) {
   );
 }
 
+// Nombre: VistaDiseno
+// Descripción: Muestra un diseño en ventana.
+// Entrada: El diseño y cómo cerrar.
+// Salida: La ventana.
+// Objetivo: Reservar rápido.
 function VistaDiseno({ id, cerrar }) {
   const [f, setF] = useState(null);
   const { actualizar } = useReserva();
@@ -91,6 +106,11 @@ function VistaDiseno({ id, cerrar }) {
   useEffect(() => { api.foto(id).then(setF).catch(() => cerrar()); }, [id]);
   if (!f) return <div className="vista-rapida vista-rapida--cargando" role="status"><span className="girando girando--oscuro" /> Cargando…</div>;
 
+  // Nombre: reservar
+  // Descripción: Reserva el diseño.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ir a reservar.
   const reservar = () => { actualizar({ fotoRef: f, diseno: null }); cerrar(); irA(f.servicio ? `/reservar?servicio=${f.servicio.id}` : '/reservar'); };
   return (
     <div className="vista-rapida">
@@ -116,10 +136,20 @@ function VistaDiseno({ id, cerrar }) {
   );
 }
 
+// Nombre: VistaRapidaProvider
+// Descripción: Comparte la vista rápida con el sitio.
+// Entrada: Las páginas.
+// Salida: El proveedor.
+// Objetivo: Usarla en todas partes.
 export function VistaRapidaProvider({ children }) {
   const [abierto, setAbierto] = useState(null);
   const { pathname } = useLocation();
   useEffect(() => setAbierto(null), [pathname]);
+  // Nombre: cerrar
+  // Descripción: Cierra la vista rápida.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Volver a la página.
   const cerrar = () => setAbierto(null);
   return (
     <Contexto.Provider value={setAbierto}>

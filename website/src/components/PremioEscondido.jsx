@@ -18,18 +18,53 @@ const SIN_PREMIO = ['/admin', '/equipo', '/finalizar-compra', '/carrito'];
 // Dónde se puede esconder (la primera que exista en la página)
 const ESCONDITES = ['.vitrina__producto', '.inspira__polaroid', '.tarjeta-producto', '.servicio', '.disenos-rejilla > li', '.flash-tarjeta', '.tendencias__item', '.cat-circulos li', '.categoria-circulo', '.ayuda-tarjeta', '.campana__producto', '.podio__producto'];
 
+// Nombre: leer
+// Descripción: Lee los premios encontrados.
+// Entrada: Nada.
+// Salida: Los premios.
+// Objetivo: No repetirlos.
 const leer = () => { try { return JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch { return {}; } };
+// Nombre: enSesion
+// Descripción: Cuenta los premios de esta visita.
+// Entrada: Nada.
+// Salida: La cantidad.
+// Objetivo: No mostrar demasiados.
 const enSesion = () => { try { return Number(sessionStorage.getItem(SESION)) || 0; } catch { return 0; } };
+// Nombre: guardar
+// Descripción: Guarda un premio encontrado.
+// Entrada: El código.
+// Salida: Nada.
+// Objetivo: Recordarlo.
 function guardar(codigo) {
   try {
     const v = leer(); v[codigo] = Date.now(); localStorage.setItem(CLAVE, JSON.stringify(v));
     sessionStorage.setItem(SESION, String(enSesion() + 1));
   } catch { /* sin almacenamiento */ }
 }
+// Nombre: libre
+// Descripción: Revisa si un cupón se puede esconder.
+// Entrada: El cupón.
+// Salida: Sí o no.
+// Objetivo: Preferir cupones nuevos.
 const libre = (c) => !leer()[c.codigo] || Date.now() - leer()[c.codigo] > 3 * 86400000;
+// Nombre: azar
+// Descripción: Elige uno al azar.
+// Entrada: La lista.
+// Salida: Un elemento.
+// Objetivo: Sorprender.
 const azar = (l) => l[Math.floor(Math.random() * l.length)];
+// Nombre: valor
+// Descripción: Escribe el valor del cupón.
+// Entrada: El cupón.
+// Salida: El texto.
+// Objetivo: Mostrar el descuento.
 const valor = (c) => (c.tipo === 'porcentaje' ? `${c.valor} %` : dinero(c.valor));
 
+// Nombre: PremioEscondido
+// Descripción: Esconde regalitos con cupones en la página.
+// Entrada: Nada.
+// Salida: El regalito y su ventana.
+// Objetivo: Que los cupones sean premios.
 export default function PremioEscondido() {
   const { pathname, search } = useLocation();
   const [cupones, setCupones] = useState([]);
@@ -46,6 +81,11 @@ export default function PremioEscondido() {
     setPremio(null); setPos(null); objetivo.current = null;
     if (!cupones.length || SIN_PREMIO.some((p) => pathname.startsWith(p)) || enSesion() >= 6 || Math.random() > 0.8) return undefined;
     let t;
+    // Nombre: esconder
+    // Descripción: Elige dónde esconder el regalito.
+    // Entrada: El intento.
+    // Salida: Nada.
+    // Objetivo: Ponerlo en una tarjeta visible.
     const esconder = (intento = 0) => {
       const nuevos = cupones.filter(libre);
       const posibles = nuevos.length ? nuevos : cupones;
@@ -66,6 +106,11 @@ export default function PremioEscondido() {
   // Sigue a la tarjeta aunque la página cambie de tamaño
   useEffect(() => {
     if (!premio) return undefined;
+    // Nombre: medir
+    // Descripción: Mide dónde está la tarjeta.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Que el regalito la siga.
     const medir = () => {
       const el = objetivo.current;
       if (!el || !el.isConnected) { setPremio(null); return; }
@@ -78,7 +123,17 @@ export default function PremioEscondido() {
     return () => { clearInterval(i); window.removeEventListener('resize', medir); };
   }, [premio]);
 
+  // Nombre: abrir
+  // Descripción: Abre el regalito.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar el premio.
   const abrir = () => { guardar(premio.cupon.codigo); setAbierto(premio.cupon); setCopiado(false); setPremio(null); };
+  // Nombre: copiar
+  // Descripción: Copia el código del premio.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Pegarlo al pagar.
   const copiar = async () => { try { await navigator.clipboard.writeText(abierto.codigo); setCopiado(true); } catch { /* sin portapapeles */ } };
 
   return (

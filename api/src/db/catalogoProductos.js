@@ -22,9 +22,19 @@ const ACRILICO = [['Transparente', '#F4EEEC'], ['Blanco', '#F7F5F2'], ['Rosa', '
 const ESMALTE = [['Rojo', '#B3122E'], ['Nude', '#E3BFA8'], ['Rosa', '#F2A3BC'], ['Vino', '#6B1630'], ['Negro', '#1E1A1C'], ['Blanco', '#F7F5F2'], ['Coral', '#F07B6B'], ['Lila', '#BBA5DA']];
 const AROMAS = [['Almendra', '#E8B65C'], ['Coco', '#F1E6D2'], ['Vainilla', '#F3DDB0'], ['Rosas', '#F2A3BC'], ['Lavanda', '#C9B8E8'], ['Sandía', '#F0807A']];
 
+// Nombre: P
+// Descripción: Arma un producto del catálogo.
+// Entrada: Nombre, descripción, categoría, precio y más.
+// Salida: El producto listo.
+// Objetivo: Escribir el catálogo más corto.
 const P = (nombre, descripcion, categoria, tipo, precio, color, extra = {}) =>
   ({ nombre, descripcion, categoria, tipo, precio, color, marca: extra.marca || 'Nailé Pro', stock: extra.stock ?? 20 });
 
+// Nombre: generarCatalogo
+// Descripción: Crea todo el catálogo de productos.
+// Entrada: Nada.
+// Salida: La lista de productos.
+// Objetivo: Llenar la tienda.
 export function generarCatalogo() {
   const l = [];
   // Esmaltes y geles

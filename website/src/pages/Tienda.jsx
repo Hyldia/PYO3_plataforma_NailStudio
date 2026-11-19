@@ -13,6 +13,11 @@ const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan l
 const ORDENES = { relevancia: 'Relevancia', vendidos: 'Más vendidos', descuento: 'Mayor descuento', calificacion: 'Mejor calificados', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', nuevos: 'Más nuevos' };
 const RANGOS = [['', '', 'Cualquier precio'], ['', '3000', 'Hasta ₡3 000'], ['3000', '8000', '₡3 000 a ₡8 000'], ['8000', '20000', '₡8 000 a ₡20 000'], ['20000', '', 'Más de ₡20 000']];
 
+// Nombre: Tienda
+// Descripción: Muestra la tienda.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Comprar productos.
 export default function Tienda() {
   useTitulo('Tienda');
   const [params, setParams] = useSearchParams();
@@ -30,6 +35,11 @@ export default function Tienda() {
   const disponibles = params.get('disponibles') === '1';
   const rango = RANGOS.find(([mn, mx]) => mn === (params.get('min') || '') && mx === (params.get('max') || '')) || RANGOS[0];
 
+  // Nombre: fijar
+  // Descripción: Cambia filtros de la tienda.
+  // Entrada: Los cambios.
+  // Salida: Nada.
+  // Objetivo: Filtrar productos.
   const fijar = (cambios) => {
     const p = new URLSearchParams(params);
     Object.entries(cambios).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)));
@@ -47,9 +57,19 @@ export default function Tienda() {
       .finally(() => setCargando(false));
   }, [params]);
 
+  // Nombre: limpiar
+  // Descripción: Quita los filtros.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ver todo.
   const limpiar = () => { setTexto(''); setPagina(1); setParams({}, { replace: true }); };
   const hayFiltros = categoria || ofertas || disponibles || rango !== RANGOS[0] || orden !== 'relevancia';
   const vendidos = orden === 'vendidos';
+  // Nombre: verVendidos
+  // Descripción: Muestra u oculta los más vendidos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ver lo más vendido.
   const verVendidos = () => fijar({ orden: vendidos ? '' : 'vendidos', ofertas: '' });
   const titulo = categoria || (ofertas ? 'Ofertas' : vendidos ? 'Más vendidos' : 'Tienda');
   const inicio = ![...params.keys()].filter((k) => k !== 'q').length; // escribir en el buscador no cambia la portada

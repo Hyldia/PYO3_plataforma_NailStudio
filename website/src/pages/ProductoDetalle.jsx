@@ -13,6 +13,11 @@ import { miles } from '../components/TarjetaDiseno.jsx';
 import { fichaProducto, etiquetaVariante } from '../lib/fichaProducto.js';
 import Icono from '../components/Icono.jsx';
 
+// Nombre: ProductoDetalle
+// Descripción: Muestra la página de un producto.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Ver y comprar el producto.
 export default function ProductoDetalle() {
   const { id } = useParams();
   const [p, setP] = useState(null);
@@ -23,6 +28,11 @@ export default function ProductoDetalle() {
   const irA = useNavigate();
   useTitulo(p?.nombre || 'Producto');
 
+  // Nombre: cargar
+  // Descripción: Carga el producto.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar sus datos.
   const cargar = () => api.producto(id).then(setP).catch((e) => setError(e.message));
   useEffect(() => {
     setP(null); setError(''); setCantidad(1); window.scrollTo(0, 0);
@@ -40,7 +50,17 @@ export default function ProductoDetalle() {
   const { detalles, uso } = fichaProducto({ ...p, variante });
   const clave = `${p.id}|`;
   const enCarrito = carrito.items.find((i) => i.clave === clave);
+  // Nombre: irAlCarrito
+  // Descripción: Va al carrito con el producto marcado.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Pagar rápido.
   const irAlCarrito = () => { carrito.seleccionar(clave, true); irA('/carrito'); };
+  // Nombre: verSimilares
+  // Descripción: Baja a los productos parecidos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ver más opciones.
   const verSimilares = () => document.getElementById('t-rel-p')?.scrollIntoView({ behavior: 'smooth' });
 
   return (

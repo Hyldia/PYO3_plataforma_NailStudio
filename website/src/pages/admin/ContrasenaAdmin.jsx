@@ -3,6 +3,11 @@
 import { useState } from 'react';
 import { api } from '../../lib/api.js';
 
+// Nombre: nivel
+// Descripción: Mide qué tan segura es una contraseña.
+// Entrada: La contraseña.
+// Salida: El nivel.
+// Objetivo: Ayudar a elegir una buena.
 function nivel(clave) {
   let n = 0;
   if (clave.length >= 8) n++;
@@ -14,13 +19,28 @@ function nivel(clave) {
 }
 const NIVELES = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Muy segura'];
 
+// Nombre: ContrasenaAdmin
+// Descripción: Muestra el cambio de contraseña.
+// Entrada: Qué hacer al cambiarla.
+// Salida: El formulario.
+// Objetivo: Cambiar la contraseña.
 export default function ContrasenaAdmin({ onCambiada }) {
   const [d, setD] = useState({ actual: '', nueva: '', confirmar: '' });
   const [ver, setVer] = useState(false);
   const [estado, setEstado] = useState({ guardando: false, error: '', ok: '' });
+  // Nombre: set
+  // Descripción: Guarda lo que se escribe en un campo.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Llenar el formulario.
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
   const fuerza = nivel(d.nueva);
 
+  // Nombre: guardar
+  // Descripción: Guarda la contraseña nueva.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Cambiarla.
   async function guardar(e) {
     e.preventDefault();
     setEstado({ guardando: true, error: '', ok: '' });
@@ -38,6 +58,11 @@ export default function ContrasenaAdmin({ onCambiada }) {
     ['Tiene números', /\d/.test(d.nueva)],
     ['Las dos nuevas son iguales', d.confirmar !== '' && d.confirmar === d.nueva]
   ];
+  // Nombre: ojo
+  // Descripción: Dibuja el botón de ver contraseña.
+  // Entrada: Nada.
+  // Salida: El botón.
+  // Objetivo: Ver lo escrito.
   const ojo = () => (
     <button type="button" className="clave-ojo" onClick={() => setVer(!ver)} aria-pressed={ver} aria-label={ver ? 'Ocultar las contraseñas' : 'Mostrar las contraseñas'}>
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

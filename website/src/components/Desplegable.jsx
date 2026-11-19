@@ -2,6 +2,11 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 // Chip con menú desplegable (como los filtros de las tiendas en línea).
 // Se cierra con Escape o al tocar fuera; el foco vuelve al botón.
+// Nombre: Desplegable
+// Descripción: Muestra un menú que se abre al tocarlo.
+// Entrada: Etiqueta y contenido.
+// Salida: El menú.
+// Objetivo: Filtros ordenados.
 export default function Desplegable({ etiqueta, activo = false, children, alinear = 'izquierda' }) {
   const [abierto, setAbierto] = useState(false);
   const id = useId();
@@ -10,7 +15,17 @@ export default function Desplegable({ etiqueta, activo = false, children, alinea
 
   useEffect(() => {
     if (!abierto) return undefined;
+    // Nombre: fuera
+    // Descripción: Cierra el menú al tocar afuera.
+    // Entrada: El clic.
+    // Salida: Nada.
+    // Objetivo: No estorbar.
     const fuera = (e) => { if (!caja.current?.contains(e.target)) setAbierto(false); };
+    // Nombre: tecla
+    // Descripción: Cierra el menú con Escape.
+    // Entrada: La tecla.
+    // Salida: Nada.
+    // Objetivo: Usar con teclado.
     const tecla = (e) => { if (e.key === 'Escape') { setAbierto(false); boton.current?.focus(); } };
     document.addEventListener('mousedown', fuera);
     document.addEventListener('keydown', tecla);

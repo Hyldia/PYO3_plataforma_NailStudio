@@ -1,7 +1,17 @@
 import { SALON } from '../config.js';
 
 // Descarga un archivo .ics con una o varias citas, para guardarlas en el calendario del teléfono
+// Nombre: descargarCalendario
+// Descripción: Descarga las citas para el calendario del teléfono.
+// Entrada: Las citas.
+// Salida: Nada.
+// Objetivo: Agendarlas en el teléfono.
 export function descargarCalendario(citas) {
+  // Nombre: dos
+  // Descripción: Pone dos dígitos.
+  // Entrada: El número.
+  // Salida: El texto.
+  // Objetivo: Fechas parejas.
   const dos = (n) => String(n).padStart(2, '0');
   const eventos = citas.flatMap((c) => {
     const [h, m] = c.hora.split(':').map(Number);

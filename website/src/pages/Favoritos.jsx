@@ -13,14 +13,29 @@ import Contador from '../components/Contador.jsx';
 import Migas from '../components/Migas.jsx';
 
 const CORAZON = 'M12 20.5s-7.5-4.6-9.3-9.4C1.4 7.6 3.6 4 7.2 4c2 0 3.6 1.1 4.8 2.8C13.2 5.1 14.8 4 16.8 4c3.6 0 5.8 3.6 4.5 7.1-1.8 4.8-9.3 9.4-9.3 9.4z';
+// Nombre: Corazones
+// Descripción: Dibuja corazones flotando.
+// Entrada: Nada.
+// Salida: Los corazones.
+// Objetivo: Decorar favoritos.
 const Corazones = () => (
   <span className="fav-hero__corazones" aria-hidden="true">
     {Array.from({ length: 14 }, (_, n) => <svg key={n} viewBox="0 0 24 24" style={{ '--n': n, '--t': `${14 + ((n * 7) % 5) * 6}px`, '--d': `${6 + ((n * 3) % 5)}s` }}><path d={CORAZON} /></svg>)}
   </span>
 );
+// Nombre: lista
+// Descripción: Saca la lista de productos.
+// Entrada: La respuesta.
+// Salida: La lista.
+// Objetivo: Trabajar con la lista.
 const lista = (r) => r.productos || r;
 
 // Lista de favoritos: productos y diseños guardados con el corazón
+// Nombre: Favoritos
+// Descripción: Muestra la página de favoritos.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Ver lo guardado.
 export default function Favoritos() {
   useTitulo('Mis favoritos');
   const fav = useFavoritos();
@@ -64,6 +79,11 @@ export default function Favoritos() {
   const bajaron = productos.filter((p) => p.guardadoA && p.precio < p.guardadoA).length;
   const collage = useMemo(() => fav.items.slice(0, 5), [fav.items]);
 
+  // Nombre: agregarTodo
+  // Descripción: Agrega todos los favoritos al carrito.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Comprar de una vez.
   const agregarTodo = () => {
     disponibles.forEach((p) => carrito.agregar(p, { cantidad: 1 }));
     setAgregados(disponibles.length);

@@ -13,11 +13,21 @@ import Foto from '../components/Foto.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import Migas from '../components/Migas.jsx';
 
+// Nombre: mas
+// Descripción: Escribe el costo extra.
+// Entrada: El monto.
+// Salida: El texto (+₡500 o Incluido).
+// Objetivo: Mostrar precios.
 const mas = (n) => (n ? `+${dinero(n)}` : 'Incluido');
 const BUSCAR_DECO = { Francesa: 'francesa', 'Francesa de color': 'francesa', 'Baby boomer': 'degradado', 'Ombré': 'degradado', 'Mármol': 'mármol', Corazones: 'corazones',
   'Flores a mano': 'flores', 'Animal print': 'leopardo', 'Pedrería': 'pedrería', 'Foil dorado': 'dorado' };
 // Servicio con el que se hace el diseño según el largo
 const SERVICIOS_DISENO = ['Manicure semipermanente', 'Manicure rusa', 'Builder gel (nivelación)', 'Soft gel (tips de gel)', 'Polygel', 'Uñas acrílicas'];
+// Nombre: servicioPorLargo
+// Descripción: Elige el servicio según el largo.
+// Entrada: El largo.
+// Salida: El nombre del servicio.
+// Objetivo: Reservar el servicio correcto.
 const servicioPorLargo = (largo) => (largo === 'Corto' ? 'Manicure semipermanente' : largo === 'Medio' ? 'Polygel' : 'Uñas acrílicas');
 // Los 15 colores que se ven primero (los favoritos del salón)
 const DESTACADOS = ['AH-038', 'AH-005', 'AH-028', 'AH-037', 'AH-068', 'AH-042', 'AH-174', 'AH-004', 'AH-227', 'AH-148', 'AH-043', 'AH-123', 'AH-091', 'AH-081', 'AH-241'];
@@ -30,9 +40,19 @@ const ICONOS = {
   corazonVacio: <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z" /></svg>
 };
 
+// Nombre: leerFavorito
+// Descripción: Lee el diseño favorito guardado.
+// Entrada: Nada.
+// Salida: El diseño o nada.
+// Objetivo: Recuperarlo al volver.
 const leerFavorito = () => { try { return JSON.parse(localStorage.getItem('naile-diseno-favorito')); } catch { return null; } };
 
 // Muestra de color: cuadrito con brillo, como en un muestrario de salón
+// Nombre: Muestra
+// Descripción: Muestra un color para elegir.
+// Entrada: El color, si está elegido y qué hacer.
+// Salida: El botón.
+// Objetivo: Elegir esmalte.
 function Muestra({ e, elegido, onElegir }) {
   return (
     <button type="button" role="radio" aria-checked={elegido} className="muestra" onClick={() => onElegir(e.codigo)} title={`${e.nombre} · ${e.codigo}`}>
@@ -42,6 +62,11 @@ function Muestra({ e, elegido, onElegir }) {
   );
 }
 
+// Nombre: Disena
+// Descripción: Muestra el diseñador de uñas.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Crear un diseño propio.
 export default function Disena() {
   useTitulo('Diseña tus uñas');
   const { reserva, actualizar } = useReserva();
@@ -78,15 +103,35 @@ export default function Disena() {
   const esmaltes = ESMALTES.filter((e) => (familia === 'Todos' || e.familia === familia)
     && `${e.nombre} ${e.codigo} ${e.familia}`.toLowerCase().includes(texto.trim().toLowerCase()));
 
+  // Nombre: general
+  // Descripción: Cambia algo para todas las uñas.
+  // Entrada: El campo y el valor.
+  // Salida: Nada.
+  // Objetivo: Diseñar rápido.
   const general = (campo, valor) => setDiseno((d) => new DisenoBuilder(d).con(campo, valor).build());
   // Con "Todas" el cambio va a las cinco uñas; con "Una por una", solo a la uña elegida
+  // Nombre: cambiarUna
+  // Descripción: Cambia algo de una sola uña.
+  // Entrada: El campo y el valor.
+  // Salida: Nada.
+  // Objetivo: Diseñar uña por uña.
   const cambiarUna = (campo, valor) => setDiseno((d) => {
     const unas = d.unas.map((u, i) => (modo === 'todas' || i === dedo ? { ...u, [campo]: valor } : u));
     const generales = campo === 'forma' ? { forma: valor } : campo === 'largo' ? { largo: valor } : {};
     return new DisenoBuilder({ ...d, ...generales, unas, color: esmalte(unas[1].esmalte).nombre, acabado: unas[1].acabado, decoracion: unas[1].decoracion }).build();
   });
+  // Nombre: elegirDedo
+  // Descripción: Elige un dedo.
+  // Entrada: El número del dedo.
+  // Salida: Nada.
+  // Objetivo: Editar esa uña.
   const elegirDedo = (i) => { setDedo(i); setModo('una'); setVista('mano'); };
 
+  // Nombre: guardarFavorito
+  // Descripción: Guarda el diseño como favorito.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: No perderlo.
   const guardarFavorito = () => {
     try {
       if (favorito) localStorage.removeItem('naile-diseno-favorito');
@@ -94,7 +139,17 @@ export default function Disena() {
     } catch { /* sin almacenamiento */ }
     setFavorito(!favorito);
   };
+  // Nombre: reservar
+  // Descripción: Reserva el diseño.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ir a reservar.
   const reservar = () => { actualizar({ diseno: { ...diseno, id: null } }); navegar(servicio ? `/reservar?servicio=${servicio.id}` : '/reservar'); };
+  // Nombre: pedirPresson
+  // Descripción: Pide el diseño en press-on.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Comprarlo para casa.
   const pedirPresson = () => {
     if (!presson) return;
     carrito.agregar(
@@ -116,8 +171,18 @@ export default function Disena() {
   const vistas = [{ id: 'mano', titulo: 'Tu diseño en la mano' }, { id: 'cerca', titulo: 'Tu diseño de cerca' },
     ...reales.map((f) => ({ id: `foto-${f.id}`, titulo: f.titulo, foto: f }))];
   const vistaFoto = vistas.find((v) => v.id === vista)?.foto;
+  // Nombre: moverVista
+  // Descripción: Cambia la vista (mano, foto...).
+  // Entrada: El paso.
+  // Salida: Nada.
+  // Objetivo: Ver el diseño de varias formas.
   const moverVista = (paso) => { const i = vistas.findIndex((v) => v.id === vista); setVista(vistas[(i + paso + vistas.length) % vistas.length].id); };
 
+  // Nombre: Opcion
+  // Descripción: Muestra una opción con su precio.
+  // Entrada: Campo, valor y precio.
+  // Salida: El botón.
+  // Objetivo: Elegir opciones.
   const Opcion = ({ campo, valor, precio, una = false }) => {
     const elegido = una ? (actual[campo] || diseno[campo]) === valor : diseno[campo] === valor;
     return (

@@ -26,6 +26,11 @@ const PREGUNTAS = [
 const TEMAS = ['Reservas', 'Un pedido', 'Precios', 'Otra cosa'];
 
 // ¿Está abierto ahora? Lee el horario del salón (por ejemplo "9:00 a. m. – 7:00 p. m.")
+// Nombre: abiertoAhora
+// Descripción: Revisa si el salón está abierto ahora.
+// Entrada: Nada.
+// Salida: Sí o no.
+// Objetivo: Avisar en Ayuda.
 function abiertoAhora() {
   const ahora = new Date();
   const dia = ahora.getDay(); // 0 domingo
@@ -36,10 +41,20 @@ function abiertoAhora() {
   return min >= horas[0] && min < horas[1];
 }
 
+// Nombre: Contacto
+// Descripción: Muestra la página de ayuda y contacto.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Resolver dudas.
 export default function Contacto() {
   useTitulo('Ayuda y contacto');
   const [msj, setMsj] = useState({ nombre: '', tema: TEMAS[0], mensaje: '' });
   const abierto = abiertoAhora();
+  // Nombre: enviar
+  // Descripción: Abre WhatsApp con el mensaje.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Escribir al salón.
   const enviar = (e) => {
     e.preventDefault();
     window.open(enlaceWhatsApp(`Hola, soy ${msj.nombre}. Les escribo por: ${msj.tema}. ${msj.mensaje}`), '_blank', 'noopener');

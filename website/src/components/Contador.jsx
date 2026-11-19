@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
 // Número que cuenta desde 0 hasta su valor cuando aparece en pantalla
+// Nombre: Contador
+// Descripción: Muestra un número que sube contando.
+// Entrada: El valor y el formato.
+// Salida: El número animado.
+// Objetivo: Que los datos llamen la atención.
 export default function Contador({ valor, formato = (n) => n, duracion = 1200 }) {
   const [n, setN] = useState(0);
   const ref = useRef(null);
@@ -8,6 +13,11 @@ export default function Contador({ valor, formato = (n) => n, duracion = 1200 })
     if (!valor) return undefined;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setN(valor); return undefined; }
     let raf; let inicio;
+    // Nombre: animar
+    // Descripción: Avanza la animación del número.
+    // Entrada: El tiempo.
+    // Salida: Nada.
+    // Objetivo: Contar poco a poco.
     const animar = (t) => {
       inicio ??= t;
       const p = Math.min((t - inicio) / duracion, 1);

@@ -10,6 +10,11 @@ import { SALON, urlFoto } from '../config.js';
 // La foto que el salón sube en el panel tiene prioridad sobre la de config.js
 let fotoSubida = undefined;
 const oyentes = new Set();
+// Nombre: usarFotoAsistente
+// Descripción: Da la foto de la asistente.
+// Entrada: Nada.
+// Salida: La foto o nada.
+// Objetivo: Mostrar su cara.
 export function usarFotoAsistente() {
   const [foto, setFoto] = useState(fotoSubida);
   useEffect(() => {
@@ -19,14 +24,39 @@ export function usarFotoAsistente() {
   }, []);
   return foto;
 }
+// Nombre: avisarFotoAsistente
+// Descripción: Avisa que cambió la foto de la asistente.
+// Entrada: La foto.
+// Salida: Nada.
+// Objetivo: Actualizarla en todo el sitio.
 export const avisarFotoAsistente = (foto) => { fotoSubida = foto ? urlFoto(foto) : null; oyentes.forEach((f) => f(fotoSubida)); };
 
 const CLAVE = 'ahnails-chat';
+// Nombre: leer
+// Descripción: Lee la conversación guardada.
+// Entrada: Nada.
+// Salida: Los mensajes o nada.
+// Objetivo: No perder el chat al cambiar de página.
 const leer = () => { try { return JSON.parse(sessionStorage.getItem(CLAVE)) || null; } catch { return null; } };
+// Nombre: guardar
+// Descripción: Guarda la conversación.
+// Entrada: Los mensajes.
+// Salida: Nada.
+// Objetivo: Recordar el chat.
 const guardar = (m) => { try { sessionStorage.setItem(CLAVE, JSON.stringify(m.slice(-40))); } catch { /* sin almacenamiento */ } };
+// Nombre: hora
+// Descripción: Da la hora actual.
+// Entrada: Nada.
+// Salida: La hora en texto.
+// Objetivo: Poner hora a los mensajes.
 const hora = () => new Date().toLocaleTimeString('es-CR', { hour: 'numeric', minute: '2-digit' });
 
 // Foto de la recepcionista (config.js → SALON.asistente.foto). Si no carga, se usa el dibujo.
+// Nombre: AvatarSofi
+// Descripción: Muestra la cara de la asistente.
+// Entrada: El tamaño.
+// Salida: La imagen.
+// Objetivo: Darle cara al chat.
 export function AvatarSofi({ tam = 56 }) {
   const [fallo, setFallo] = useState(false);
   const subida = usarFotoAsistente();
@@ -39,6 +69,11 @@ export function AvatarSofi({ tam = 56 }) {
 }
 
 // Dibujo de respaldo (por si la foto no carga)
+// Nombre: DibujoSofi
+// Descripción: Dibuja a la asistente.
+// Entrada: El tamaño.
+// Salida: El dibujo.
+// Objetivo: Usarlo si no hay foto.
 function DibujoSofi({ tam }) {
   return (
     <svg width={tam} height={tam} viewBox="0 0 120 120" aria-hidden="true" className="sofi">
@@ -75,6 +110,11 @@ function DibujoSofi({ tam }) {
   );
 }
 
+// Nombre: Burbuja
+// Descripción: Muestra un mensaje del chat.
+// Entrada: El mensaje y qué hacer al elegir.
+// Salida: La burbuja.
+// Objetivo: Leer la conversación.
 function Burbuja({ m, onOpcion }) {
   return (
     <li className={`chat__msj chat__msj--${m.de}`}>
@@ -99,6 +139,11 @@ function Burbuja({ m, onOpcion }) {
   );
 }
 
+// Nombre: ChatAsistente
+// Descripción: Muestra el chat de la asistente virtual.
+// Entrada: Nada.
+// Salida: El chat.
+// Objetivo: Responder dudas.
 export default function ChatAsistente() {
   const { pathname } = useLocation();
   const [abierto, setAbierto] = useState(false);
@@ -129,6 +174,11 @@ export default function ChatAsistente() {
   useEffect(() => { guardar(mensajes); lista.current?.scrollTo({ top: lista.current.scrollHeight, behavior: 'smooth' }); }, [mensajes, escribiendo]);
   useEffect(() => { if (abierto) { setNoLeidos(0); setSaludo(false); setTimeout(() => entrada.current?.focus(), 250); } }, [abierto]);
 
+  // Nombre: enviar
+  // Descripción: Envía una pregunta a la asistente.
+  // Entrada: La pregunta.
+  // Salida: Nada.
+  // Objetivo: Recibir respuesta.
   async function enviar(pregunta) {
     const q = String(pregunta || '').trim();
     if (!q || escribiendo) return;
@@ -145,6 +195,11 @@ export default function ChatAsistente() {
     }, espera);
   }
 
+  // Nombre: reiniciar
+  // Descripción: Empieza el chat de nuevo.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Limpiar la conversación.
   const reiniciar = () => { setMensajes([{ de: 'sofi', hora: hora(), texto: '¡Empecemos de nuevo! ¿En qué te ayudo?', opciones: PREGUNTAS_RAPIDAS }]); };
   if (pathname.startsWith('/admin') || pathname.startsWith('/equipo')) return null;
 

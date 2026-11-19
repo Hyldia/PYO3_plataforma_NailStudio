@@ -11,6 +11,11 @@ import { claveUnsplash, buscarUnsplash, urlFotoUnsplash, autorUnsplash } from '.
 const CLAVE = claveUnsplash();
 const BUSQUEDAS = ['woman portrait smiling', 'latina woman portrait', 'young woman headshot', 'woman face natural light', 'happy woman portrait'];
 
+// Nombre: main
+// Descripción: Descarga fotos de Unsplash para las clientas de ejemplo.
+// Entrada: Nada (usa tu clave de Unsplash).
+// Salida: Nada.
+// Objetivo: Que las clientas tengan foto.
 async function main() {
   const db = getDb();
   const clientas = db.prepare(`SELECT DISTINCT c.cliente_telefono AS telefono FROM citas c

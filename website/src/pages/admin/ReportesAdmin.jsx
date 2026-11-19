@@ -12,8 +12,18 @@ const ESTADOS = { pendiente: 'Por confirmar', confirmada: 'Confirmadas', complet
 const COLOR_ESTADO = { completada: 'var(--estado-bien)', confirmada: 'var(--serie-2)', pendiente: 'var(--estado-aviso)', cancelada: 'var(--estado-mal)', no_asistio: 'var(--estado-serio)' };
 const SERIES_VENTAS = [{ clave: 'servicios', nombre: 'Servicios del salón', color: colorSerie(1) }, { clave: 'tienda', nombre: 'Tienda', color: colorSerie(2) }];
 const PAGOS = ['SINPE Móvil', 'Tarjeta', 'Pago en el salón'];
+// Nombre: colorPago
+// Descripción: Da el color de cada forma de pago.
+// Entrada: La forma de pago.
+// Salida: El color.
+// Objetivo: Gráficos de colores.
 const colorPago = (m) => colorSerie(PAGOS.includes(m) ? PAGOS.indexOf(m) + 2 : 6);
 
+// Nombre: periodo
+// Descripción: Calcula fechas rápidas del reporte.
+// Entrada: El tipo.
+// Salida: Desde y hasta.
+// Objetivo: Filtrar rápido.
 function periodo(tipo) {
   const hoy = new Date();
   const hasta = isoLocal(hoy);
@@ -27,6 +37,11 @@ function periodo(tipo) {
 }
 const RAPIDOS = [['7', 'Últimos 7 días'], ['30', 'Últimos 30 días'], ['mes', 'Este mes'], ['pasado', 'Mes pasado'], ['anio', 'Este año']];
 
+// Nombre: ReportesAdmin
+// Descripción: Muestra los reportes con gráficos.
+// Entrada: Nada.
+// Salida: La sección.
+// Objetivo: Ver cómo va el salón.
 export default function ReportesAdmin() {
   const [rapido, setRapido] = useState('30');
   const [rango, setRango] = useState(periodo('30'));
@@ -34,7 +49,17 @@ export default function ReportesAdmin() {
   const [error, setError] = useState('');
 
   useEffect(() => { api.admin.reportes(rango).then((x) => { setR(x); setError(''); }).catch((e) => setError(e.message)); }, [rango]);
+  // Nombre: elegir
+  // Descripción: Elige un periodo rápido.
+  // Entrada: El tipo.
+  // Salida: Nada.
+  // Objetivo: Cambiar el reporte.
   const elegir = (t) => { setRapido(t); setRango(periodo(t)); };
+  // Nombre: cambiarFecha
+  // Descripción: Cambia una fecha del reporte.
+  // Entrada: El campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Elegir fechas.
   const cambiarFecha = (k) => (e) => { setRapido(''); setRango({ ...rango, [k]: e.target.value }); };
 
   // Si son más de 2 meses, la gráfica de ventas se agrupa por mes
@@ -53,6 +78,11 @@ export default function ReportesAdmin() {
   }, [r]);
 
   const t = r?.totales;
+  // Nombre: archivo
+  // Descripción: Arma el nombre del archivo.
+  // Entrada: El nombre.
+  // Salida: El texto.
+  // Objetivo: Descargas ordenadas.
   const archivo = (nombre) => `${nombre}-${rango.desde}-al-${rango.hasta}`;
 
   return (

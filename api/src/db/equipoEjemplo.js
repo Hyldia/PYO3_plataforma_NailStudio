@@ -3,8 +3,18 @@
 // Se hace una sola vez. Se borra con `npm run limpiar`.
 import { EquipoModel, quincenaAnterior, quincenaDe, hoyIso } from '../models/EquipoModel.js';
 
+// Nombre: sumar
+// Descripción: Suma días a una fecha.
+// Entrada: La fecha y cuántos días.
+// Salida: La fecha nueva.
+// Objetivo: Calcular días libres de ejemplo.
 const sumar = (f, n) => { const d = new Date(`${f}T12:00:00`); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
+// Nombre: cargarEquipoEjemplo
+// Descripción: Llena datos de ejemplo del equipo (libres y pagos).
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Que el portal tenga datos para probar.
 export function cargarEquipoEjemplo(db) {
   const hecho = db.prepare("SELECT valor FROM ajustes WHERE clave = 'equipo_ejemplo'").get();
   if (hecho || !db.prepare("SELECT valor FROM ajustes WHERE clave = 'datos_ejemplo'").get()) return false;
@@ -37,6 +47,11 @@ export function cargarEquipoEjemplo(db) {
 }
 
 // Solicitudes de días libres de muestra (dos por responder y una ya aprobada), una sola vez
+// Nombre: cargarSolicitudesEjemplo
+// Descripción: Crea solicitudes de días libres de ejemplo.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Que la campanita tenga avisos al probar.
 export function cargarSolicitudesEjemplo(db) {
   if (db.prepare("SELECT valor FROM ajustes WHERE clave = 'solicitudes_ejemplo'").get()) return false;
   if (!db.prepare("SELECT valor FROM ajustes WHERE clave = 'equipo_ejemplo'").get() || !db.prepare('SELECT COUNT(*) AS n FROM citas').get().n) return false;

@@ -23,6 +23,11 @@ const PRECIO = {
 };
 
 export class DisenoBuilder {
+  // Nombre: constructor
+  // Descripción: Empieza un diseño vacío.
+  // Entrada: Nada.
+  // Salida: El constructor.
+  // Objetivo: Armar un diseño paso a paso (Builder).
   constructor() {
     this.d = { forma: 'Almendra', largo: 'Medio', color: 'Nude', acabado: 'Brillante', decoracion: 'Ninguna', acento: false, notas: null, fotoRefId: null };
   }
@@ -31,16 +36,61 @@ export class DisenoBuilder {
     this.d[campo] = valor;
     return this;
   }
+  // Nombre: notas
+  // Descripción: Agrega notas al diseño.
+  // Entrada: El texto.
+  // Salida: El constructor.
+  // Objetivo: Guardar indicaciones.
   notas(v) { this.d.notas = v ? String(v).slice(0, 500) : null; return this; }
+  // Nombre: referencia
+  // Descripción: Agrega una foto de referencia.
+  // Entrada: El número de la foto.
+  // Salida: El constructor.
+  // Objetivo: Copiar un diseño de la galería.
   referencia(id) { this.d.fotoRefId = id ? Number(id) : null; return this; }
+  // Nombre: forma
+  // Descripción: Elige la forma de las uñas.
+  // Entrada: La forma.
+  // Salida: El constructor.
+  // Objetivo: Armar el diseño.
   forma(v) { return this.#validar('forma', v, OPCIONES.formas); }
+  // Nombre: largo
+  // Descripción: Elige el largo de las uñas.
+  // Entrada: El largo.
+  // Salida: El constructor.
+  // Objetivo: Armar el diseño.
   largo(v) { return this.#validar('largo', v, OPCIONES.largos); }
+  // Nombre: color
+  // Descripción: Elige el color.
+  // Entrada: El color.
+  // Salida: El constructor.
+  // Objetivo: Armar el diseño.
   color(v) { return this.#validar('color', v, [...OPCIONES.colores, ...ESMALTES.map((e) => e.nombre)]); }
+  // Nombre: acabado
+  // Descripción: Elige el acabado.
+  // Entrada: El acabado.
+  // Salida: El constructor.
+  // Objetivo: Armar el diseño.
   acabado(v) { return this.#validar('acabado', v, OPCIONES.acabados); }
+  // Nombre: decoracion
+  // Descripción: Elige la decoración.
+  // Entrada: La decoración.
+  // Salida: El constructor.
+  // Objetivo: Armar el diseño.
   decoracion(v) { return this.#validar('decoracion', v, OPCIONES.decoraciones); }
+  // Nombre: acento
+  // Descripción: Activa o quita la uña de acento.
+  // Entrada: Sí o no.
+  // Salida: El constructor.
+  // Objetivo: Armar el diseño.
   acento(v) { this.d.acento = Boolean(v); return this; }
 
   // Diseño uña por uña: cinco uñas (pulgar a meñique) con su esmalte, acabado y decoración
+  // Nombre: unas
+  // Descripción: Guarda el diseño de cada uña.
+  // Entrada: La lista de uñas.
+  // Salida: El constructor.
+  // Objetivo: Diseñar uña por uña.
   unas(lista) {
     if (!lista) return this;
     if (!Array.isArray(lista) || lista.length !== 5) throw new Error('El diseño debe traer las cinco uñas.');
@@ -56,6 +106,11 @@ export class DisenoBuilder {
     return this;
   }
 
+  // Nombre: build
+  // Descripción: Termina y revisa el diseño.
+  // Entrada: Nada.
+  // Salida: El diseño listo.
+  // Objetivo: Entregar un diseño completo.
   build() {
     if (this.d.unas) return { ...this.d, precio: calcularDiseno(this.d).total };
     const recargo = PRECIO.largo[this.d.largo] + PRECIO.acabado[this.d.acabado]

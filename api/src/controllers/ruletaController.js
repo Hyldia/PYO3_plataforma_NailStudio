@@ -27,8 +27,18 @@ const ESPERA = 12 * 3600000;
 const giros = new Map();
 
 export const ruletaController = {
+  // Nombre: premios
+  // Descripción: Entrega los premios de la ruleta.
+  // Entrada: Nada.
+  // Salida: Los nombres de los premios.
+  // Objetivo: Dibujar la ruleta.
   premios: (req, res) => res.json(PREMIOS.map(({ etiqueta }) => etiqueta)),
   // Un giro por persona cada 12 horas (se recuerda por dirección IP mientras el servidor esté encendido)
+  // Nombre: girar
+  // Descripción: Gira la ruleta y elige el premio.
+  // Entrada: Nada.
+  // Salida: El premio y su código.
+  // Objetivo: Dar un regalo justo desde el servidor.
   girar(req, res) {
     const ip = req.ip || 'x';
     const ultimo = giros.get(ip);

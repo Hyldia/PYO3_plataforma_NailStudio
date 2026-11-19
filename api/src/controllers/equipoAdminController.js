@@ -8,8 +8,18 @@ import { ReporteModel } from '../models/ReporteModel.js';
 import { SALON } from '../patrones/plantillaMensajes.js';
 
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+// Nombre: periodoDe
+// Descripción: Lee el rango de fechas pedido.
+// Entrada: Los datos de la búsqueda.
+// Salida: Fecha de inicio y de fin.
+// Objetivo: Calcular pagos por periodo.
 const periodoDe = (q) => (FECHA.test(q.desde || '') && FECHA.test(q.hasta || '') && q.desde <= q.hasta
   ? { ...quincenaDe(q.desde), desde: q.desde, hasta: q.hasta } : quincenaDe(FECHA.test(q.fecha || '') ? q.fecha : undefined));
+// Nombre: existe
+// Descripción: Busca la especialista y avisa si no existe.
+// Entrada: La petición y la respuesta.
+// Salida: La especialista o nada.
+// Objetivo: Evitar errores con equipo inexistente.
 const existe = (req, res) => {
   const e = EspecialistaModel.buscarPorId(req.params.id);
   if (!e) res.status(404).json({ error: 'No existe esa especialista.' });
@@ -17,6 +27,11 @@ const existe = (req, res) => {
 };
 
 export const equipoAdminController = {
+  // Nombre: guardarConfig
+  // Descripción: Guarda cómo se le paga a una especialista.
+  // Entrada: Su forma de pago y porcentajes.
+  // Salida: La especialista actualizada.
+  // Objetivo: Calcular bien su pago.
   guardarConfig(req, res) {
     if (!existe(req, res)) return;
     const error = EquipoModel.validarConfig(req.body);
@@ -24,11 +39,21 @@ export const equipoAdminController = {
     EquipoModel.guardarConfig(Number(req.params.id), req.body);
     res.json(EspecialistaModel.buscarPorId(req.params.id));
   },
+  // Nombre: definirAcceso
+  // Descripción: Crea el usuario y contraseña de una especialista.
+  // Entrada: Usuario y contraseña.
+  // Salida: Un "ok".
+  // Objetivo: Que entre a su propio portal.
   definirAcceso(req, res) {
     if (!existe(req, res)) return;
     EquipoModel.definirAcceso(Number(req.params.id), req.body);
     res.json({ ok: true, usuario: String(req.body.usuario).trim().toLowerCase() });
   },
+  // Nombre: quitarAcceso
+  // Descripción: Quita el acceso de una especialista.
+  // Entrada: La especialista.
+  // Salida: Nada.
+  // Objetivo: Bloquear su entrada.
   quitarAcceso(req, res) {
     if (!existe(req, res)) return;
     EquipoModel.quitarAcceso(Number(req.params.id));
@@ -36,21 +61,41 @@ export const equipoAdminController = {
   },
 
   // ----- Días libres / ausencias -----
+  // Nombre: ausencias
+  // Descripción: Lista los días libres de una especialista.
+  // Entrada: La especialista.
+  // Salida: Sus ausencias.
+  // Objetivo: Ver vacaciones y libres.
   ausencias(req, res) {
     if (!existe(req, res)) return;
     res.json({ ausencias: EquipoModel.ausencias(Number(req.params.id), req.query.desde || '2000-01-01'), tipos: TIPOS_AUSENCIA });
   },
+  // Nombre: agregarAusencias
+  // Descripción: Agrega días libres a una especialista.
+  // Entrada: Las fechas y el motivo.
+  // Salida: Las ausencias guardadas.
+  // Objetivo: Que no le lleguen citas esos días.
   agregarAusencias(req, res) {
     if (!existe(req, res)) return;
     const citasAfectadas = EquipoModel.agregarAusencias(Number(req.params.id), req.body);
     res.status(201).json({ citasAfectadas });
   },
+  // Nombre: borrarAusencia
+  // Descripción: Borra un día libre.
+  // Entrada: El número de la ausencia.
+  // Salida: Nada.
+  // Objetivo: Corregir libres.
   borrarAusencia(req, res) {
     if (!EquipoModel.borrarAusencia(Number(req.params.id), Number(req.params.ausencia))) return res.status(404).json({ error: 'No encontramos ese día.' });
     res.status(204).end();
   },
 
   // ----- Avisos del panel (la campanita): lo que está esperando a la administradora -----
+  // Nombre: avisos
+  // Descripción: Junta los avisos para la campanita del panel.
+  // Entrada: Nada.
+  // Salida: La lista de avisos.
+  // Objetivo: Que la dueña vea lo pendiente.
   avisos(req, res) {
     const db = getDb();
     const hoy = hoyIso();
@@ -63,25 +108,55 @@ export const equipoAdminController = {
   },
 
   // ----- Días libres que piden las especialistas -----
+  // Nombre: resolverSolicitud
+  // Descripción: Aprueba o rechaza un día libre pedido.
+  // Entrada: La solicitud y la respuesta.
+  // Salida: La solicitud actualizada.
+  // Objetivo: Responder a las especialistas.
   resolverSolicitud: (req, res) => res.json(EquipoModel.resolverSolicitud(Number(req.params.id), { aprobar: Boolean(req.body.aprobar), respuesta: req.body.respuesta })),
 
   // ----- Pagos de la quincena -----
+  // Nombre: nomina
+  // Descripción: Calcula lo que se le paga a cada especialista.
+  // Entrada: El periodo.
+  // Salida: La lista de pagos.
+  // Objetivo: Hacer la planilla.
   nomina(req, res) {
     const periodo = periodoDe(req.query);
     res.json({ periodo, actual: quincenaDe(), anterior: quincenaAnterior(), equipo: EquipoModel.nomina(periodo) });
   },
+  // Nombre: marcarPagado
+  // Descripción: Marca un pago como hecho.
+  // Entrada: La especialista y el periodo.
+  // Salida: El pago guardado.
+  // Objetivo: Llevar control de lo pagado.
   marcarPagado(req, res) {
     const periodo = periodoDe(req.body);
     res.json(EquipoModel.registrarPago(Number(req.params.id), periodo));
   },
+  // Nombre: marcarAtendidas
+  // Descripción: Marca como atendidas las citas pasadas.
+  // Entrada: La especialista y el periodo.
+  // Salida: Cuántas se marcaron.
+  // Objetivo: Que cuenten para su pago.
   marcarAtendidas(req, res) {
     const periodo = periodoDe(req.body);
     res.json({ marcadas: EquipoModel.marcarPasadasAtendidas(periodo, req.body.especialistaId ? Number(req.body.especialistaId) : null) });
   },
+  // Nombre: quitarPagado
+  // Descripción: Quita la marca de pagado.
+  // Entrada: El pago.
+  // Salida: Nada.
+  // Objetivo: Corregir un pago marcado por error.
   quitarPagado(req, res) {
     EquipoModel.quitarPago(Number(req.params.id), periodoDe(req.query));
     res.status(204).end();
   },
+  // Nombre: nominaExcel
+  // Descripción: Descarga la planilla en Excel.
+  // Entrada: El periodo.
+  // Salida: Un archivo de Excel.
+  // Objetivo: Guardar o imprimir la planilla.
   async nominaExcel(req, res) {
     const periodo = periodoDe(req.query);
     const equipo = EquipoModel.nomina(periodo);
@@ -107,5 +182,10 @@ export const equipoAdminController = {
   },
 
   // ----- Gráficas -----
+  // Nombre: reportes
+  // Descripción: Arma los reportes del negocio.
+  // Entrada: El periodo.
+  // Salida: Ventas, citas y gráficos.
+  // Objetivo: Ver cómo va el salón.
   reportes: (req, res) => res.json(ReporteModel.generar(ReporteModel.periodo(req.query)))
 };

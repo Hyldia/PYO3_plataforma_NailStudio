@@ -8,19 +8,44 @@ import { BotonFoto, ZonaFotos, formData } from './piezasPanel.jsx';
 
 const ETIQUETAS = ['', 'Más pedido', 'Nuevo', 'Oferta', 'Especial'];
 const VACIO = { nombre: '', descripcion: '', categoria: 'Manos', duracion_min: 60, precio: '', precio_oferta: '', incluye: '', etiqueta: '', es_combo: 0, destacado: 0, activo: 1 };
+// Nombre: horas
+// Descripción: Escribe minutos como horas.
+// Entrada: Los minutos.
+// Salida: El texto (1 h 30 min).
+// Objetivo: Leer fácil.
 const horas = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ''}` : `${min} min`);
 
+// Nombre: Editor
+// Descripción: Muestra el formulario de un servicio.
+// Entrada: Servicio y categorías.
+// Salida: El formulario.
+// Objetivo: Editar servicios.
 function Editor({ servicio, categorias, onCerrar, onGuardado }) {
   const nuevo = !servicio.id;
   const [d, setD] = useState({ ...VACIO, ...servicio, descripcion: servicio.descripcion ?? '', precio_oferta: servicio.precio_oferta ?? '', etiqueta: servicio.etiqueta ?? '', incluye: (servicio.incluye || '').split('|').filter(Boolean).join('\n') });
   const [archivo, setArchivo] = useState([]);
   const [estado, setEstado] = useState({ guardando: false, error: '' });
+  // Nombre: set
+  // Descripción: Guarda lo que se escribe en un campo.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Llenar el formulario.
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  // Nombre: marcar
+  // Descripción: Marca o desmarca una casilla.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para la casilla.
+  // Objetivo: Llenar el formulario.
   const marcar = (k) => (e) => setD({ ...d, [k]: e.target.checked ? 1 : 0 });
   const oferta = Number(d.precio_oferta) > 0 && Number(d.precio_oferta) < Number(d.precio);
   const pct = oferta ? Math.round((1 - d.precio_oferta / d.precio) * 100) : 0;
   const incluye = d.incluye.split('\n').map((x) => x.trim()).filter(Boolean);
 
+  // Nombre: guardar
+  // Descripción: Guarda el servicio.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Crear o editar.
   async function guardar(e) {
     e.preventDefault();
     setEstado({ guardando: true, error: '' });
@@ -82,6 +107,11 @@ function Editor({ servicio, categorias, onCerrar, onGuardado }) {
   );
 }
 
+// Nombre: ServiciosAdmin
+// Descripción: Muestra los servicios en el panel.
+// Entrada: Nada.
+// Salida: La sección.
+// Objetivo: Administrar la carta.
 export default function ServiciosAdmin() {
   const [datos, setDatos] = useState({ servicios: [], categorias: [] });
   const [buscar, setBuscar] = useState('');
@@ -89,6 +119,11 @@ export default function ServiciosAdmin() {
   const [ver, setVer] = useState('');
   const [editando, setEditando] = useState(null);
   const [aviso, setAviso] = useState({ texto: '', error: false });
+  // Nombre: cargar
+  // Descripción: Carga los servicios.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar la lista.
   const cargar = () => api.admin.servicios().then(setDatos).catch((e) => setAviso({ texto: e.message, error: true }));
   useEffect(() => { cargar(); }, []);
 
@@ -102,12 +137,27 @@ export default function ServiciosAdmin() {
     top: [...datos.servicios].sort((a, b) => b.citas - a.citas)[0]
   }), [datos]);
 
+  // Nombre: foto
+  // Descripción: Cambia la foto de un servicio.
+  // Entrada: El servicio y la foto.
+  // Salida: Nada.
+  // Objetivo: Actualizarla.
   const foto = async (s, archivo) => {
     try { await api.admin.imagenServicio(s.id, formData(archivo)); setAviso({ texto: `Foto de «${s.nombre}» actualizada.` }); cargar(); } catch (e) { setAviso({ texto: e.message, error: true }); }
   };
+  // Nombre: alternar
+  // Descripción: Muestra u oculta un servicio.
+  // Entrada: El servicio.
+  // Salida: Nada.
+  // Objetivo: Pausar servicios.
   const alternar = async (s) => {
     try { await api.admin.editarServicio(s.id, { ...s, activo: s.activo ? 0 : 1 }); setAviso({ texto: s.activo ? `«${s.nombre}» quedó oculto: ya no aparece para reservar.` : `«${s.nombre}» vuelve a aparecer para reservar.` }); cargar(); } catch (e) { setAviso({ texto: e.message, error: true }); }
   };
+  // Nombre: borrar
+  // Descripción: Borra un servicio.
+  // Entrada: El servicio.
+  // Salida: Nada.
+  // Objetivo: Quitarlo.
   const borrar = async (s) => {
     if (!window.confirm(`¿Eliminar el servicio «${s.nombre}»?`)) return;
     try {

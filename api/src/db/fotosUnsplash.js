@@ -25,12 +25,27 @@ const BUSQUEDAS = ['nail art', 'manicure', 'nails', 'gel nails', 'french manicur
   'blue nails', 'green nails', 'purple nails', 'ombre nails', 'marble nails', 'flower nail art', 'heart nail art',
   'christmas nails', 'summer nails', 'autumn nails', 'press on nails', 'wedding nails', 'manicured hands'];
 const PAGINAS = 6;
+// Nombre: buscar
+// Descripción: Busca fotos en Unsplash.
+// Entrada: Lo que se busca y la página.
+// Salida: La lista de fotos.
+// Objetivo: Conseguir fotos de uñas.
 const buscar = (query, page) => buscarUnsplash(CLAVE, query, page);
 
 // Descarta fotos que no muestran uñas (frascos solos, sillas, paisajes...)
+// Nombre: esDeUnas
+// Descripción: Revisa si una foto es de uñas.
+// Entrada: El texto de la foto.
+// Salida: Sí o no.
+// Objetivo: No guardar fotos que no son de uñas.
 const esDeUnas = (t) => /\b(nail|nails|manicure|manicured|pedicure|toenail|fingernail|polish)\b/.test(t) && /\b(hand|hands|finger|fingers|nail|nails|feet|toe|toes|woman|person)\b/.test(t)
   && !/\b(bottles?|chair|salon interior|hammer|screw|wood)\b/.test(t);
 
+// Nombre: main
+// Descripción: Busca y guarda fotos de uñas para la galería.
+// Entrada: Nada (usa tu clave de Unsplash).
+// Salida: Nada.
+// Objetivo: Llenar la galería.
 async function main() {
   const db = getDb();
   const existe = db.prepare('SELECT 1 FROM fotos WHERE archivo LIKE ?');

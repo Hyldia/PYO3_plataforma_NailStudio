@@ -4,6 +4,11 @@ import { api } from '../lib/api.js';
 
 // Citas guardadas en el carrito sin foto: se usa la foto del servicio (la lista se pide una sola vez)
 let serviciosPromesa = null;
+// Nombre: FotoServicio
+// Descripción: Muestra la foto de un servicio.
+// Entrada: El producto y el estilo.
+// Salida: La foto.
+// Objetivo: Ver el servicio.
 function FotoServicio({ producto, className }) {
   const [imagen, setImagen] = useState(null);
   useEffect(() => {
@@ -19,6 +24,11 @@ const M = '#9AA0A6';   // metal
 const MO = '#6E747A';  // metal oscuro
 const T = '#22161C';   // tinta
 
+// Nombre: Dibujo
+// Descripción: Dibuja un producto si no tiene foto.
+// Entrada: El tipo y el color.
+// Salida: El dibujo.
+// Objetivo: Que nunca quede vacío.
 function Dibujo({ tipo, c }) {
   switch (tipo) {
     case 'frasco':
@@ -152,6 +162,11 @@ function Dibujo({ tipo, c }) {
   }
 }
 
+// Nombre: ProductoImagen
+// Descripción: Muestra la imagen de un producto.
+// Entrada: El producto.
+// Salida: La foto o el dibujo.
+// Objetivo: Ver el producto.
 export default function ProductoImagen({ producto, className = '' }) {
   // Si la foto no carga (por ejemplo, la borraron de Unsplash), se muestra la ilustración del producto
   if (producto.imagen) return <Foto archivo={producto.imagen} alt={producto.nombre} className={className} respaldo={<ProductoImagen producto={{ ...producto, imagen: null }} className={className} />} />;

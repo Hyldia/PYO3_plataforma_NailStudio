@@ -3,6 +3,11 @@ import { useEffect, useState } from 'react';
 import { api } from './api.js';
 
 const cache = {};
+// Nombre: useResumenes
+// Descripción: Trae las estrellas de muchos elementos.
+// Entrada: El tipo.
+// Salida: Los resúmenes.
+// Objetivo: Mostrar estrellas en tarjetas.
 export function useResumenes(tipo) {
   const [mapa, setMapa] = useState(() => (cache[tipo] instanceof Map ? cache[tipo] : new Map()));
   useEffect(() => {
@@ -14,4 +19,9 @@ export function useResumenes(tipo) {
   }, [tipo]);
   return mapa;
 }
+// Nombre: olvidarResumenes
+// Descripción: Olvida los resúmenes guardados.
+// Entrada: El tipo.
+// Salida: Nada.
+// Objetivo: Volver a pedirlos al opinar.
 export const olvidarResumenes = (tipo) => { delete cache[tipo]; };

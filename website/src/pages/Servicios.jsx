@@ -24,10 +24,30 @@ const ORDENES = { relevancia: 'Recomendados', calificacion: 'Mejor calificados',
 const PRECIOS = [['', 'Cualquier precio', () => true], ['15000', 'Hasta ₡15 000', (p) => p <= 15000], ['25000', '₡15 000 a ₡25 000', (p) => p > 15000 && p <= 25000], ['mas', 'Más de ₡25 000', (p) => p > 25000]];
 const DURACIONES = [['', 'Cualquier duración', () => true], ['1h', 'Hasta 1 hora', (m) => m <= 60], ['2h', '1 a 2 horas', (m) => m > 60 && m <= 120], ['mas', 'Más de 2 horas', (m) => m > 120]];
 
+// Nombre: duracion
+// Descripción: Escribe minutos como horas.
+// Entrada: Los minutos.
+// Salida: El texto.
+// Objetivo: Leer fácil.
 const duracion = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ''}` : `${min} min`);
+// Nombre: ahorro
+// Descripción: Calcula cuánto se ahorra.
+// Entrada: El servicio.
+// Salida: El monto.
+// Objetivo: Mostrar ahorro.
 const ahorro = (s) => (s.precio_oferta != null ? s.precio - s.precio_oferta : 0);
+// Nombre: porcentaje
+// Descripción: Calcula el porcentaje de descuento.
+// Entrada: El servicio.
+// Salida: El porcentaje.
+// Objetivo: Mostrar ahorro.
 const porcentaje = (s) => Math.round((ahorro(s) / s.precio) * 100);
 
+// Nombre: Precio
+// Descripción: Muestra el precio con oferta.
+// Entrada: El servicio y el tamaño.
+// Salida: El precio.
+// Objetivo: Ver cuánto cuesta.
 function Precio({ s, grande = false }) {
   return (
     <p className={`precio-servicio ${grande ? 'precio-servicio--grande' : ''}`}>
@@ -42,6 +62,11 @@ function Precio({ s, grande = false }) {
   );
 }
 
+// Nombre: TarjetaServicio
+// Descripción: Muestra la tarjeta de un servicio.
+// Entrada: El servicio y opiniones.
+// Salida: La tarjeta.
+// Objetivo: Ver la carta.
 function TarjetaServicio({ s, opinion, onOpiniones }) {
   const incluye = (s.incluye || '').split('|').filter(Boolean);
   return (
@@ -80,6 +105,11 @@ function TarjetaServicio({ s, opinion, onOpiniones }) {
   );
 }
 
+// Nombre: Servicios
+// Descripción: Muestra la página de servicios.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Ver la carta y precios.
 export default function Servicios() {
   useTitulo('Servicios y precios');
   const [params, setParams] = useSearchParams();
@@ -98,20 +128,65 @@ export default function Servicios() {
     api.servicios().then(setServicios).catch((e) => setError(e.message));
   }, []);
 
+  // Nombre: fijar
+  // Descripción: Cambia un filtro.
+  // Entrada: El filtro y el valor.
+  // Salida: Nada.
+  // Objetivo: Filtrar servicios.
   const fijar = (k, v) => { const p = new URLSearchParams(params); v ? p.set(k, v) : p.delete(k); setParams(p, { replace: true }); };
+  // Nombre: limpiar
+  // Descripción: Quita los filtros.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ver todo.
   const limpiar = () => { setTexto(''); setParams({}, { replace: true }); };
   const hayFiltros = categoria !== 'Todos' || soloOfertas || orden !== 'relevancia' || precio !== PRECIOS[0] || tiempo !== DURACIONES[0] || texto;
 
   const categorias = useMemo(() => ORDEN_CATEGORIAS.filter((c) => servicios.some((s) => s.categoria === c))
     .concat([...new Set(servicios.map((s) => s.categoria))].filter((c) => !ORDEN_CATEGORIAS.includes(c))), [servicios]);
 
+  // Nombre: nota
+  // Descripción: Da las estrellas de un servicio.
+  // Entrada: El servicio.
+  // Salida: El promedio.
+  // Objetivo: Ordenar por calificación.
   const nota = (s) => resumenes.get(s.id)?.promedio || 0;
   const comparar = {
+    // Nombre: relevancia
+    // Descripción: Deja el orden normal.
+    // Entrada: Nada.
+    // Salida: Cero.
+    // Objetivo: Orden recomendado.
     relevancia: () => 0,
+    // Nombre: calificacion
+    // Descripción: Ordena por estrellas.
+    // Entrada: Dos servicios.
+    // Salida: Cuál va primero.
+    // Objetivo: Ver los mejores.
     calificacion: (a, b) => nota(b) - nota(a),
+    // Nombre: descuento
+    // Descripción: Ordena por descuento.
+    // Entrada: Dos servicios.
+    // Salida: Cuál va primero.
+    // Objetivo: Ver las mejores ofertas.
     descuento: (a, b) => porcentaje(b) - porcentaje(a),
+    // Nombre: precio-asc
+    // Descripción: Ordena de menor a mayor precio.
+    // Entrada: Dos servicios.
+    // Salida: Cuál va primero.
+    // Objetivo: Ver los más baratos.
     'precio-asc': (a, b) => (a.precio_oferta ?? a.precio) - (b.precio_oferta ?? b.precio),
+    // Nombre: precio-desc
+    // Descripción: Ordena de mayor a menor precio.
+    // Entrada: Dos servicios.
+    // Salida: Cuál va primero.
+    // Objetivo: Ver los más completos.
     'precio-desc': (a, b) => (b.precio_oferta ?? b.precio) - (a.precio_oferta ?? a.precio),
+    // Nombre: rapidos
+    // Descripción: Ordena por duración.
+    // Entrada: Dos servicios.
+    // Salida: Cuál va primero.
+    // Objetivo: Ver los más rápidos.
     rapidos: (a, b) => a.duracion_min - b.duracion_min
   }[orden];
   const filtrados = servicios.filter((s) => (categoria === 'Todos' || s.categoria === categoria)

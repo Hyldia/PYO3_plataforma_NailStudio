@@ -17,6 +17,11 @@ const CAMPOS = [
 const ORDENES = { recientes: 'Más recientes', populares: 'Más populares', antiguas: 'Más antiguos' };
 const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
 
+// Nombre: Galeria
+// Descripción: Muestra la galería de diseños.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Inspirar a la clienta.
 export default function Galeria() {
   useTitulo('Galería');
   const [params, setParams] = useSearchParams();
@@ -29,10 +34,20 @@ export default function Galeria() {
   const [presson, setPresson] = useState(null);
   const [pagina, setPagina] = useState(1);
 
+  // Nombre: lista
+  // Descripción: Lee una lista de filtros.
+  // Entrada: El nombre del filtro.
+  // Salida: Los valores.
+  // Objetivo: Filtrar diseños.
   const lista = (clave) => (params.get(clave) || '').split(',').filter(Boolean);
   const orden = params.get('orden') || 'recientes';
   const activos = CAMPOS.flatMap((c) => lista(c.clave).map((v) => ({ clave: c.clave, valor: v })));
 
+  // Nombre: fijar
+  // Descripción: Cambia un filtro.
+  // Entrada: El filtro y el valor.
+  // Salida: Nada.
+  // Objetivo: Filtrar diseños.
   const fijar = (clave, valor) => {
     const p = new URLSearchParams(params);
     if (!valor || (Array.isArray(valor) && !valor.length)) p.delete(clave);
@@ -40,6 +55,11 @@ export default function Galeria() {
     setPagina(1);
     setParams(p, { replace: true });
   };
+  // Nombre: alternar
+  // Descripción: Marca o desmarca un filtro.
+  // Entrada: El filtro y el valor.
+  // Salida: Nada.
+  // Objetivo: Filtrar diseños.
   const alternar = (clave, valor) => fijar(clave, lista(clave).includes(valor) ? lista(clave).filter((v) => v !== valor) : [...lista(clave), valor]);
 
   useEffect(() => {
@@ -62,6 +82,11 @@ export default function Galeria() {
   const totalGaleria = useRef(0);
   if (!activos.length && !params.get('q') && !cargando) totalGaleria.current = resultado.total;
 
+  // Nombre: limpiar
+  // Descripción: Quita los filtros.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ver todo.
   const limpiar = () => { setTexto(''); setPagina(1); setParams({}, { replace: true }); };
 
   return (

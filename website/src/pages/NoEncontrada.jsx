@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useTitulo } from '../lib/hooks.js';
 
+// Nombre: NoEncontrada
+// Descripción: Muestra la página de "no encontrada".
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Ayudar a volver.
 export default function NoEncontrada() {
   useTitulo('Página no encontrada');
   return (

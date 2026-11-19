@@ -6,9 +6,24 @@ import CuentaRegresiva from './CuentaRegresiva.jsx';
 import Contador from './Contador.jsx';
 import Decoracion from './Decoracion.jsx';
 
+// Nombre: Rayo
+// Descripción: Dibuja un rayo.
+// Entrada: El tamaño.
+// Salida: El dibujo.
+// Objetivo: Decorar ofertas.
 const Rayo = ({ tam = 22 }) => <svg aria-hidden="true" width={tam} height={tam} viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>;
+// Nombre: Corona
+// Descripción: Dibuja una corona.
+// Entrada: Nada.
+// Salida: El dibujo.
+// Objetivo: Decorar el primer lugar.
 const Corona = () => <svg aria-hidden="true" width="38" height="28" viewBox="0 0 38 28"><path d="M3 24 1 6l10 8 8-13 8 13 10-8-2 18z" fill="#E8B04B" stroke="#B7832A" strokeWidth="1.5" strokeLinejoin="round" /><circle cx="19" cy="17" r="3" fill="#C2185B" /></svg>;
 
+// Nombre: PodioVendidos
+// Descripción: Muestra el podio de los más vendidos.
+// Entrada: Productos y categoría.
+// Salida: El podio.
+// Objetivo: Destacar lo más vendido.
 export function PodioVendidos({ productos, categoria }) {
   const top = productos.slice(0, 3);
   if (top.length < 3) return null;
@@ -44,9 +59,19 @@ export function PodioVendidos({ productos, categoria }) {
   );
 }
 
+// Nombre: BannerOfertas
+// Descripción: Muestra la franja de ofertas relámpago.
+// Entrada: Los productos.
+// Salida: La franja.
+// Objetivo: Destacar las ofertas.
 export function BannerOfertas({ productos }) {
   const conDescuento = productos.filter((p) => p.precio_anterior);
   if (!conDescuento.length) return null;
+  // Nombre: pct
+  // Descripción: Calcula el porcentaje de descuento.
+  // Entrada: El producto.
+  // Salida: El porcentaje.
+  // Objetivo: Mostrar cuánto ahorra.
   const pct = (p) => Math.round((1 - p.precio / p.precio_anterior) * 100);
   const maximo = Math.max(...conDescuento.map(pct));
   const cinta = conDescuento.slice(0, 12);
@@ -83,6 +108,11 @@ export function BannerOfertas({ productos }) {
 
 // Portada para una categoría (o la tienda filtrada): texto con datos y botones a la izquierda
 // y 4 productos que flotan a la derecha, con adornos.
+// Nombre: PortadaCategoria
+// Descripción: Muestra la portada de una categoría.
+// Entrada: El nombre y sus productos.
+// Salida: La portada.
+// Objetivo: Presentar la categoría.
 export function PortadaCategoria({ titulo, productos }) {
   const muestra = [...productos].sort((a, b) => Boolean(b.imagen) - Boolean(a.imagen)).slice(0, 4);
   const enOferta = productos.filter((p) => p.precio_anterior).length;

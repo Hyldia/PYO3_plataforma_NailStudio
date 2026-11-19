@@ -17,9 +17,19 @@ import { FotoModel } from '../models/FotoModel.js';
 // Envío a domicilio (solo productos; las citas son en el salón). Se cambia con la variable COSTO_ENVIO.
 export const COSTO_ENVIO = Number(process.env.COSTO_ENVIO ?? 2500);
 
+// Nombre: error
+// Descripción: Crea un error con mensaje y código.
+// Entrada: El mensaje y el código.
+// Salida: El error.
+// Objetivo: Avisar problemas claros.
 const error = (mensaje, status = 400) => Object.assign(new Error(mensaje), { status });
 
 // Productos: los precios se leen de la base de datos, no del navegador
+// Nombre: armarProductos
+// Descripción: Revisa los productos del carrito contra la tienda.
+// Entrada: Los productos del carrito.
+// Salida: Productos con precio real.
+// Objetivo: Que nadie cambie precios desde el navegador.
 function armarProductos(items = []) {
   return items.map(({ productoId, cantidad, detalle }) => {
     const p = ProductoModel.buscarPorId(productoId);
@@ -32,6 +42,11 @@ function armarProductos(items = []) {
 
 // Citas: una por persona, cantidad siempre 1, un solo diseño. Se revisa que la hora siga libre
 // y que el mismo carrito no tenga dos citas a la misma hora con la misma especialista.
+// Nombre: armarCitas
+// Descripción: Revisa las citas del carrito.
+// Entrada: Las citas del carrito.
+// Salida: Citas con precio real.
+// Objetivo: Cobrar el precio correcto.
 function armarCitas(citas = []) {
   const usadas = new Set();
   return citas.map((c) => {
@@ -54,6 +69,11 @@ function armarCitas(citas = []) {
 }
 
 // Total con cupón (patrón Decorator) y cuánto se paga hoy: productos completos + 30 % de las citas
+// Nombre: cotizar
+// Descripción: Calcula el total de la compra.
+// Entrada: Productos, citas, cupón, pago y entrega.
+// Salida: Subtotal, descuentos, envío y total.
+// Objetivo: Cobrar lo justo.
 function cotizar(productos, citas, codigo, metodoPago, entrega = 'retiro') {
   const lineas = [...productos, ...citas];
   let base = calcularPrecioPedido(lineas);
@@ -76,6 +96,11 @@ function cotizar(productos, citas, codigo, metodoPago, entrega = 'retiro') {
   return { ...base, total: base.total + envio, envio, cupon, factor, productosNeto, citasNeto, anticipo, pagasHoy, enSalon: base.total + envio - pagasHoy, sinOfertas, ahorroOfertas: sinOfertas - base.subtotal };
 }
 
+// Nombre: publico
+// Descripción: Deja solo los datos del total que ve la clienta.
+// Entrada: El cálculo completo.
+// Salida: Un resumen del total.
+// Objetivo: No mostrar datos internos.
 const publico = (c) => ({ subtotal: c.subtotal, total: c.total, envio: c.envio, costoEnvio: COSTO_ENVIO, descuento: c.descuento, detalle: c.detalle,
   cupon: c.cupon ? { codigo: c.cupon.codigo, descripcion: c.cupon.descripcion } : null,
   productosNeto: c.productosNeto, citasNeto: c.citasNeto, anticipo: c.anticipo, pagasHoy: c.pagasHoy, enSalon: c.enSalon,
@@ -83,12 +108,22 @@ const publico = (c) => ({ subtotal: c.subtotal, total: c.total, envio: c.envio, 
 
 export const pedidoController = {
   // POST /api/pedidos/cotizar: el resumen antes de pagar
+  // Nombre: cotizar
+  // Descripción: Calcula el total antes de pagar.
+  // Entrada: El carrito.
+  // Salida: El resumen del total.
+  // Objetivo: Mostrar cuánto se paga.
   cotizar(req, res) {
     const { items = [], citas = [], cupon, metodoPago = 'sinpe', entrega = 'retiro' } = req.body;
     if (!items.length && !citas.length) return res.status(400).json({ error: 'No hay nada seleccionado.' });
     res.json(publico(cotizar(armarProductos(items), armarCitas(citas), cupon, metodoPago, entrega)));
   },
 
+  // Nombre: crear
+  // Descripción: Crea el pedido y cobra.
+  // Entrada: El carrito y el pago.
+  // Salida: El pedido creado o un error.
+  // Objetivo: Terminar la compra.
   crear(req, res) {
     const { items = [], citas: citasPedidas = [], metodoPago, pago, cupon, notas, entrega = 'retiro', direccionId } = req.body;
     if (!items.length && !citasPedidas.length) return res.status(400).json({ error: 'El carrito está vacío.' });

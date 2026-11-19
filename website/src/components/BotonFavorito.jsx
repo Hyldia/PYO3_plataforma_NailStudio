@@ -2,10 +2,20 @@ import { useState } from 'react';
 import { useFavoritos } from '../context/FavoritosContext.jsx';
 
 // Corazón para guardar en favoritos, con un pequeño estallido al marcarlo
+// Nombre: BotonFavorito
+// Descripción: Muestra el corazón de favoritos.
+// Entrada: Tipo, datos y nombre.
+// Salida: El botón.
+// Objetivo: Guardar lo que gusta.
 export default function BotonFavorito({ tipo, datos, nombre, clase = '' }) {
   const fav = useFavoritos();
   const [pop, setPop] = useState(0);
   const activo = fav.tiene(tipo, datos.id);
+  // Nombre: tocar
+  // Descripción: Guarda o quita de favoritos.
+  // Entrada: El clic.
+  // Salida: Nada.
+  // Objetivo: Marcar favoritos.
   const tocar = (e) => {
     e.preventDefault(); e.stopPropagation();
     if (!activo) setPop((n) => n + 1);

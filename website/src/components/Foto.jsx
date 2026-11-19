@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { urlFoto } from '../config.js';
 
 // Imagen con carga diferida y un fondo neutro mientras carga o si falta el archivo
+// Nombre: Foto
+// Descripción: Muestra una foto con respaldo.
+// Entrada: Archivo, texto y estilo.
+// Salida: La imagen.
+// Objetivo: Que nunca se vea una foto rota.
 export default function Foto({ archivo, alt, className = '', prioridad = false, respaldo = null }) {
   const [error, setError] = useState(false);
   const src = urlFoto(archivo);

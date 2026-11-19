@@ -11,6 +11,11 @@ const TEXTO = { listo: 'Listo para retirar', completado: 'Ya lo retiró', recibi
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
 // «2026-11-15 15:51» → «15 nov 2026 · 3:51 p. m.»
+// Nombre: fechaPedido
+// Descripción: Escribe la fecha de un pedido.
+// Entrada: El texto de la fecha.
+// Salida: La fecha bonita.
+// Objetivo: Leer fácil.
 function fechaPedido(texto = '') {
   const [f, h = ''] = String(texto).replace('T', ' ').split(' ');
   const [a, m, d] = f.split('-').map(Number);
@@ -20,6 +25,11 @@ function fechaPedido(texto = '') {
   return `${d} ${MESES[m - 1]} ${a}${hora}`;
 }
 
+// Nombre: rango
+// Descripción: Calcula fechas rápidas (hoy, semana, mes).
+// Entrada: El tipo.
+// Salida: Desde y hasta.
+// Objetivo: Filtrar rápido.
 function rango(tipo) {
   const hoy = new Date();
   const d = new Date(hoy);
@@ -29,10 +39,20 @@ function rango(tipo) {
   return { desde: '', hasta: '' };
 }
 
+// Nombre: VentanaCompletar
+// Descripción: Muestra la ventana para entregar un pedido.
+// Entrada: El pedido.
+// Salida: La ventana.
+// Objetivo: Registrar quién lo retiró.
 function VentanaCompletar({ pedido, onCerrar, onListo }) {
   const [retiradoPor, setRetiradoPor] = useState(pedido.cliente_nombre);
   const [notas, setNotas] = useState('');
   const [error, setError] = useState('');
+  // Nombre: guardar
+  // Descripción: Guarda la entrega.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Completar el pedido.
   const guardar = async (e) => {
     e.preventDefault();
     try { await api.admin.estadoPedido(pedido.id, { estado: 'completado', retiradoPor, notas }); onListo(); onCerrar(); } catch (err) { setError(err.message); }
@@ -51,6 +71,11 @@ function VentanaCompletar({ pedido, onCerrar, onListo }) {
   );
 }
 
+// Nombre: PedidosAdmin
+// Descripción: Muestra los pedidos en el panel.
+// Entrada: Nada.
+// Salida: La sección.
+// Objetivo: Atender ventas.
 export default function PedidosAdmin() {
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', q: '', estado: '', pago: '' });
   const [texto, setTexto] = useState('');
@@ -61,13 +86,33 @@ export default function PedidosAdmin() {
   const [error, setError] = useState('');
   const [bajando, setBajando] = useState(false);
 
+  // Nombre: cargar
+  // Descripción: Carga los pedidos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar la lista.
   const cargar = () => api.admin.pedidos(filtros).then(setPedidos).catch((e) => setError(e.message));
   useEffect(() => { cargar(); }, [filtros]);
   useEffect(() => { api.admin.pedidos().then((l) => setPagos([...new Set(l.map((p) => p.metodo_pago))])).catch(() => {}); }, []);
   useEffect(() => { const t = setTimeout(() => setFiltros((f) => ({ ...f, q: texto })), 300); return () => clearTimeout(t); }, [texto]);
 
+  // Nombre: set
+  // Descripción: Cambia un filtro.
+  // Entrada: El nombre del filtro.
+  // Salida: Una función para el campo.
+  // Objetivo: Filtrar pedidos.
   const set = (k) => (e) => { setFiltros({ ...filtros, [k]: e.target.value }); if (k === 'desde' || k === 'hasta') setRapido(''); };
+  // Nombre: elegirRapido
+  // Descripción: Elige un rango rápido.
+  // Entrada: El tipo.
+  // Salida: Nada.
+  // Objetivo: Filtrar rápido.
   const elegirRapido = (t) => { setRapido(t); setFiltros({ ...filtros, ...rango(t) }); };
+  // Nombre: limpiar
+  // Descripción: Quita los filtros.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ver todo.
   const limpiar = () => { setTexto(''); setRapido(''); setFiltros({ desde: '', hasta: '', q: '', estado: '', pago: '' }); };
 
   const resumen = useMemo(() => {
@@ -75,6 +120,11 @@ export default function PedidosAdmin() {
     return { total: validos.reduce((s, p) => s + p.total, 0), porRetirar: pedidos.filter((p) => ['recibido', 'listo'].includes(p.estado)).length, completados: pedidos.filter((p) => p.estado === 'completado').length };
   }, [pedidos]);
 
+  // Nombre: cambiar
+  // Descripción: Cambia el estado de un pedido.
+  // Entrada: El pedido y el estado.
+  // Salida: Nada.
+  // Objetivo: Seguir su avance.
   async function cambiar(p, estado) {
     if (estado === 'completado') return setVentana({ tipo: 'completar', pedido: p });
     if (estado === 'cancelado' && !window.confirm(`¿Cancelar el pedido #${p.id}? El stock vuelve a la tienda.`)) return;
@@ -84,6 +134,11 @@ export default function PedidosAdmin() {
       if (r.mensaje) setVentana({ tipo: 'mensaje', pedido: r.pedido, mensaje: r.mensaje });
     } catch (e) { setError(e.message); }
   }
+  // Nombre: descargar
+  // Descripción: Descarga los pedidos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Guardarlos en Excel.
   const descargar = async () => { setBajando(true); try { await api.admin.descargarExcelPedidos(filtros); } catch (e) { setError(e.message); } setBajando(false); };
   const hayFiltros = Object.values(filtros).some(Boolean);
 

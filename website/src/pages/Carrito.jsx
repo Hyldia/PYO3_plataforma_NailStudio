@@ -11,6 +11,11 @@ import { enlaceArticulo } from '../components/CarritoLateral.jsx';
 import Icono from '../components/Icono.jsx';
 
 // Página del carrito: lista con casillas para elegir qué pedir y resumen a la derecha
+// Nombre: Carrito
+// Descripción: Muestra la página del carrito.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Revisar y pagar.
 export default function Carrito() {
   useTitulo('Carrito');
   const carrito = useCarrito();

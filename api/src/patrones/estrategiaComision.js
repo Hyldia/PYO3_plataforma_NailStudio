@@ -4,6 +4,11 @@
 // Todas tienen el mismo método calcular(); crearEsquemaPago() (Factory) elige la correcta.
 class PagoPorComision {
   nombre = 'Comisión';
+  // Nombre: calcular
+  // Descripción: Calcula el pago solo por comisión.
+  // Entrada: Lo vendido y el porcentaje.
+  // Salida: El pago.
+  // Objetivo: Pagar a la especialista.
   calcular({ vendido, comision }) {
     const porComision = Math.round(vendido * (comision / 100));
     return { base: 0, porComision, total: porComision };
@@ -12,6 +17,11 @@ class PagoPorComision {
 
 class PagoBaseMasComision {
   nombre = 'Base + comisión';
+  // Nombre: calcular
+  // Descripción: Calcula el pago con salario y comisión.
+  // Entrada: Lo vendido, porcentaje y salario.
+  // Salida: El pago.
+  // Objetivo: Pagar a la especialista.
   calcular({ vendido, comision, salarioBase }) {
     const porComision = Math.round(vendido * (comision / 100));
     return { base: salarioBase, porComision, total: salarioBase + porComision };
@@ -21,6 +31,11 @@ class PagoBaseMasComision {
 const ESQUEMAS = { comision: PagoPorComision, base_comision: PagoBaseMasComision };
 export const NOMBRES_ESQUEMA = { comision: 'Comisión', base_comision: 'Base + comisión' };
 
+// Nombre: crearEsquemaPago
+// Descripción: Elige la forma de pago de la especialista.
+// Entrada: El tipo.
+// Salida: El cálculo correcto.
+// Objetivo: Pagar según el acuerdo (Strategy).
 export function crearEsquemaPago(tipo) {
   const Clase = ESQUEMAS[tipo] || PagoPorComision;
   return new Clase();

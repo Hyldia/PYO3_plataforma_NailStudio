@@ -7,13 +7,28 @@ import { EspecialistaModel } from '../models/EspecialistaModel.js';
 const NOMBRES = ['María', 'Ana', 'Valeria', 'Daniela', 'Sofía', 'Camila', 'Fernanda', 'Gabriela', 'Andrea', 'Paola', 'Natalia', 'Carolina', 'Mariana', 'Laura', 'Melissa', 'Karla', 'Tatiana', 'Priscilla', 'Rebeca', 'Jimena'];
 const APELLIDOS = ['Rodríguez', 'Jiménez', 'Mora', 'Vargas', 'Rojas', 'Solís', 'Araya', 'Castro', 'Quesada', 'Chaves', 'Alfaro', 'Ramírez', 'Brenes', 'Monge'];
 
+// Nombre: cargarAgendaEjemplo
+// Descripción: Llena la agenda con citas de ejemplo.
+// Entrada: La base de datos.
+// Salida: Nada.
+// Objetivo: Que el panel tenga datos para probar.
 export function cargarAgendaEjemplo(db) {
   const hecho = db.prepare("SELECT valor FROM ajustes WHERE clave = 'agenda_ejemplo'").get();
   if (hecho || !db.prepare("SELECT valor FROM ajustes WHERE clave = 'datos_ejemplo'").get()) return false;
   if (!db.prepare('SELECT COUNT(*) AS n FROM citas').get().n) return false; // ya limpiaron los datos de ejemplo
 
   let s = 1511;
+  // Nombre: r
+  // Descripción: Da un número al azar (siempre la misma serie).
+  // Entrada: Nada.
+  // Salida: Un número entre 0 y 1.
+  // Objetivo: Crear datos de ejemplo iguales cada vez.
   const r = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  // Nombre: elegir
+  // Descripción: Elige un elemento al azar de una lista.
+  // Entrada: La lista.
+  // Salida: Un elemento.
+  // Objetivo: Variar los datos de ejemplo.
   const elegir = (l) => l[Math.floor(r() * l.length)];
   const servicios = db.prepare('SELECT * FROM servicios WHERE activo = 1').all();
   const especialistas = EspecialistaModel.listar();

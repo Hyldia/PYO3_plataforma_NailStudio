@@ -21,12 +21,27 @@ const ICONOS = {
   pulgar: <path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 0 1 3 2l-1 4h6a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 2H7" />,
   rayo: <path d="M13 2 4 14h7l-1 8 9-12h-7z" />
 };
+// Nombre: Icono
+// Descripción: Dibuja un ícono del encabezado.
+// Entrada: El trazo y si va relleno.
+// Salida: El ícono.
+// Objetivo: Botones claros.
 const Icono = ({ d, relleno }) => (
   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill={relleno ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 );
 
+// Nombre: Lupa
+// Descripción: Dibuja la lupa.
+// Entrada: Nada.
+// Salida: El ícono.
+// Objetivo: Botón de buscar.
 const Lupa = () => <Icono d={<><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>} />;
 
+// Nombre: Encabezado
+// Descripción: Muestra el encabezado con el menú.
+// Entrada: Nada.
+// Salida: El encabezado.
+// Objetivo: Navegar por el sitio.
 export default function Encabezado() {
   const [menu, setMenu] = useState(false);
   const { cantidad } = useCarrito();

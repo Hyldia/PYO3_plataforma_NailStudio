@@ -13,4 +13,9 @@ export const CATEGORIAS = [
 ];
 
 // Nombre con el que se guarda la foto de cada círculo
+// Nombre: claveCategoria
+// Descripción: Da la clave de una categoría.
+// Entrada: La categoría.
+// Salida: La clave.
+// Objetivo: Guardar su foto de portada.
 export const claveCategoria = (c) => c.clave || decodeURIComponent(c.to.split('categoria=')[1] || '');

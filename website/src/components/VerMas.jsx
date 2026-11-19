@@ -1,3 +1,8 @@
+// Nombre: numerosPagina
+// Descripción: Calcula qué números de página mostrar.
+// Entrada: La página y el total.
+// Salida: La lista de números.
+// Objetivo: Paginación clara.
 function numerosPagina(pagina, paginas) {
   if (paginas <= 7) return Array.from({ length: paginas }, (_, i) => i + 1);
   if (pagina <= 4) return [1, 2, 3, 4, 5, '...', paginas];
@@ -5,9 +10,19 @@ function numerosPagina(pagina, paginas) {
   return [1, '...', pagina - 1, pagina, pagina + 1, '...', paginas];
 }
 
+// Nombre: VerMas
+// Descripción: Muestra los botones de páginas.
+// Entrada: Página, total y qué hacer al cambiar.
+// Salida: Los botones.
+// Objetivo: Moverse entre páginas.
 export default function VerMas({ pagina = 1, paginas = 1, cargando = false, onCambiar }) {
   if (paginas <= 1) return null;
 
+  // Nombre: cambiar
+  // Descripción: Cambia de página.
+  // Entrada: El número.
+  // Salida: Nada.
+  // Objetivo: Ver más resultados.
   const cambiar = (n) => {
     if (!cargando && n >= 1 && n <= paginas && n !== pagina) onCambiar(n);
   };
@@ -36,6 +51,11 @@ export default function VerMas({ pagina = 1, paginas = 1, cargando = false, onCa
 }
 
 // Tarjetas grises que brillan mientras llegan las siguientes
+// Nombre: Fantasmas
+// Descripción: Muestra tarjetas grises mientras carga.
+// Entrada: Cuántas.
+// Salida: Las tarjetas.
+// Objetivo: Que no se vea vacío.
 export const Fantasmas = ({ n = 5 }) => Array.from({ length: n }, (_, i) => (
   <li key={`f${i}`} className="tarjeta-fantasma" aria-hidden="true"><span /><span /><span /></li>
 ));

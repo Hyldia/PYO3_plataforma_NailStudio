@@ -1,6 +1,11 @@
 import { useEffect, useRef } from 'react';
 
 // Ventana emergente accesible con <dialog>: cierra con Escape, con la X o tocando afuera
+// Nombre: Modal
+// Descripción: Muestra una ventana encima de la página.
+// Entrada: Título, contenido y tamaño.
+// Salida: La ventana.
+// Objetivo: Mostrar avisos y formularios.
 export default function Modal({ titulo, onCerrar, children, ancho = false, ocultarTitulo = false }) {
   const ref = useRef(null);
   useEffect(() => {

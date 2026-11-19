@@ -16,9 +16,29 @@ import Icono from '../components/Icono.jsx';
 
 
 // Tarjeta: formato, marca y validación (Luhn) en el navegador; el servidor vuelve a validar
+// Nombre: soloNumeros
+// Descripción: Deja solo números.
+// Entrada: El texto.
+// Salida: Los números.
+// Objetivo: Limpiar datos.
 const soloNumeros = (v) => v.replace(/\D/g, '');
+// Nombre: formatoTarjeta
+// Descripción: Separa el número de tarjeta en grupos.
+// Entrada: El texto.
+// Salida: El número ordenado.
+// Objetivo: Leer fácil.
 const formatoTarjeta = (v) => soloNumeros(v).slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 ');
+// Nombre: marca
+// Descripción: Dice la marca de la tarjeta.
+// Entrada: El número.
+// Salida: La marca.
+// Objetivo: Mostrar el logo.
 const marca = (n) => (/^4/.test(n) ? 'Visa' : /^(5[1-5]|2[2-7])/.test(n) ? 'Mastercard' : /^3[47]/.test(n) ? 'American Express' : '');
+// Nombre: luhn
+// Descripción: Revisa si la tarjeta es válida.
+// Entrada: El número.
+// Salida: Sí o no.
+// Objetivo: Evitar errores.
 function luhn(n) {
   let suma = 0;
   [...n].reverse().forEach((c, i) => { let d = Number(c); if (i % 2) { d *= 2; if (d > 9) d -= 9; } suma += d; });
@@ -31,6 +51,11 @@ const METODOS = [
   { id: 'salon', nombre: 'Pagar al retirar en el salón', logo: <span className="logo-pago logo-pago--salon" aria-hidden="true">₡</span> }
 ];
 
+// Nombre: FinalizarCompra
+// Descripción: Muestra la página de pago.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Terminar la compra.
 export default function FinalizarCompra() {
   useTitulo('Finalizar compra');
   const carrito = useCarrito();
@@ -91,6 +116,11 @@ export default function FinalizarCompra() {
   const pocos = articulos.filter((i) => i.stock > 0 && i.stock < 10).length;
   const cantidad = articulos.reduce((s, i) => s + i.cantidad, 0);
 
+  // Nombre: aplicarCupon
+  // Descripción: Aplica un cupón.
+  // Entrada: El código.
+  // Salida: Nada.
+  // Objetivo: Dar el descuento.
   function aplicarCupon(codigo) {
     const c = String(codigo || cuponTexto).trim().toUpperCase();
     if (!c) { setErrores((e) => ({ ...e, cupon: 'Escribe el código del cupón.' })); return; }
@@ -99,6 +129,11 @@ export default function FinalizarCompra() {
     setVerCupones(false);
   }
 
+  // Nombre: confirmarDatos
+  // Descripción: Confirma los datos de la clienta.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Pasar al pago.
   async function confirmarDatos() {
     const e = {};
     if (!cliente.nombre.trim()) e.nombre = 'Escribe tu nombre.';
@@ -109,6 +144,11 @@ export default function FinalizarCompra() {
     catch (err) { setErrores((x) => ({ ...x, telefono: err.message })); }
   }
 
+  // Nombre: validar
+  // Descripción: Revisa el formulario de pago.
+  // Entrada: Nada.
+  // Salida: Sí o no.
+  // Objetivo: Evitar errores.
   function validar() {
     const e = {};
     if (!cliente.nombre.trim()) e.nombre = 'Escribe tu nombre.';
@@ -127,6 +167,11 @@ export default function FinalizarCompra() {
     return Object.keys(e).length === 0;
   }
 
+  // Nombre: finalizar
+  // Descripción: Termina la compra.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Crear el pedido.
   async function finalizar() {
     if (!validar()) {
       setTimeout(() => document.querySelector('[aria-invalid="true"]')?.focus(), 0);
@@ -225,6 +270,11 @@ export default function FinalizarCompra() {
   }
 
   const ahorro = (cotizacion?.ahorroOfertas || 0) + (cotizacion?.descuento || 0);
+  // Nombre: campo
+  // Descripción: Muestra un campo del formulario.
+  // Entrada: Id, etiqueta y opciones.
+  // Salida: El campo.
+  // Objetivo: Formularios ordenados.
   const campo = (id, etiqueta, props = {}) => (
     <div className="campo">
       <label htmlFor={`fc-${id}`}>{etiqueta}</label>

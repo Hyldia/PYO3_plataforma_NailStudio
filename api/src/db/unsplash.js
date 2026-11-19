@@ -1,6 +1,11 @@
 // Cliente mínimo de la API de Unsplash, compartido por los comandos de fotos.
 export const UTM = 'utm_source=naile&utm_medium=referral';
 
+// Nombre: claveUnsplash
+// Descripción: Busca la clave de Unsplash.
+// Entrada: Nada.
+// Salida: La clave o un aviso.
+// Objetivo: Usar Unsplash sin poner la clave en el código.
 export function claveUnsplash() {
   const clave = process.env.UNSPLASH_KEY;
   if (!clave) {
@@ -10,6 +15,11 @@ export function claveUnsplash() {
   return clave;
 }
 
+// Nombre: buscarUnsplash
+// Descripción: Pide fotos a Unsplash.
+// Entrada: La clave, lo que se busca y la página.
+// Salida: La lista de fotos.
+// Objetivo: Conseguir fotos reales.
 export async function buscarUnsplash(clave, query, page = 1, perPage = 30) {
   const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}&content_filter=high`;
   const res = await fetch(url, { headers: { Authorization: `Client-ID ${clave}`, 'Accept-Version': 'v1' } });
@@ -22,7 +32,17 @@ export async function buscarUnsplash(clave, query, page = 1, perPage = 30) {
   return datos;
 }
 
+// Nombre: urlFotoUnsplash
+// Descripción: Arma el enlace de una foto de Unsplash.
+// Entrada: La foto.
+// Salida: El enlace con tamaño ajustado.
+// Objetivo: Que las fotos carguen rápido.
 export const urlFotoUnsplash = (f) => `${f.urls.raw.split('?')[0]}?auto=format&fit=crop&w=1000&q=70`;
+// Nombre: autorUnsplash
+// Descripción: Arma los datos del autor de una foto.
+// Entrada: La foto.
+// Salida: Nombre y enlace del autor.
+// Objetivo: Dar crédito al fotógrafo.
 export const autorUnsplash = (f) => ({
   autor: f.user?.name || 'Unsplash',
   autor_url: `${f.user?.links?.html || 'https://unsplash.com'}?${UTM}`

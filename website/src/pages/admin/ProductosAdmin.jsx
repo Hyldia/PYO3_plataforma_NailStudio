@@ -8,14 +8,34 @@ import { BotonFoto, ZonaFotos, formData } from './piezasPanel.jsx';
 import { CATEGORIAS, claveCategoria } from '../../lib/categoriasPortada.js';
 
 // Fotos de los círculos de categorías que salen en la portada
+// Nombre: FotosCategorias
+// Descripción: Muestra las fotos de cada categoría.
+// Entrada: Nada.
+// Salida: La sección.
+// Objetivo: Elegir portadas.
 function FotosCategorias() {
   const [portadas, setPortadas] = useState({});
   const [aviso, setAviso] = useState('');
+  // Nombre: cargar
+  // Descripción: Carga las portadas.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrarlas.
   const cargar = () => api.portadas().then(setPortadas).catch(() => {});
   useEffect(() => { cargar(); }, []);
+  // Nombre: subir
+  // Descripción: Sube una portada.
+  // Entrada: La categoría y la foto.
+  // Salida: Nada.
+  // Objetivo: Cambiarla.
   const subir = async (c, archivo) => {
     try { await api.admin.fotoPortada(claveCategoria(c), formData(archivo)); setAviso(`Listo: «${c.nombre}» tiene foto nueva en la portada.`); cargar(); } catch (e) { setAviso(e.message); }
   };
+  // Nombre: quitar
+  // Descripción: Quita una portada.
+  // Entrada: La categoría.
+  // Salida: Nada.
+  // Objetivo: Volver a la automática.
   const quitar = async (c) => { await api.admin.quitarFotoPortada(claveCategoria(c)).catch(() => {}); setAviso(`«${c.nombre}» vuelve a usar la foto de su producto más vendido.`); cargar(); };
   return (
     <details className="portadas-admin">
@@ -40,14 +60,29 @@ function FotosCategorias() {
 const VACIO = { nombre: '', categoria: '', marca: 'AH Nails', precio: '', precio_anterior: '', stock: '10', descripcion: '' };
 const POR_PAGINA = 24;
 
+// Nombre: Editor
+// Descripción: Muestra el formulario de un producto.
+// Entrada: Producto y categorías.
+// Salida: El formulario.
+// Objetivo: Editar productos.
 function Editor({ producto, categorias, onCerrar, onGuardado }) {
   const nuevo = !producto.id;
   const [d, setD] = useState({ ...VACIO, ...producto, precio_anterior: producto.precio_anterior ?? '', descripcion: producto.descripcion ?? '' });
   const [archivo, setArchivo] = useState([]);
   const [estado, setEstado] = useState({ guardando: false, error: '' });
+  // Nombre: set
+  // Descripción: Guarda lo que se escribe en un campo.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Llenar el formulario.
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
   const descuento = d.precio_anterior && Number(d.precio_anterior) > Number(d.precio) ? Math.round((1 - d.precio / d.precio_anterior) * 100) : 0;
 
+  // Nombre: guardar
+  // Descripción: Guarda el producto.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Crear o editar.
   async function guardar(e) {
     e.preventDefault();
     setEstado({ guardando: true, error: '' });
@@ -102,6 +137,11 @@ function Editor({ producto, categorias, onCerrar, onGuardado }) {
   );
 }
 
+// Nombre: ProductosAdmin
+// Descripción: Muestra los productos en el panel.
+// Entrada: Nada.
+// Salida: La sección.
+// Objetivo: Administrar la tienda.
 export default function ProductosAdmin() {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -112,6 +152,11 @@ export default function ProductosAdmin() {
   const [editando, setEditando] = useState(null);
   const [aviso, setAviso] = useState({ texto: '', error: false });
 
+  // Nombre: cargar
+  // Descripción: Carga los productos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar la lista.
   const cargar = () => api.admin.productos().then(setProductos).catch((e) => setAviso({ texto: e.message, error: true }));
   useEffect(() => { cargar(); api.categoriasProductos().then(setCategorias).catch(() => {}); }, []);
   useEffect(() => setVisibles(POR_PAGINA), [q, cat, stock]);
@@ -121,10 +166,20 @@ export default function ProductosAdmin() {
     (!stock || (stock === 'agotado' ? p.stock === 0 : stock === 'poco' ? p.stock > 0 && p.stock < 10 : p.precio_anterior)) &&
     (!q || `${p.nombre} ${p.marca || ''} ${p.id}`.toLowerCase().includes(q.toLowerCase()))), [productos, q, cat, stock]);
 
+  // Nombre: fotoNueva
+  // Descripción: Cambia la foto de un producto.
+  // Entrada: El producto y la foto.
+  // Salida: Nada.
+  // Objetivo: Actualizarla.
   const fotoNueva = async (p, archivo) => {
     try { await api.admin.imagenProducto(p.id, formData(archivo)); setAviso({ texto: `Foto de «${p.nombre}» actualizada.` }); cargar(); } catch (e) { setAviso({ texto: e.message, error: true }); }
   };
   // Marcar agotado (stock 0) o reponer unidades sin abrir el editor
+  // Nombre: fijarStock
+  // Descripción: Cambia el stock.
+  // Entrada: El producto y la cantidad.
+  // Salida: Nada.
+  // Objetivo: Llevar inventario.
   const fijarStock = async (p, stock) => {
     try {
       await api.admin.editarProducto(p.id, { ...p, stock, precio_anterior: p.precio_anterior ?? '' });
@@ -132,10 +187,20 @@ export default function ProductosAdmin() {
       cargar();
     } catch (e) { setAviso({ texto: e.message, error: true }); }
   };
+  // Nombre: reponer
+  // Descripción: Repone el stock.
+  // Entrada: El producto.
+  // Salida: Nada.
+  // Objetivo: Volver a tener.
   const reponer = (p) => {
     const n = window.prompt(`¿Cuántas unidades de «${p.nombre}» hay ahora?`, '10');
     if (n !== null && Number(n) > 0) fijarStock(p, Math.floor(Number(n)));
   };
+  // Nombre: borrar
+  // Descripción: Borra un producto.
+  // Entrada: El producto.
+  // Salida: Nada.
+  // Objetivo: Quitarlo.
   const borrar = async (p) => {
     if (!window.confirm(`¿Eliminar «${p.nombre}» de la tienda?`)) return;
     try {

@@ -28,6 +28,11 @@ import PremioEscondido from './components/PremioEscondido.jsx';
 import ChatAsistente from './components/ChatAsistente.jsx';
 import Accesibilidad from './components/Accesibilidad.jsx';
 
+// Nombre: App
+// Descripción: Arma todas las páginas del sitio.
+// Entrada: Nada.
+// Salida: La aplicación completa.
+// Objetivo: Unir encabezado, páginas y pie.
 export default function App() {
   const { pathname } = useLocation();
   const main = useRef(null);

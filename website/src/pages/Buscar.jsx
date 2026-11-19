@@ -8,6 +8,11 @@ import Foto from '../components/Foto.jsx';
 import Migas from '../components/Migas.jsx';
 
 // Búsqueda general: servicios, productos y fotos de la galería
+// Nombre: Buscar
+// Descripción: Muestra los resultados de búsqueda.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Encontrar de todo.
 export default function Buscar() {
   const [params] = useSearchParams();
   const q = params.get('q') || '';

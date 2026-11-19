@@ -6,13 +6,28 @@ import { urlFoto } from '../config.js';
 
 const FONDOS = [['#FDE2EA', '#8C1D4B'], ['#E5ECFB', '#1F4F8A'], ['#FFF0D6', '#7A4B00'], ['#DDF4EA', '#1F6B45'], ['#F1E4FF', '#5A3A9A'], ['#FFE3DA', '#9A3B1F']];
 
+// Nombre: numero
+// Descripción: Convierte un nombre en un número.
+// Entrada: El texto.
+// Salida: Un número.
+// Objetivo: Dar siempre el mismo color a cada clienta.
 function numero(texto) {
   let h = 2166136261;
   for (const c of String(texto)) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
   return Math.abs(h);
 }
+// Nombre: iniciales
+// Descripción: Saca las iniciales de un nombre.
+// Entrada: El nombre.
+// Salida: Las iniciales.
+// Objetivo: Mostrarlas si no hay foto.
 const iniciales = (nombre) => String(nombre).trim().split(/\s+/).slice(0, 2).map((p) => p[0] || '').join('').toUpperCase();
 
+// Nombre: AvatarClienta
+// Descripción: Muestra la foto o las iniciales de una clienta.
+// Entrada: Nombre, foto y tamaño.
+// Salida: El círculo con la foto.
+// Objetivo: Reconocer a cada clienta.
 export default function AvatarClienta({ nombre = '', foto = null, tam = 48 }) {
   const [fallo, setFallo] = useState(false);
   const src = foto && !fallo ? (String(foto).startsWith('http') ? foto : urlFoto(foto)) : null;

@@ -5,11 +5,21 @@ import { FILTRO_ESTRELLAS } from './ResenaModel.js';
 export const TIPOS_COMENTARIO = ['foto', 'servicio'];
 
 export const ComentarioModel = {
+  // Nombre: existe
+  // Descripción: Revisa si existe lo que se comenta.
+  // Entrada: El tipo y su número.
+  // Salida: Sí o no.
+  // Objetivo: Evitar comentarios sueltos.
   existe(tipo, id) {
     const tabla = tipo === 'foto' ? 'fotos' : 'servicios';
     return Boolean(getDb().prepare(`SELECT 1 FROM ${tabla} WHERE id = ?`).get(id));
   },
 
+  // Nombre: listar
+  // Descripción: Lista comentarios.
+  // Entrada: Tipo, número, cuántos y filtro.
+  // Salida: Los comentarios y el resumen.
+  // Objetivo: Mostrar opiniones.
   listar(tipo, refId, limite = 6, filtro = '') {
     const db = getDb();
     const filas = db.prepare('SELECT estrellas, COUNT(*) AS n FROM comentarios WHERE tipo = ? AND ref_id = ? GROUP BY estrellas').all(tipo, refId);
@@ -22,10 +32,20 @@ export const ComentarioModel = {
   },
 
   // Promedio y cantidad de cada elemento de un tipo (para mostrar estrellas en las tarjetas)
+  // Nombre: resumenes
+  // Descripción: Saca promedio y cantidad de estrellas.
+  // Entrada: El tipo.
+  // Salida: Un resumen por cada uno.
+  // Objetivo: Mostrar estrellas.
   resumenes(tipo) {
     return getDb().prepare(`SELECT ref_id AS id, COUNT(*) AS total, ROUND(AVG(estrellas), 1) AS promedio FROM comentarios WHERE tipo = ? GROUP BY ref_id`).all(tipo);
   },
 
+  // Nombre: crear
+  // Descripción: Guarda un comentario.
+  // Entrada: Nombre, estrellas y texto.
+  // Salida: El comentario guardado.
+  // Objetivo: Que opinen.
   crear(tipo, refId, { nombre, estrellas, comentario }) {
     const r = getDb().prepare('INSERT INTO comentarios (tipo, ref_id, nombre, estrellas, comentario) VALUES (?, ?, ?, ?, ?)')
       .run(tipo, refId, String(nombre).trim().slice(0, 60), Number(estrellas), String(comentario).trim().slice(0, 800));

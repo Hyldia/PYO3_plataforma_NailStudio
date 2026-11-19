@@ -15,6 +15,11 @@ import Icono from '../components/Icono.jsx';
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
 const LARGOS = ['Corto', 'Medio', 'Largo'];
 
+// Nombre: DisenoDetalle
+// Descripción: Muestra la página de un diseño.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Ver el diseño en grande.
 export default function DisenoDetalle() {
   const { id } = useParams();
   const [foto, setFoto] = useState(null);
@@ -39,8 +44,23 @@ export default function DisenoDetalle() {
   if (!foto) return <div className="contenedor pagina"><p className="tenue" role="status">Cargando diseño…</p></div>;
 
   const p = foto.presson;
+  // Nombre: reservar
+  // Descripción: Reserva el diseño.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ir a reservar.
   const reservar = () => { actualizar({ fotoRef: foto, diseno: null }); navegar(foto.servicio ? `/reservar?servicio=${foto.servicio.id}` : '/reservar'); };
+  // Nombre: personalizar
+  // Descripción: Abre el diseño en el diseñador.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Personalizarlo.
   const personalizar = () => { actualizar({ fotoRef: foto, diseno: null }); navegar('/disena'); };
+  // Nombre: agregar
+  // Descripción: Agrega el press-on al carrito.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Comprarlo.
   const agregar = () => agregarPresson(foto, { forma, largo, presson: p });
   const opinion = resumenes.get(foto.id);
   const descuentoPresson = p?.precio_anterior ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0;

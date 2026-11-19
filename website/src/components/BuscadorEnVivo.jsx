@@ -8,16 +8,31 @@ import Foto from './Foto.jsx';
 import ProductoImagen from './ProductoImagen.jsx';
 
 const POPULARES = ['Rubber base', 'Pedicure', 'Francesa', 'Acrílicas', 'Lámpara', 'Press-on'];
+// Nombre: sinTildes
+// Descripción: Quita tildes y pasa a minúscula.
+// Entrada: El texto.
+// Salida: El texto limpio.
+// Objetivo: Buscar sin importar tildes.
 const sinTildes = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 let serviciosCache = null;
 
 // Resalta en negrita la parte que coincide con lo escrito
+// Nombre: Resaltado
+// Descripción: Resalta lo que se escribió.
+// Entrada: El texto y lo buscado.
+// Salida: El texto resaltado.
+// Objetivo: Ver por qué salió el resultado.
 function Resaltado({ texto, q }) {
   const i = sinTildes(texto).indexOf(sinTildes(q));
   if (!q || i < 0) return texto;
   return <>{texto.slice(0, i)}<mark>{texto.slice(i, i + q.length)}</mark>{texto.slice(i + q.length)}</>;
 }
 
+// Nombre: BuscadorEnVivo
+// Descripción: Muestra el buscador que sugiere al escribir.
+// Entrada: El dibujo de la lupa.
+// Salida: El buscador.
+// Objetivo: Encontrar cosas rápido.
 export default function BuscadorEnVivo({ Lupa }) {
   const [texto, setTexto] = useState('');
   const [abierto, setAbierto] = useState(false);
@@ -30,6 +45,11 @@ export default function BuscadorEnVivo({ Lupa }) {
 
   useEffect(() => { setAbierto(false); }, [pathname]);
   useEffect(() => {
+    // Nombre: fuera
+    // Descripción: Cierra la lista al tocar afuera.
+    // Entrada: El clic.
+    // Salida: Nada.
+    // Objetivo: No estorbar.
     const fuera = (e) => { if (caja.current && !caja.current.contains(e.target)) setAbierto(false); };
     document.addEventListener('pointerdown', fuera);
     return () => document.removeEventListener('pointerdown', fuera);
@@ -67,15 +87,35 @@ export default function BuscadorEnVivo({ Lupa }) {
     ...res.fotos.map((f) => ({ clave: `f${f.id}`, to: `/galeria/${f.id}` })),
     ...(q.length >= 2 ? [{ clave: 'todo', to: `/buscar?q=${encodeURIComponent(q)}` }] : [])
   ], [res, q]);
+  // Nombre: idx
+  // Descripción: Busca la posición de una opción.
+  // Entrada: La clave.
+  // Salida: La posición.
+  // Objetivo: Moverse con flechas.
   const idx = (clave) => opciones.findIndex((o) => o.clave === clave);
+  // Nombre: ir
+  // Descripción: Va a la página elegida.
+  // Entrada: La dirección.
+  // Salida: Nada.
+  // Objetivo: Abrir el resultado.
   const ir = (to) => { setAbierto(false); setTexto(''); navegar(to); };
 
+  // Nombre: teclas
+  // Descripción: Maneja las flechas y Escape.
+  // Entrada: La tecla.
+  // Salida: Nada.
+  // Objetivo: Usar el buscador con teclado.
   const teclas = (e) => {
     if (!abierto) setAbierto(true);
     if (e.key === 'ArrowDown') { e.preventDefault(); setActivo((a) => Math.min(opciones.length - 1, a + 1)); }
     if (e.key === 'ArrowUp') { e.preventDefault(); setActivo((a) => Math.max(-1, a - 1)); }
     if (e.key === 'Escape') setAbierto(false);
   };
+  // Nombre: enviar
+  // Descripción: Busca al presionar Enter.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Ver todos los resultados.
   const enviar = (e) => {
     e.preventDefault();
     if (activo >= 0 && opciones[activo]) return ir(opciones[activo].to);
@@ -83,6 +123,11 @@ export default function BuscadorEnVivo({ Lupa }) {
   };
 
   const nada = q.length >= 2 && !res.cargando && !res.servicios.length && !res.productos.length && !res.fotos.length;
+  // Nombre: opcion
+  // Descripción: Dibuja una opción de la lista.
+  // Entrada: Clave, destino y contenido.
+  // Salida: La opción.
+  // Objetivo: Mostrar resultados.
   const opcion = (clave, to, contenido) => (
     <li key={clave} role="option" aria-selected={activo === idx(clave)} id={`bv-${clave}`}>
       <button type="button" className={`bv__opcion ${activo === idx(clave) ? 'bv__opcion--activa' : ''}`} onMouseEnter={() => setActivo(idx(clave))} onClick={() => ir(to)}>{contenido}</button>

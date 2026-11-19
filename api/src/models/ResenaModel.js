@@ -5,6 +5,11 @@ import { getDb } from '../db/conexion.js';
 export const SQL_RESUMEN = `UPDATE productos SET
   resenas = (SELECT COUNT(*) FROM resenas r WHERE r.producto_id = productos.id),
   calificacion = (SELECT ROUND(AVG(estrellas), 1) FROM resenas r WHERE r.producto_id = productos.id)`;
+// Nombre: actualizarResumen
+// Descripción: Recalcula las estrellas de un producto.
+// Entrada: La base de datos y el producto.
+// Salida: Nada.
+// Objetivo: Tener el promedio al día.
 export const actualizarResumen = (db, productoId) => db.prepare(`${SQL_RESUMEN} WHERE id = ?`).run(productoId);
 
 // Buenas: 4 y 5 estrellas · Regulares: 3 · Malas: 1 y 2
@@ -12,6 +17,11 @@ export const FILTRO_ESTRELLAS = { buenas: 'AND estrellas >= 4', regulares: 'AND 
 
 export const ResenaModel = {
   // Resumen (promedio y cuántas hay de cada estrella) + las más recientes
+  // Nombre: deProducto
+  // Descripción: Lista las reseñas de un producto.
+  // Entrada: El producto, cuántas y filtro.
+  // Salida: Las reseñas y el resumen.
+  // Objetivo: Mostrar opiniones.
   deProducto(productoId, limite = 6, filtro = '') {
     const db = getDb();
     const filas = db.prepare('SELECT estrellas, COUNT(*) AS n FROM resenas WHERE producto_id = ? GROUP BY estrellas').all(productoId);
@@ -24,6 +34,11 @@ export const ResenaModel = {
   },
 
   // Una clienta puede dejar su reseña; si da el número de pedido y su teléfono, queda como compra verificada
+  // Nombre: crear
+  // Descripción: Guarda una reseña de producto.
+  // Entrada: Los datos de la reseña.
+  // Salida: La reseña.
+  // Objetivo: Que opinen de lo que compraron.
   crear(productoId, { nombre, estrellas, comentario, pedido, telefono }) {
     const db = getDb();
     let pedidoId = null;
@@ -38,6 +53,11 @@ export const ResenaModel = {
     return { id: Number(info.lastInsertRowid), verificada: Boolean(pedidoId) };
   },
 
+  // Nombre: validar
+  // Descripción: Revisa los datos de una reseña.
+  // Entrada: Nombre, estrellas y texto.
+  // Salida: Un error o nada.
+  // Objetivo: Evitar reseñas vacías.
   validar({ nombre, estrellas, comentario }) {
     if (!nombre || String(nombre).trim().length < 2) return 'Escribe tu nombre.';
     if (!(Number(estrellas) >= 1 && Number(estrellas) <= 5)) return 'Elige de 1 a 5 estrellas.';

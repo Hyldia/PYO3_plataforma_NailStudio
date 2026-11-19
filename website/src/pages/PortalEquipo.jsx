@@ -13,16 +13,46 @@ import { fechaLarga, isoLocal, DIAS_SEMANA } from './admin/piezasPanel.jsx';
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ESTADO = { pendiente: 'Por confirmar', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada' };
 const TIPO = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Incapacidad', permiso: 'Permiso' };
+// Nombre: sumar
+// Descripción: Suma días a una fecha.
+// Entrada: La fecha y cuántos días.
+// Salida: La fecha nueva.
+// Objetivo: Calcular fechas.
 const sumar = (f, n) => { const d = new Date(`${f}T12:00:00`); d.setDate(d.getDate() + n); return isoLocal(d); };
+// Nombre: faltan
+// Descripción: Cuenta los días que faltan.
+// Entrada: La fecha y hoy.
+// Salida: Los días.
+// Objetivo: Mostrar "faltan X días".
 const faltan = (f, hoy) => Math.round((new Date(`${f}T12:00:00`) - new Date(`${hoy}T12:00:00`)) / 86400000);
+// Nombre: wa
+// Descripción: Arma el enlace de WhatsApp a una clienta.
+// Entrada: El teléfono y el texto.
+// Salida: El enlace.
+// Objetivo: Escribirle.
 const wa = (tel, texto) => `https://wa.me/506${String(tel).replace(/\D/g, '').slice(-8)}?text=${encodeURIComponent(texto)}`;
+// Nombre: hora12
+// Descripción: Escribe la hora en formato 12 horas.
+// Entrada: La hora.
+// Salida: El texto.
+// Objetivo: Leer fácil.
 const hora12 = (h) => { const [a, m] = h.split(':').map(Number); return `${a % 12 || 12}:${String(m).padStart(2, '0')} ${a < 12 ? 'a. m.' : 'p. m.'}`; };
 
+// Nombre: Entrar
+// Descripción: Muestra la entrada al portal.
+// Entrada: Qué hacer al entrar.
+// Salida: El formulario.
+// Objetivo: Iniciar sesión.
 function Entrar({ onEntrar }) {
   const [d, setD] = useState({ usuario: '', contrasena: '' });
   const [ver, setVer] = useState(false);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
+  // Nombre: entrar
+  // Descripción: Envía usuario y contraseña.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Entrar al portal.
   const entrar = async (e) => {
     e.preventDefault();
     setCargando(true); setError('');
@@ -61,11 +91,21 @@ function Entrar({ onEntrar }) {
 }
 
 const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
+// Nombre: fechaCorta
+// Descripción: Escribe una fecha corta.
+// Entrada: La fecha.
+// Salida: El texto.
+// Objetivo: Leer fácil.
 const fechaCorta = (f) => (f ? `${Number(f.slice(8, 10))} ${MESES_CORTOS[Number(f.slice(5, 7)) - 1]}` : '');
 
 // Pedir días libres en un calendario: se toca el primer día y, si son varios, el último.
 // En el mismo calendario se ven los días que no trabaja, los aprobados y los que esperan respuesta.
 const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
+// Nombre: PedirLibre
+// Descripción: Muestra el calendario para pedir libres.
+// Entrada: Datos del calendario.
+// Salida: La sección.
+// Objetivo: Pedir días libres.
 function PedirLibre({ hoy, dias, ausencias, solicitudes, onListo }) {
   const [mes, setMes] = useState(hoy.slice(0, 7));
   const [sel, setSel] = useState({ desde: null, hasta: null });
@@ -73,7 +113,17 @@ function PedirLibre({ hoy, dias, ausencias, solicitudes, onListo }) {
   const [motivo, setMotivo] = useState('');
   const [estado, setEstado] = useState({ enviando: false, error: '', ok: '' });
   const ausentes = useMemo(() => Object.fromEntries(ausencias.map((a) => [a.fecha, a.tipo])), [ausencias]);
+  // Nombre: pendiente
+  // Descripción: Revisa si un día tiene solicitud pendiente.
+  // Entrada: La fecha.
+  // Salida: Sí o no.
+  // Objetivo: Pintarlo en el calendario.
   const pendiente = (f) => solicitudes.some((s) => s.estado === 'pendiente' && f >= s.desde && f <= s.hasta);
+  // Nombre: trabaja
+  // Descripción: Revisa si trabaja ese día.
+  // Entrada: La fecha.
+  // Salida: Sí o no.
+  // Objetivo: Pintar el calendario.
   const trabaja = (f) => dias.split(',').includes(String(new Date(`${f}T12:00:00`).getDay() || 7));
 
   const [a, m] = mes.split('-').map(Number);
@@ -81,17 +131,37 @@ function PedirLibre({ hoy, dias, ausencias, solicitudes, onListo }) {
   const total = new Date(a, m, 0).getDate();
   const huecos = (primero.getDay() + 6) % 7;
   const celdas = [...Array(huecos).fill(null), ...Array.from({ length: total }, (_, i) => `${mes}-${String(i + 1).padStart(2, '0')}`)];
+  // Nombre: moverMes
+  // Descripción: Cambia de mes.
+  // Entrada: Cuántos meses.
+  // Salida: Nada.
+  // Objetivo: Ver otro mes.
   const moverMes = (n) => { const d = new Date(a, m - 1 + n, 1); setMes(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`); };
 
+  // Nombre: tocar
+  // Descripción: Elige un día en el calendario.
+  // Entrada: La fecha.
+  // Salida: Nada.
+  // Objetivo: Marcar el rango.
   const tocar = (f) => {
     setEstado({ enviando: false, error: '', ok: '' });
     if (!sel.desde || sel.hasta || f < sel.desde) return setSel({ desde: f, hasta: null });
     setSel({ desde: sel.desde, hasta: f });
   };
   const hasta = sel.hasta || sel.desde;
+  // Nombre: enRango
+  // Descripción: Revisa si un día está en el rango.
+  // Entrada: La fecha.
+  // Salida: Sí o no.
+  // Objetivo: Pintar el rango.
   const enRango = (f) => sel.desde && f >= sel.desde && f <= hasta && !ausentes[f];
   const cuantos = sel.desde ? Math.round((new Date(`${hasta}T12:00:00`) - new Date(`${sel.desde}T12:00:00`)) / 86400000) + 1 : 0;
 
+  // Nombre: enviar
+  // Descripción: Envía la solicitud.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Pedir el libre.
   const enviar = async () => {
     setEstado({ enviando: true, error: '', ok: '' });
     try {
@@ -158,12 +228,22 @@ function PedirLibre({ hoy, dias, ausencias, solicitudes, onListo }) {
 
 // La especialista cancela una cita suya: se escribe el motivo y queda listo el aviso de WhatsApp para la clienta
 const MOTIVOS = ['Una enfermedad', 'Una emergencia familiar', 'Un imprevisto', 'Un problema de transporte'];
+// Nombre: CancelarCita
+// Descripción: Muestra la ventana para cancelar una cita.
+// Entrada: La cita y opciones.
+// Salida: La ventana.
+// Objetivo: Cancelar con aviso.
 function CancelarCita({ c, onCerrar, onListo }) {
   const [motivo, setMotivo] = useState('');
   const [otro, setOtro] = useState('');
   const [tipo, setTipo] = useState('reprogramacion');
   const [estado, setEstado] = useState({ enviando: false, error: '', aviso: null });
   const texto = motivo === 'otro' ? otro : motivo;
+  // Nombre: enviar
+  // Descripción: Confirma la cancelación.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Cancelar la cita.
   const enviar = async (e) => {
     e.preventDefault();
     setEstado({ enviando: true, error: '', aviso: null });
@@ -213,6 +293,11 @@ function CancelarCita({ c, onCerrar, onListo }) {
   );
 }
 
+// Nombre: TarjetaCita
+// Descripción: Muestra una cita.
+// Entrada: La cita y opciones.
+// Salida: La tarjeta.
+// Objetivo: Ver la agenda.
 function TarjetaCita({ c, hoy, onCancelar }) {
   const diseno = [c.forma, c.largo, c.color, c.acabado, c.decoracion !== 'Ninguna' ? c.decoracion : null].filter(Boolean);
   return (
@@ -240,6 +325,11 @@ function TarjetaCita({ c, hoy, onCancelar }) {
   );
 }
 
+// Nombre: Panel
+// Descripción: Muestra el portal de la especialista.
+// Entrada: Sus datos y opciones.
+// Salida: El portal.
+// Objetivo: Ver solo lo suyo.
 function Panel({ d, onSalir, onRecargar }) {
   const [pestana, setPestana] = useState('citas');
   const [cancelando, setCancelando] = useState(null);
@@ -248,6 +338,11 @@ function Panel({ d, onSalir, onRecargar }) {
   const p = d.perfil;
   const ausencias = useMemo(() => Object.fromEntries(d.ausencias.map((a) => [a.fecha, a])), [d]);
   const porDia = useMemo(() => d.proximas.reduce((m, c) => ({ ...m, [c.fecha]: [...(m[c.fecha] || []), c] }), {}), [d]);
+  // Nombre: trabaja
+  // Descripción: Revisa si trabaja ese día.
+  // Entrada: La fecha.
+  // Salida: Sí o no.
+  // Objetivo: Mostrar su semana.
   const trabaja = (f) => p.dias.split(',').includes(String(new Date(`${f}T12:00:00`).getDay() || 7));
   const dias14 = Array.from({ length: 14 }, (_, i) => sumar(d.hoy, i));
   const deHoy = porDia[d.hoy] || [];
@@ -439,12 +534,27 @@ function Panel({ d, onSalir, onRecargar }) {
   );
 }
 
+// Nombre: PortalEquipo
+// Descripción: Muestra el portal del equipo.
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Que cada especialista vea lo suyo.
 export default function PortalEquipo() {
   useTitulo('Acceso del equipo');
   const [datos, setDatos] = useState(null);
   const [estado, setEstado] = useState(sesionEquipo.obtener() ? 'cargando' : 'fuera');
+  // Nombre: cargar
+  // Descripción: Carga los datos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Llenar el portal.
   const cargar = () => api.equipo.yo().then((d) => { setDatos(d); setEstado('dentro'); }).catch(() => { sesionEquipo.cerrar(); setEstado('fuera'); });
   useEffect(() => { if (estado === 'cargando') cargar(); }, []);
+  // Nombre: salir
+  // Descripción: Sale del portal.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Cerrar sesión.
   const salir = async () => { await api.equipo.salir(); sesionEquipo.cerrar(); setDatos(null); setEstado('fuera'); };
 
   return (

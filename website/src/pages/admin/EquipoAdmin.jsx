@@ -9,11 +9,26 @@ import { AvatarSofi, avisarFotoAsistente } from '../../components/ChatAsistente.
 import AjustesEspecialista from './AjustesEspecialista.jsx';
 
 // Foto de la asistente del chat (Sofi)
+// Nombre: FotoAsistente
+// Descripción: Muestra la foto de la asistente virtual.
+// Entrada: Qué hacer al avisar.
+// Salida: La sección.
+// Objetivo: Cambiar su cara.
 function FotoAsistente({ onAviso }) {
+  // Nombre: subir
+  // Descripción: Sube la foto.
+  // Entrada: El archivo.
+  // Salida: Nada.
+  // Objetivo: Cambiarla.
   const subir = async (archivo) => {
     try { const r = await api.admin.fotoAsistente(formData(archivo)); avisarFotoAsistente(r.foto); onAviso({ texto: 'Listo: la foto nueva ya sale en el chat.' }); }
     catch (e) { onAviso({ texto: e.message, error: true }); }
   };
+  // Nombre: quitar
+  // Descripción: Quita la foto.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Volver al dibujo.
   const quitar = async () => {
     try { await api.admin.quitarFotoAsistente(); avisarFotoAsistente(null); onAviso({ texto: 'Se quitó la foto subida; el chat vuelve a la foto de config.js.' }); }
     catch (e) { onAviso({ texto: e.message, error: true }); }
@@ -34,17 +49,42 @@ function FotoAsistente({ onAviso }) {
 }
 
 const VACIA = { nombre: '', especialidad: '', bio: '', experiencia: '', dias: '1,2,3,4,5', hora_inicio: '09:00', hora_fin: '17:30', activa: 1 };
+// Nombre: textoDias
+// Descripción: Escribe los días de trabajo.
+// Entrada: Los días.
+// Salida: El texto.
+// Objetivo: Leer fácil.
 const textoDias = (dias = '') => DIAS_SEMANA.filter(([k]) => dias.split(',').includes(k)).map(([, t]) => t).join(' · ');
 
+// Nombre: Editor
+// Descripción: Muestra el formulario de una especialista.
+// Entrada: La persona y opciones.
+// Salida: El formulario.
+// Objetivo: Editar sus datos.
 export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
   const nueva = !persona.id;
   const [d, setD] = useState({ ...VACIA, ...persona, bio: persona.bio ?? '', experiencia: persona.experiencia ?? '' });
   const [archivo, setArchivo] = useState([]);
   const [estado, setEstado] = useState({ guardando: false, error: '' });
+  // Nombre: set
+  // Descripción: Guarda lo que se escribe en un campo.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Llenar el formulario.
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
   const dias = d.dias.split(',').filter(Boolean);
+  // Nombre: alternarDia
+  // Descripción: Marca o desmarca un día de trabajo.
+  // Entrada: El día.
+  // Salida: Nada.
+  // Objetivo: Elegir sus días.
   const alternarDia = (k) => setD({ ...d, dias: (dias.includes(k) ? dias.filter((x) => x !== k) : [...dias, k]).sort().join(',') });
 
+  // Nombre: guardar
+  // Descripción: Guarda la especialista.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Crear o editar.
   async function guardar(e) {
     e.preventDefault();
     setEstado({ guardando: true, error: '' });
@@ -106,14 +146,29 @@ export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
   return <Modal titulo={nueva ? 'Agregar especialista' : `Editar a ${persona.nombre}`} onCerrar={onCerrar} ancho>{formulario}</Modal>;
 }
 
+// Nombre: EquipoAdmin
+// Descripción: Muestra el equipo en el panel.
+// Entrada: Nada.
+// Salida: La sección.
+// Objetivo: Administrar el equipo.
 export default function EquipoAdmin() {
   const [lista, setLista] = useState([]);
   const [editando, setEditando] = useState(null);
   const [ajustes, setAjustes] = useState(null);
   const [aviso, setAviso] = useState({ texto: '', error: false });
+  // Nombre: cargar
+  // Descripción: Carga el equipo.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar la lista.
   const cargar = () => api.admin.equipo().then(setLista).catch((e) => setAviso({ texto: e.message, error: true }));
   useEffect(() => { cargar(); }, []);
 
+  // Nombre: quitar
+  // Descripción: Quita una especialista.
+  // Entrada: La especialista.
+  // Salida: Nada.
+  // Objetivo: Sacarla del equipo.
   const quitar = async (e) => {
     if (!window.confirm(`¿Quitar a ${e.nombre} del equipo?`)) return;
     try {

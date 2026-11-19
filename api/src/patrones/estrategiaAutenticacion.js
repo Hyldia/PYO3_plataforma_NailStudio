@@ -5,13 +5,28 @@
 // Las contraseñas se guardan con scrypt + sal (nunca en texto plano).
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 
+// Nombre: error
+// Descripción: Crea un error con mensaje y código.
+// Entrada: El mensaje y el código.
+// Salida: El error.
+// Objetivo: Avisar problemas claros.
 const error = (mensaje, status = 400) => Object.assign(new Error(mensaje), { status });
 
 export const Contrasenas = {
+  // Nombre: crear
+  // Descripción: Cifra una contraseña.
+  // Entrada: La contraseña.
+  // Salida: La contraseña cifrada.
+  // Objetivo: No guardarla en texto.
   crear(texto) {
     const sal = randomBytes(16).toString('hex');
     return `${sal}:${scryptSync(texto, sal, 64).toString('hex')}`;
   },
+  // Nombre: verificar
+  // Descripción: Revisa una contraseña contra la guardada.
+  // Entrada: El texto y lo guardado.
+  // Salida: Sí o no.
+  // Objetivo: Iniciar sesión.
   verificar(texto, guardado = '') {
     const [sal, hash] = guardado.split(':');
     if (!sal || !hash) return false;
@@ -20,13 +35,33 @@ export const Contrasenas = {
     return a.length === b.length && timingSafeEqual(a, b);
   }
 };
+// Nombre: hashToken
+// Descripción: Cifra un permiso.
+// Entrada: El permiso.
+// Salida: El permiso cifrado.
+// Objetivo: Guardar sesiones seguras.
 export const hashToken = (t) => createHash('sha256').update(t).digest('hex');
+// Nombre: nuevoToken
+// Descripción: Crea un permiso nuevo al azar.
+// Entrada: Nada.
+// Salida: El permiso.
+// Objetivo: Abrir sesiones.
 export const nuevoToken = () => randomBytes(32).toString('base64url');
 
 class EstrategiaFormulario {
   nombre = 'formulario';
+  // Nombre: disponible
+  // Descripción: Dice si este método está disponible.
+  // Entrada: Nada.
+  // Salida: Sí.
+  // Objetivo: Elegir cómo entrar.
   disponible() { return true; }
   // La verificación de la contraseña la hace el controlador con el usuario guardado
+  // Nombre: autenticar
+  // Descripción: Entra con correo y contraseña.
+  // Entrada: Correo y contraseña.
+  // Salida: La clienta o un error.
+  // Objetivo: Iniciar sesión.
   async autenticar({ correo, contrasena }) {
     if (!/^\S+@\S+\.\S+$/.test(correo || '')) throw error('Escribe un correo válido.');
     if (!contrasena) throw error('Escribe tu contraseña.');
@@ -37,8 +72,18 @@ class EstrategiaFormulario {
 class EstrategiaGoogle {
   nombre = 'google';
   clientId = process.env.GOOGLE_CLIENT_ID || null;
+  // Nombre: disponible
+  // Descripción: Dice si Google está configurado.
+  // Entrada: Nada.
+  // Salida: Sí o no.
+  // Objetivo: Mostrar el botón de Google.
   disponible() { return Boolean(this.clientId); }
   // El navegador entrega el "credential" (un JWT firmado por Google); Google lo valida aquí
+  // Nombre: autenticar
+  // Descripción: Entra con la cuenta de Google.
+  // Entrada: El dato que manda Google.
+  // Salida: La clienta o un error.
+  // Objetivo: Iniciar sesión con Google.
   async autenticar({ credential }) {
     if (!this.disponible()) throw error('El inicio con Google no está configurado (falta GOOGLE_CLIENT_ID).', 503);
     if (!credential) throw error('Falta la respuesta de Google.');
@@ -54,8 +99,18 @@ class EstrategiaFacebook {
   nombre = 'facebook';
   appId = process.env.FACEBOOK_APP_ID || null;
   secreto = process.env.FACEBOOK_APP_SECRET || null;
+  // Nombre: disponible
+  // Descripción: Dice si Facebook está configurado.
+  // Entrada: Nada.
+  // Salida: Sí o no.
+  // Objetivo: Mostrar el botón de Facebook.
   disponible() { return Boolean(this.appId && this.secreto); }
   // El navegador entrega el accessToken; se confirma que sea de nuestra app y se piden nombre y correo
+  // Nombre: autenticar
+  // Descripción: Entra con la cuenta de Facebook.
+  // Entrada: El dato que manda Facebook.
+  // Salida: La clienta o un error.
+  // Objetivo: Iniciar sesión con Facebook.
   async autenticar({ accessToken }) {
     if (!this.disponible()) throw error('El inicio con Facebook no está configurado (faltan FACEBOOK_APP_ID y FACEBOOK_APP_SECRET).', 503);
     if (!accessToken) throw error('Falta la respuesta de Facebook.');
@@ -69,11 +124,21 @@ class EstrategiaFacebook {
 }
 
 const ESTRATEGIAS = { formulario: new EstrategiaFormulario(), google: new EstrategiaGoogle(), facebook: new EstrategiaFacebook() };
+// Nombre: crearEstrategia
+// Descripción: Elige cómo iniciar sesión.
+// Entrada: El nombre del método.
+// Salida: El método elegido.
+// Objetivo: Cambiar de forma fácil (Strategy).
 export function crearEstrategia(nombre) {
   const e = ESTRATEGIAS[nombre];
   if (!e) throw error('Forma de inicio de sesión desconocida.');
   return e;
 }
+// Nombre: configuracionPublica
+// Descripción: Dice qué formas de entrar hay.
+// Entrada: Nada.
+// Salida: Los métodos activos.
+// Objetivo: Mostrar los botones correctos.
 export const configuracionPublica = () => ({
   google: ESTRATEGIAS.google.disponible() ? ESTRATEGIAS.google.clientId : null,
   facebook: ESTRATEGIAS.facebook.disponible() ? ESTRATEGIAS.facebook.appId : null

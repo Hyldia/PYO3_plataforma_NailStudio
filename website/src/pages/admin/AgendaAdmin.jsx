@@ -13,10 +13,20 @@ const NIVEL = { libre: 'Libre', medio: 'Con citas', casi: 'Casi lleno', lleno: '
 const CABECERA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const HORAS_SALON = ['09:00', '10:00', '11:00', '12:00', '13:30', '14:30', '15:30', '16:30', '17:30'];
 
+// Nombre: Calendario
+// Descripción: Muestra el calendario del mes.
+// Entrada: Mes, días y elegido.
+// Salida: El calendario.
+// Objetivo: Elegir un día.
 function Calendario({ mes, dias, elegido, onElegir, onMes }) {
   const [a, m] = mes.split('-').map(Number);
   const vacios = (new Date(a, m - 1, 1).getDay() + 6) % 7;
   const hoy = isoLocal(new Date());
+  // Nombre: mover
+  // Descripción: Cambia de mes.
+  // Entrada: Cuántos meses.
+  // Salida: Nada.
+  // Objetivo: Ver otro mes.
   const mover = (d) => { const f = new Date(a, m - 1 + d, 1); onMes(`${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}`); };
   return (
     <div className="cal">
@@ -50,13 +60,28 @@ function Calendario({ mes, dias, elegido, onElegir, onMes }) {
   );
 }
 
+// Nombre: VentanaCancelar
+// Descripción: Muestra la ventana para cancelar o mover una cita.
+// Entrada: La cita y opciones.
+// Salida: La ventana.
+// Objetivo: Cancelar con aviso.
 function VentanaCancelar({ cita, especialistas, fecha, onCerrar, onListo }) {
   const emergencia = !cita;
   const [datos, setDatos] = useState({ motivo: '', tipo: 'cancelacion', nuevaFecha: '', nuevaHora: '', nota: '', especialistaId: '' });
   const [estado, setEstado] = useState({ enviando: false, error: '' });
   const [mensajes, setMensajes] = useState(null);
+  // Nombre: set
+  // Descripción: Guarda lo que se escribe en un campo.
+  // Entrada: El nombre del campo.
+  // Salida: Una función para el campo.
+  // Objetivo: Llenar el formulario.
   const set = (k) => (e) => setDatos({ ...datos, [k]: e.target.value });
 
+  // Nombre: confirmar
+  // Descripción: Confirma la cancelación.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Cancelar la cita.
   async function confirmar(e) {
     e.preventDefault();
     if (datos.motivo.trim().length < 3) return setEstado({ enviando: false, error: 'Escribe el motivo: se le explica a la clienta en el mensaje.' });
@@ -121,6 +146,11 @@ function VentanaCancelar({ cita, especialistas, fecha, onCerrar, onListo }) {
   );
 }
 
+// Nombre: VentanaMensaje
+// Descripción: Muestra la ventana para enviar un mensaje.
+// Entrada: La cita y los tipos.
+// Salida: La ventana.
+// Objetivo: Avisar a la clienta.
 function VentanaMensaje({ cita, tipos, onCerrar }) {
   const [tipo, setTipo] = useState('recordatorio');
   const [mensaje, setMensaje] = useState(null);
@@ -139,6 +169,11 @@ function VentanaMensaje({ cita, tipos, onCerrar }) {
   );
 }
 
+// Nombre: AgendaAdmin
+// Descripción: Muestra la agenda del panel.
+// Entrada: Nada.
+// Salida: La agenda.
+// Objetivo: Ver y manejar citas.
 export default function AgendaAdmin() {
   const [mes, setMes] = useState(isoLocal(new Date()).slice(0, 7));
   const [dias, setDias] = useState([]);
@@ -153,15 +188,45 @@ export default function AgendaAdmin() {
   const [historial, setHistorial] = useState([]);
   const [error, setError] = useState('');
 
+  // Nombre: cargarMes
+  // Descripción: Carga el mes.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Pintar el calendario.
   const cargarMes = () => api.admin.calendario(mes).then((r) => setDias(r.dias)).catch((e) => setError(e.message));
+  // Nombre: cargarDia
+  // Descripción: Carga las citas del día.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ver la lista.
   const cargarDia = () => api.admin.citas(fecha).then(setCitas).catch((e) => setError(e.message));
+  // Nombre: cargarHistorial
+  // Descripción: Carga los mensajes.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ver el historial.
   const cargarHistorial = () => api.admin.mensajes().then(setHistorial).catch(() => {});
   useEffect(() => { cargarMes(); }, [mes]);
   useEffect(() => { cargarDia(); }, [fecha]);
   useEffect(() => { api.especialistas().then(setEspecialistas).catch(() => {}); api.admin.tiposMensaje().then(setTipos).catch(() => {}); cargarHistorial(); }, []);
 
+  // Nombre: recargar
+  // Descripción: Vuelve a cargar todo.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Tener datos al día.
   const recargar = () => { cargarMes(); cargarDia(); cargarHistorial(); };
+  // Nombre: cambiar
+  // Descripción: Cambia el estado de una cita.
+  // Entrada: Número y acción.
+  // Salida: Nada.
+  // Objetivo: Confirmar o completar.
   const cambiar = async (id, accion) => { try { await api.admin.estadoCita(id, accion); recargar(); } catch (e) { setError(e.message); } };
+  // Nombre: elegirDia
+  // Descripción: Elige un día.
+  // Entrada: La fecha.
+  // Salida: Nada.
+  // Objetivo: Ver sus citas.
   const elegirDia = (f) => { setFecha(f); if (f.slice(0, 7) !== mes) setMes(f.slice(0, 7)); };
 
   const dia = dias.find((d) => d.fecha === fecha);

@@ -8,14 +8,34 @@ import Modal from './Modal.jsx';
 const CLAVE = 'ahnails-accesibilidad';
 const INICIAL = { gris: false, oscuro: false, sencillo: false, pausa: false, lector: false, zoom: 1 };
 const ZOOMS = [1, 1.1, 1.25, 1.4, 1.6];
+// Nombre: leer
+// Descripción: Lee las preferencias de accesibilidad guardadas.
+// Entrada: Nada.
+// Salida: Las preferencias.
+// Objetivo: Recordar lo que eligió.
 const leer = () => { try { return { ...INICIAL, ...JSON.parse(localStorage.getItem(CLAVE)) }; } catch { return INICIAL; } };
 
 // ---------- Voz ----------
+// Nombre: hayVoz
+// Descripción: Revisa si el navegador puede hablar.
+// Entrada: Nada.
+// Salida: Sí o no.
+// Objetivo: Usar la lectura en voz alta.
 const hayVoz = () => typeof window !== 'undefined' && 'speechSynthesis' in window;
+// Nombre: vozEspanol
+// Descripción: Busca una voz en español.
+// Entrada: Nada.
+// Salida: La voz o nada.
+// Objetivo: Leer en español.
 function vozEspanol() {
   const voces = window.speechSynthesis.getVoices();
   return ['es-CR', 'es-MX', 'es-US', 'es-419', 'es-ES'].map((l) => voces.find((v) => v.lang === l)).find(Boolean) || voces.find((v) => v.lang?.startsWith('es')) || null;
 }
+// Nombre: hablar
+// Descripción: Lee un texto en voz alta.
+// Entrada: El texto.
+// Salida: Nada.
+// Objetivo: Ayudar a quien no puede leer.
 export function hablar(texto, { alTerminar } = {}) {
   if (!hayVoz() || !texto) return;
   window.speechSynthesis.cancel();
@@ -29,6 +49,11 @@ export function hablar(texto, { alTerminar } = {}) {
     window.speechSynthesis.speak(u);
   });
 }
+// Nombre: callar
+// Descripción: Detiene la lectura en voz alta.
+// Entrada: Nada.
+// Salida: Nada.
+// Objetivo: Callar la voz.
 export const callar = () => hayVoz() && window.speechSynthesis.cancel();
 
 // ---------- Guía para el modo sencillo ----------
@@ -54,6 +79,11 @@ const PISTAS = {
   '/disena': 'Aquí puede diseñar sus uñas eligiendo colores, uña por uña.'
 };
 
+// Nombre: Guia
+// Descripción: Muestra la guía de uso.
+// Entrada: Qué hacer al cerrar.
+// Salida: La ventana de ayuda.
+// Objetivo: Explicar cómo usar el sitio.
 function Guia({ onCerrar }) {
   const [elegida, setElegida] = useState(null);
   const irA = useNavigate();
@@ -83,8 +113,18 @@ function Guia({ onCerrar }) {
   );
 }
 
+// Nombre: Icono
+// Descripción: Dibuja un ícono.
+// Entrada: El trazo del dibujo.
+// Salida: El ícono.
+// Objetivo: Botones claros.
 const Icono = ({ d }) => <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{d}</svg>;
 
+// Nombre: Accesibilidad
+// Descripción: Muestra el menú de accesibilidad.
+// Entrada: Nada.
+// Salida: El botón y el menú.
+// Objetivo: Que todas puedan usar el sitio.
 export default function Accesibilidad() {
   const [pref, setPref] = useState(leer);
   const [abierto, setAbierto] = useState(false);
@@ -111,6 +151,11 @@ export default function Accesibilidad() {
     if (!pref.lector) return undefined;
     let t;
     const SELECTOR = 'h1, h2, h3, h4, p, li, a, button, label, td, th, dt, dd, figcaption, [aria-label]';
+    // Nombre: leerElemento
+    // Descripción: Lee en voz alta lo que se toca.
+    // Entrada: El evento del clic.
+    // Salida: Nada.
+    // Objetivo: Ayudar a personas con poca vista.
     const leerElemento = (e) => {
       const el = e.target.closest?.(SELECTOR);
       if (!el || el === ultimo.current || el.closest('.a11y')) return;
@@ -130,12 +175,27 @@ export default function Accesibilidad() {
   useEffect(() => { callar(); setLeyendo(false); }, [pathname]);
   if (pathname.startsWith('/admin')) return null;
 
+  // Nombre: cambiar
+  // Descripción: Enciende o apaga una opción.
+  // Entrada: La opción.
+  // Salida: Nada.
+  // Objetivo: Cambiar preferencias.
   const cambiar = (k) => setPref((p) => ({ ...p, [k]: !p[k] }));
   const zoomIdx = ZOOMS.indexOf(pref.zoom) === -1 ? 0 : ZOOMS.indexOf(pref.zoom);
+  // Nombre: leerPagina
+  // Descripción: Lee toda la página en voz alta.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Ayudar a quien no puede leer.
   const leerPagina = () => {
     if (leyendo) { callar(); setLeyendo(false); return; }
     const main = document.querySelector('main') || document.body;
     setLeyendo(true);
+    // Nombre: alTerminar
+    // Descripción: Avisa que terminó de leer.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Cambiar el botón a "leer".
     hablar(main.innerText, { alTerminar: () => setLeyendo(false) });
   };
   const activos = ['gris', 'oscuro', 'sencillo', 'pausa', 'lector'].filter((k) => pref[k]).length + (pref.zoom !== 1 ? 1 : 0);

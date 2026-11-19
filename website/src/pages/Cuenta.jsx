@@ -12,6 +12,11 @@ import Migas from '../components/Migas.jsx';
 const ESTADO = { recibido: 'Recibido', listo: 'Listo', completado: 'Completado', cancelado: 'Cancelado', pendiente: 'Pendiente', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada' };
 const PROVEEDOR = { google: 'Google', facebook: 'Facebook', formulario: 'correo y contraseña' };
 
+// Nombre: Cuenta
+// Descripción: Muestra la página "Mi cuenta".
+// Entrada: Nada.
+// Salida: La página.
+// Objetivo: Ver datos e historial.
 export default function Cuenta() {
   useTitulo('Mi cuenta');
   const sesion = useUsuario();
@@ -48,6 +53,11 @@ export default function Cuenta() {
     );
   }
 
+  // Nombre: guardar
+  // Descripción: Guarda los datos de la cuenta.
+  // Entrada: El envío.
+  // Salida: Nada.
+  // Objetivo: Editar perfil.
   const guardar = async (e) => {
     e.preventDefault();
     try { sesion.actualizarUsuario(await api.cuenta.actualizar(datos)); setAviso({ texto: 'Datos guardados.' }); } catch (err) { setAviso({ texto: err.message, error: true }); }

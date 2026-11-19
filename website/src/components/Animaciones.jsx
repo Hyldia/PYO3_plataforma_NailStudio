@@ -10,9 +10,24 @@ import { useLocation } from 'react-router-dom';
 // invisibles hasta recargar. Ahora: se vuelven a observar, al salir de la página se muestran
 // todas, y por si acaso a los 2 segundos se muestra cualquier cosa que siga escondida.
 const SELECTOR = '.tarjeta-producto, .servicio, .cupon, .mosaico > li, .bloque-ofertas__cabeza, .confianza, .categoria-circulo, .pasos li, .servicios-ayuda, .caja, .tarjeta-diseno';
+// Nombre: mostrar
+// Descripción: Hace aparecer un elemento.
+// Entrada: El elemento.
+// Salida: Nada.
+// Objetivo: Animar al bajar en la página.
 const mostrar = (el) => el.classList.add('aparece--visible');
+// Nombre: mostrarTodo
+// Descripción: Muestra todo lo que falta aparecer.
+// Entrada: Nada.
+// Salida: Nada.
+// Objetivo: No dejar cosas escondidas.
 const mostrarTodo = () => document.querySelectorAll('.aparece:not(.aparece--visible)').forEach(mostrar);
 
+// Nombre: Animaciones
+// Descripción: Activa las animaciones al bajar.
+// Entrada: Nada.
+// Salida: Nada.
+// Objetivo: Que la página se vea viva.
 export default function Animaciones() {
   const { pathname } = useLocation();
 
@@ -25,6 +40,11 @@ export default function Animaciones() {
       });
     }, { rootMargin: '0px 0px -40px 0px', threshold: 0.01 });
 
+    // Nombre: preparar
+    // Descripción: Prepara los elementos para animarlos.
+    // Entrada: La parte de la página.
+    // Salida: Nada.
+    // Objetivo: Animar lo nuevo.
     const preparar = (raiz) => {
       raiz.querySelectorAll?.(SELECTOR).forEach((el) => {
         if (el.classList.contains('aparece--visible')) return;
