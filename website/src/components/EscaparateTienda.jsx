@@ -102,7 +102,7 @@ function Categorias({ categorias, muestras }) {
   return (
     <section className="cat-circulos" aria-labelledby="t-cat-circ">
       <h2 id="t-cat-circ" className="fila-titulo">Compra por categoría</h2>
-      <ul>
+      <ul style={{ '--columnas': categorias.length <= 10 ? categorias.length : Math.ceil(categorias.length / 2), '--columnas-movil': [4, 3, 5].find((columnas) => categorias.length % columnas === 0) || 4 }}>
         {categorias.map((c, n) => (
           <li key={c.valor} style={{ '--n': n }}>
             <Link to={`/tienda?categoria=${encodeURIComponent(c.valor)}`} className="cat-circulos__enlace">
