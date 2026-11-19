@@ -535,9 +535,9 @@ main { outline: none; min-height: 60vh; }
 .encabezado .menu a:hover { background: rgba(255, 255, 255, 0.12); }
 .encabezado .menu a.active { color: #FFD6E4; text-decoration: underline; text-underline-offset: 6px; }
 .menu__solo-movil { display: none; }
-.encabezado__buscador { display: flex; align-items: center; background: var(--papel); border-radius: 999px; padding: 4px 4px 4px 20px; min-width: 0; }
-.encabezado__buscador input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 1rem; min-height: 42px; color: var(--tinta); }
-.encabezado__buscador button { width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--fondo-oscuro); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+.encabezado__buscador { max-width: 520px; width: 100%; justify-self: center; display: flex; align-items: center; background: var(--papel); border-radius: 999px; padding: 3px 3px 3px 16px; min-width: 0; }
+.encabezado__buscador input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 0.92rem; min-height: 38px; color: var(--tinta); }
+.encabezado__buscador button { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--fondo-oscuro); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
 .encabezado__buscador:focus-within { outline: 3px solid #FFD6E4; outline-offset: 2px; }
 .encabezado__acciones { display: flex; align-items: center; gap: 6px; }
 .encabezado__reservar, .encabezado__ayuda { display: flex; align-items: center; gap: 8px; color: #fff; text-decoration: none; font-weight: 700; padding: 8px 10px; border-radius: 10px; line-height: 1.1; }
