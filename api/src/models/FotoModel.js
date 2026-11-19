@@ -1,5 +1,9 @@
 // MODELO: fotos de la galería, con búsqueda y filtros combinables.
 import { getDb } from '../db/conexion.js';
+import { ServicioModel } from './ServicioModel.js';
+import { ProductoModel } from './ProductoModel.js';
+
+const PRESSON = 'Press-on personalizado con tu diseño';
 
 export const CAMPOS_FILTRABLES = ['categoria', 'forma', 'color', 'acabado'];
 const ORDEN = {
@@ -152,5 +156,31 @@ export const FotoModel = {
     precio: b.precio === '' || b.precio == null || !(Number(b.precio) > 0) ? null : Math.round(Number(b.precio)),
     etiquetas: b.etiquetas || null,
     destacada: b.destacada === 'true' || b.destacada === true ? 1 : 0
-  })
+  }),
+
+  // Nombre: conPrecios
+  // Descripción: Agrega a cada diseño su precio en el salón y en press-on.
+  // Entrada: La lista de diseños.
+  // Salida: Los diseños con sus precios.
+  // Objetivo: Que cada foto diga cuánto cuesta.
+  conPrecios(fotos) {
+    const presson = ProductoModel.buscarPorNombre(PRESSON);
+    return fotos.map((f) => {
+      const sv = ServicioModel.sugeridoParaDiseno(f);
+      return { ...f, servicio_id: sv?.id ?? null, precio_salon: f.precio ?? sv?.precio ?? null, precio_presson: presson?.precio ?? null, presson_anterior: presson?.precio_anterior ?? null };
+    });
+  },
+
+  // Nombre: detalleConPrecios
+  // Descripción: Arma el detalle de un diseño con su servicio y su press-on.
+  // Entrada: El número del diseño.
+  // Salida: El diseño completo o nada.
+  // Objetivo: Llenar la página del diseño.
+  detalleConPrecios(id) {
+    const foto = this.conPuesto(id);
+    if (!foto) return null;
+    const presson = ProductoModel.buscarPorNombre(PRESSON);
+    const sv = ServicioModel.sugeridoParaDiseno(foto);
+    return { ...foto, servicio: sv && { ...sv, precio: foto.precio ?? sv.precio }, presson: presson && { id: presson.id, precio: presson.precio, precio_anterior: presson.precio_anterior, stock: presson.stock } };
+  }
 };

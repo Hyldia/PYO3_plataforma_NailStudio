@@ -86,3 +86,10 @@ function migrar(db) {
            UPDATE pedidos SET estado = 'listo' WHERE estado = 'listo para retirar';`);
   if (!colProd.includes('imagen_autor_url')) db.exec('ALTER TABLE productos ADD COLUMN imagen_autor_url TEXT');
 }
+
+// Nombre: enTransaccion
+// Descripción: Hace varios pasos en la base de datos como uno solo: o se guardan todos o ninguno.
+// Entrada: Una función con los pasos.
+// Salida: Lo que devuelva esa función.
+// Objetivo: Que un pedido con citas nunca quede a medias (los controladores no tocan SQL).
+export const enTransaccion = (pasos) => getDb().transaction(pasos)();

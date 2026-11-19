@@ -1,8 +1,6 @@
 // CONTROLADOR: servicios del salón desde el panel (ver, agregar, modificar, cambiar foto y quitar).
-import { unlink } from 'node:fs/promises';
-import { join } from 'node:path';
-import { UPLOADS_DIR } from '../db/conexion.js';
 import { ServicioModel, CATEGORIAS_SERVICIO } from '../models/ServicioModel.js';
+import { borrarSubida } from '../middleware/subidas.js';
 
 export const servicioAdminController = {
   // Nombre: listar
@@ -44,7 +42,7 @@ export const servicioAdminController = {
   cambiarImagen(req, res) {
     const s = ServicioModel.buscarCualquiera(req.params.id);
     if (!s || !req.file) return res.status(400).json({ error: 'Servicio o imagen no válidos.' });
-    if (s.imagen && !s.imagen.startsWith('http')) unlink(join(UPLOADS_DIR, s.imagen)).catch(() => {});
+    borrarSubida(s.imagen);
     ServicioModel.cambiarImagen(s.id, req.file.filename);
     res.json(ServicioModel.buscarCualquiera(s.id));
   },

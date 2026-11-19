@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { SALON, campanaActual, dinero } from '../config.js';
-import { useTitulo } from '../lib/hooks.js';
+import { useTitulo, usePorPagina } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
 import VerMas from '../components/VerMas.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
@@ -10,6 +10,7 @@ import ProductoImagen from '../components/ProductoImagen.jsx';
 import CuentaRegresiva from '../components/CuentaRegresiva.jsx';
 import Decoracion from '../components/Decoracion.jsx';
 import { CATEGORIAS, claveCategoria } from '../lib/categoriasPortada.js';
+import CarruselAuto from '../components/CarruselAuto.jsx';
 
 
 // Nombre: Flecha
@@ -18,7 +19,7 @@ import { CATEGORIAS, claveCategoria } from '../lib/categoriasPortada.js';
 // Salida: La flecha.
 // Objetivo: Botones.
 const Flecha = () => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>;
-const PRODUCTOS_POR_PAGINA = 10;
+const PRODUCTOS_POR_PAGINA_BASE = 10;
 
 // Nombre: TarjetaServicioMini
 // Descripción: Muestra un servicio pequeño.
@@ -54,6 +55,7 @@ function TarjetaServicioMini({ s }) {
 // Salida: La página.
 // Objetivo: Presentar el salón.
 export default function Inicio() {
+  const [rejilla, PRODUCTOS_POR_PAGINA] = usePorPagina(2, PRODUCTOS_POR_PAGINA_BASE); // filas completas, sin huecos
   useTitulo('');
   const [ofertas, setOfertas] = useState([]);
   const [portadas, setPortadas] = useState({});
@@ -75,6 +77,7 @@ export default function Inicio() {
 
   const serviciosOferta = servicios.filter((s) => s.precio_oferta != null);
   const combos = servicios.filter((s) => s.es_combo);
+  const paraHombres = servicios.filter((s) => s.categoria === 'Hombres');
   // Nombre: agregado
   // Descripción: Avisa que se agregó al carrito.
   // Entrada: El producto.
@@ -190,22 +193,40 @@ export default function Inicio() {
             </h2>
             <Link to="/servicios?ofertas=1" className="enlace-flecha">Ver todos <Flecha /></Link>
           </div>
-          <ul className="inicio-carrusel carrusel-scroll">
+          <CarruselAuto className="inicio-carrusel" etiqueta="Servicios en oferta">
             {serviciosOferta.map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
-          </ul>
+          </CarruselAuto>
         </section>
       )}
 
       {/* Combos */}
+      {/* Para hombres */}
+      {paraHombres.length > 0 && (
+        <section className="contenedor seccion-tienda hombres" aria-labelledby="t-hombres">
+          <div className="hombres__texto">
+            <p className="hombres__ante">Para él</p>
+            <h2 id="t-hombres">Cuidado de uñas y manos para hombres</h2>
+            <p>Uñas limpias y parejas, manos suaves y pies cómodos. Acabado natural, sin brillo, en un espacio tranquilo.</p>
+            <div className="hombres__botones">
+              <Link to="/servicios?categoria=Hombres" className="boton">Ver servicios</Link>
+              <Link to="/tienda?categoria=Para hombres" className="hombres__secundario">Productos para hombres ›</Link>
+            </div>
+          </div>
+          <CarruselAuto className="inicio-carrusel" etiqueta="Servicios para hombres">
+            {paraHombres.map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
+          </CarruselAuto>
+        </section>
+      )}
+
       {combos.length > 0 && (
         <section className="contenedor seccion-tienda" aria-labelledby="t-combos">
           <div className="bloque-ofertas__cabeza">
             <h2 id="t-combos">Combos para consentirte</h2>
             <Link to="/servicios?categoria=Combos" className="enlace-flecha">Ver combos <Flecha /></Link>
           </div>
-          <ul className="inicio-carrusel carrusel-scroll">
+          <CarruselAuto className="inicio-carrusel" etiqueta="Combos">
             {combos.map((s) => <TarjetaServicioMini key={s.id} s={s} />)}
-          </ul>
+          </CarruselAuto>
         </section>
       )}
 
@@ -215,7 +236,7 @@ export default function Inicio() {
           <h2 id="t-vendidos">Lo más vendido en la tienda</h2>
           <Link to="/tienda?orden=vendidos" className="enlace-flecha">Ver la tienda <Flecha /></Link>
         </div>
-        <ul className="productos-rejilla productos-rejilla--grande">
+        <ul ref={rejilla} className="productos-rejilla productos-rejilla--grande">
           {vendidos.map((p) => <TarjetaProducto key={p.id} p={p} onAgregar={agregado} />)}
         </ul>
         <VerMas pagina={paginaVendidos} paginas={Math.ceil(vendidosTodos.length / PRODUCTOS_POR_PAGINA)}
@@ -238,7 +259,7 @@ export default function Inicio() {
             <h2 id="t-galeria">Diseños favoritos de nuestras clientas</h2>
             <Link to="/galeria" className="enlace-flecha">Ver galería <Flecha /></Link>
           </div>
-          <ul className="mosaico inicio-carrusel carrusel-scroll">
+          <CarruselAuto className="mosaico inicio-carrusel" etiqueta="Diseños favoritos">
             {fotos.map((f, i) => (
               <li key={f.id}>
                 <Link to={`/galeria/${f.id}`} className="mosaico__boton">
@@ -247,7 +268,7 @@ export default function Inicio() {
                 </Link>
               </li>
             ))}
-          </ul>
+          </CarruselAuto>
         </section>
       )}
 

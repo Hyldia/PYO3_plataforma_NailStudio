@@ -66,3 +66,42 @@ body.con-modal { overflow: hidden; }
 .editar-foto__campos .casilla { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 560px) { .disena-acento { grid-template-columns: auto auto; } .disena-acento > span:last-child { grid-column: 1 / -1; } .disena-previa__cabeza h2 { font-size: 1.2rem; } }
 .muestra-una, .mano-previa { overflow: hidden; } .disena-pagina, .disena-portada { overflow-x: clip; }
+
+/* ---- Vista previa de producto (diseño profesional) ---- */
+.vista-pro { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: start; }
+.vista-pro__foto { position: relative; aspect-ratio: 1; border-radius: 18px; overflow: hidden; background: #F7EEF1; }
+.vista-pro__foto > .foto, .vista-pro__foto > svg, .vista-pro__foto > div:first-child, .vista-pro__foto img { width: 100%; height: 100%; object-fit: cover; }
+.vista-pro__foto img { transition: transform 0.5s ease; }
+.vista-pro__foto:hover img { transform: scale(1.06); }
+.vista-pro__pct { position: absolute; top: 14px; left: 14px; padding: 5px 12px; border-radius: 999px; background: var(--oferta); color: #fff; font-weight: 800; font-size: 0.9rem; }
+.vista-pro__fav { position: absolute; top: 12px; right: 12px; }
+.vista-pro__info { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding-right: 8px; }
+.vista-pro__ante { margin: 0; color: var(--vino-texto); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.vista-pro__nombre { margin: 0; font-size: clamp(1.4rem, 2.4vw, 1.9rem); line-height: 1.15; }
+.vista-pro__desc { margin: 0; color: var(--gris); line-height: 1.5; }
+.vista-pro__fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.92rem; }
+.vista-pro__estrellas { display: inline-flex; align-items: center; gap: 6px; }
+.vista-pro__ranking { align-self: flex-start; margin: 0; padding: 4px 12px; border-radius: 999px; background: #FFF3D6; color: #7A4B00; font-size: 0.82rem; font-weight: 800; }
+.vista-pro__precio { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; padding-top: 10px; border-top: 1px solid var(--linea); }
+.vista-pro__precio strong { font-size: 2.1rem; line-height: 1; color: var(--tinta); }
+.vista-pro__precio s { color: var(--gris); font-size: 1.05rem; }
+.vista-pro__ahorro { padding: 3px 10px; border-radius: 999px; background: #E6F6EE; color: #1F6B45; font-size: 0.82rem; font-weight: 800; }
+.vista-pro__reloj { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; color: var(--oferta); font-size: 0.88rem; font-weight: 700; }
+.vista-pro__horas { padding: 2px 8px; border-radius: 8px; background: #FDE2EA; font-variant-numeric: tabular-nums; }
+.vista-pro__grupo { border: none; margin: 0; padding: 0; }
+.vista-pro__grupo legend { padding: 0; margin-bottom: 8px; font-size: 0.92rem; }
+.vista-pro__comprar { display: flex; gap: 10px; align-items: stretch; margin-top: 4px; }
+.vista-pro__cantidad { display: inline-flex; align-items: center; border: 1.5px solid var(--linea); border-radius: 999px; background: var(--superficie); }
+.vista-pro__cantidad button { width: 42px; height: 48px; border: none; background: none; font-size: 1.3rem; color: var(--tinta); cursor: pointer; border-radius: 999px; }
+.vista-pro__cantidad button:disabled { color: var(--apagado); cursor: not-allowed; }
+.vista-pro__cantidad output { min-width: 26px; text-align: center; font-weight: 800; }
+.vista-pro__agregar { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; font-size: 1rem; }
+.vista-pro__stock { margin: 0; color: #1F6B45; font-size: 0.88rem; font-weight: 700; }
+.vista-pro__stock--poco { color: #B3261E; }
+.vista-pro__confianza { list-style: none; margin: 4px 0 0; padding: 12px 0 0; border-top: 1px solid var(--linea); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.vista-pro__confianza li { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; color: var(--gris); font-size: 0.78rem; line-height: 1.25; }
+.vista-pro__confianza svg { color: var(--vino); }
+.vista-pro__detalles { align-self: flex-start; color: var(--vino-texto); font-weight: 700; text-decoration: none; }
+.vista-pro__detalles:hover { text-decoration: underline; }
+@media (max-width: 760px) { .vista-pro { grid-template-columns: 1fr; } .vista-pro__foto { aspect-ratio: 4 / 3; } }
+.vista-pro__pct--vino { background: var(--vino); }

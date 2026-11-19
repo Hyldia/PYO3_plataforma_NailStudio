@@ -14,7 +14,7 @@ export const OPCIONES = {
 };
 
 // Recargos sobre el servicio base (en colones). Ajustar a la lista real del salón.
-const PRECIO = {
+export const PRECIO = {
   largo: { Corto: 0, Medio: 2000, Largo: 4000, 'Extra largo': 6000 },
   acabado: { Brillante: 0, Mate: 1000, Chrome: 3000, Glitter: 2000, 'Ojo de gato': 3000, Aurora: 3000, Perlado: 2000 },
   decoracion: { Ninguna: 0, Francesa: 2500, 'Francesa de color': 2500, 'Baby boomer': 3000, 'Ombré': 3000, 'Mármol': 3500, 'Líneas': 2000, Puntos: 1500,

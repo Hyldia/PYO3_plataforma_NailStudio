@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, sesionEquipo } from '../lib/api.js';
-import { useTitulo } from '../lib/hooks.js';
+import { useTitulo, usePorPagina } from '../lib/hooks.js';
 import { SALON, dinero, urlFoto } from '../config.js';
 import Foto from '../components/Foto.jsx';
 import Modal from '../components/Modal.jsx';
@@ -12,7 +12,7 @@ import VerMas from '../components/VerMas.jsx';
 import { fechaLarga, isoLocal, DIAS_SEMANA } from './admin/piezasPanel.jsx';
 
 const CITAS_POR_PAGINA = 4;
-const CLIENTAS_POR_PAGINA = 10;
+const CLIENTAS_POR_PAGINA_BASE = 10;
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ESTADO = { pendiente: 'Por confirmar', confirmada: 'Confirmada', completada: 'Atendida', cancelada: 'Cancelada' };
 const TIPO = { libre: 'Día libre', vacaciones: 'Vacaciones', incapacidad: 'Incapacidad', permiso: 'Permiso' };
@@ -334,6 +334,7 @@ function TarjetaCita({ c, hoy, onCancelar }) {
 // Salida: El portal.
 // Objetivo: Ver solo lo suyo.
 function Panel({ d, onSalir, onRecargar }) {
+  const [rejilla, CLIENTAS_POR_PAGINA] = usePorPagina(2, CLIENTAS_POR_PAGINA_BASE); // filas completas, sin huecos
   const [pestana, setPestana] = useState('citas');
   const [cancelando, setCancelando] = useState(null);
   const [dia, setDia] = useState(d.hoy);
@@ -350,6 +351,11 @@ function Panel({ d, onSalir, onRecargar }) {
   // Objetivo: Mostrar su semana.
   const trabaja = (f) => p.dias.split(',').includes(String(new Date(`${f}T12:00:00`).getDay() || 7));
   const dias14 = Array.from({ length: 14 }, (_, i) => sumar(d.hoy, i));
+  // La agenda muestra 14 días a la vez y se puede avanzar hasta 2 meses
+  const [desde, setDesde] = useState(0);
+  const diasVista = Array.from({ length: 14 }, (_, i) => sumar(d.hoy, desde + i));
+  const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const mesesVista = [...new Set([diasVista[0], diasVista[13]].map((f) => MESES_LARGOS[Number(f.slice(5, 7)) - 1]))].join(' – ');
   const deHoy = porDia[d.hoy] || [];
   const citasDia = porDia[dia] || [];
   const paginasCitas = Math.ceil(citasDia.length / CITAS_POR_PAGINA);
@@ -401,8 +407,20 @@ function Panel({ d, onSalir, onRecargar }) {
 
       {pestana === 'citas' && (
         <section aria-label="Mis citas">
+          <div className="portal-agenda__cabeza">
+            <div className="portal-agenda__mes">
+              <button type="button" className="portal-agenda__flecha" onClick={() => setDesde((n) => Math.max(0, n - 7))} disabled={desde === 0} aria-label="Días anteriores">‹</button>
+              <p><b>{mesesVista[0].toUpperCase() + mesesVista.slice(1)}</b><span>{fechaCorta(diasVista[0])} al {fechaCorta(diasVista[13])}</span></p>
+              <button type="button" className="portal-agenda__flecha" onClick={() => setDesde((n) => Math.min(46, n + 7))} disabled={desde >= 46} aria-label="Días siguientes">›</button>
+              {desde > 0 && <button type="button" className="portal-agenda__hoy" onClick={() => { setDesde(0); setDia(d.hoy); setPaginaCitas(1); }}>Hoy</button>}
+            </div>
+            <Link to={`/reservar?especialista=${p.id}`} className="boton portal-agenda__agendar">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4M12 13v4M10 15h4" /></svg>
+              Agendar una cita
+            </Link>
+          </div>
           <ol className="portal-dias">
-            {dias14.map((f) => {
+            {diasVista.map((f) => {
               const n = porDia[f]?.length || 0;
               const fuera = !trabaja(f) || ausencias[f];
               const dt = new Date(`${f}T12:00:00`);
@@ -436,7 +454,7 @@ function Panel({ d, onSalir, onRecargar }) {
           <label id="portal-clientas-buscar" className="portal-buscar" style={{ scrollMarginTop: '64px' }}><span className="solo-lector">Buscar clienta</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setPaginaClientas(1); }} placeholder="Buscar por nombre o teléfono" /></label>
           {clientas.length === 0 ? <p className="portal-vacio">Aquí aparecen las clientas que ya atendiste.</p> : (
             <>
-              <ul className="portal-clientas">
+              <ul ref={rejilla} className="portal-clientas">
                 {clientasPagina.map((c, i) => (
                   <li key={c.telefono} style={{ '--n': i % CLIENTAS_POR_PAGINA }} className="clienta-tarjeta">
                     {c.visitas >= 3 && <span className="clienta-tarjeta__sello">Frecuente</span>}

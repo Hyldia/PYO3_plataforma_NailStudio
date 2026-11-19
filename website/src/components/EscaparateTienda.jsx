@@ -179,8 +179,11 @@ export default function EscaparateTienda({ categorias, children }) {
   const [muestras, setMuestras] = useState({});
   useEffect(() => {
     if (!categorias.length) return;
-    Promise.all(categorias.map((c) => api.productos({ categoria: c.valor, orden: 'vendidos', limite: 6 }).then((r) => [c.valor, conFotoPrimero(lista(r))[0]]).catch(() => [c.valor, null])))
-      .then((pares) => setMuestras(Object.fromEntries(pares)));
+    // Primero la foto que la dueña eligió en el panel; si no hay, la del producto más vendido
+    Promise.all([
+      api.portadas().catch(() => ({})),
+      ...categorias.map((c) => api.productos({ categoria: c.valor, orden: 'vendidos', limite: 6 }).then((r) => [c.valor, conFotoPrimero(lista(r))[0]]).catch(() => [c.valor, null]))
+    ]).then(([portadas, ...pares]) => setMuestras(Object.fromEntries(pares.map(([k, p]) => [k, portadas[k] ? { ...(p || {}), nombre: k, imagen: portadas[k] } : p]))));
   }, [categorias]);
 
   if (!datos) return <><div className="vitrina vitrina--cargando" aria-hidden="true" />{children}</>;

@@ -2,8 +2,11 @@
 // días libres y pagos de cada quincena (con descarga en Excel). También las gráficas (reportes).
 import ExcelJS from 'exceljs';
 import { EspecialistaModel } from '../models/EspecialistaModel.js';
-import { EquipoModel, quincenaDe, quincenaAnterior, TIPOS_AUSENCIA, hoyIso } from '../models/EquipoModel.js';
-import { getDb } from '../db/conexion.js';
+import { AusenciaModel, TIPOS_AUSENCIA } from '../models/AusenciaModel.js';
+import { NominaModel } from '../models/NominaModel.js';
+import { AccesoEquipoModel } from '../models/AccesoEquipoModel.js';
+import { SolicitudLibreModel } from '../models/SolicitudLibreModel.js';
+import { quincenaDe, quincenaAnterior, hoyIso } from '../lib/fechas.js';
 import { ReporteModel } from '../models/ReporteModel.js';
 import { SALON } from '../patrones/plantillaMensajes.js';
 
@@ -34,9 +37,9 @@ export const equipoAdminController = {
   // Objetivo: Calcular bien su pago.
   guardarConfig(req, res) {
     if (!existe(req, res)) return;
-    const error = EquipoModel.validarConfig(req.body);
+    const error = NominaModel.validarConfig(req.body);
     if (error) return res.status(400).json({ error });
-    EquipoModel.guardarConfig(Number(req.params.id), req.body);
+    NominaModel.guardarConfig(Number(req.params.id), req.body);
     res.json(EspecialistaModel.buscarPorId(req.params.id));
   },
   // Nombre: definirAcceso
@@ -46,7 +49,7 @@ export const equipoAdminController = {
   // Objetivo: Que entre a su propio portal.
   definirAcceso(req, res) {
     if (!existe(req, res)) return;
-    EquipoModel.definirAcceso(Number(req.params.id), req.body);
+    AccesoEquipoModel.definirAcceso(Number(req.params.id), req.body);
     res.json({ ok: true, usuario: String(req.body.usuario).trim().toLowerCase() });
   },
   // Nombre: quitarAcceso
@@ -56,7 +59,7 @@ export const equipoAdminController = {
   // Objetivo: Bloquear su entrada.
   quitarAcceso(req, res) {
     if (!existe(req, res)) return;
-    EquipoModel.quitarAcceso(Number(req.params.id));
+    AccesoEquipoModel.quitarAcceso(Number(req.params.id));
     res.status(204).end();
   },
 
@@ -68,7 +71,7 @@ export const equipoAdminController = {
   // Objetivo: Ver vacaciones y libres.
   ausencias(req, res) {
     if (!existe(req, res)) return;
-    res.json({ ausencias: EquipoModel.ausencias(Number(req.params.id), req.query.desde || '2000-01-01'), tipos: TIPOS_AUSENCIA });
+    res.json({ ausencias: AusenciaModel.ausencias(Number(req.params.id), req.query.desde || '2000-01-01'), tipos: TIPOS_AUSENCIA });
   },
   // Nombre: agregarAusencias
   // Descripción: Agrega días libres a una especialista.
@@ -77,7 +80,7 @@ export const equipoAdminController = {
   // Objetivo: Que no le lleguen citas esos días.
   agregarAusencias(req, res) {
     if (!existe(req, res)) return;
-    const citasAfectadas = EquipoModel.agregarAusencias(Number(req.params.id), req.body);
+    const citasAfectadas = AusenciaModel.agregarAusencias(Number(req.params.id), req.body);
     res.status(201).json({ citasAfectadas });
   },
   // Nombre: borrarAusencia
@@ -86,7 +89,7 @@ export const equipoAdminController = {
   // Salida: Nada.
   // Objetivo: Corregir libres.
   borrarAusencia(req, res) {
-    if (!EquipoModel.borrarAusencia(Number(req.params.id), Number(req.params.ausencia))) return res.status(404).json({ error: 'No encontramos ese día.' });
+    if (!AusenciaModel.borrarAusencia(Number(req.params.id), Number(req.params.ausencia))) return res.status(404).json({ error: 'No encontramos ese día.' });
     res.status(204).end();
   },
 
@@ -97,14 +100,7 @@ export const equipoAdminController = {
   // Salida: La lista de avisos.
   // Objetivo: Que la dueña vea lo pendiente.
   avisos(req, res) {
-    const db = getDb();
-    const hoy = hoyIso();
-    res.json({
-      solicitudes: EquipoModel.solicitudesPendientes(),
-      pedidosNuevos: db.prepare("SELECT COUNT(*) AS n FROM pedidos WHERE estado = 'recibido'").get().n,
-      citasSinMarcar: db.prepare("SELECT COUNT(*) AS n FROM citas WHERE estado IN ('pendiente', 'confirmada') AND fecha < ?").get(hoy).n,
-      citasPorConfirmar: db.prepare("SELECT COUNT(*) AS n FROM citas WHERE estado = 'pendiente' AND fecha >= ?").get(hoy).n
-    });
+    res.json({ solicitudes: SolicitudLibreModel.solicitudesPendientes(), ...ReporteModel.avisosPanel(hoyIso()) });
   },
 
   // ----- Días libres que piden las especialistas -----
@@ -113,7 +109,7 @@ export const equipoAdminController = {
   // Entrada: La solicitud y la respuesta.
   // Salida: La solicitud actualizada.
   // Objetivo: Responder a las especialistas.
-  resolverSolicitud: (req, res) => res.json(EquipoModel.resolverSolicitud(Number(req.params.id), { aprobar: Boolean(req.body.aprobar), respuesta: req.body.respuesta })),
+  resolverSolicitud: (req, res) => res.json(SolicitudLibreModel.resolverSolicitud(Number(req.params.id), { aprobar: Boolean(req.body.aprobar), respuesta: req.body.respuesta })),
 
   // ----- Pagos de la quincena -----
   // Nombre: nomina
@@ -123,7 +119,7 @@ export const equipoAdminController = {
   // Objetivo: Hacer la planilla.
   nomina(req, res) {
     const periodo = periodoDe(req.query);
-    res.json({ periodo, actual: quincenaDe(), anterior: quincenaAnterior(), equipo: EquipoModel.nomina(periodo) });
+    res.json({ periodo, actual: quincenaDe(), anterior: quincenaAnterior(), equipo: NominaModel.nomina(periodo) });
   },
   // Nombre: marcarPagado
   // Descripción: Marca un pago como hecho.
@@ -132,7 +128,7 @@ export const equipoAdminController = {
   // Objetivo: Llevar control de lo pagado.
   marcarPagado(req, res) {
     const periodo = periodoDe(req.body);
-    res.json(EquipoModel.registrarPago(Number(req.params.id), periodo));
+    res.json(NominaModel.registrarPago(Number(req.params.id), periodo));
   },
   // Nombre: marcarAtendidas
   // Descripción: Marca como atendidas las citas pasadas.
@@ -141,7 +137,7 @@ export const equipoAdminController = {
   // Objetivo: Que cuenten para su pago.
   marcarAtendidas(req, res) {
     const periodo = periodoDe(req.body);
-    res.json({ marcadas: EquipoModel.marcarPasadasAtendidas(periodo, req.body.especialistaId ? Number(req.body.especialistaId) : null) });
+    res.json({ marcadas: NominaModel.marcarPasadasAtendidas(periodo, req.body.especialistaId ? Number(req.body.especialistaId) : null) });
   },
   // Nombre: quitarPagado
   // Descripción: Quita la marca de pagado.
@@ -149,7 +145,7 @@ export const equipoAdminController = {
   // Salida: Nada.
   // Objetivo: Corregir un pago marcado por error.
   quitarPagado(req, res) {
-    EquipoModel.quitarPago(Number(req.params.id), periodoDe(req.query));
+    NominaModel.quitarPago(Number(req.params.id), periodoDe(req.query));
     res.status(204).end();
   },
   // Nombre: nominaExcel
@@ -159,7 +155,7 @@ export const equipoAdminController = {
   // Objetivo: Guardar o imprimir la planilla.
   async nominaExcel(req, res) {
     const periodo = periodoDe(req.query);
-    const equipo = EquipoModel.nomina(periodo);
+    const equipo = NominaModel.nomina(periodo);
     const libro = new ExcelJS.Workbook();
     libro.creator = SALON.nombre;
     const hoja = libro.addWorksheet('Pagos del equipo', { views: [{ state: 'frozen', ySplit: 3 }] });

@@ -1,7 +1,9 @@
 // Datos de muestra del equipo: citas de días pasados marcadas como atendidas, algunos días libres
 // y los pagos de las quincenas anteriores, para que «Pagos al equipo» y el portal no salgan en cero.
 // Se hace una sola vez. Se borra con `npm run limpiar`.
-import { EquipoModel, quincenaAnterior, quincenaDe, hoyIso } from '../models/EquipoModel.js';
+import { AusenciaModel } from '../models/AusenciaModel.js';
+import { NominaModel } from '../models/NominaModel.js';
+import { quincenaAnterior, quincenaDe, hoyIso } from '../lib/fechas.js';
 
 // Nombre: sumar
 // Descripción: Suma días a una fecha.
@@ -34,12 +36,12 @@ export function cargarEquipoEjemplo(db) {
       if (!e) return;
       const ini = sumar(hoy, desde);
       db.prepare('DELETE FROM citas WHERE especialista_id = ? AND fecha BETWEEN ? AND ?').run(e.id, ini, sumar(ini, dias - 1));
-      EquipoModel.agregarAusencias(e.id, { desde: ini, hasta: sumar(ini, dias - 1), tipo, motivo });
+      AusenciaModel.agregarAusencias(e.id, { desde: ini, hasta: sumar(ini, dias - 1), tipo, motivo });
     });
 
     // 3. Las dos quincenas anteriores ya están pagadas
     const pasada = quincenaAnterior();
-    [quincenaDe(sumar(pasada.desde, -1)), pasada].forEach((p) => equipo.forEach((e) => EquipoModel.registrarPago(e.id, p)));
+    [quincenaDe(sumar(pasada.desde, -1)), pasada].forEach((p) => equipo.forEach((e) => NominaModel.registrarPago(e.id, p)));
 
     db.prepare("INSERT INTO ajustes (clave, valor) VALUES ('equipo_ejemplo', '1') ON CONFLICT(clave) DO UPDATE SET valor = '1'").run();
   })();

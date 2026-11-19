@@ -64,12 +64,12 @@
 .inicio-carrusel > li { flex: 0 0 clamp(220px, 28vw, 280px); min-width: 0; scroll-snap-align: start; }
 
 /* Compra por categoría: los 9 círculos siempre caben (sin barra para moverse) */
-.categorias__lista { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 10px; overflow: visible; }
+.categorias__lista { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 10px; overflow: visible; }
 .categoria-circulo a { width: auto; }
 .categoria-circulo__imagen { width: min(100%, 104px); }
 .categoria-circulo__nombre { min-height: 2.4em; }
 @media (max-width: 1000px) { .categorias__lista { grid-template-columns: repeat(5, minmax(0, 1fr)); row-gap: 16px; } }
-@media (max-width: 560px) { .categorias__lista { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 6px; } .categoria-circulo__nombre { font-size: 0.74rem; } }
+@media (max-width: 560px) { .categorias__lista { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px 6px; } .categoria-circulo__nombre { font-size: 0.74rem; } }
 
 /* Portada de campaña: la foto llena todo el ancho de la tarjeta (sin franja blanca) */
 .campana__producto > .foto, .campana__producto > svg, .campana__producto > div:not(.campana__etiqueta) { width: 100%; aspect-ratio: auto; height: clamp(110px, 11vw, 150px); justify-self: stretch; }
@@ -93,3 +93,15 @@
 .categoria-circulo a:hover .categoria-circulo__nombre { color: var(--vino-texto); }
 @media (prefers-reduced-motion: reduce) { .categoria-circulo, .categoria-circulo__aro, .categoria-circulo__imagen { animation: none !important; } }
 .categoria-circulo__imagen { display: block; border-radius: 50%; overflow: hidden; }
+
+/* Sección para hombres en el inicio: texto a la izquierda y servicios a la derecha */
+.hombres { display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(0, 2fr); gap: 24px; align-items: center; padding: 28px; border-radius: 24px; background: linear-gradient(135deg, #22262B, #3A3F45 60%, #4B5560); color: #fff; }
+.hombres__ante { margin: 0 0 6px; color: #E8B04B; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.8rem; }
+.hombres h2 { margin: 0 0 10px; color: #fff; font-size: clamp(1.5rem, 2.6vw, 2.1rem); line-height: 1.15; }
+.hombres__texto > p:not(.hombres__ante) { margin: 0 0 16px; color: #D9DEE3; line-height: 1.55; }
+.hombres__botones { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.hombres__botones .boton { background: #E8B04B; color: #22262B; }
+.hombres__secundario { color: #fff; font-weight: 700; text-decoration: none; }
+.hombres__secundario:hover { text-decoration: underline; }
+.hombres .carrusel-auto { min-width: 0; color: var(--tinta); }
+@media (max-width: 900px) { .hombres { grid-template-columns: 1fr; padding: 20px; } }

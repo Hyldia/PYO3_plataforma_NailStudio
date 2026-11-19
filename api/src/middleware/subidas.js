@@ -1,5 +1,6 @@
 import multer from 'multer';
-import { extname } from 'node:path';
+import { extname, join } from 'node:path';
+import { unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { UPLOADS_DIR } from '../db/conexion.js';
 
@@ -26,3 +27,10 @@ export const subirImagen = multer({
     else cb(new Error('Solo se aceptan imágenes JPG, PNG o WebP.'));
   }
 });
+
+// Nombre: borrarSubida
+// Descripción: Borra del disco una foto que se había subido (las de internet no se tocan).
+// Entrada: El nombre del archivo.
+// Salida: Nada.
+// Objetivo: No dejar fotos viejas ocupando espacio (una sola función para todo el sitio).
+export const borrarSubida = (nombre) => nombre && !String(nombre).startsWith('http') && unlink(join(UPLOADS_DIR, nombre)).catch(() => {});

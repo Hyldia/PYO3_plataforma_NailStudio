@@ -11,13 +11,6 @@ const ESTADOS = { pendiente: 'Por confirmar', confirmada: 'Confirmadas', complet
 // Colores de estado: verde = bien, ámbar = falta algo, rojo = se perdió (siempre con su nombre al lado)
 const COLOR_ESTADO = { completada: 'var(--estado-bien)', confirmada: 'var(--serie-2)', pendiente: 'var(--estado-aviso)', cancelada: 'var(--estado-mal)', no_asistio: 'var(--estado-serio)' };
 const SERIES_VENTAS = [{ clave: 'servicios', nombre: 'Servicios del salón', color: colorSerie(1) }, { clave: 'tienda', nombre: 'Tienda', color: colorSerie(2) }];
-const PAGOS = ['SINPE Móvil', 'Tarjeta', 'Pago en el salón'];
-// Nombre: colorPago
-// Descripción: Da el color de cada forma de pago.
-// Entrada: La forma de pago.
-// Salida: El color.
-// Objetivo: Gráficos de colores.
-const colorPago = (m) => colorSerie(PAGOS.includes(m) ? PAGOS.indexOf(m) + 2 : 6);
 
 // Nombre: periodo
 // Descripción: Calcula fechas rápidas del reporte.
@@ -114,15 +107,17 @@ export default function ReportesAdmin() {
 
           <div className="graficas-dos">
             <GraficoBarras tipo="horizontal" titulo="Citas por especialista" descripcion="Citas no canceladas en estas fechas." archivo={archivo('citas-por-especialista')} nombreValor="Citas"
-                           datos={r.porEspecialista.map((e) => ({ etiqueta: e.nombre, valor: e.citas, color: colorSerie(e.id), detalle: `Vendió ${dinero(e.vendido)}` }))} formato={(v) => `${v} citas`} />
+                           datos={r.porEspecialista.map((e, i) => ({ etiqueta: e.nombre, valor: e.citas, color: colorSerie(i + 1), detalle: `Vendió ${dinero(e.vendido)}` }))} formato={(v) => `${v} citas`} />
             <GraficoBarras tipo="horizontal" titulo="Servicios más pedidos" archivo={archivo('servicios-mas-pedidos')} nombreValor="Citas"
-                           datos={r.servicios.map((s) => ({ etiqueta: s.nombre, valor: s.citas, color: colorSerie(s.id), detalle: `Vendido ${dinero(s.vendido)}` }))} formato={(v) => `${v} citas`} />
+                           datos={r.servicios.map((s, i) => ({ etiqueta: s.nombre, valor: s.citas, color: colorSerie(i + 1), detalle: `Vendido ${dinero(s.vendido)}` }))} formato={(v) => `${v} citas`} />
             <GraficoBarras tipo="horizontal" titulo="Productos más vendidos" archivo={archivo('productos-mas-vendidos')} nombreValor="Unidades"
-                           datos={r.productos.map((p) => ({ etiqueta: p.nombre, valor: p.unidades, color: colorSerie(p.id), detalle: dinero(p.vendido) }))} formato={(v) => `${v} u.`} />
+                           datos={r.productos.map((p, i) => ({ etiqueta: p.nombre, valor: p.unidades, color: colorSerie(i + 1), detalle: dinero(p.vendido) }))} formato={(v) => `${v} u.`} />
             <GraficoBarras tipo="horizontal" titulo="Formas de pago en la tienda" archivo={archivo('formas-de-pago')} nombreValor="Total (₡)"
-                           datos={r.pagos.map((p) => ({ etiqueta: p.metodo, valor: p.total, color: colorPago(p.metodo), detalle: `${p.pedidos} pedidos` }))} formato={dinero} />
+                           datos={r.pagos.map((p, i) => ({ etiqueta: p.metodo, valor: p.total, color: colorSerie(i + 2), detalle: `${p.pedidos} pedidos` }))} formato={dinero} />
             <GraficoBarras tipo="horizontal" titulo="Cómo terminaron las citas" archivo={archivo('estado-de-citas')} nombreValor="Citas"
                            datos={r.estados.map((e) => ({ etiqueta: ESTADOS[e.estado] || e.estado, valor: e.n, color: COLOR_ESTADO[e.estado] }))} formato={(v) => `${v}`} />
+            <GraficoBarras tipo="horizontal" titulo="Horas con más citas" descripcion="Sirve para saber a qué horas hace falta más personal." archivo={archivo('horas-con-mas-citas')} nombreValor="Citas"
+                           datos={(r.porHora || []).map((h, i) => ({ etiqueta: `${h.hora % 12 || 12}:00 ${h.hora < 12 ? 'a. m.' : 'p. m.'}`, valor: h.citas, color: colorSerie(i + 1) }))} formato={(v) => `${v} citas`} />
           </div>
         </>
       )}

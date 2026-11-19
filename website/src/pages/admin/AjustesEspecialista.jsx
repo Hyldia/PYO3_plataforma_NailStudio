@@ -44,7 +44,7 @@ function Pago({ persona, onGuardado }) {
       </fieldset>
       <div className="campos-dos">
         <div className="campo"><label htmlFor="a-com">Comisión (%)</label><input id="a-com" type="number" min="0" max="100" step="1" value={d.comision} onChange={set('comision')} required /></div>
-        {d.esquema_pago === 'base_comision' && <div className="campo"><label htmlFor="a-base">Monto base por quincena (₡)</label><input id="a-base" type="number" min="1" step="1000" value={d.salario_base} onChange={set('salario_base')} required /></div>}
+        {d.esquema_pago === 'base_comision' && <div className="campo"><label htmlFor="a-base">Monto base por quincena (₡)</label><input id="a-base" type="number" min="1" step="1" value={d.salario_base} onChange={set('salario_base')} required /></div>}
       </div>
       <p className="ajustes-esp__ejemplo">Ejemplo: si en la quincena atiende citas por <b>{dinero(ejemplo)}</b>, se le pagan <b>{dinero(ganaria)}</b>.</p>
       {estado.texto && <p role={estado.error ? 'alert' : 'status'} className={estado.error ? 'error' : 'aviso-ok'}>{estado.texto}</p>}

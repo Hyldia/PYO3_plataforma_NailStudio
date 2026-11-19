@@ -11,8 +11,9 @@ import Resenas from '../components/Resenas.jsx';
 import Desplegable from '../components/Desplegable.jsx';
 import { olvidarResumenes, useResumenes } from '../lib/resumenesOpiniones.js';
 import Migas from '../components/Migas.jsx';
+import CarruselAuto from '../components/CarruselAuto.jsx';
 
-const ORDEN_CATEGORIAS = ['Combos', 'Manos', 'Uñas acrílicas', 'Gel y polygel', 'Pies', 'Tratamientos', 'Diseños y extras', 'Retiros y reparaciones'];
+const ORDEN_CATEGORIAS = ['Combos', 'Manos', 'Uñas acrílicas', 'Gel y polygel', 'Pies', 'Tratamientos', 'Hombres', 'Diseños y extras', 'Retiros y reparaciones'];
 
 const Icono = {
   reloj: <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>,
@@ -299,15 +300,14 @@ export default function Servicios() {
         {grupos.map(([cat, lista]) => (
           <section key={cat} className="servicios-grupo" aria-labelledby={`g-${cat}`}>
             <div className="servicios-grupo__cabeza">
-              <h2 id={`g-${cat}`}>{cat === 'Combos' ? 'Combos y paquetes' : cat}</h2>
+              <h2 id={`g-${cat}`}>{cat === 'Combos' ? 'Combos y paquetes' : cat === 'Hombres' ? 'Para hombres' : cat}</h2>
               {cat === 'Combos' && <p className="tenue">Varios servicios en una sola cita, a mejor precio.</p>}
+              {cat === 'Hombres' && <p className="tenue">Cuidado de uñas, manos y pies para caballeros, con acabado natural.</p>}
             </div>
-            <ul key={`${categoria}-${soloOfertas}-${texto}-${orden}-${precio[0]}-${tiempo[0]}`} className={`servicios-rejilla servicios-rejilla--nueva carrusel-scroll ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
+            <CarruselAuto key={`${categoria}-${soloOfertas}-${texto}-${orden}-${precio[0]}-${tiempo[0]}`} etiqueta={cat}
+                          className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
               {lista.map((s) => <TarjetaServicio key={s.id} s={s} opinion={resumenes.get(s.id)} onOpiniones={setOpiniones} />)}
-            </ul>
-            {lista.length > 4 && (
-              <p className="servicios-rejilla__desliza"><span aria-hidden="true">‹</span> Desliza para ver más <span aria-hidden="true">›</span></p>
-            )}
+            </CarruselAuto>
           </section>
         ))}
       </div>

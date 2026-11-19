@@ -1,16 +1,7 @@
 // CONTROLADOR: galería pública y administración de fotos.
-import { unlink } from 'node:fs/promises';
-import { join } from 'node:path';
-import { UPLOADS_DIR } from '../db/conexion.js';
 import { FotoModel } from '../models/FotoModel.js';
-import { conPrecios } from './detalleController.js';
+import { borrarSubida } from '../middleware/subidas.js';
 
-// Nombre: borrarArchivo
-// Descripción: Borra del disco una foto subida.
-// Entrada: El nombre del archivo.
-// Salida: Nada.
-// Objetivo: No dejar fotos viejas guardadas.
-const borrarArchivo = (nombre) => nombre && !nombre.startsWith('http') && unlink(join(UPLOADS_DIR, nombre)).catch(() => {});
 
 export const fotoController = {
   // Nombre: buscar
@@ -20,7 +11,7 @@ export const fotoController = {
   // Objetivo: Mostrar la galería.
   buscar(req, res) {
     const r = FotoModel.buscar(req.query);
-    res.json({ ...r, fotos: conPrecios(r.fotos) });
+    res.json({ ...r, fotos: FotoModel.conPrecios(r.fotos) });
   },
   // Nombre: opcionesDeFiltro
   // Descripción: Entrega las opciones de filtro de la galería.
@@ -68,7 +59,20 @@ export const fotoController = {
     const foto = FotoModel.buscarPorId(req.params.id);
     if (!foto) return res.status(404).json({ error: 'No existe esa foto.' });
     FotoModel.eliminar(foto.id);
-    borrarArchivo(foto.archivo);
+    borrarSubida(foto.archivo);
     res.status(204).end();
+  },
+
+  // Nombre: cambiarFotoDiseno
+  // Descripción: Cambia la foto de un diseño de la galería.
+  // Entrada: El diseño y la foto nueva.
+  // Salida: El diseño actualizado.
+  // Objetivo: Mantener la galería al día.
+  cambiarFotoDiseno(req, res) {
+    const foto = FotoModel.buscarPorId(req.params.id);
+    if (!foto || !req.file) return res.status(400).json({ error: 'Diseño o imagen no válidos.' });
+    FotoModel.cambiarArchivo(foto.id, req.file.filename);
+    borrarSubida(foto.archivo);
+    res.json(FotoModel.buscarPorId(foto.id));
   }
 };

@@ -40,6 +40,7 @@ async function revisarRotas(db) {
 
 // Qué buscar en Unsplash según el nombre del producto (se aplica la primera regla que coincida)
 export const GRUPOS = [
+  { re: /hombre|caballero/i, busquedas: ['men grooming kit', 'men hand care', 'grooming products'] },
   // Primero los frascos y el acrílico, para que "Esmalte gel Dorado glitter" no caiga en decoración
   { re: /^(esmalte|rubber base|top coat|base |builder|primer|deshidratante|bonder|gel |set \d+ geles|gotas secantes|spray secante|diluyente)/i, busquedas: ['nail polish bottle', 'nail polish', 'gel polish'], paginas: 2 },
   // Pedicure antes que las herramientas, para que "Lima para pies" o "Cortaúñas para uña encarnada" busquen fotos de pies
@@ -153,6 +154,18 @@ async function main() {
         asignados++;
       }
       process.stdout.write(`\r${asignados} de ${productos.length} productos con foto (${consultas} consultas)…`);
+    }
+    // Servicios sin foto (por ejemplo los de la sección para hombres)
+    const servicios = db.prepare('SELECT id, nombre, categoria FROM servicios WHERE imagen IS NULL').all();
+    if (servicios.length) {
+      const pool = [];
+      for (const q of ['man manicure', 'men nail care', 'pedicure spa']) {
+        const { results } = await buscarUnsplash(CLAVE, q, 1);
+        results.forEach((f) => { if (!pool.some((x) => x.id === f.id)) pool.push(f); });
+      }
+      const ponerServicio = db.prepare('UPDATE servicios SET imagen = ? WHERE id = ?');
+      servicios.forEach((sv, i) => { if (pool[i]) ponerServicio.run(urlFotoUnsplash(pool[i]), sv.id); });
+      console.log(`\n${Math.min(servicios.length, pool.length)} servicios con foto nueva.`);
     }
   } finally {
     console.log(`\nListo: ${asignados} productos con foto nueva.`);

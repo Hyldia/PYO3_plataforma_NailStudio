@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, sesionAdmin } from '../lib/api.js';
-import { useTitulo } from '../lib/hooks.js';
+import { useTitulo, usePorPagina } from '../lib/hooks.js';
 import { dinero } from '../config.js';
 import Foto from '../components/Foto.jsx';
 import Modal from '../components/Modal.jsx';
@@ -20,7 +20,7 @@ const CATEGORIAS = ['Manicure', 'Acrílicas', 'Polygel', 'Gel', 'Pedicure', 'Nai
 const FORMAS = ['Almendra', 'Ovalada', 'Cuadrada', 'Coffin', 'Stiletto'];
 const COLORES = ['Nude', 'Rosa', 'Rojo', 'Vino', 'Morado', 'Azul', 'Verde', 'Negro', 'Blanco', 'Dorado', 'Multicolor'];
 const ACABADOS = ['Brillante', 'Mate', 'Chrome', 'Glitter'];
-const POR_PAGINA_GALERIA = 8;
+const POR_PAGINA_GALERIA_BASE = 8;
 
 // Nombre: Entrar
 // Descripción: Muestra la entrada al panel.
@@ -81,6 +81,7 @@ const Elegir = ({ id, etiqueta, opciones, valor, onCambio, vacio = true }) => (
 // Salida: La sección.
 // Objetivo: Subir y editar diseños.
 function Galeria() {
+  const [rejilla, POR_PAGINA_GALERIA] = usePorPagina(2, POR_PAGINA_GALERIA_BASE); // filas completas, sin huecos
   const VACIO = { titulo: '', descripcion: '', categoria: 'Manicure', forma: '', color: '', acabado: '', etiquetas: '', destacada: false, precio: '' };
   const [datos, setDatos] = useState(VACIO);
   const [archivos, setArchivos] = useState([]);
@@ -236,7 +237,7 @@ function Galeria() {
         <label><span className="solo-lector">Servicio</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todos los servicios</option>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></label>
       </div>
       <p className="tenue">{lista.length} diseños</p>
-      <ul className="admin-tarjetas">
+      <ul ref={rejilla} className="admin-tarjetas">
         {fotosPagina.map((f, i) => (
           <li key={f.id} className="admin-tarjeta" style={{ '--n': i % 24 }}>
             <div className="admin-tarjeta__foto">

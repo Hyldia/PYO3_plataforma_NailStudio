@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { useDebounce, useTitulo } from '../lib/hooks.js';
+import { useDebounce, useTitulo, usePorPagina } from '../lib/hooks.js';
 import Desplegable from '../components/Desplegable.jsx';
 import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaDiseno from '../components/TarjetaDiseno.jsx';
@@ -15,7 +15,7 @@ const CAMPOS = [
   { clave: 'acabado', titulo: 'Acabado' }
 ];
 const ORDENES = { recientes: 'Más recientes', populares: 'Más populares', antiguas: 'Más antiguos' };
-const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
+const POR_PAGINA_BASE = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
 
 // Nombre: Galeria
 // Descripción: Muestra la galería de diseños.
@@ -23,6 +23,7 @@ const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan l
 // Salida: La página.
 // Objetivo: Inspirar a la clienta.
 export default function Galeria() {
+  const [rejilla, POR_PAGINA] = usePorPagina(4, POR_PAGINA_BASE); // filas completas, sin huecos
   useTitulo('Galería');
   const [params, setParams] = useSearchParams();
   const [texto, setTexto] = useState(params.get('q') || '');
@@ -76,7 +77,7 @@ export default function Galeria() {
       .then((r) => { setResultado({ total: r.total, fotos: r.fotos }); setError(''); })
       .catch((e) => setError(e.message))
       .finally(() => setCargando(false));
-  }, [params, pagina]);
+  }, [params, pagina, POR_PAGINA]);
 
   // La portada siempre muestra el total de la galería, no el de los filtros
   const totalGaleria = useRef(0);
@@ -136,7 +137,7 @@ export default function Galeria() {
         <div className="vacio"><p>No encontramos diseños con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>
       )}
 
-      <ul className="disenos-rejilla">
+      <ul ref={rejilla} className="disenos-rejilla">
         {resultado.fotos.map((f, i) => <TarjetaDiseno key={f.id} foto={f} indice={i} />)}
         {cargando && pagina > 1 && <Fantasmas n={Math.min(POR_PAGINA, resultado.total - resultado.fotos.length)} />}
       </ul>

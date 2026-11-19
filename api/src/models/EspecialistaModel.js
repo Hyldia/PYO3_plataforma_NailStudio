@@ -102,5 +102,14 @@ export const EspecialistaModel = {
     const dia = new Date(`${fecha}T12:00:00`).getDay() || 7;
     if (!String(especialista.dias || '').split(',').map(Number).includes(dia)) return false;
     return !getDb().prepare('SELECT 1 FROM ausencias WHERE especialista_id = ? AND fecha = ?').get(especialista.id, fecha);
+  },
+
+  // Nombre: cambiarFoto
+  // Descripción: Pone una foto subida desde el panel a la especialista.
+  // Entrada: El número de la especialista y el archivo.
+  // Salida: Nada.
+  // Objetivo: Que su cara salga en el sitio.
+  cambiarFoto(id, archivo) {
+    getDb().prepare('UPDATE especialistas SET foto = ?, foto_autor = NULL, foto_autor_url = NULL WHERE id = ?').run(archivo, id);
   }
 };

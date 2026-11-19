@@ -279,7 +279,13 @@ export default function GraficoBarras({ titulo, descripcion, datos, tipo = 'colu
 
   const punto = activa != null ? datos[activa] : null;
   let posTip = null;
-  if (punto && tipo === 'columnas') posTip = { left: `${((52 + ((ancho - 60) / datos.length) * (activa + 0.5)) / ancho) * 100}%`, top: 0 };
+  if (punto && tipo === 'columnas') {
+    // El globo sale al lado de la barra (a la derecha, o a la izquierda si la barra está al final), a la altura de su punta
+    const centro = 52 + ((ancho - 60) / datos.length) * (activa + 0.5);
+    const punta = 12 + 198 * (1 - punto.valor / escala(max).tope);
+    const izquierda = centro > ancho * 0.6;
+    posTip = { left: `${centro}px`, top: `${Math.max(0, Math.min(punta - 8, 110))}px`, transform: izquierda ? 'translateX(calc(-100% - 14px))' : 'translateX(14px)' };
+  }
   if (punto && tipo === 'horizontal') posTip = { left: '50%', top: `${4 + activa * 34 - 6}px` };
 
   return (

@@ -9,7 +9,8 @@ export const CATEGORIAS = [
   { nombre: 'Pedicure', tipo: 'crema', color: '#A8E0C8', to: '/tienda?categoria=Pedicure' },
   { nombre: 'Manicure pro', tipo: 'caja', color: '#D9B79A', to: '/tienda?categoria=Manicure profesional' },
   { nombre: 'Aceites', tipo: 'gotero', color: '#E8B65C', to: '/tienda?q=aceite', clave: 'aceite' },
-  { nombre: 'Decoración', tipo: 'tarro', color: '#D4AF37', to: '/tienda?categoria=Decoración' }
+  { nombre: 'Decoración', tipo: 'tarro', color: '#D4AF37', to: '/tienda?categoria=Decoración' },
+  { nombre: 'Para hombres', tipo: 'kit', color: '#3A3F45', to: '/tienda?categoria=Para hombres' }
 ];
 
 // Nombre con el que se guarda la foto de cada círculo

@@ -1,14 +1,15 @@
 // Foto de la asistente del chat: la sube el salón desde el panel (Equipo) y se guarda en la tabla ajustes.
-import { unlink } from 'node:fs/promises';
-import { join } from 'node:path';
-import { getDb, UPLOADS_DIR } from '../db/conexion.js';
+import { AjustesModel } from '../models/AjustesModel.js';
+import { borrarSubida } from '../middleware/subidas.js';
+
+const CLAVE = 'asistente_foto';
 
 // Nombre: leer
 // Descripción: Lee la foto guardada de la asistente virtual.
 // Entrada: Nada.
 // Salida: El nombre de la foto o nada.
 // Objetivo: Mostrar la cara de la asistente.
-const leer = () => getDb().prepare("SELECT valor FROM ajustes WHERE clave = 'asistente_foto'").get()?.valor || null;
+const leer = () => AjustesModel.leer(CLAVE);
 
 export const asistenteController = {
   // Nombre: ver
@@ -25,8 +26,8 @@ export const asistenteController = {
   subirFoto(req, res) {
     if (!req.file) return res.status(400).json({ error: 'Elige una imagen.' });
     const anterior = leer();
-    getDb().prepare("INSERT INTO ajustes (clave, valor) VALUES ('asistente_foto', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor").run(req.file.filename);
-    if (anterior) unlink(join(UPLOADS_DIR, anterior)).catch(() => {});
+    AjustesModel.guardar(CLAVE, req.file.filename);
+    borrarSubida(anterior);
     res.json({ foto: req.file.filename });
   },
   // Nombre: quitarFoto
@@ -36,8 +37,8 @@ export const asistenteController = {
   // Objetivo: Volver al dibujo de siempre.
   quitarFoto(req, res) {
     const anterior = leer();
-    getDb().prepare("DELETE FROM ajustes WHERE clave = 'asistente_foto'").run();
-    if (anterior) unlink(join(UPLOADS_DIR, anterior)).catch(() => {});
+    AjustesModel.borrar(CLAVE);
+    borrarSubida(anterior);
     res.json({ foto: null });
   }
 };

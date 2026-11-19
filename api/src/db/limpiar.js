@@ -13,6 +13,8 @@ db.exec(`
     ON CONFLICT(clave) DO UPDATE SET valor = '1';
   INSERT INTO ajustes (clave, valor) VALUES ('agenda_ejemplo', '1')
     ON CONFLICT(clave) DO UPDATE SET valor = '1';
+  INSERT INTO ajustes (clave, valor) VALUES ('historial_ejemplo', '1')
+    ON CONFLICT(clave) DO UPDATE SET valor = '1';
   INSERT INTO ajustes (clave, valor) VALUES ('solicitudes_ejemplo', '1')
     ON CONFLICT(clave) DO UPDATE SET valor = '1';
   INSERT INTO ajustes (clave, valor) VALUES ('equipo_ejemplo', '1')

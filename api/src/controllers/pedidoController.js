@@ -1,6 +1,6 @@
 // CONTROLADOR: finalizar compra. Un mismo pedido puede traer productos de la tienda
 // y citas (una por persona, cada una con un solo diseño).
-import { getDb } from '../db/conexion.js';
+import { enTransaccion } from '../db/conexion.js';
 import { ProductoModel } from '../models/ProductoModel.js';
 import { PedidoModel } from '../models/PedidoModel.js';
 import { CuponModel } from '../models/CuponModel.js';
@@ -149,7 +149,7 @@ export const pedidoController = {
     if (!cobro.ok) return res.status(402).json({ error: cobro.mensaje });
 
     // Todo o nada: si una cita se ocupó en este momento, no se guarda nada
-    const resultado = getDb().transaction(() => {
+    const resultado = enTransaccion(() => {
       const pedido = productos.length ? PedidoModel.crear(cliente, productos, metodo.nombre, {
         total: c.productosNeto + c.envio, usuarioId: u.id, entrega: direccion ? 'envio' : 'retiro', direccion, costoEnvio: c.envio, descuento: Math.round(productos.reduce((s, l) => s + l.precio * l.cantidad, 0) * (1 - c.factor)),
         cupon: c.cupon?.codigo, notas: notas ? String(notas).slice(0, 300) : null, referencia: cobro.referencia
@@ -167,7 +167,7 @@ export const pedidoController = {
         });
       });
       return { pedido, creadas };
-    })();
+    });
 
     if (c.cupon) CuponModel.registrarUso(c.cupon.codigo);
     // Observer: recordatorios por WhatsApp para cada cita

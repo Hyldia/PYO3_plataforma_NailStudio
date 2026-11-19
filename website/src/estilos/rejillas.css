@@ -49,3 +49,28 @@
 .tarjeta-fantasma > span:not(:first-child) { height: 14px; margin: 12px; border-radius: 6px; }
 .tarjeta-fantasma > span:last-child { width: 50%; }
 @keyframes fantasma { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* ---- Carrusel que se mueve solo (Inicio y Servicios) ---- */
+.carrusel-auto { position: relative; overflow: hidden; container-type: inline-size; padding: 4px 0 10px; }
+.carrusel-auto__pista { display: flex; width: max-content; }
+.carrusel-auto .carrusel-auto__lista { display: flex; flex-wrap: nowrap; overflow: visible; scroll-snap-type: none; margin: 0; padding: 4px 0 8px; gap: 16px; }
+.carrusel-auto--mueve .carrusel-auto__lista { padding-right: 16px; }
+.carrusel-auto--mueve .carrusel-auto__pista { animation: carrusel-desliza var(--duracion, 40s) linear infinite; }
+/* Se detiene al pasar el mouse o al usar el teclado */
+.carrusel-auto--mueve:hover .carrusel-auto__pista, .carrusel-auto--mueve:focus-within .carrusel-auto__pista { animation-play-state: paused; }
+/* Bordes que se desvanecen para que se vea suave */
+.carrusel-auto--mueve { -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+@keyframes carrusel-desliza { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+/* Tamaño de las tarjetas según el ancho del carrusel */
+.carrusel-auto .inicio-carrusel > li { flex: 0 0 clamp(220px, calc((100cqw - 64px) / 5), 280px); }
+.carrusel-auto .servicios-rejilla--nueva .servicio { flex: 0 0 calc((100cqw - 42px) / 4); width: calc((100cqw - 42px) / 4); }
+@container (max-width: 1100px) { .carrusel-auto .servicios-rejilla--nueva .servicio { flex-basis: calc((100cqw - 28px) / 3); width: calc((100cqw - 28px) / 3); } }
+@container (max-width: 800px) { .carrusel-auto .servicios-rejilla--nueva .servicio { flex-basis: calc((100cqw - 14px) / 2); width: calc((100cqw - 14px) / 2); } }
+@container (max-width: 520px) { .carrusel-auto .servicios-rejilla--nueva .servicio { flex-basis: 78cqw; width: 78cqw; } .carrusel-auto .inicio-carrusel > li { flex-basis: 70cqw; } }
+/* Si la persona pidió menos movimiento: sin animación, se puede deslizar con el dedo */
+@media (prefers-reduced-motion: reduce) {
+  .carrusel-auto--mueve .carrusel-auto__pista { animation: none; }
+  .carrusel-auto { overflow-x: auto; scrollbar-width: none; }
+  .carrusel-auto::-webkit-scrollbar { display: none; }
+}
+html.a11y-pausa .carrusel-auto { overflow-x: auto; scrollbar-width: none; }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { useDebounce, useTitulo } from '../lib/hooks.js';
+import { useDebounce, useTitulo, usePorPagina } from '../lib/hooks.js';
 import VerMas, { Fantasmas } from '../components/VerMas.jsx';
 import TarjetaProducto from '../components/TarjetaProducto.jsx';
 import Desplegable from '../components/Desplegable.jsx';
@@ -9,7 +9,7 @@ import { BannerOfertas, PodioVendidos, PortadaCategoria } from '../components/Ba
 import EscaparateTienda from '../components/EscaparateTienda.jsx';
 import Migas from '../components/Migas.jsx';
 
-const POR_PAGINA = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
+const POR_PAGINA_BASE = 20; // 4 filas de 5 (o 5 de 4, o 10 de 2): las filas quedan llenas
 const ORDENES = { relevancia: 'Relevancia', vendidos: 'Más vendidos', descuento: 'Mayor descuento', calificacion: 'Mejor calificados', 'precio-asc': 'Precio: menor a mayor', 'precio-desc': 'Precio: mayor a menor', nuevos: 'Más nuevos' };
 const RANGOS = [['', '', 'Cualquier precio'], ['', '3000', 'Hasta ₡3 000'], ['3000', '8000', '₡3 000 a ₡8 000'], ['8000', '20000', '₡8 000 a ₡20 000'], ['20000', '', 'Más de ₡20 000']];
 
@@ -19,6 +19,7 @@ const RANGOS = [['', '', 'Cualquier precio'], ['', '3000', 'Hasta ₡3 000'], ['
 // Salida: La página.
 // Objetivo: Comprar productos.
 export default function Tienda() {
+  const [rejilla, POR_PAGINA] = usePorPagina(4, POR_PAGINA_BASE); // filas completas, sin huecos
   useTitulo('Tienda');
   const [params, setParams] = useSearchParams();
   const [texto, setTexto] = useState(params.get('q') || '');
@@ -147,7 +148,7 @@ export default function Tienda() {
       {!cargando && productos.length === 0 && (
         <div className="vacio"><p>No hay productos con esos filtros.</p><button type="button" className="boton boton--contorno" onClick={limpiar}>Ver todos</button></div>
       )}
-      <ul className={`productos-rejilla productos-rejilla--grande ${ofertas ? 'productos-rejilla--ofertas' : ''}`} key={`${orden}-${ofertas}`}>
+      <ul ref={rejilla} className={`productos-rejilla productos-rejilla--grande ${ofertas ? 'productos-rejilla--ofertas' : ''}`} key={`${orden}-${ofertas}`}>
         {productos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA).map((p, i) => <TarjetaProducto key={p.id} p={p} puesto={vendidos && (pagina - 1) * POR_PAGINA + i < 20 ? (pagina - 1) * POR_PAGINA + i + 1 : undefined} oferta={ofertas} />)}
         {cargando && <Fantasmas n={Math.min(POR_PAGINA, productos.length)} />}
       </ul>

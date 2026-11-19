@@ -5,7 +5,7 @@ import { useReserva } from '../context/ReservaContext.jsx';
 import { useCarrito } from '../context/CarritoContext.jsx';
 import { dinero } from '../config.js';
 import { describir } from '../patrones/constructorDiseno.js';
-import { useTitulo } from '../lib/hooks.js';
+import { useTitulo, usePorPagina } from '../lib/hooks.js';
 import Foto from '../components/Foto.jsx';
 import MuestraUnas from '../components/DibujoUnas.jsx';
 import Decoracion from '../components/Decoracion.jsx';
@@ -100,9 +100,9 @@ export default function Reservar() {
   const [agenda, setAgenda] = useState([]);
   const [categoria, setCategoria] = useState('Todos');
   const [paginaServicios, setPaginaServicios] = useState(1);
-  const POR_PAGINA_SERVICIOS = 9;
+  const [rejilla, POR_PAGINA_SERVICIOS] = usePorPagina(3, 9); // filas completas, sin huecos
   const dias = useMemo(proximosDias, []);
-  const [sel, setSel] = useState({ servicioId: Number(params.get('servicio')) || null, especialistaId: null, fecha: aISO(dias[0]), hora: null });
+  const [sel, setSel] = useState({ servicioId: Number(params.get('servicio')) || null, especialistaId: Number(params.get('especialista')) || null, fecha: aISO(dias[0]), hora: null });
   const [notas, setNotas] = useState(reserva.diseno?.notas || '');
   // Acompañante: otra persona, otra cita aparte (con su propio diseño en el salón)
   const [acompana, setAcompana] = useState({ activo: false, nombre: '', servicioId: null, modo: 'otra', especialistaId: null });
@@ -315,7 +315,7 @@ export default function Reservar() {
                       </button>
                     ))}
                   </div>
-                  <div className="servicios-elegir">
+                  <div ref={rejilla} className="servicios-elegir">
                     {serviciosPagina.map((s, n) => {
                       const desc = s.precio_oferta != null ? Math.round((1 - s.precio_oferta / s.precio) * 100) : 0;
                       return (

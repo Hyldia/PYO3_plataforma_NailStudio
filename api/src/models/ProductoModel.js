@@ -1,5 +1,6 @@
 // MODELO: productos de la tienda, con búsqueda, filtros y orden.
 import { getDb } from '../db/conexion.js';
+import { AjustesModel } from './AjustesModel.js';
 
 const ORDEN = {
   relevancia: 'stock > 0 DESC, id',
@@ -148,5 +149,29 @@ export const ProductoModel = {
   // Entrada: El número y la foto.
   // Salida: Nada.
   // Objetivo: Actualizar la foto.
-  cambiarImagen: (id, imagen) => getDb().prepare('UPDATE productos SET imagen = ?, imagen_autor = NULL, imagen_autor_url = NULL WHERE id = ?').run(imagen, id)
+  cambiarImagen: (id, imagen) => getDb().prepare('UPDATE productos SET imagen = ?, imagen_autor = NULL, imagen_autor_url = NULL WHERE id = ?').run(imagen, id),
+
+  // Nombre: puestoEnCategoria
+  // Descripción: Dice en qué lugar de ventas está un producto dentro de su categoría.
+  // Entrada: El producto.
+  // Salida: El puesto (1 = el más vendido).
+  // Objetivo: Mostrar «#1 más vendido en …».
+  puestoEnCategoria: (p) => getDb().prepare('SELECT COUNT(*) + 1 AS n FROM productos WHERE categoria = ? AND vendidos > ?').get(p.categoria, p.vendidos).n,
+
+  // Nombre: portadas
+  // Descripción: Da una foto por categoría: la que eligió la dueña o la del más vendido con foto.
+  // Entrada: Nada.
+  // Salida: Un objeto categoría → foto.
+  // Objetivo: Decorar los círculos de «Compra por categoría».
+  portadas() {
+    const db = getDb();
+    const foto = (where, ...p) => db.prepare(`SELECT imagen FROM productos WHERE imagen LIKE 'http%' AND ${where} ORDER BY stock > 0 DESC, vendidos DESC LIMIT 1`).get(...p)?.imagen ?? null;
+    const mapa = {};
+    db.prepare('SELECT DISTINCT categoria FROM productos').all().forEach(({ categoria }) => { mapa[categoria] = foto('categoria = ?', categoria); });
+    mapa.rubber = foto("nombre LIKE '%rubber%'");
+    mapa.aceite = foto("nombre LIKE 'Aceite%'");
+    mapa.Equipos = foto("categoria = 'Equipos' AND nombre LIKE 'Lámpara%'") || mapa.Equipos;
+    // La foto que el salón eligió en el panel tiene prioridad
+    return { ...mapa, ...AjustesModel.conPrefijo('portada:') };
+  }
 };

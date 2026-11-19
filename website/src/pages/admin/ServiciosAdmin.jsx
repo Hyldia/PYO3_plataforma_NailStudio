@@ -6,8 +6,9 @@ import Modal from '../../components/Modal.jsx';
 import Foto from '../../components/Foto.jsx';
 import VerMas from '../../components/VerMas.jsx';
 import { BotonFoto, ZonaFotos, formData } from './piezasPanel.jsx';
+import { usePorPagina } from '../../lib/hooks.js';
 
-const POR_PAGINA = 8;
+const POR_PAGINA_BASE = 8;
 const ETIQUETAS = ['', 'Más pedido', 'Nuevo', 'Oferta', 'Especial'];
 const VACIO = { nombre: '', descripcion: '', categoria: 'Manos', duracion_min: 60, precio: '', precio_oferta: '', incluye: '', etiqueta: '', es_combo: 0, destacado: 0, activo: 1 };
 // Nombre: horas
@@ -87,8 +88,8 @@ function Editor({ servicio, categorias, onCerrar, onGuardado }) {
             <div className="campo"><label htmlFor="s-dur">Duración (minutos)</label><input id="s-dur" type="number" min="15" max="360" step="5" value={d.duracion_min} onChange={set('duracion_min')} required /></div>
           </div>
           <div className="campos-tres">
-            <div className="campo"><label htmlFor="s-precio">Precio (₡)</label><input id="s-precio" type="number" min="1" step="500" value={d.precio} onChange={set('precio')} required /></div>
-            <div className="campo"><label htmlFor="s-oferta">Precio de oferta <span className="tenue">(opcional)</span></label><input id="s-oferta" type="number" min="0" step="500" value={d.precio_oferta} onChange={set('precio_oferta')} placeholder="Vacío = sin oferta" /></div>
+            <div className="campo"><label htmlFor="s-precio">Precio (₡)</label><input id="s-precio" type="number" min="1" step="1" value={d.precio} onChange={set('precio')} required /></div>
+            <div className="campo"><label htmlFor="s-oferta">Precio de oferta <span className="tenue">(opcional)</span></label><input id="s-oferta" type="number" min="0" step="1" value={d.precio_oferta} onChange={set('precio_oferta')} placeholder="Vacío = sin oferta" /></div>
             <div className="campo"><label htmlFor="s-etq">Etiqueta</label><select id="s-etq" value={d.etiqueta} onChange={set('etiqueta')}>{ETIQUETAS.map((x) => <option key={x} value={x}>{x || 'Ninguna'}</option>)}</select></div>
           </div>
           <div className="campo"><label htmlFor="s-desc">Descripción <span className="tenue">(la ven las clientas)</span></label><textarea id="s-desc" rows="2" value={d.descripcion} onChange={set('descripcion')} /></div>
@@ -115,6 +116,7 @@ function Editor({ servicio, categorias, onCerrar, onGuardado }) {
 // Salida: La sección.
 // Objetivo: Administrar la carta.
 export default function ServiciosAdmin() {
+  const [rejilla, POR_PAGINA] = usePorPagina(2, POR_PAGINA_BASE); // filas completas, sin huecos
   const [datos, setDatos] = useState({ servicios: [], categorias: [] });
   const [buscar, setBuscar] = useState('');
   const [cat, setCat] = useState('');
@@ -131,7 +133,7 @@ export default function ServiciosAdmin() {
   useEffect(() => { cargar(); }, []);
 
   const lista = useMemo(() => datos.servicios.filter((s) => (!cat || s.categoria === cat)
-    && (!ver || (ver === 'ocultos' ? !s.activo : ver === 'oferta' ? s.precio_oferta : s.activo))
+    && (!ver || (ver === 'ocultos' ? !s.activo : ver === 'oferta' ? s.precio_oferta : ver === 'sinfoto' ? !s.imagen : ver === 'hombres' ? s.categoria === 'Hombres' : s.activo))
     && (!buscar || `${s.nombre} ${s.descripcion || ''}`.toLowerCase().includes(buscar.toLowerCase()))), [datos, cat, ver, buscar]);
   const paginas = Math.ceil(lista.length / POR_PAGINA);
   const serviciosPagina = lista.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
@@ -189,12 +191,12 @@ export default function ServiciosAdmin() {
         <label className="filtros-admin__buscar"><span className="solo-lector">Buscar servicio</span><input type="search" value={buscar} onChange={(e) => { setBuscar(e.target.value); setPagina(1); }} placeholder="Buscar servicio" /></label>
         <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{datos.categorias.map((c) => <option key={c}>{c}</option>)}</select></label>
         <div className="barra-chips barra-chips--compacta" role="group" aria-label="Mostrar">
-          {[['', 'Todos'], ['visibles', 'Visibles'], ['oferta', 'Con oferta'], ['ocultos', 'Ocultos']].map(([k, t]) => <button key={k} type="button" className={`chip-filtro ${ver === k ? 'chip-filtro--activo' : ''}`} onClick={() => { setVer(k); setPagina(1); }}>{t}</button>)}
+          {[['', 'Todos'], ['visibles', 'Visibles'], ['oferta', 'Con oferta'], ['ocultos', 'Ocultos'], ['sinfoto', 'Sin foto'], ['hombres', 'Para hombres']].map(([k, t]) => <button key={k} type="button" className={`chip-filtro ${ver === k ? 'chip-filtro--activo' : ''}`} onClick={() => { setVer(k); setPagina(1); }}>{t}</button>)}
         </div>
       </div>
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <p className="tenue">{lista.length} servicios</p>
-      <ul className="admin-tarjetas admin-tarjetas--servicios">
+      <ul ref={rejilla} className="admin-tarjetas admin-tarjetas--servicios">
         {serviciosPagina.map((s, i) => {
           const pct = s.precio_oferta ? Math.round((1 - s.precio_oferta / s.precio) * 100) : 0;
           return (

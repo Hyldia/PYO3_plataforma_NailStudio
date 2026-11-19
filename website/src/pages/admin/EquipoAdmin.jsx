@@ -8,6 +8,7 @@ import { BotonFoto, ZonaFotos, DIAS_SEMANA, HORAS, formData } from './piezasPane
 import { AvatarSofi, avisarFotoAsistente } from '../../components/ChatAsistente.jsx';
 import AjustesEspecialista from './AjustesEspecialista.jsx';
 import VerMas from '../../components/VerMas.jsx';
+import { usePorPagina } from '../../lib/hooks.js';
 
 // Foto de la asistente del chat (Sofi)
 // Nombre: FotoAsistente
@@ -50,7 +51,7 @@ function FotoAsistente({ onAviso }) {
 }
 
 const VACIA = { nombre: '', especialidad: '', bio: '', experiencia: '', dias: '1,2,3,4,5', hora_inicio: '09:00', hora_fin: '17:30', activa: 1 };
-const POR_PAGINA = 8;
+const POR_PAGINA_BASE = 8;
 // Nombre: textoDias
 // Descripción: Escribe los días de trabajo.
 // Entrada: Los días.
@@ -154,6 +155,7 @@ export function Editor({ persona, onCerrar, onGuardado, embebido = false }) {
 // Salida: La sección.
 // Objetivo: Administrar el equipo.
 export default function EquipoAdmin() {
+  const [rejilla, POR_PAGINA] = usePorPagina(2, POR_PAGINA_BASE); // filas completas, sin huecos
   const [lista, setLista] = useState([]);
   const [pagina, setPagina] = useState(1);
   const [editando, setEditando] = useState(null);
@@ -194,7 +196,7 @@ export default function EquipoAdmin() {
       </div>
 
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
-      <ul className="admin-tarjetas admin-tarjetas--equipo">
+      <ul ref={rejilla} className="admin-tarjetas admin-tarjetas--equipo">
         {equipoVisible.map((e, i) => (
           <li key={e.id} className={`admin-tarjeta ${e.activa ? '' : 'admin-tarjeta--inactiva'}`} style={{ '--n': i }}>
             <div className="admin-tarjeta__foto admin-tarjeta__foto--persona">

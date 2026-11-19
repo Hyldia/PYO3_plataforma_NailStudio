@@ -5,7 +5,9 @@ import { cargarDatosEjemplo } from './datosEjemplo.js';
 import { cargarResenasEjemplo } from './resenasEjemplo.js';
 import { cargarComentariosEjemplo } from './comentariosEjemplo.js';
 import { cargarAgendaEjemplo } from './agendaEjemplo.js';
+import { cargarHistorialEjemplo } from './historialEjemplo.js';
 import { cargarEquipoEjemplo, cargarSolicitudesEjemplo } from './equipoEjemplo.js';
+import { cargarSeccionHombres } from './seccionHombres.js';
 import { ESPECIALISTAS, VERSION_ESPECIALISTAS } from './especialistasEjemplo.js';
 import { generarCatalogo } from './catalogoProductos.js';
 import { SERVICIOS, CUPONES } from './catalogoServicios.js';
@@ -29,9 +31,11 @@ export function seed({ force = false } = {}) {
     const resenas = cargarResenasEjemplo(db);
     const comentarios = cargarComentariosEjemplo(db);
     const agenda = cargarAgendaEjemplo(db);
+    const historial = cargarHistorialEjemplo(db);
     const pagos = cargarEquipoEjemplo(db);
     const solicitudes = cargarSolicitudesEjemplo(db);
-    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda || pagos || solicitudes;
+    const hombres = cargarSeccionHombres(db);
+    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda || historial || pagos || solicitudes || hombres;
   }
 
   db.exec(`
@@ -51,8 +55,10 @@ export function seed({ force = false } = {}) {
   cargarResenasEjemplo(db);
   cargarComentariosEjemplo(db);
   cargarAgendaEjemplo(db);
+  cargarHistorialEjemplo(db);
   cargarEquipoEjemplo(db);
   cargarSolicitudesEjemplo(db);
+  cargarSeccionHombres(db);
   db.exec('UPDATE citas SET ejemplo = 1');
   return true;
 }

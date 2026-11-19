@@ -7,6 +7,7 @@ import ProductoImagen from '../../components/ProductoImagen.jsx';
 import VerMas from '../../components/VerMas.jsx';
 import { BotonFoto, ZonaFotos, formData } from './piezasPanel.jsx';
 import { CATEGORIAS, claveCategoria } from '../../lib/categoriasPortada.js';
+import { usePorPagina } from '../../lib/hooks.js';
 
 // Fotos de los círculos de categorías que salen en la portada
 // Nombre: FotosCategorias
@@ -17,6 +18,20 @@ import { CATEGORIAS, claveCategoria } from '../../lib/categoriasPortada.js';
 function FotosCategorias() {
   const [portadas, setPortadas] = useState({});
   const [aviso, setAviso] = useState('');
+  const [tienda, setTienda] = useState([]);
+  // Nombre: (efecto) categorías de la tienda
+  // Descripción: Trae las categorías que tienen productos.
+  // Entrada: Nada.
+  // Salida: Nada.
+  // Objetivo: Mostrar también los círculos de la tienda.
+  useEffect(() => { api.categoriasProductos().then((l) => setTienda(l.map((c) => c.categoria || c.valor || c.nombre || c))).catch(() => {}); }, []);
+  // Juntamos los círculos del Inicio y los de la Tienda (los que comparten categoría usan la misma foto)
+  const delInicio = CATEGORIAS.map((c) => ({ ...c, clave: claveCategoria(c) }));
+  const lista = [
+    ...delInicio.map((c) => ({ ...c, donde: tienda.includes(c.clave) ? 'Inicio y Tienda' : 'Inicio' })),
+    ...tienda.filter((n) => typeof n === 'string' && !delInicio.some((c) => c.clave === n))
+      .map((n) => ({ nombre: n, clave: n, to: `/tienda?categoria=${n}`, tipo: 'caja', color: '#F2C8CF', donde: 'Tienda' }))
+  ];
   // Nombre: cargar
   // Descripción: Carga las portadas.
   // Entrada: Nada.
@@ -30,25 +45,26 @@ function FotosCategorias() {
   // Salida: Nada.
   // Objetivo: Cambiarla.
   const subir = async (c, archivo) => {
-    try { await api.admin.fotoPortada(claveCategoria(c), formData(archivo)); setAviso(`Listo: «${c.nombre}» tiene foto nueva en la portada.`); cargar(); } catch (e) { setAviso(e.message); }
+    try { await api.admin.fotoPortada(c.clave, formData(archivo)); setAviso(`Listo: «${c.nombre}» tiene foto nueva en la portada.`); cargar(); } catch (e) { setAviso(e.message); }
   };
   // Nombre: quitar
   // Descripción: Quita una portada.
   // Entrada: La categoría.
   // Salida: Nada.
   // Objetivo: Volver a la automática.
-  const quitar = async (c) => { await api.admin.quitarFotoPortada(claveCategoria(c)).catch(() => {}); setAviso(`«${c.nombre}» vuelve a usar la foto de su producto más vendido.`); cargar(); };
+  const quitar = async (c) => { await api.admin.quitarFotoPortada(c.clave).catch(() => {}); setAviso(`«${c.nombre}» vuelve a usar la foto de su producto más vendido.`); cargar(); };
   return (
     <details className="portadas-admin">
       <summary>
-        <span><b>Fotos de los círculos de la portada</b><small>Los círculos de categorías que salen arriba en la página principal. Toca uno para cambiar su foto.</small></span>
+        <span><b>Fotos de los círculos de categorías</b><small>Los círculos de «Compra por categoría» del Inicio y de la Tienda. Toca «Cambiar» para poner tu propia foto.</small></span>
       </summary>
       {aviso && <p role="status" className="aviso-ok">{aviso}</p>}
       <ul>
-        {CATEGORIAS.map((c) => (
-          <li key={c.nombre}>
-            <span className="portadas-admin__circulo"><ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color, imagen: portadas[claveCategoria(c)] || null }} /></span>
+        {lista.map((c) => (
+          <li key={c.clave}>
+            <span className="portadas-admin__circulo"><ProductoImagen producto={{ nombre: '', tipo: c.tipo, color: c.color, imagen: portadas[c.clave] || null }} /></span>
             <p>{c.nombre}</p>
+            <small className="portadas-admin__donde">{c.donde}</small>
             <BotonFoto texto="Cambiar" etiqueta={`del círculo ${c.nombre}`} onArchivo={(f) => subir(c, f)} />
             <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => quitar(c)}>Usar la automática</button>
           </li>
@@ -59,7 +75,7 @@ function FotosCategorias() {
 }
 
 const VACIO = { nombre: '', categoria: '', marca: 'AH Nails', precio: '', precio_anterior: '', stock: '10', descripcion: '' };
-const POR_PAGINA = 8;
+const POR_PAGINA_BASE = 8;
 
 // Nombre: Editor
 // Descripción: Muestra el formulario de un producto.
@@ -121,8 +137,8 @@ function Editor({ producto, categorias, onCerrar, onGuardado }) {
             <div className="campo"><label htmlFor="p-marca">Marca</label><input id="p-marca" value={d.marca || ''} onChange={set('marca')} /></div>
           </div>
           <div className="campos-tres">
-            <div className="campo"><label htmlFor="p-precio">Precio (₡)</label><input id="p-precio" type="number" min="1" step="50" value={d.precio} onChange={set('precio')} required /></div>
-            <div className="campo"><label htmlFor="p-ant">Precio antes <span className="tenue">(oferta)</span></label><input id="p-ant" type="number" min="0" step="50" value={d.precio_anterior} onChange={set('precio_anterior')} placeholder="Vacío = sin oferta" /></div>
+            <div className="campo"><label htmlFor="p-precio">Precio (₡)</label><input id="p-precio" type="number" min="1" step="1" value={d.precio} onChange={set('precio')} required /></div>
+            <div className="campo"><label htmlFor="p-ant">Precio antes <span className="tenue">(oferta)</span></label><input id="p-ant" type="number" min="0" step="1" value={d.precio_anterior} onChange={set('precio_anterior')} placeholder="Vacío = sin oferta" /></div>
             <div className="campo"><label htmlFor="p-stock">Stock <span className="tenue">(0 = agotado)</span></label><input id="p-stock" type="number" min="0" value={d.stock} onChange={set('stock')} required />
               <button type="button" className="enlace enlace--boton enlace--chico" onClick={() => setD({ ...d, stock: '0' })}>Marcar agotado</button></div>
           </div>
@@ -144,6 +160,7 @@ function Editor({ producto, categorias, onCerrar, onGuardado }) {
 // Salida: La sección.
 // Objetivo: Administrar la tienda.
 export default function ProductosAdmin() {
+  const [rejilla, POR_PAGINA] = usePorPagina(2, POR_PAGINA_BASE); // filas completas, sin huecos
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [q, setQ] = useState('');
@@ -162,7 +179,7 @@ export default function ProductosAdmin() {
   useEffect(() => { cargar(); api.categoriasProductos().then(setCategorias).catch(() => {}); }, []);
   const lista = useMemo(() => productos.filter((p) =>
     (!cat || p.categoria === cat) &&
-    (!stock || (stock === 'agotado' ? p.stock === 0 : stock === 'poco' ? p.stock > 0 && p.stock < 10 : p.precio_anterior)) &&
+    (!stock || (stock === 'agotado' ? p.stock === 0 : stock === 'poco' ? p.stock > 0 && p.stock < 10 : stock === 'sinfoto' ? !p.imagen : stock === 'hombres' ? p.categoria === 'Para hombres' : p.precio_anterior)) &&
     (!q || `${p.nombre} ${p.marca || ''} ${p.id}`.toLowerCase().includes(q.toLowerCase()))), [productos, q, cat, stock]);
   const paginas = Math.ceil(lista.length / POR_PAGINA);
   const productosPagina = lista.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
@@ -231,11 +248,11 @@ export default function ProductosAdmin() {
       <div className="filtros-admin">
         <label className="filtros-admin__buscar"><span className="solo-lector">Buscar producto</span><input type="search" value={q} onChange={(e) => { setQ(e.target.value); setPagina(1); }} placeholder="Buscar por nombre, marca o N.º" /></label>
         <label><span className="solo-lector">Categoría</span><select value={cat} onChange={(e) => { setCat(e.target.value); setPagina(1); }}><option value="">Todas las categorías</option>{categorias.map((c) => <option key={c.valor} value={c.valor}>{c.valor} ({c.cantidad})</option>)}</select></label>
-        <label><span className="solo-lector">Stock</span><select value={stock} onChange={(e) => { setStock(e.target.value); setPagina(1); }}><option value="">Todo el stock</option><option value="agotado">Agotados</option><option value="poco">Poco stock</option><option value="oferta">En oferta</option></select></label>
+        <label><span className="solo-lector">Mostrar</span><select value={stock} onChange={(e) => { setStock(e.target.value); setPagina(1); }}><option value="">Mostrar todos</option><option value="agotado">Agotados</option><option value="poco">Poco stock</option><option value="oferta">En oferta</option><option value="sinfoto">Sin foto</option><option value="hombres">Para hombres</option></select></label>
       </div>
       {aviso.texto && <p role={aviso.error ? 'alert' : 'status'} className={aviso.error ? 'error' : 'aviso-ok'}>{aviso.texto}</p>}
       <p className="tenue">{lista.length} {lista.length === 1 ? 'producto' : 'productos'}</p>
-      <ul className="admin-tarjetas">
+      <ul ref={rejilla} className="admin-tarjetas">
         {productosPagina.map((p, i) => (
           <li key={p.id} className="admin-tarjeta" style={{ '--n': i % POR_PAGINA }}>
             <div className="admin-tarjeta__foto">

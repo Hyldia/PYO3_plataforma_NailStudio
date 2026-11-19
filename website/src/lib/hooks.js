@@ -35,3 +35,39 @@ export function useUsarFoto() {
 export function useTitulo(titulo) {
   useEffect(() => { document.title = titulo ? `${titulo} · ${SALON.nombre}` : `${SALON.nombre} · Salón de uñas`; }, [titulo]);
 }
+
+// Nombre: usePorPagina
+// Descripción: Cuenta cuántas columnas tiene una rejilla y calcula cuántas tarjetas caben en filas completas.
+// Entrada: Cuántas filas se quieren y un número de respaldo.
+// Salida: La referencia para la rejilla y la cantidad por página.
+// Objetivo: Que cada página quede llena, sin huecos al final de la fila.
+export function usePorPagina(filas = 2, respaldo = 8) {
+  // Se usa una "referencia de función": así mide aunque la rejilla aparezca después
+  const [el, ref] = useState(null);
+  const [porPagina, setPorPagina] = useState(respaldo);
+  useEffect(() => {
+    if (!el) return undefined;
+    // Nombre: medir
+    // Descripción: Lee cuántas columnas tiene la rejilla ahora.
+    // Entrada: Nada.
+    // Salida: Nada.
+    // Objetivo: Ajustar la cantidad cuando cambia el tamaño de la pantalla.
+    const medir = () => {
+      const estilo = getComputedStyle(el);
+      let columnas = 1;
+      if (estilo.display.includes('grid')) {
+        columnas = estilo.gridTemplateColumns.split(' ').filter((x) => x && x !== '0px').length || 1;
+      } else {
+        const primera = el.firstElementChild;
+        const hueco = parseFloat(estilo.columnGap) || 0;
+        if (primera) columnas = Math.max(1, Math.floor((el.clientWidth + hueco) / (primera.getBoundingClientRect().width + hueco)));
+      }
+      setPorPagina(Math.max(1, columnas * filas));
+    };
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el, filas]);
+  return [ref, porPagina];
+}

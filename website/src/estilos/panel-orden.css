@@ -279,3 +279,4 @@ html.a11y-oscuro .nomina-falta { background: #3A2F12; color: #F2CF73; }
 .ajuste-chat summary small { color: var(--gris); }
 .ajuste-chat .asistente-admin { margin-top: 14px; }
 @media (prefers-reduced-motion: reduce) { .campanita__boton--avisos svg { animation: none; } }
+.portadas-admin__donde { color: var(--gris); font-size: 0.75rem; margin-top: -4px; }

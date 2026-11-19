@@ -258,3 +258,18 @@ html.a11y-oscuro .solicitud__estado--aprobada { background: #1B3326; color: #8FE
 .horario-lugar { margin: 4px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--superficie); }
 html.a11y-oscuro .libres-cal__dia--vacaciones, html.a11y-oscuro .libres-cal__dia--libre, html.a11y-oscuro .libres-cal__dia--permiso, html.a11y-oscuro .libres-cal__dia--incapacidad { background: #1B3326; border-color: #2F5A40; color: #8FE0AE; }
 html.a11y-oscuro .libres-cal__dia--pendiente { background: #3A2F12; border-color: #6B5320; color: #F2CF73; }
+
+/* Agenda: cabecera con mes, flechas y botón para agendar; 14 días que llenan todo el ancho */
+.portal-agenda__cabeza { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 4px 0 12px; }
+.portal-agenda__mes { display: flex; align-items: center; gap: 10px; }
+.portal-agenda__mes p { display: flex; flex-direction: column; margin: 0; min-width: 190px; text-align: center; line-height: 1.2; }
+.portal-agenda__mes p b { font-size: 1.1rem; }
+.portal-agenda__mes p span { color: var(--gris); font-size: 0.85rem; }
+.portal-agenda__flecha { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--linea); background: var(--papel); color: var(--vino-texto); font-size: 1.4rem; line-height: 1; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+.portal-agenda__flecha:hover:not(:disabled) { background: var(--rubor); transform: scale(1.06); }
+.portal-agenda__flecha:disabled { opacity: 0.35; cursor: not-allowed; }
+.portal-agenda__hoy { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--vino); background: none; color: var(--vino-texto); font: inherit; font-weight: 700; cursor: pointer; }
+.portal-agenda__agendar { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.portal-dias { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); overflow: visible; }
+.portal-dias .portal-dia { width: 100%; }
+@media (max-width: 1100px) { .portal-dias { display: flex; overflow-x: auto; } .portal-dias .portal-dia { width: 82px; } }

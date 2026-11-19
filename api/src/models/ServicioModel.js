@@ -1,6 +1,14 @@
 // MODELO: servicios del salón (manicure, acrílicas, pedicure...).
 // Los modelos son la única capa que habla con la base de datos.
 import { getDb } from '../db/conexion.js';
+import { PRECIO } from '../patrones/constructorDiseno.js';
+
+// Servicio con el que se hace cada tipo de diseño de la galería
+const SERVICIO_POR_CATEGORIA = {
+  Manicure: 'Manicure semipermanente', Gel: 'Manicure semipermanente', 'Nail art': 'Manicure semipermanente',
+  'Acrílicas': 'Uñas acrílicas', Polygel: 'Polygel', Pedicure: 'Pedicure semipermanente'
+};
+const RECARGO_NAIL_ART = 4500;
 
 export const CATEGORIAS_SERVICIO = ['Combos', 'Manos', 'Uñas acrílicas', 'Gel y polygel', 'Pies', 'Tratamientos', 'Diseños y extras', 'Retiros y reparaciones'];
 const CAMPOS = ['nombre', 'descripcion', 'categoria', 'duracion_min', 'precio', 'precio_oferta', 'incluye', 'etiqueta', 'es_combo', 'destacado', 'activo'];
@@ -109,5 +117,19 @@ export const ServicioModel = {
     if (usadas) { getDb().prepare('UPDATE servicios SET activo = 0 WHERE id = ?').run(id); return 'oculto'; }
     getDb().prepare('DELETE FROM servicios WHERE id = ?').run(id);
     return 'borrado';
+  },
+
+  // Nombre: sugeridoParaDiseno
+  // Descripción: Busca el servicio con el que se hace un diseño de la galería y su recargo.
+  // Entrada: La foto del diseño.
+  // Salida: El servicio con precio, duración y recargo, o nada.
+  // Objetivo: Mostrar cuánto cuesta cada diseño (el experto en servicios y precios es este modelo).
+  sugeridoParaDiseno(foto) {
+    const nombre = SERVICIO_POR_CATEGORIA[foto.categoria] || 'Manicure semipermanente';
+    const s = getDb().prepare('SELECT * FROM servicios WHERE nombre = ? AND activo = 1').get(nombre);
+    if (!s) return null;
+    // Los recargos salen de la misma tabla que usa el diseñador de uñas: así un acabado cuesta igual en todo el sitio
+    const recargo = (PRECIO.acabado[foto.acabado] || 0) + (foto.categoria === 'Nail art' ? RECARGO_NAIL_ART : 0);
+    return { id: s.id, nombre: s.nombre, duracion_min: s.duracion_min, precio: s.precio_oferta ?? s.precio, recargo };
   }
 };

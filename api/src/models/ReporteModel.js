@@ -48,6 +48,9 @@ export const ReporteModel = {
       GROUP BY pr.id ORDER BY unidades DESC LIMIT 8`).all(p);
     const pagos = db.prepare(`SELECT metodo_pago AS metodo, COUNT(*) AS pedidos, SUM(total) AS total FROM pedidos
       WHERE date(creado_en, 'localtime') BETWEEN @desde AND @hasta AND estado != 'cancelado' GROUP BY metodo_pago ORDER BY total DESC`).all(p);
+    // Horas con más citas: ayuda a saber a qué horas hace falta más personal
+    const porHora = db.prepare(`SELECT CAST(substr(hora, 1, 2) AS INTEGER) AS hora, COUNT(*) AS citas FROM citas
+      WHERE fecha BETWEEN @desde AND @hasta AND estado != 'cancelada' GROUP BY 1 ORDER BY 1`).all(p);
     const estados = db.prepare(`SELECT estado, COUNT(*) AS n FROM citas WHERE fecha BETWEEN @desde AND @hasta GROUP BY estado`).all(p);
     const clientasNuevas = db.prepare(`SELECT COUNT(*) AS n FROM (SELECT cliente_telefono, MIN(fecha) AS primera FROM citas WHERE estado != 'cancelada' GROUP BY cliente_telefono) WHERE primera BETWEEN @desde AND @hasta`).get(p).n;
     const totalServicios = porDia.reduce((s, x) => s + x.servicios, 0);
@@ -55,8 +58,22 @@ export const ReporteModel = {
     const totalCitas = porDia.reduce((s, x) => s + x.citas, 0);
     const canceladas = estados.find((e) => e.estado === 'cancelada')?.n || 0;
     return {
-      desde, hasta, porDia, porEspecialista, servicios, productos, pagos, estados,
+      desde, hasta, porDia, porEspecialista, servicios, productos, pagos, estados, porHora,
       totales: { ventas: totalServicios + totalTienda, servicios: totalServicios, tienda: totalTienda, citas: totalCitas, canceladas, pedidos: porDia.reduce((s, x) => s + x.pedidos, 0), clientasNuevas }
+    };
+  },
+
+  // Nombre: avisosPanel
+  // Descripción: Cuenta lo pendiente para la campanita del panel.
+  // Entrada: La fecha de hoy.
+  // Salida: Pedidos nuevos, citas sin marcar y citas por confirmar.
+  // Objetivo: Que la dueña vea de un vistazo lo que falta atender.
+  avisosPanel(hoy) {
+    const db = getDb();
+    return {
+      pedidosNuevos: db.prepare("SELECT COUNT(*) AS n FROM pedidos WHERE estado = 'recibido'").get().n,
+      citasSinMarcar: db.prepare("SELECT COUNT(*) AS n FROM citas WHERE estado IN ('pendiente', 'confirmada') AND fecha < ?").get(hoy).n,
+      citasPorConfirmar: db.prepare("SELECT COUNT(*) AS n FROM citas WHERE estado = 'pendiente' AND fecha >= ?").get(hoy).n
     };
   }
 };

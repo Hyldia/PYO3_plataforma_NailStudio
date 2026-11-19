@@ -5,7 +5,9 @@ import { subirImagen } from '../middleware/subidas.js';
 import { fotoController } from '../controllers/fotoController.js';
 import { citaController } from '../controllers/citaController.js';
 import { productoAdminController } from '../controllers/productoAdminController.js';
-import { adminController as a } from '../controllers/adminController.js';
+import { agendaAdminController as agenda } from '../controllers/agendaAdminController.js';
+import { especialistaAdminController as especialistas } from '../controllers/especialistaAdminController.js';
+import { pedidoAdminController as pedidos } from '../controllers/pedidoAdminController.js';
 import { asistenteController } from '../controllers/asistenteController.js';
 import { accesoAdminController as acceso } from '../controllers/accesoAdminController.js';
 import { servicioAdminController as servicios } from '../controllers/servicioAdminController.js';
@@ -27,22 +29,22 @@ r.delete('/fotos/:id', fotoController.eliminar);
 r.post('/productos/:id/imagen', subirImagen.single('imagen'), productoAdminController.cambiarImagen);
 r.post('/portadas/:clave', subirImagen.single('imagen'), productoAdminController.fotoPortada);
 r.delete('/portadas/:clave', productoAdminController.quitarFotoPortada);
-r.post('/especialistas/:id/foto', subirImagen.single('imagen'), productoAdminController.fotoEspecialista);
+r.post('/especialistas/:id/foto', subirImagen.single('imagen'), especialistas.fotoEspecialista);
 r.post('/asistente/foto', subirImagen.single('imagen'), asistenteController.subirFoto);
 r.delete('/asistente/foto', asistenteController.quitarFoto);
-r.post('/fotos/:id/imagen', subirImagen.single('imagen'), a.cambiarFotoDiseno);
+r.post('/fotos/:id/imagen', subirImagen.single('imagen'), fotoController.cambiarFotoDiseno);
 
 // Productos: listar, crear, editar y eliminar
-r.get('/productos', a.productos);
-r.post('/productos', a.crearProducto);
-r.put('/productos/:id', a.editarProducto);
-r.delete('/productos/:id', a.eliminarProducto);
+r.get('/productos', productoAdminController.productos);
+r.post('/productos', productoAdminController.crearProducto);
+r.put('/productos/:id', productoAdminController.editarProducto);
+r.delete('/productos/:id', productoAdminController.eliminarProducto);
 
 // Equipo
-r.get('/especialistas', a.equipo);
-r.post('/especialistas', a.crearEspecialista);
-r.put('/especialistas/:id', a.editarEspecialista);
-r.delete('/especialistas/:id', a.eliminarEspecialista);
+r.get('/especialistas', especialistas.equipo);
+r.post('/especialistas', especialistas.crearEspecialista);
+r.put('/especialistas/:id', especialistas.editarEspecialista);
+r.delete('/especialistas/:id', especialistas.eliminarEspecialista);
 
 // Servicios del salón
 r.get('/servicios', servicios.listar);
@@ -70,18 +72,18 @@ r.delete('/nomina/:id/pagado', equipo.quitarPagado);
 r.get('/reportes', equipo.reportes);
 
 // Pedidos con filtros y estados
-r.get('/pedidos', a.pedidos);
-r.get('/pedidos/excel', a.pedidosExcel);
-r.patch('/pedidos/:id/estado', a.estadoPedido);
+r.get('/pedidos', pedidos.pedidos);
+r.get('/pedidos/excel', pedidos.pedidosExcel);
+r.patch('/pedidos/:id/estado', pedidos.estadoPedido);
 
 // Agenda: calendario del mes, cancelaciones y avisos por WhatsApp
-r.get('/calendario', a.calendario);
-r.get('/mensajes/tipos', a.tiposMensaje);
-r.get('/mensajes', a.mensajes);
-r.post('/mensajes/:id/enviado', a.mensajeEnviado);
-r.post('/citas/emergencia', a.emergencia);
-r.post('/citas/:id/cancelar', a.cancelar);
-r.post('/citas/:id/mensaje', a.mensaje);
+r.get('/calendario', agenda.calendario);
+r.get('/mensajes/tipos', agenda.tiposMensaje);
+r.get('/mensajes', agenda.mensajes);
+r.post('/mensajes/:id/enviado', agenda.mensajeEnviado);
+r.post('/citas/emergencia', agenda.emergencia);
+r.post('/citas/:id/cancelar', agenda.cancelar);
+r.post('/citas/:id/mensaje', agenda.mensaje);
 
 r.get('/citas', citaController.listarDelDia);
 r.patch('/citas/:id/estado', citaController.cambiarEstado);
