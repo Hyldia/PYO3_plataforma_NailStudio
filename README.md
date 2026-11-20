@@ -26,7 +26,7 @@ Sitio web completo para un salón de uñas: reservas en línea, galería de trab
 15. [Patrones de diseño](#15-patrones-de-diseño-gof)
 16. [Seguridad](#16-seguridad)
 17. [Accesibilidad](#17-accesibilidad)
-18. [Pendiente para producción](#18-pendiente-para-producción)
+
 
 ---
 
@@ -417,12 +417,3 @@ GRASP y SOLID están explicados con ejemplos en [`DOCUMENTACION.md`](DOCUMENTACI
 - **Botón de accesibilidad:** gris, modo oscuro, modo sencillo, pausar animaciones y lector de voz.
 - **Movimiento:** respeta la opción «reducir movimiento» del sistema.
 - **Celular:** funciona bien en pantallas desde 390 px de ancho.
-
----
-
-## 18. Pendiente para producción
-
-- **Varias cuentas para el panel:** una por persona, en lugar de una sola contraseña para la dueña.
-- **Pago real:** conectar una pasarela de pago de un banco o proveedor en `PagoTarjeta.cobrar()`.
-- **Recordatorios automáticos:** enviarlos solos por WhatsApp Business o correo, leyendo la tabla `recordatorios`.
-- **Fotos más livianas:** comprimir las fotos al subirlas (por ejemplo con `sharp`).
