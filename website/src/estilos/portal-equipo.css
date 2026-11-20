@@ -124,8 +124,6 @@ html.a11y-oscuro .portal-cita__nueva { background: #1A2B3D; color: #9CC8F0; }
 html.a11y-oscuro .portal-chip--lugar { background: #F6EDF0; }
 html.a11y-oscuro .portal-cifras--vino { border-color: #5A3343 !important; }
 @media (prefers-reduced-motion: reduce) { .portal-hero::after, .portal-entrar__burbuja { animation: none; } }
-html.a11y-pausa .portal-hero::after, html.a11y-pausa .portal-entrar__burbuja { animation: none; }
-
 /* ---- Fotos de las clientas ---- */
 .avatar-clienta { display: inline-grid; place-items: center; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: var(--rubor); box-shadow: 0 0 0 3px var(--papel), 0 4px 12px rgba(140,29,75,0.15); }
 .avatar-clienta img, .avatar-clienta svg { width: 100%; height: 100%; object-fit: cover; display: block; }

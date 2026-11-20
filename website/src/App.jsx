@@ -26,7 +26,6 @@ import Cuenta from './pages/Cuenta.jsx';
 import Ruleta from './components/Ruleta.jsx';
 import CuponSorpresa from './components/CuponSorpresa.jsx';
 import PremioEscondido from './components/PremioEscondido.jsx';
-import ChatAsistente from './components/ChatAsistente.jsx';
 import Accesibilidad from './components/Accesibilidad.jsx';
 
 // Nombre: App
@@ -77,7 +76,6 @@ export default function App() {
       <Ruleta />
       <CuponSorpresa />
       <PremioEscondido />
-      <ChatAsistente />
       <Accesibilidad />
       <Animaciones />
     </>

@@ -1,4 +1,4 @@
-/* Botón de accesibilidad, modo nocturno, modo sencillo y guía */
+/* Botón de accesibilidad, modo nocturno y guía */
 
 /* ================= Accesibilidad ================= */
 .a11y__boton { position: fixed; left: 0; top: 50%; z-index: 46; width: 50px; height: 56px; display: grid; place-items: center; transform: translateY(-50%); border: none; border-radius: 0 14px 14px 0;
@@ -19,9 +19,7 @@
 .a11y__leer { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; border: none; border-radius: 14px; background: #1F4FA8; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
 .a11y__leer--activo { background: #A3122A; animation: latido 1.6s ease-in-out infinite; }
 .a11y__opciones { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.a11y__opcion--grande { grid-column: 1 / -1; }
 .a11y__opcion { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; border: 2px solid #E3E6EF; border-radius: 14px; background: var(--papel); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-.a11y__opcion--grande .a11y__opcion { flex-direction: row; align-items: center; }
 .a11y__opcion span { display: flex; flex-direction: column; padding-right: 30px; }
 .a11y__opcion strong { font-size: 0.95rem; }
 .a11y__opcion small { color: #5E6475; font-size: 0.78rem; line-height: 1.3; }
@@ -41,25 +39,12 @@ html.a11y-lector { cursor: help; }
 /* Escala de grises y modo nocturno (se combinan) */
 html.a11y-gris { filter: grayscale(1); }
 
-/* Pausar animaciones (y modo sencillo) */
-html.a11y-pausa *, html.a11y-pausa *::before, html.a11y-pausa *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-
-/* Modo sencillo: letras grandes, menos distracciones, botones grandes */
-html.a11y-sencillo body { font-size: 1.12rem; line-height: 1.7; }
-html.a11y-sencillo .anuncios, html.a11y-sencillo .regalo-flotante, html.a11y-sencillo .vitrina__burbujas, html.a11y-sencillo .podio__chispas, html.a11y-sencillo .inspira__brillos,
-html.a11y-sencillo .fav-hero__corazones, html.a11y-sencillo .relampago__cinta, html.a11y-sencillo .tendencias, html.a11y-sencillo .campana__cupon, html.a11y-sencillo .decoracion,
-html.a11y-sencillo .tarjeta-producto__foto::after, html.a11y-sencillo .tarjeta-diseno__foto::after, html.a11y-sencillo .chat__saludo { display: none !important; }
-html.a11y-sencillo main p a:not(.boton):not(.boton-gigante), html.a11y-sencillo .pie a { text-decoration: underline; text-underline-offset: 3px; }
-html.a11y-sencillo .boton, html.a11y-sencillo .boton-gigante, html.a11y-sencillo .chip-filtro { min-height: 50px; }
-html.a11y-sencillo .tarjeta-producto:hover, html.a11y-sencillo .tarjeta-diseno:hover { transform: none; }
-html.a11y-sencillo :focus-visible { outline: 4px solid #1F4FA8 !important; outline-offset: 3px; }
-html.a11y-sencillo main { padding-bottom: 90px; }
-.sencillo-barra { position: fixed; left: 50%; bottom: 14px; z-index: 44; transform: translateX(-50%); width: min(680px, calc(100vw - 200px)); display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 18px;
-  border-radius: 18px; background: #1F4FA8; color: #fff; box-shadow: 0 12px 30px rgba(0,0,0,0.3); }
-.sencillo-barra p { flex: 1; margin: 0; font-size: 1rem; line-height: 1.35; }
-.sencillo-barra button { flex: none; min-height: 48px; padding: 0 18px; border: none; border-radius: 12px; background: #FFE08A; color: #22161C; font: inherit; font-weight: 900; font-size: 1.05rem; cursor: pointer; }
-.sencillo-barra button:last-child { padding: 0 12px; background: rgba(255,255,255,0.2); color: #fff; }
-@media (max-width: 760px) { .sencillo-barra { left: 10px; right: 80px; width: auto; transform: none; bottom: 10px; } .sencillo-barra p { font-size: 0.85rem; } }
+/* Alto contraste: refuerza textos secundarios, enlaces y foco de teclado */
+html.a11y-contraste { --gris: #3D2832; --apagado: #4A313C; --linea: #754B5C; --vino-texto: #6E1539; }
+html.a11y-contraste a:not(.boton):not(.boton-gigante) { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+html.a11y-contraste :focus-visible { outline: 4px solid #111 !important; outline-offset: 3px; }
+html.a11y-oscuro.a11y-contraste { --gris: #FFF; --apagado: #E5DCE0; --linea: #D4BFC8; --vino-texto: #FFC1D9; }
+html.a11y-oscuro.a11y-contraste :focus-visible { outline-color: #fff !important; }
 
 /* Guía paso a paso */
 .guia__opciones { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -88,8 +73,6 @@ html.a11y-oscuro .a11y__opcion { background: #26222E; border-color: #3A3546; }
 html.a11y-oscuro .a11y__opcion small { color: #B9B4C6; }
 html.a11y-oscuro .a11y__zoom { background: #26222E; }
 html.a11y-oscuro .a11y__zoom button, html.a11y-oscuro .a11y__cerrar { background: #2F2A38; color: #fff; }
-html.a11y-oscuro .chat__panel, html.a11y-oscuro .chat__lista { background: #1C1519; }
-html.a11y-oscuro .chat__saludo { color: var(--tinta); }
 html.a11y-oscuro .msj { background: #2A2520; border-color: #3D362E; }
 html.a11y-oscuro .msj__texto { background: #1F3A2A; color: #E6F5EA; }
 html.a11y-oscuro .cal__dia--libre { background: #183324; color: #8FE0AE; }
@@ -98,14 +81,3 @@ html.a11y-oscuro .cal__dia--casi { background: #3D2513; color: #FFB27A; }
 html.a11y-oscuro .cal__dia--lleno { background: #3F1820; color: #FF9AAB; }
 html.a11y-oscuro .cal__dia--cerrado { background: #272124; color: #7E7177; }
 html.a11y-gris { filter: grayscale(1); }
-.chat--abierto { z-index: 48; }
-.sofi--foto { display: block; border-radius: 50%; object-fit: cover; object-position: center 25%; background: var(--rubor); }
-.chat__boton .sofi--foto { width: 64px; height: 64px; }
-.chat__credito { margin: 0; padding: 4px 12px; background: var(--papel); font-size: 0.68rem; color: var(--apagado); text-align: right; }
-.chat__credito a { color: inherit; }
-@media (max-width: 760px) { .chat__boton .sofi--foto { width: 52px; height: 52px; } }
-.asistente-admin { display: flex; align-items: center; gap: 18px; padding: 16px 18px; border-radius: 18px; background: linear-gradient(120deg, var(--papel-rosa), var(--superficie)); border: 1px solid var(--linea); }
-.asistente-admin__foto { flex: none; padding: 4px; border-radius: 50%; background: linear-gradient(135deg, #E8B04B, var(--oferta), var(--vino)); }
-.asistente-admin__foto img, .asistente-admin__foto svg { display: block; width: 96px; height: 96px; border-radius: 50%; object-fit: cover; }
-.asistente-admin p { margin: 0 0 6px; }
-@media (max-width: 560px) { .asistente-admin { flex-direction: column; text-align: center; } }

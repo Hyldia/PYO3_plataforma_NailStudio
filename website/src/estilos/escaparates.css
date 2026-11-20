@@ -36,7 +36,7 @@
   animation: flotar 3.4s ease-in-out infinite; animation-delay: calc(var(--n) * -0.8s); transition: transform 0.25s; }
 .vitrina__producto:hover { transform: translateY(-8px) rotate(-2deg) scale(1.04); }
 .vitrina__producto .foto { width: 100%; height: 100%; }
-.vitrina__pct { position: absolute; top: 8px; left: 8px; padding: 3px 9px; border-radius: 8px; background: var(--oferta); color: #fff; font-weight: 900; font-size: 0.85rem; animation: latido 1.4s ease-in-out infinite; }
+.vitrina__pct { position: absolute; top: 8px; left: 8px; padding: 3px 9px; border-radius: 8px; background: var(--oferta); color: #fff; font-weight: 900; font-size: 0.85rem; animation: latido-descuento 1.4s ease-in-out infinite; }
 .vitrina__precio { position: absolute; left: 8px; right: 8px; bottom: 8px; padding: 5px; border-radius: 10px; background: rgba(255,255,255,0.94); color: var(--oferta-hondo); font-weight: 900; text-align: center; font-size: 0.95rem; }
 .vitrina__puntos { position: absolute; left: 40px; bottom: 18px; z-index: 2; display: flex; gap: 8px; }
 .vitrina__puntos button { width: 34px; height: 6px; padding: 0; border: none; border-radius: 3px; background: rgba(255,255,255,0.35); cursor: pointer; overflow: hidden; }
@@ -245,7 +245,7 @@
 
 /* Anuncio de la tienda: la animación se queda, pero más suave */
 .vitrina__burbujas i { background: rgba(255,255,255,0.07); animation-duration: calc(14s + var(--n) * 1.5s); }
-.vitrina h2 em, .vitrina__pct { animation: none; }
+.vitrina h2 em { animation: none; }
 .vitrina__texto > * { animation: aparece-suave 0.6s ease both; }
 .vitrina__productos li { animation: aparece-suave 0.6s ease both; animation-delay: calc(0.1s + var(--n) * 0.08s); }
 .vitrina__productos li:nth-child(even) { margin-top: 24px; }

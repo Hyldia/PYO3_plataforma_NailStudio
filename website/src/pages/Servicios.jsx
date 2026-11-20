@@ -12,7 +12,6 @@ import Resenas from '../components/Resenas.jsx';
 import Desplegable from '../components/Desplegable.jsx';
 import { olvidarResumenes, useResumenes } from '../lib/resumenesOpiniones.js';
 import Migas from '../components/Migas.jsx';
-import CarruselAuto from '../components/CarruselAuto.jsx';
 
 const ORDEN_CATEGORIAS = ['Combos', 'Manos', 'Uñas acrílicas', 'Gel y polygel', 'Pies', 'Tratamientos', 'Hombres', 'Diseños y extras', 'Retiros y reparaciones'];
 
@@ -104,6 +103,50 @@ function TarjetaServicio({ s, opinion, onOpiniones }) {
         <Link to={`/reservar?servicio=${s.id}`} className="servicio__reservar">Reservar<span className="solo-lector"> {s.nombre}</span></Link>
       </div>
     </li>
+  );
+}
+
+function GrupoServicios({ cat, lista, resumenes, onOpiniones }) {
+  const [pagina, setPagina] = useState(1);
+  const porPagina = 4;
+  const paginas = Math.ceil(lista.length / porPagina);
+  const idTitulo = `g-${cat}`;
+
+  useEffect(() => {
+    if (pagina > Math.max(1, paginas)) setPagina(Math.max(paginas, 1));
+  }, [pagina, paginas]);
+
+  const cambiarPagina = (numero) => {
+    setPagina(numero);
+    requestAnimationFrame(() => document.getElementById(idTitulo)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+
+  return (
+    <section className="servicios-grupo" aria-labelledby={idTitulo}>
+      <div className="servicios-grupo__cabeza">
+        <h2 id={idTitulo}>{cat === 'Combos' ? 'Combos y paquetes' : cat === 'Hombres' ? 'Para hombres' : cat}</h2>
+        {cat === 'Combos' && <p className="tenue">Varios servicios en una sola cita, a mejor precio.</p>}
+        {cat === 'Hombres' && <p className="tenue">Cuidado de uñas, manos y pies para caballeros, con acabado natural.</p>}
+      </div>
+      <div className={`servicios-paginado ${paginas > 1 ? 'servicios-paginado--navegable' : ''}`}>
+        {paginas > 1 && (
+          <button type="button" className="servicios-paginado__flecha" onClick={() => cambiarPagina(pagina - 1)} disabled={pagina === 1} aria-label={`Servicios anteriores de ${cat}`}>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+          </button>
+        )}
+        <ul className="servicios-rejilla servicios-rejilla--nueva">
+          {lista.slice((pagina - 1) * porPagina, pagina * porPagina).map((elemento) => (
+            <TarjetaServicio key={elemento.id} s={elemento} opinion={resumenes.get(elemento.id)} onOpiniones={onOpiniones} />
+          ))}
+        </ul>
+        {paginas > 1 && (
+          <button type="button" className="servicios-paginado__flecha" onClick={() => cambiarPagina(pagina + 1)} disabled={pagina === paginas} aria-label={`Más servicios de ${cat}`}>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+        )}
+        {paginas > 1 && <span className="solo-lector" aria-live="polite">Página {pagina} de {paginas}</span>}
+      </div>
+    </section>
   );
 }
 
@@ -298,17 +341,13 @@ export default function Servicios() {
         )}
 
         {grupos.map(([cat, lista]) => (
-          <section key={cat} className="servicios-grupo" aria-labelledby={`g-${cat}`}>
-            <div className="servicios-grupo__cabeza">
-              <h2 id={`g-${cat}`}>{cat === 'Combos' ? 'Combos y paquetes' : cat === 'Hombres' ? 'Para hombres' : cat}</h2>
-              {cat === 'Combos' && <p className="tenue">Varios servicios en una sola cita, a mejor precio.</p>}
-              {cat === 'Hombres' && <p className="tenue">Cuidado de uñas, manos y pies para caballeros, con acabado natural.</p>}
-            </div>
-            <CarruselAuto key={`${categoria}-${soloOfertas}-${texto}-${orden}-${precio[0]}-${tiempo[0]}`} etiqueta={cat}
-                          className={`servicios-rejilla servicios-rejilla--nueva ${cat === 'Combos' ? 'servicios-rejilla--combos' : ''}`}>
-              {lista.map((elemento) => <TarjetaServicio key={elemento.id} s={elemento} opinion={resumenes.get(elemento.id)} onOpiniones={setOpiniones} />)}
-            </CarruselAuto>
-          </section>
+          <GrupoServicios
+            key={`${cat}-${categoria}-${soloOfertas}-${texto}-${orden}-${precio[0]}-${tiempo[0]}`}
+            cat={cat}
+            lista={lista}
+            resumenes={resumenes}
+            onOpiniones={setOpiniones}
+          />
         ))}
       </div>
 

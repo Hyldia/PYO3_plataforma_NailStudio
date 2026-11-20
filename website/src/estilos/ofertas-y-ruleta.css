@@ -159,8 +159,6 @@
 .cupon-sorpresa__cerrar { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--rubor); color: var(--tinta); font-size: 1.1rem; cursor: pointer; }
 @media (max-width: 760px) { .cupon-sorpresa { bottom: 84px; left: 10px; } }
 @media (prefers-reduced-motion: reduce) { .cupon-sorpresa, .cupon-sorpresa__talon::after, .regalo-flotante--aparece { animation: none; } }
-html.a11y-pausa .cupon-sorpresa, html.a11y-pausa .cupon-sorpresa__talon::after { animation: none; }
-
 /* ---- Premio escondido: un regalito pequeño en una tarjeta cualquiera ---- */
 .premio-escondido { position: absolute; z-index: 30; width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 2px solid #fff; border-radius: 12px; background: linear-gradient(150deg, #E8B04B, #E0245E); color: #fff; cursor: pointer; transform: rotate(var(--giro, 0deg)); box-shadow: 0 6px 16px rgba(224,36,94,0.35); animation: premio-aparece 0.6s cubic-bezier(.2,1.5,.4,1) both, premio-brilla 2.6s ease-in-out 0.6s infinite; }
 .premio-escondido::after { content: ''; position: absolute; inset: -6px; border-radius: 16px; border: 2px solid rgba(232,176,75,0.6); animation: premio-onda 2.6s ease-out infinite; pointer-events: none; }

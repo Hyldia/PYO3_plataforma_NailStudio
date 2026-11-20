@@ -50,8 +50,6 @@ html.a11y-oscuro { --barra: #F08DB1; --barra-activa: #F9C2D5; --guia: #3A2C33;
 .cifras-graficas--grande strong { font-size: 2.1rem; }
 @media (max-width: 860px) { .cifras-graficas { grid-template-columns: 1fr 1fr; } .cifras-graficas--grande { grid-column: 1 / -1; } }
 @media (prefers-reduced-motion: reduce) { .grafico__barra { animation: none; } }
-html.a11y-pausa .grafico__barra { animation: none; }
-
 .grafico__leyenda { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.85rem; font-weight: 700; color: var(--tinta); }
 .grafico__leyenda li { display: inline-flex; align-items: center; gap: 6px; }
 .grafico__leyenda i, .grafico__tip-parte i, .grafico__punto { display: inline-block; width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }

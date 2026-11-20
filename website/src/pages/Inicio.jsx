@@ -197,9 +197,9 @@ export default function Inicio() {
             </h2>
             <Link to="/servicios?ofertas=1" className="enlace-flecha">Ver todos <Flecha /></Link>
           </div>
-          <CarruselAuto className="inicio-carrusel" etiqueta="Servicios en oferta">
-            {serviciosOferta.map((servicio) => <TarjetaServicioMini key={servicio.id} s={servicio} />)}
-          </CarruselAuto>
+          <ul className="productos-rejilla inicio-rejilla" aria-label="Servicios en oferta">
+            {serviciosOferta.slice(0, 5).map((servicio) => <TarjetaServicioMini key={servicio.id} s={servicio} />)}
+          </ul>
         </section>
       )}
 
@@ -228,9 +228,9 @@ export default function Inicio() {
             <h2 id="t-combos">Combos para consentirte</h2>
             <Link to="/servicios?categoria=Combos" className="enlace-flecha">Ver combos <Flecha /></Link>
           </div>
-          <CarruselAuto className="inicio-carrusel" etiqueta="Combos">
-            {combos.map((combo) => <TarjetaServicioMini key={combo.id} s={combo} />)}
-          </CarruselAuto>
+          <ul className="productos-rejilla inicio-rejilla" aria-label="Combos">
+            {combos.slice(0, 5).map((combo) => <TarjetaServicioMini key={combo.id} s={combo} />)}
+          </ul>
         </section>
       )}
 
@@ -263,8 +263,8 @@ export default function Inicio() {
             <h2 id="t-galeria">Diseños favoritos de nuestras clientas</h2>
             <Link to="/galeria" className="enlace-flecha">Ver galería <Flecha /></Link>
           </div>
-          <CarruselAuto className="mosaico inicio-carrusel" etiqueta="Diseños favoritos">
-            {fotos.map((foto, i) => (
+          <ul className="mosaico inicio-rejilla inicio-rejilla--galeria" aria-label="Diseños favoritos">
+            {fotos.slice(0, 5).map((foto) => (
               <li key={foto.id}>
                 <Link to={`/galeria/${foto.id}`} className="mosaico__boton">
                   <Foto archivo={foto.archivo} alt={foto.titulo} />
@@ -272,7 +272,7 @@ export default function Inicio() {
                 </Link>
               </li>
             ))}
-          </CarruselAuto>
+          </ul>
         </section>
       )}
     </>
