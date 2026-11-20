@@ -1,281 +1,429 @@
-# Nailé · sitio web del salón de uñas
+# AH Nails · Sitio web del salón de uñas
 
-Sitio web con reservas en línea, galería de trabajos con buscador y filtros, diseñador de uñas, tienda y panel para el salón.
+Sitio web completo para un salón de uñas: reservas en línea, galería de trabajos, diseñador de uñas, tienda, portal para el equipo y panel para la dueña.
 
-- **Frontend:** React + Vite (`website/`)
-- **Backend:** Node.js + Express (`api/`)
-- **Base de datos:** SQLite (`better-sqlite3`)
-- **Fotos:** se suben desde el panel y se guardan en `uploads/`
-- **Despliegue:** Railway (un solo servicio entrega la API, las fotos y el sitio)
+**Autoras:** Hyldia Thomas y Alice Arias
+**Curso:** Diseño de Software
 
-## Qué tiene
+---
 
-| Página | Ruta | Qué hace |
-|---|---|---|
-| Inicio | `/` | Portada con foto destacada, servicios, trabajos recientes, pasos para reservar, horario y ubicación |
-| Servicios | `/servicios` | Carta de servicios con precio y duración |
-| Galería | `/galeria` | Fotos reales con buscador, filtros (servicio, forma, color, acabado), orden y visor a pantalla completa. Los filtros quedan en la URL, así se pueden compartir |
-| Diseña tus uñas | `/disena` | Elige forma, largo, color, acabado y decoración, con muestra y recargo en vivo |
-| Reservar | `/reservar` | Tres pasos: servicio y especialista, fecha y hora libres, datos y adelanto (SINPE Móvil, tarjeta o en el salón) |
-| Tienda | `/tienda` | Productos con buscador, filtros por categoría y precio, orden y carrito |
-| Contacto | `/contacto` | Datos, horario, mapa y mensaje directo por WhatsApp |
-| Panel | `/admin` | Agenda del día, subir y editar fotos, fotos de productos y pedidos |
+## Contenido
 
-## Personalizar para el salón
+1. [Tecnologías](#1-tecnologías)
+2. [Páginas del sitio](#2-páginas-del-sitio)
+3. [Reglas del salón](#3-reglas-del-salón)
+4. [Panel de la dueña](#4-panel-de-la-dueña-admin)
+5. [Portal del equipo](#5-portal-del-equipo-equipo)
+6. [Compras, citas y pagos](#6-compras-citas-y-pagos)
+7. [Diseña tus uñas](#7-diseña-tus-uñas)
+8. [Fotos](#8-fotos)
+9. [Datos de ejemplo](#9-datos-de-ejemplo)
+10. [Correr en la computadora](#10-correr-en-la-computadora)
+11. [Comandos útiles](#11-comandos-útiles)
+12. [Publicar en Railway](#12-publicar-en-railway)
+13. [Cuentas de clientas](#13-cuentas-de-clientas)
+14. [Arquitectura MVC](#14-arquitectura-mvc)
+15. [Patrones de diseño](#15-patrones-de-diseño-gof)
+16. [Seguridad](#16-seguridad)
+17. [Accesibilidad](#17-accesibilidad)
+18. [Pendiente para producción](#18-pendiente-para-producción)
 
-1. **Datos del local:** `website/src/config.js` (nombre, teléfono, WhatsApp, dirección, horario, redes, SINPE y mapa).
-2. **Logo:** el logo actual es provisional. Pon el archivo real en `website/public/logo.svg` (o `.png`) y cambia `website/src/components/Logo.jsx` por `<img src="/logo.svg" alt="Nombre del salón" />`. Cambia también `website/public/favicon.svg`.
-3. **Servicios, especialistas y productos:** `api/src/db/seed.js`. Los precios están en colones y son de ejemplo.
-4. **Recargos por diseño:** la tabla `PRECIO` en `api/src/patrones/constructorDiseno.js` y en `website/src/patrones/constructorDiseno.js` (deben coincidir).
-5. **Fotos de muestra:** la galería arranca con 16 fotos gratuitas de Unsplash (`api/src/db/fotosMuestra.js`), enlazadas con el crédito de cada fotógrafa. Se cargan solas si la galería está vacía. Cuando el salón tenga sus fotos, bórrenlas desde el panel.
-6. **Datos de ejemplo:** al arrancar se crean unas 200 citas y 50 pedidos de clientas ficticias (`api/src/db/datosEjemplo.js`) para que la demo se vea real. Antes de usarlo con el salón de verdad, bórrenlos con `npm run limpiar` dentro de `api/`.
-7. **Fotos:** entra a `/admin`, pestaña Galería, y sube las fotos de los trabajos con su servicio, forma, color y acabado. Así funcionan los filtros. Marca como destacada la que quieras en la portada.
+---
 
-## Contraseña del panel del salón (/admin)
+## 1. Tecnologías
 
-- **La primera vez** la contraseña es `cambia-esta-clave` (o la que pongan en la variable `ADMIN_TOKEN` de Railway).
-- **Para cambiarla:** entren a `/admin` → pestaña **Contraseña** → escriban la actual y la nueva dos veces. Mientras usen la inicial, el panel muestra un aviso para cambiarla.
-- La contraseña se guarda **cifrada** (scrypt con sal) en la base de datos; nunca en texto. Al cambiarla se cierran las demás sesiones abiertas.
-- Después de 5 intentos fallidos hay que esperar 5 minutos.
+| Parte                | Tecnología                                                     | Carpeta          |
+| -------------------- | --------------------------------------------------------------- | ---------------- |
+| Sitio (lo que se ve) | React + Vite                                                    | `website/`     |
+| Servidor             | Node.js + Express                                               | `api/`         |
+| Base de datos        | SQLite (`better-sqlite3`)                                     | `api/naile.db` |
+| Fotos subidas        | Se guardan en el servidor                                       | `uploads/`     |
+| Publicación         | Railway (un solo servicio entrega el sitio, la API y las fotos) | —               |
 
-## Más fotos para la galería
+La explicación técnica completa (MVC, patrones GoF, GRASP y SOLID) está en [`DOCUMENTACION.md`](DOCUMENTACION.md).
 
-- **~200 fotos gratuitas de Unsplash:** creen una cuenta en https://unsplash.com/developers, hagan una «New Application» y copien el *Access Key*. Dentro de `api/`:
-  - PowerShell: `$env:UNSPLASH_KEY="su_access_key"; npm run fotos -- 200`
-  - Mac/Linux: `UNSPLASH_KEY=su_access_key npm run fotos -- 200`
-  - Usa 40 búsquedas distintas (manicure, pedicure, francesa, chrome, coffin, navidad…). Si se corta por el límite de 50 consultas por hora, se vuelve a correr una hora después y sigue donde quedó.
+---
 
-  Cada foto queda clasificada (servicio, forma, color, acabado) y con el crédito de su fotógrafa. Unsplash permite 50 consultas por hora, suficiente para unas 200 fotos.
-- **Fotos del salón:** pongan las fotos en una carpeta con nombres descriptivos («francesa rosa almendra.jpg») y corran `npm run importar -- "ruta/de/la/carpeta"`.
+## 2. Páginas del sitio
 
-## Servicios, combos y cupones
+| Página             | Dirección            | Qué hace                                                                                                                               |
+| ------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Inicio              | `/`                 | Portada, círculos de categorías, servicios, diseños destacados, tienda y reseñas                                                    |
+| Servicios           | `/servicios`        | Unos 30 servicios en 8 categorías, con precio, duración, filtros y botón para reservar                                               |
+| Galería            | `/galeria`          | Fotos reales con buscador, filtros (servicio, forma, color, acabado) y orden. Los filtros quedan en la dirección y se pueden compartir |
+| Detalle de diseño  | `/galeria/:id`      | Foto grande, datos, diseños parecidos y «Reservar este diseño»                                                                      |
+| Diseña tus uñas   | `/disena`           | Diseñador paso a paso sobre la foto de una mano, uña por uña, con precio en vivo                                                     |
+| Reservar            | `/reservar`         | Servicio, especialista, día y hora libres, y pasa al carrito                                                                           |
+| Tienda              | `/tienda`           | Unos 450 productos con filtros, orden, buscador y carrito                                                                               |
+| Detalle de producto | `/tienda/:id`       | Fotos, precio, reseñas y productos parecidos                                                                                           |
+| Carrito             | `/carrito`          | Productos y citas juntos                                                                                                                |
+| Finalizar compra    | `/finalizar-compra` | Datos, método de pago, cupón y resumen                                                                                                |
+| Mi cuenta           | `/cuenta`           | Pedidos, citas (cancelar hasta 2 horas antes) y direcciones                                                                             |
+| Favoritos           | `/favoritos`        | Diseños y productos guardados con el corazón                                                                                          |
+| Buscar              | `/buscar`           | Resultados de servicios, productos y diseños                                                                                           |
+| Ayuda y contacto    | `/contacto`         | Datos del salón, horario, preguntas frecuentes y mensaje por WhatsApp                                                                  |
+| Portal del equipo   | `/equipo`           | Entrada de las especialistas                                                                                                            |
+| Panel               | `/admin`            | Panel de la dueña                                                                                                                      |
 
-La carta tiene unos 30 servicios en 8 categorías (manos, uñas acrílicas, gel y polygel, pies, tratamientos, diseños y extras, retiros y combos) en `api/src/db/catalogoServicios.js`, cada uno con descripción, qué incluye, foto, duración, precio y, si aplica, precio de oferta y etiqueta (Más pedido, Nuevo, Oferta, Especial).
+**El buscador del encabezado** muestra resultados mientras se escribe y se puede usar con las flechas y Enter.
 
-Los cupones (`BIENVENIDA15`, `COMBO5000`, `NAVIDAD20`, `AMIGA10` y uno privado `CUMPLE25`) están en el mismo archivo y en la tabla `cupones`. Se validan en el servidor (vigencia, compra mínima, solo combos) y el descuento se calcula con el patrón Decorator.
+---
 
-## Tienda
+## 3. Reglas del salón
 
-Unos 450 productos en 13 categorías (`api/src/db/catalogoProductos.js`): geles, rubber base, top coats, polygel, acrílico, lámparas, tornos, cortacutículas, limas, removedores, decoración y estampado, tips y press-on, cuidado de manos, pedicure, manicure profesional (estación de trabajo) y kits. Al subir la versión del catálogo, las bases de datos existentes reciben solo los productos nuevos. Para ponerles **fotos reales** de Unsplash (lámparas, cortacutículas, limas, cremas, frascos del color del esmalte…), dentro de `api/`:
+| Regla                 | Cómo funciona                                                                                                                                                                                                                                                              |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ubicación y contacto | Limón, Limón, Costa Rica · 8532 6297. El WhatsApp está en el pie de página y en Ayuda y contacto (`website/src/config.js`)                                                                                                                                           |
+| Cancelar una cita     | Clientas y especialistas,**solo hasta 2 horas antes**. La dueña puede cancelar siempre (emergencias)                                                                                                                                                                 |
+| Clienta que no llegó | Al pasar la hora aparece el botón**«No llegó»**. La dueña o la especialista elige**Reprogramar** (otra fecha, se guarda el adelanto) o **Cobrar** (adelanto, mitad, total u otro monto). Queda anotado quién decidió y se prepara el mensaje de WhatsApp |
+| Comisión             | Cada especialista gana el**65 %** de lo que atiende; el 35 % queda para el salón. Se puede cambiar por especialista                                                                                                                                                  |
+| Días de pago         | El 15 y el último día del mes. Si cae domingo, se paga el sábado anterior                                                                                                                                                                                                |
+| Adelanto de citas     | Se paga el 30 % al reservar; el resto en el salón                                                                                                                                                                                                                          |
+| Uña levantada        | Si pasa en los primeros 5 días, se arregla sin costo                                                                                                                                                                                                                       |
 
-- PowerShell: `$env:UNSPLASH_KEY="su_access_key"; npm run fotos-productos`
-- Para reemplazar también las que ya tienen foto: `npm run fotos-productos -- --todas`
+---
 
-Usa unas 35 consultas (el límite es 50 por hora). Si se corta, esperen una hora y córranlo de nuevo: sigue con los que faltan. Cada foto muestra el crédito de su fotógrafa. Los productos sin foto muestran una ilustración, y siempre pueden subir la foto real del producto desde /admin → Productos.
+## 4. Panel de la dueña (`/admin`)
 
-## Fotos de la galería con descripción en español
+**Contraseña inicial:** `cambia-esta-clave` (o la que tenga la variable `ADMIN_TOKEN`). Mientras se use la inicial, el panel avisa que hay que cambiarla.
 
-Al prender el servidor, cada foto recibe (una sola vez) una descripción y etiquetas en español: colores, forma, largo, técnica (francesa, ombré, mármol…), piedras y decoraciones (perlas, cristales, flores 3D, charms…) y ocasión. Así el diseñador encuentra más fotos parecidas. Para repetirlo a mano: `npm run describir-fotos`.
+| Pestaña        | Para qué sirve                                                                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Agenda          | Calendario del mes, citas del día, «No llegó», cancelar por emergencia y avisar por WhatsApp                                                                         |
+| Servicios       | Agregar, cambiar, ocultar o eliminar servicios (precio, oferta, duración, foto)                                                                                         |
+| Galería        | «+ Agregar nueva imagen». Cada diseño puede tener su propio precio                                                                                                    |
+| Productos       | Productos de la tienda. Arriba, las tarjetas de los**círculos de categorías**: cambiar la foto, ocultar un círculo o agregarlo al Inicio                        |
+| Pedidos         | Pedidos de la tienda con filtros y descarga en Excel                                                                                                                     |
+| Equipo          | Ficha de cada especialista: datos y horario, pago y estación, días libres, usuario y contraseña del portal                                                            |
+| Pagos al equipo | Quincena por quincena: citas, ventas, comisión y total a pagar. Marcar como pagado y bajar en Excel                                                                     |
+| Cierre del día | Ingresos, pago al equipo, ganancia del salón, pérdidas y citas perdidas. Se imprime o se manda por WhatsApp. Después de las 5 p. m. el panel avisa que ya está listo |
+| Gráficas       | Ventas, citas por especialista, servicios y productos más vendidos, formas de pago. Cada gráfica se baja como imagen (PNG) o para Excel (CSV)                          |
+| Contraseña     | Cambiar la contraseña del panel                                                                                                                                         |
 
-Para traer fotos de decoraciones desde Unsplash (perlas, cristales, flores 3D, moños, aura, ojo de gato, cromo, foil…):
+**Campanita de avisos** (arriba a la derecha): días libres por aprobar, pedidos nuevos, citas por confirmar y citas pasadas sin marcar.
 
-- PowerShell: `$env:UNSPLASH_KEY="su_access_key"; npm run fotos -- 150 --decoraciones`
-
-## Reglas del salón
-
-- **Ubicación y contacto:** Limón, Limón, Costa Rica · teléfono y WhatsApp **8532 6297** (`website/src/config.js`). El WhatsApp del salón está en el pie de página de todas las páginas y en Ayuda y contacto.
-- **Cancelar:** las clientas y las especialistas solo pueden cancelar **hasta 2 horas antes** de la cita. La dueña puede cancelar siempre (emergencias).
-- **Clienta que no llegó:** en la Agenda (dueña) o en el portal (especialista) aparece el botón **«No llegó»** cuando ya pasó la hora. Se elige **Reprogramar** (otra fecha, sin costo, se guarda el adelanto) o **Cobrar** (el adelanto, la mitad, el total u otro monto). Queda anotado quién decidió y se prepara el mensaje de WhatsApp para la clienta.
-- **Comisión:** las especialistas ganan el **65 %** de lo que atienden y el 35 % queda para el salón (se puede cambiar por especialista en Equipo → Ajustes).
-- **Datos de muestra:** las citas de muestra que ya pasaron se marcan solas como atendidas cada 15 minutos, para que la agenda, el cierre y las gráficas se vean como en un salón funcionando. Las citas reales nunca se tocan. `npm run limpiar` borra todo lo de muestra.
-
-## Pestañas del panel (/admin)
-
-| Pestaña | Para qué sirve |
-|---|---|
-| Agenda | Calendario del mes, citas del día, cancelar por emergencia y avisar por WhatsApp |
-| **Servicios** | Ver, agregar y modificar servicios: precio, oferta, duración, categoría, qué incluye, foto, ocultar o eliminar |
-| Galería | Botón **«+ Agregar nueva imagen»**. Cada diseño puede tener su propio precio (cualquier monto); si se deja vacío usa el precio del servicio |
-| Productos | Productos de la tienda. Arriba, **«Fotos de los círculos de categorías»**: cambiar la foto de cada círculo, **ocultar** un círculo, o **agregar** al Inicio el círculo de una categoría de la tienda. Para una categoría nueva se crea un producto con ese nombre de categoría |
-| Equipo | Cada especialista tiene un botón **«Abrir ficha»** con 4 partes: 1) datos, foto y horario, 2) pago y estación, 3) días libres, 4) usuario y contraseña del portal |
-| **Pagos al equipo** | Quincena por quincena: citas atendidas, lo vendido, comisión, total a pagar, días trabajados, libres y ausencias. Marcar como pagado y descargar en Excel |
-| Pedidos | Pedidos de la tienda con filtros y Excel |
-| **Cierre del día** | Reporte de fin de día: ingresos, pago al equipo, ganancia del salón, pérdidas y la lista de citas perdidas. Se imprime o se manda por WhatsApp. Después de las 5 p. m. el panel avisa que ya se puede ver |
-| **Gráficas** | Ventas por día o por mes, citas por especialista, servicios y productos más vendidos, formas de pago y cómo terminaron las citas. Cada gráfica se descarga como imagen (PNG) o para Excel (CSV) |
-| Contraseña | Cambiar la contraseña del panel |
-
-## Portal del equipo (/equipo)
-
-1. En el panel: **Equipo** → «Pago, días libres y acceso» → **Usuario y contraseña** → escriban un usuario y una contraseña (o toquen «Inventar una contraseña segura») → **Dar acceso**.
-2. Denle el usuario y la contraseña a la especialista en persona.
-3. Ella entra en **Acceso del equipo** (al pie de la página o en `/equipo`) y ve: sus citas de los próximos 14 días con el nombre, teléfono, servicio, diseño y notas de cada clienta (con botón de WhatsApp), sus clientas, su estación, su horario, sus días libres y lo que lleva ganado en la quincena. No ve nada de las demás.
-- La contraseña se guarda cifrada (scrypt). 5 intentos fallidos = esperar 5 minutos. Al cambiarla se cierran sus sesiones.
-- **Días de pago:** el 15 y el último día de cada mes (si cae domingo, el sábado antes). Solo cuentan las citas marcadas como atendidas. Si quedan citas de días pasados sin marcar, «Pagos al equipo» avisa y tiene un botón para marcarlas todas.
-- Un día marcado como libre/vacaciones ya no se puede reservar con esa especialista.
-- **Pedir días libres:** en el portal, pestaña «Días libres» → «Pedir un día libre». La solicitud aparece en la **campanita de avisos** del panel (arriba a la derecha, con un número rojo) para **Aprobar** o **No aprobar**; si se aprueba, ese día ya no se puede reservar con ella.
-- **Fotos de las clientas:** se usa la foto de su cuenta (por ejemplo, la de Google). Las clientas de ejemplo reciben fotos de Unsplash con `npm run fotos-clientas` (con la clave `UNSPLASH_KEY`, igual que los otros comandos de fotos). Si una clienta no tiene foto, se muestran sus iniciales.
-- **Cancelar una cita desde el portal:** la especialista toca «Cancelar cita», elige el motivo y si le ofrece otro día. La cita se cancela (patrón State), el aviso para la clienta queda escrito (Template Method) y se abre en WhatsApp para enviarlo. La administradora la ve cancelada en la Agenda con el nombre de quien la canceló.
-
-## Ver la base de datos (solo para quien programa)
-
-- **Desde VS Code:** instalen la extensión **SQLite Viewer** y abran `api/naile.db`.
-
-## Correr en local
-
-Necesitas Node.js 20 o superior.
+**Si se olvida la contraseña**, dentro de `api/`:
 
 ```bash
-cd api
-npm install
-npm run dev          # API en http://localhost:3001
-
-# en otra terminal
-cd website
-npm install
-npm run dev          # sitio en http://localhost:5173
+npm run cambiar-contrasena -- correo@ejemplo.com claveNueva
 ```
 
-La clave del panel en desarrollo es `cambia-esta-clave`. Para cambiarla, define la variable `ADMIN_TOKEN`.
+---
 
-## Desplegar en Railway
+## 5. Portal del equipo (`/equipo`)
 
-1. Sube el proyecto a GitHub.
-2. En Railway: **New Project → Deploy from GitHub repo**.
-3. En **Settings** del servicio: Build Command `npm run build`, Start Command `npm start`.
-4. Agrega un **Volume** montado en `/data`. Ahí viven la base de datos y las fotos; sin el volumen se borran en cada despliegue.
-5. En **Variables**:
-   - `DB_PATH=/data/naile.db`
-   - `UPLOADS_DIR=/data/uploads`
-   - `ADMIN_TOKEN=` una clave larga que solo conozca el salón
-   - `NODE_ENV=production`
-   - `TZ=America/Costa_Rica` (para que las fechas, el cierre del día y las citas usen la hora de Costa Rica)
-   - `COSTO_ENVIO=2500` (opcional: precio del envío a domicilio)
-   - `GOOGLE_CLIENT_ID=` y `FACEBOOK_APP_ID=` + `FACEBOOK_APP_SECRET=` para entrar con Google y Facebook (ver abajo)
-6. **Networking → Generate Domain** para la URL pública. Si el salón tiene dominio propio, se conecta en **Custom Domain**.
+**Cómo darle acceso a una especialista**
 
-## Cuentas de clientas (Google, Facebook y formulario)
+1. En el panel: **Equipo** → abrir su ficha → **Usuario y contraseña**.
+2. Escribir un usuario y una contraseña (o tocar «Inventar una contraseña segura») → **Dar acceso**.
+3. Darle los datos en persona.
 
-Para comprar hay que tener cuenta. Con correo y contraseña funciona sin configurar nada (las contraseñas se guardan con scrypt).
-Los botones de Google y Facebook se activan solos cuando existen sus variables:
+**Qué ve la especialista** (solo lo suyo, nunca lo de las demás):
 
-- **Google:** en https://console.cloud.google.com → *APIs y servicios → Credenciales → Crear ID de cliente de OAuth* (tipo *Aplicación web*).
-  En *Orígenes de JavaScript autorizados* pongan `http://localhost:5173` y la URL de Railway. Copien el ID en `GOOGLE_CLIENT_ID`.
-- **Facebook:** en https://developers.facebook.com → *Crear app* → producto *Inicio de sesión con Facebook*.
-  Agreguen el dominio de Railway, y copien *Identificador de la app* en `FACEBOOK_APP_ID` y la *Clave secreta* en `FACEBOOK_APP_SECRET`.
+- Sus citas de los próximos 14 días con nombre, teléfono, servicio, diseño y notas de cada clienta.
+- Sus clientas, su estación, su horario y sus días libres.
+- Lo que lleva ganado en la quincena.
+
+**Qué puede hacer**
+
+- **Cancelar una cita** (hasta 2 horas antes): elige el motivo y se abre el mensaje para la clienta en WhatsApp.
+- **Marcar «No llegó»** y decidir si se reprograma o se cobra.
+- **Pedir un día libre**: la solicitud le llega a la dueña en la campanita. Si se aprueba, ese día ya no se puede reservar con ella.
+
+---
+
+## 6. Compras, citas y pagos
+
+- **Para comprar hay que tener cuenta** (correo y contraseña, o Google y Facebook si están configurados).
+- **Flujo de una cita:** Galería → «Reservar este diseño» → servicio, especialista, día y hora → «¿Vas con alguien más?» → carrito → finalizar compra.
+- Cada cita es para una persona con un solo diseño.
+- En **Finalizar compra** se pagan juntos los productos completos y el 30 % de las citas.
+- **El servidor calcula el resumen** (`POST /api/pedidos/cotizar`) con los precios de la base de datos y el cupón. Así nadie puede cambiar un precio desde el navegador.
+- **Todo se guarda junto:** si una hora se ocupa en ese momento, no se guarda nada.
+- **Métodos de pago:** SINPE Móvil, tarjeta o pago en el salón.
+- **Tarjeta en modo de prueba:** se revisa el número (Luhn) y el vencimiento, pero no se cobra nada. Número de prueba: `4242 4242 4242 4242`.
+
+**Cupones:** `BIENVENIDA15`, `COMBO5000`, `NAVIDAD20`, `AMIGA10` y uno privado, `CUMPLE25`. El servidor revisa la vigencia, la compra mínima y si es solo para combos.
+
+**Regalos sorpresa:**
+
+- **Ruleta:** se abre sola en la primera visita. Después aparece de vez en cuando, nunca si se giró en las últimas 12 horas.
+- **Cupones sorpresa:** salen al agregar un combo o al pasar el monto mínimo. Máximo dos por visita y nunca el mismo en 3 días.
+
+**Reseñas:** cada producto tiene reseñas. Si la clienta pone su número de pedido y su teléfono, sale como **compra verificada**.
+
+**Productos agotados:** se ven en gris, con «Ver similares» y «Avisarme por WhatsApp».
+
+---
+
+## 7. Diseña tus uñas
+
+- **Cómo se ve:** se usa una foto real de una mano sin uñas (`website/public/img/mano.jpg`). Encima se dibuja cada uña con su forma, largo, color, acabado y decoración. Con `mano-mascara.png` se cambia el tono de piel.
+- **Uña por uña:** se puede cambiar las 5 uñas juntas o una sola. Tocar una uña cambia solo esa.
+- **Decoraciones:** perlas, cristales, stickers, polvos, flores 3D, foil, charms y líneas finas, eligiendo en qué uña y en qué parte va cada una.
+- **273 esmaltes** con código (AH-001…), en `api/src/db/esmaltes.js` y copiados en `website/src/lib/esmaltes.js`. Los dos archivos deben ser iguales.
+- **Fotos parecidas:** debajo del diseño salen fotos reales parecidas. Cuentan más las decoraciones, después el color y al final la forma.
+
+**Cómo se calcula el precio:**
+
+| Parte                                   | Cómo se cobra                                         |
+| --------------------------------------- | ------------------------------------------------------ |
+| Largo                                   | Una vez por juego                                      |
+| Acabado, decoración y esmalte especial | Por uña, por 2 (las dos manos)                        |
+| Decoraciones pegadas                    | Precio por uña × uñas elegidas × 2 manos           |
+| Colores combinados                      | +₡500 por cada color de más (el primero va incluido) |
+
+Al guardar el diseño, el servidor vuelve a calcular el precio (patrón Builder).
+
+Si se cambia la foto de la mano, hay que volver a medir cada uña en `website/src/components/ManoFoto.jsx`.
+
+---
+
+## 8. Fotos
+
+Todas las fotos de muestra son **gratuitas de Unsplash** y muestran el nombre de su fotógrafa. No se usan fotos de Pinterest, con marca de agua ni de pago.
+
+**Clave de Unsplash:**
+
+1. Crear una cuenta en https://unsplash.com/developers.
+2. Hacer una «New Application» y copiar el *Access Key*.
+3. **La clave nunca va en el código ni en GitHub.** Se escribe solo en la terminal antes del comando (PowerShell):
+
+```powershell
+$env:UNSPLASH_KEY="su_access_key"
+```
+
+Unsplash permite 50 consultas por hora. Si un comando se corta, se vuelve a correr una hora después y sigue donde quedó.
+
+| Para qué                                              | Comando (dentro de `api/`)                 |
+| ------------------------------------------------------ | -------------------------------------------- |
+| Unas 200 fotos para la galería                        | `npm run fotos -- 200`                     |
+| Fotos de decoraciones (perlas, cristales, flores 3D…) | `npm run fotos -- 150 --decoraciones`      |
+| Fotos de los productos                                 | `npm run fotos-productos`                  |
+| Reemplazar también las que ya tienen foto             | `npm run fotos-productos -- --todas`       |
+| Fotos de muestra de las especialistas                  | `npm run fotos-especialistas`              |
+| Fotos de muestra de las clientas                       | `npm run fotos-clientas`                   |
+| Importar fotos del salón desde una carpeta            | `npm run importar -- "ruta/de/la/carpeta"` |
+| Volver a escribir las descripciones en español        | `npm run describir-fotos`                  |
+
+- **Descripciones en español:** al prender el servidor, cada foto recibe una sola vez una descripción y etiquetas (colores, forma, técnica, decoraciones). Así el diseñador encuentra más fotos parecidas.
+- **Nombres al importar:** las fotos del salón deben tener nombres descriptivos, por ejemplo «francesa rosa almendra.jpg».
+- **Para el sitio real:** usen fotos del equipo de verdad. Las clientas deben ver a quien las va a atender.
+
+---
+
+## 9. Datos de ejemplo
+
+Para que la demo se vea como un salón funcionando, la base de datos trae datos de muestra:
+
+- 10 especialistas.
+- Citas de los últimos 60 días y de los próximos días.
+- Pedidos de la tienda.
+- Reseñas y comentarios.
+
+Las citas de muestra que ya pasaron se marcan solas como atendidas cada 15 minutos. **Las citas reales nunca se tocan.**
+
+**Antes de abrir el sitio al público, borren todo lo de muestra.** Dentro de `api/`:
+
+```bash
+npm run limpiar
+```
+
+---
+
+## 10. Correr en la computadora
+
+Se necesita **Node.js 20 o superior**.
+
+```bash
+# Terminal 1: el servidor
+cd api
+npm install
+npm run dev          # http://localhost:3001
+
+# Terminal 2: el sitio
+cd website
+npm install
+npm run dev          # http://localhost:5173
+```
+
+**Para ver la base de datos:** en VS Code, instalen la extensión **SQLite Viewer** y abran `api/naile.db`.
+
+---
+
+## 11. Comandos útiles
+
+Todos se corren dentro de `api/`.
+
+| Comando                                                | Qué hace                                           |
+| ------------------------------------------------------ | --------------------------------------------------- |
+| `npm run dev`                                        | Prende el servidor y lo reinicia al guardar cambios |
+| `npm start`                                          | Prende el servidor                                  |
+| `npm run seed`                                       | Carga los datos iniciales                           |
+| `npm run limpiar`                                    | Borra todos los datos de muestra                    |
+| `npm run cambiar-contrasena -- correo clave`         | Cambia la contraseña de una cuenta                 |
+| `npm run fotos`, `fotos-productos`, `importar`… | Ver la[sección de fotos](#8-fotos)                    |
+
+---
+
+## 12. Publicar en Railway
+
+1. **GitHub:** subir el proyecto a GitHub.
+2. **Crear el proyecto:** en Railway, **New Project → Deploy from GitHub repo**.
+3. **Settings:** Build Command `npm run build` y Start Command `npm start`.
+4. **Volume:** agregar uno montado en `/data`. Ahí viven la base de datos y las fotos; sin él se borran en cada publicación.
+5. **Variables:**
+
+| Variable                                      | Valor                                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `DB_PATH`                                   | `/data/naile.db`                                                                          |
+| `UPLOADS_DIR`                               | `/data/uploads`                                                                           |
+| `ADMIN_TOKEN`                               | Una clave larga que solo conozca el salón                                                  |
+| `NODE_ENV`                                  | `production`                                                                              |
+| `TZ`                                        | `America/Costa_Rica` (para que el cierre del día y las citas usen la hora de Costa Rica) |
+| `COSTO_ENVIO`                               | Opcional: precio del envío a domicilio, por ejemplo `2500`                               |
+| `GOOGLE_CLIENT_ID`                          | Opcional: para entrar con Google                                                            |
+| `FACEBOOK_APP_ID` y `FACEBOOK_APP_SECRET` | Opcional: para entrar con Facebook                                                          |
+
+6. **Dirección pública:** **Networking → Generate Domain**. Si el salón tiene dominio propio, se conecta en **Custom Domain**.
+
+---
+
+## 13. Cuentas de clientas
+
+Con **correo y contraseña** funciona sin configurar nada.
+
+Los botones de **Google** y **Facebook** se activan solos cuando existen sus variables:
+
+**Google**
+
+1. Entrar a https://console.cloud.google.com.
+2. Ir a *APIs y servicios → Credenciales → Crear ID de cliente de OAuth* (tipo *Aplicación web*).
+3. En *Orígenes autorizados*, poner `http://localhost:5173` y la dirección de Railway.
+4. Copiar el ID en `GOOGLE_CLIENT_ID`.
+
+**Facebook**
+
+1. Entrar a https://developers.facebook.com → *Crear app* → *Inicio de sesión con Facebook*.
+2. Agregar el dominio de Railway.
+3. Copiar el identificador en `FACEBOOK_APP_ID` y la clave secreta en `FACEBOOK_APP_SECRET`.
 
 Ninguna de estas claves va en el código ni en GitHub: solo en las variables.
 
-## Arquitectura MVC
+---
 
-El proyecto sigue el patrón **Modelo, Vista, Controlador**:
+## 14. Arquitectura MVC
 
-| Capa | Dónde | Responsabilidad |
-|---|---|---|
-| **Modelo** | `api/src/models/` | Datos y reglas de negocio. Es la única capa que habla con SQLite (por ejemplo, `CitaModel` valida datos, calcula el total y el adelanto y consulta horarios libres). |
-| **Vista** | `website/` (React) | Lo que ve la clienta y el salón. No conoce la base de datos: pide todo a la API. |
-| **Controlador** | `api/src/controllers/` | Recibe cada petición, pide datos a los modelos, aplica los patrones (cobro, estados, eventos) y responde. |
-| Rutas | `api/src/routes/` | Solo conectan cada URL con su controlador, sin lógica. |
+| Capa                  | Dónde                   | Qué hace                                                                                |
+| --------------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
+| **Modelo**      | `api/src/models/`      | Guarda y lee datos. Es la única capa que habla con SQLite                               |
+| **Vista**       | `website/` (React)     | Lo que ven las clientas, el equipo y la dueña. Pide todo al servidor por `lib/api.js` |
+| **Controlador** | `api/src/controllers/` | Recibe cada petición, llama al modelo o al servicio y responde                          |
+| Rutas                 | `api/src/routes/`      | Solo conectan cada dirección con su controlador                                         |
+| Servicios             | `api/src/servicios/`   | Reglas que usan varias pantallas (cancelar citas, citas perdidas)                        |
 
 ```mermaid
 flowchart LR
-  V["Vista<br/>React (website/)"] -- "petición HTTP /api" --> R["Rutas<br/>routes/"]
-  R --> C["Controladores<br/>controllers/"]
-  C --> M["Modelos<br/>models/"]
-  C --> P["Patrones GoF<br/>patrones/"]
+  V["Vista<br/>React (website/)"] -- "petición /api" --> R["Rutas"]
+  R --> C["Controladores"]
+  C --> S["Servicios y patrones"]
+  C --> M["Modelos"]
+  S --> M
   M --> DB[("SQLite")]
   C -- "JSON" --> V
 ```
 
-Ejemplo, reservar una cita:
+**Ejemplo: comprar una cita.**
 
-1. **Vista:** `website/src/pages/Reservar.jsx` envía `POST /api/citas`.
-2. **Ruta:** `routes/publicRoutes.js` la manda a `citaController.crear`.
-3. **Controlador:** `controllers/citaController.js` valida con `CitaModel`, cobra con la estrategia de pago (Strategy + Factory), guarda la cita y emite el evento `cita:creada` (Observer).
-4. **Modelo:** `models/CitaModel.js` guarda en SQLite; `models/RecordatorioModel.js` guarda los recordatorios.
-5. La vista recibe el JSON y muestra la confirmación.
+1. **Vista:** `FinalizarCompra.jsx` envía `POST /api/pedidos`.
+2. **Ruta:** `publicRoutes.js` revisa que haya sesión y llama a `pedidoController.crear`.
+3. **Controlador:** recalcula precios y cupón (Decorator), cobra con el método elegido (Strategy + Factory) y guarda todo junto.
+4. **Modelo:** `CitaModel` y `PedidoModel` guardan en SQLite. El evento `cita:creada` (Observer) programa los recordatorios.
+5. **Vista:** recibe la respuesta y muestra la confirmación.
 
-### Estructura del backend
+**Carpetas**
 
 ```
 api/src/
   index.js        arranque del servidor
-  db/             conexion.js (Singleton), schema.sql, datos de ejemplo y comandos de fotos
-  models/         Modelo: una clase por tabla (Producto, Cita, Pedido, Usuario, Admin…)
-  controllers/    Controlador: recibe cada petición y responde (catálogo, citas, pedidos, cuentas, panel…)
-  routes/         publicRoutes.js (sitio), adminRoutes.js (panel), equipoRoutes.js (portal del equipo) e index.js
-  patrones/       Patrones de diseño GoF (ver la tabla de abajo)
-  middleware/     sesión del panel, del equipo y de clientas, y subida de imágenes
+  db/             conexión (Singleton), tablas, datos de ejemplo y comandos de fotos
+  models/         un modelo por tema (Cita, Pedido, Producto, Usuario, Nómina…)
+  controllers/    un controlador por sección
+  routes/         publicRoutes (sitio), adminRoutes (panel), equipoRoutes (portal)
+  servicios/      reglas compartidas (cancelar, no llegó)
+  patrones/       patrones de diseño, un archivo por patrón
+  middleware/     sesiones (dueña, equipo, clientas) y subida de fotos
+  lib/            ayudantes, por ejemplo cuentas con fechas
 
 website/src/
-  main.jsx, App.jsx   arranque y rutas de las páginas
-  pages/              Vista: una página por archivo (Tienda, Galería, Reservar…); pages/admin/ es el panel
-  components/         piezas reutilizables (tarjetas, encabezado, chat, accesibilidad…)
-  context/            datos compartidos entre páginas: carrito, favoritos, cuenta, reserva (Observer)
-  patrones/           cadenaAsistente.js (Chain of Responsibility) y constructorDiseno.js (Builder)
-  lib/                ayudas: conexión con la API, esmaltes, fichas de producto
-  estilos/            todos los CSS, uno por parte del sitio; index.css los carga en orden
+  main.jsx, App.jsx   arranque y lista de páginas
+  pages/              una página por archivo; pages/admin/ es el panel
+  components/         piezas que se repiten (tarjetas, encabezado, mano, ventanas)
+  context/            datos compartidos: carrito, favoritos, cuenta, reserva
+  patrones/           Chain of Responsibility y Builder
+  lib/                conexión con el servidor, esmaltes, ayudantes
+  estilos/            hojas de estilo, una por sección
 ```
 
-## Patrones de diseño (GoF)
+**Cómo está escrito el código**
 
-El proyecto usa **12 usos de patrones GoF** (10 patrones distintos). La explicación completa, con GRASP y SOLID, está en [`DOCUMENTACION.md`](DOCUMENTACION.md). Cada uno está en un archivo con el nombre del patrón:
+- Todo está en español y con nombres que dicen qué guardan: `respuesta`, `cita`, `gananciaSalon`, `horasLibres`.
+- Cada archivo empieza con un comentario que dice para qué sirve.
+- Cada función tiene cinco líneas de comentario: Nombre, Descripción, Entrada, Salida y Objetivo.
+- Los cálculos difíciles tienen una nota que los explica.
 
-| # | Patrón | Archivo | Para qué se usa |
-|---|---|---|---|
-| 1 | **Singleton** | `api/src/db/conexion.js` | Toda la aplicación comparte una sola conexión a la base de datos. |
-| 2 | **Strategy** | `api/src/patrones/estrategiaPagos.js` | SINPE Móvil, tarjeta o pago en el salón se cobran con el mismo método `cobrar()`. |
-| 3 | **Strategy** | `api/src/patrones/estrategiaAutenticacion.js` | Entrar con formulario, Google o Facebook usa el mismo método `autenticar()`. |
-| 4 | **Factory Method** | `crearMetodoPago()`, `crearEstrategia()`, `crearMensaje()` | El controlador pide «sinpe», «google» o «cancelacion» y la fábrica entrega la clase correcta. |
-| 5 | **Decorator** | `api/src/patrones/decoradorPrecio.js` | El precio se arma por capas: servicio → recargo del diseño → cupón (porcentaje o monto). |
-| 6 | **Builder** | `api/src/patrones/constructorDiseno.js` y `website/src/patrones/constructorDiseno.js` | El diseño de uñas se arma paso a paso (forma, largo, colores por uña…) y calcula su precio. |
-| 7 | **State** | `api/src/patrones/estadoCita.js` y `estadoPedido.js` | Una cita o un pedido solo puede pasar a los estados permitidos (por ejemplo, no se completa algo cancelado). |
-| 8 | **Observer** | `api/src/patrones/observadorEventos.js` y `website/src/context/` | Al crear o cancelar una cita se programan o borran los recordatorios; el carrito, favoritos y la cuenta avisan a todas las pantallas cuando cambian. |
-| 9 | **Template Method** + **Adapter** | `api/src/patrones/plantillaMensajes.js` | Todos los mensajes de WhatsApp siguen la misma plantilla (saludo, motivo, detalle, despedida); el adaptador convierte el teléfono de Costa Rica en un enlace de WhatsApp. |
-| 10 | **Chain of Responsibility** | `website/src/patrones/cadenaAsistente.js` | Cada tema del chat (precios, horario, pagos…) revisa la pregunta; si no es suya, la pasa al siguiente. |
-| 11 | **Strategy (pago del equipo)** | `api/src/patrones/estrategiaComision.js` | «Comisión» y «Base + comisión» calculan el pago con el mismo método `calcular()`; `crearEsquemaPago()` (Factory) elige cuál usar según la especialista. |
-| 12 | **Strategy (cita perdida)** | `api/src/patrones/estrategiaInasistencia.js` | Cuando una clienta no llega, la dueña o la especialista elige «Reprogramar» o «Cobrar»; las dos usan el mismo método `aplicar()`. |
+---
 
-## Accesibilidad
+## 15. Patrones de diseño (GoF)
 
-- Navegación completa con teclado, foco visible y enlace «Saltar al contenido».
-- Filtros, opciones y horarios hechos con casillas y radios reales, que los lectores de pantalla entienden.
-- Textos con contraste AA; las fotos usan su descripción como texto alternativo.
-- Visor de fotos y carrito con `<dialog>`: Esc cierra y el foco queda dentro.
-- Respeta «reducir movimiento» del sistema.
+**12 usos de 10 patrones distintos.** Cada uno está en un archivo con el nombre del patrón.
 
-## Pendiente para producción
+| #  | Patrón                    | Archivo                                                           | Para qué se usa                                                                                                     |
+| -- | -------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1  | Singleton                  | `api/src/db/conexion.js`                                        | Una sola conexión a la base de datos para toda la aplicación                                                       |
+| 2  | Strategy                   | `estrategiaPagos.js`                                            | SINPE Móvil, tarjeta o pago en el salón con el mismo método `cobrar()`                                          |
+| 3  | Strategy                   | `estrategiaAutenticacion.js`                                    | Entrar con formulario, Google o Facebook con el mismo método                                                        |
+| 4  | Factory Method             | `crearMetodoPago()`, `crearEsquemaPago()`, `crearMensaje()` | Se pide la opción por nombre y la fábrica entrega la clase correcta                                                |
+| 5  | Decorator                  | `decoradorPrecio.js`                                            | El precio del pedido se arma por capas: precio base → cupón (porcentaje o monto)                                   |
+| 6  | Builder                    | `constructorDiseno.js` (servidor y sitio)                       | El diseño de uñas se arma paso a paso y calcula su precio                                                          |
+| 7  | State                      | `estadoCita.js` y `estadoPedido.js`                           | Una cita o un pedido solo pasa a los estados permitidos                                                              |
+| 8  | Observer                   | `observadorEventos.js` y `website/src/context/`               | Al crear o cancelar una cita se programan o borran recordatorios; el carrito avisa a todas las pantallas             |
+| 9  | Template Method + Adapter  | `plantillaMensajes.js`                                          | Todos los mensajes de WhatsApp siguen la misma plantilla; el adaptador convierte el teléfono en un enlace `wa.me` |
+| 10 | Chain of Responsibility    | `website/src/patrones/cadenaAsistente.js`                       | Cada tema del chat revisa la pregunta; si no es suya, la pasa al siguiente                                           |
+| 11 | Strategy (pago del equipo) | `estrategiaComision.js`                                         | «Comisión» y «Base + comisión» calculan el pago con el mismo método `calcular()`                            |
+| 12 | Strategy (cita perdida)    | `estrategiaInasistencia.js`                                     | «Reprogramar» y «Cobrar» se aplican con el mismo método `aplicar()`                                           |
 
-- Usuarios del panel con contraseña (bcrypt + JWT) en lugar de una sola clave.
-- Pasarela de pago real del banco y envío real de recordatorios (WhatsApp Business o correo) leyendo la tabla `recordatorios`.
-- Comprimir las fotos al subirlas (por ejemplo con `sharp`).
+GRASP y SOLID están explicados con ejemplos en [`DOCUMENTACION.md`](DOCUMENTACION.md).
 
+---
 
-## Reseñas y productos agotados
+## 16. Seguridad
 
-- Cada producto tiene reseñas (`resenas`, MVC: `ResenaModel` → `resenaController` → `GET/POST /api/productos/:id/resenas`). Una clienta puede escribir la suya; si pone su número de pedido y teléfono, sale como **compra verificada**.
-- Las reseñas que trae la base de datos son **de ejemplo** (columna `ejemplo = 1`) para la demo del curso. **Antes de abrir la tienda al público, bórrenlas con `npm run limpiar`** (dentro de `api/`): las reseñas que se muestran deben ser de clientas reales.
-- Algunos productos están agotados (stock 0): se ven en gris, la página ofrece "Ver similares" y "Avisarme por WhatsApp", y en el carrito pasan a "Artículos no disponibles".
-- El banner del inicio cambia según el mes (`campanaActual()` en `website/src/config.js`).
+- **Contraseñas:** se guardan cifradas con scrypt y sal, nunca en texto. Esto vale para la dueña, el equipo y las clientas.
+- **Intentos fallidos:** después de 5, hay que esperar 5 minutos.
+- **Cambio de contraseña:** al cambiarla se cierran las otras sesiones abiertas.
+- **Tarjetas:** solo se guarda la marca y los últimos 4 dígitos. El CVV nunca sale del navegador.
+- **Especialistas:** cada una ve solo sus propios datos.
+- **Claves secretas:** las de Unsplash, Google, Facebook y la del panel van solo en variables, nunca en el código ni en GitHub.
+- **Precios:** los calcula siempre el servidor.
 
-## Finalizar compra
+---
 
-- `/finalizar-compra`: datos para el retiro, artículos, mensaje de regalo, métodos de pago (SINPE Móvil, tarjeta o pago en el salón), cupón y resumen del pedido.
-- El resumen lo calcula el servidor (`POST /api/pedidos/cotizar`) con los precios de la base de datos y el cupón (patrón Decorator: `PrecioPedido` + `CuponPorcentaje`/`CuponMonto`). Los métodos de pago siguen usando Strategy + Factory.
-- **La tarjeta está en modo de prueba**: se valida (Luhn y vencimiento), no se cobra nada y solo se guarda la marca y los últimos 4 dígitos. El CVV nunca sale del navegador. Para cobrar de verdad hay que conectar una pasarela de pago de un banco o proveedor en `PagoTarjeta.cobrar()`. Número de prueba: 4242 4242 4242 4242.
+## 17. Accesibilidad
 
-## Especialistas y citas en el carrito
+- **Teclado:** todo se usa con el teclado, con foco visible y el enlace «Saltar al contenido».
+- **Lectores de pantalla:** los filtros, las opciones y los horarios son casillas y botones reales que estos programas entienden.
+- **Contraste:** los textos tienen contraste AA y las fotos tienen texto alternativo.
+- **Ventanas:** se cierran con Esc y el foco queda dentro mientras están abiertas.
+- **Botón de accesibilidad:** gris, modo oscuro, modo sencillo, pausar animaciones y lector de voz.
+- **Movimiento:** respeta la opción «reducir movimiento» del sistema.
+- **Celular:** funciona bien en pantallas desde 390 px de ancho.
 
-- 10 especialistas de ejemplo (`api/src/db/especialistasEjemplo.js`), cada una con especialidad, días y horas de trabajo. La disponibilidad respeta ese horario (`CitaModel.disponibilidad`), y `GET /api/especialistas/:id/agenda` da los próximos espacios libres para su ficha.
-- Fotos: `$env:UNSPLASH_KEY="..."; npm run fotos-especialistas` pone fotos de muestra. **Para el sitio real usen fotos del equipo de verdad** (las clientas deben ver a quien las atiende).
-- Flujo de una cita: Galería → «Reservar este diseño» → servicio, especialista, fecha y hora → «¿Vas con alguien más?» (otra cita aparte, con la misma especialista en la hora siguiente o con otra a la misma hora) → **carrito** → Finalizar compra.
-- Reglas: cada cita es una persona con un solo diseño (cantidad fija en 1); el press-on es un set por diseño. En Finalizar compra se pagan juntos productos y citas: productos completos + 30 % de las citas; el resto en el salón. Todo se guarda en una transacción: si una hora se ocupa en ese momento, no se guarda nada.
+---
 
-## Probador de uñas (Diseña tus uñas)
+## 18. Pendiente para producción
 
-- Usa una foto real de una mano (`website/public/img/mano.jpg`) a la que se le borraron las uñas; encima se dibuja cada uña en SVG con la forma, el largo, el esmalte, el acabado y la decoración. `mano-mascara.png` marca dónde está la piel para cambiar el tono.
-- Si cambian la foto, hay que volver a medir la base, el ancho y el giro de cada uña en `website/src/components/ManoFoto.jsx`.
-- 273 esmaltes con código (AH-001…) en `api/src/db/esmaltes.js` (copiado en `website/src/lib/esmaltes.js`). Ahí también están las opciones y los precios del diseño, que usan el diseñador y el servidor.
-- Se puede diseñar uña por uña. Precio: el largo por juego; acabado, decoración y esmaltes especiales por dedo (en las dos manos); +₡500 por cada color extra combinado. El servidor recalcula el precio al guardar el diseño (patrón Builder).
-
-## Regalos y cupones que aparecen solos
-
-- **Ruleta:** ya no hay un botón fijo. La primera visita se abre sola; en otras visitas el regalo aparece unos segundos al entrar o al poner algo en el carrito (máximo dos veces por visita y nunca si giró en las últimas 12 horas).
-- **Cupones:** ya no hay una lista a la vista. Aparecen como «¡Un regalo para ti!»: al poner un combo en el carrito (cupón de combos), cuando el carrito pasa el monto mínimo de un cupón, o un rato después de entrar. Máximo dos por visita y nunca el mismo en 3 días (`website/src/components/CuponSorpresa.jsx`).
-
-## Buscador
-
-Al escribir en el buscador del encabezado aparecen al instante servicios, productos y diseños (con la parte que coincide resaltada). Se puede usar con las flechas del teclado y Enter (`website/src/components/BuscadorEnVivo.jsx`).
-
-## Campanita de avisos del panel
-
-Arriba a la derecha del panel hay una campanita con un número. Al tocarla se ven, sin llenar la pantalla: los días libres que pidieron las especialistas (se aprueban desde ahí), los pedidos nuevos por preparar, las citas por confirmar y las citas de días pasados que falta marcar como atendidas.
+- **Varias cuentas para el panel:** una por persona, en lugar de una sola contraseña para la dueña.
+- **Pago real:** conectar una pasarela de pago de un banco o proveedor en `PagoTarjeta.cobrar()`.
+- **Recordatorios automáticos:** enviarlos solos por WhatsApp Business o correo, leyendo la tabla `recordatorios`.
+- **Fotos más livianas:** comprimir las fotos al subirlas (por ejemplo con `sharp`).
