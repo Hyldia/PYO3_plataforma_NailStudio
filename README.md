@@ -40,7 +40,6 @@ Sitio web completo para un salón de uñas: reservas en línea, galería de trab
 | Fotos subidas        | Se guardan en el servidor                                       | `uploads/`     |
 | Publicación         | Railway (un solo servicio entrega el sitio, la API y las fotos) | —               |
 
-La explicación técnica completa (MVC, patrones GoF, GRASP y SOLID) está en [`DOCUMENTACION.md`](DOCUMENTACION.md).
 
 ---
 
