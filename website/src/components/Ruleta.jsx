@@ -1,69 +1,19 @@
-// Ruleta de premios: ya no hay un botón fijo. Se abre sola mientras la persona navega:
-// · a los 8 segundos de entrar,
-// · después de 2 minutos más, luego de 4 minutos más, luego de 6… (cada vez espera 2 minutos más),
-// · y además sale el aviso del regalo la primera vez que pone algo en el carrito.
-// Cuenta el tiempo aunque cambie de página. Si ya giró, la ventana muestra el premio que ganó.
+// La ruleta aparece una vez al inicio y puede ofrecerse de nuevo al finalizar la compra.
 // El premio lo elige el servidor (así nadie puede hacer trampa) y cada premio es un cupón real.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { useCarrito } from '../context/CarritoContext.jsx';
 import Modal from './Modal.jsx';
 
 const CLAVE = 'ahnails-ruleta';
 const ESPERA = 12 * 3600000;
 const COLORES = ['#8C1D4B', '#FBE3EA', '#E0245E', '#FFF8F5', '#6E1539', '#F1DCD7', '#B8174A', '#FFFFFF'];
 const TEXTO = ['#fff', '#8C1D4B', '#fff', '#8C1D4B', '#fff', '#8C1D4B', '#fff', '#8C1D4B'];
-const PAGINAS_SIN_RULETA = ['/equipo', '/admin', '/finalizar-compra'];
-
-const SESION = 'ahnails-ruleta-sesion';
-const LLEGADA = 'ahnails-llegada';
-const VECES = 'ahnails-ruleta-veces';
-const PRIMERA = 8000;      // la primera vez: a los 8 segundos de entrar
-const PASO = 2 * 60000;    // luego espera 2 min, después 4, después 6…
-// Nombre: llegada
-// Descripción: Da la hora en que entró a la página.
-// Entrada: Nada.
-// Salida: La hora de llegada.
-// Objetivo: Contar el tiempo en el sitio.
-const llegada = () => {
-  try {
-    let llegadaGuardada = Number(sessionStorage.getItem(LLEGADA));
-    if (!llegadaGuardada) { llegadaGuardada = Date.now(); sessionStorage.setItem(LLEGADA, String(llegadaGuardada)); }
-    return llegadaGuardada;
-  } catch { return Date.now(); }
-};
-// Nombre: vecesVista
-// Descripción: Cuenta cuántas veces se abrió la ruleta.
-// Entrada: Nada.
-// Salida: La cantidad.
-// Objetivo: Saber cuándo abrir la siguiente.
-const vecesVista = () => { try { return Number(sessionStorage.getItem(VECES)) || 0; } catch { return 0; } };
-// Nombre: sumarVista
-// Descripción: Suma una vez a la ruleta.
-// Entrada: Nada.
-// Salida: Nada.
-// Objetivo: Llevar la cuenta.
-const sumarVista = () => { try { sessionStorage.setItem(VECES, String(vecesVista() + 1)); } catch { /* sin almacenamiento */ } };
-// Momento (desde que entró) en que toca abrirla por vez número n: 8 s, 8 s + 2 min, 8 s + 2 + 4 min…
-// Nombre: momento
-// Descripción: Calcula cuándo toca abrir la ruleta.
-// Entrada: El número de vez.
-// Salida: Los milisegundos.
-// Objetivo: 8 s, luego +2, +4, +6 min.
-const momento = (numero) => PRIMERA + PASO * (numero * (numero + 1)) / 2;
-// Nombre: vecesSesion
-// Descripción: Cuenta los avisos de esta visita.
-// Entrada: Nada.
-// Salida: La cantidad.
-// Objetivo: No molestar de más.
-const vecesSesion = () => { try { return Number(sessionStorage.getItem(SESION)) || 0; } catch { return 0; } };
-// Nombre: sumarSesion
-// Descripción: Suma un aviso.
-// Entrada: Nada.
-// Salida: Nada.
-// Objetivo: Llevar la cuenta.
-const sumarSesion = () => { try { sessionStorage.setItem(SESION, String(vecesSesion() + 1)); } catch { /* sin almacenamiento */ } };
+const INICIO = 'ahnails-ruleta-inicio';
+const COMPRA = 'ahnails-ruleta-compra';
+const PAGINAS_SIN_RULETA = ['/equipo', '/admin'];
+const sesionMarcada = (clave) => { try { return sessionStorage.getItem(clave) === '1'; } catch { return false; } };
+const marcarSesion = (clave) => { try { sessionStorage.setItem(clave, '1'); } catch { /* sin almacenamiento */ } };
 // Nombre: leer
 // Descripción: Lee lo guardado de la ruleta.
 // Entrada: Nada.
@@ -161,6 +111,8 @@ function Confeti() {
 export default function Ruleta() {
   const { pathname } = useLocation();
   const irA = useNavigate();
+  const enCompra = pathname.startsWith('/finalizar-compra');
+  const oculta = PAGINAS_SIN_RULETA.some((ruta) => pathname.startsWith(ruta));
   const [abierta, setAbierta] = useState(false);
   const [premios, setPremios] = useState([]);
   const [giro, setGiro] = useState(0);
@@ -171,61 +123,40 @@ export default function Ruleta() {
   });
   const [error, setError] = useState('');
   const [copiado, setCopiado] = useState(false);
-  const [aviso, setAviso] = useState(false);
-  const temporizador = useRef(null);
-  const carrito = useCarrito();
-  const cantidadAntes = useRef(null);
-  const oculta = PAGINAS_SIN_RULETA.some((ruta) => pathname.startsWith(ruta));
-  // Nombre: yaGiro
-  // Descripción: Revisa si ya giró hace poco.
-  // Entrada: Nada.
-  // Salida: Sí o no.
-  // Objetivo: No repetir el giro.
-  const yaGiro = () => { const guardado = leer(); return guardado.premio && Date.now() - guardado.cuando < ESPERA; };
-
-  // Saca el regalo a la vista unos segundos (máximo dos veces por visita y nunca encima de otra ventana)
-  // Nombre: ofrecer
-  // Descripción: Muestra el aviso del regalo.
-  // Entrada: Nada.
-  // Salida: Nada.
-  // Objetivo: Invitar a girar.
-  const ofrecer = () => {
-    if (oculta || yaGiro() || vecesSesion() >= 2 || document.querySelector('dialog[open]')) return;
-    sumarSesion(); setAviso(true);
-  };
-  useEffect(() => {
-    if (!aviso) return undefined;
-    const espera = setTimeout(() => setAviso(false), 14000);
-    return () => clearTimeout(espera);
-  }, [aviso]);
-
-  // La primera vez que pone algo en el carrito en esta visita
-  useEffect(() => {
-    const cantidad = carrito.items.length;
-    if (cantidadAntes.current !== null && cantidad > cantidadAntes.current) setTimeout(ofrecer, 1500);
-    cantidadAntes.current = cantidad;
-  }, [carrito.items.length]);
+  const [inicioMostrado, setInicioMostrado] = useState(() => sesionMarcada(INICIO));
+  const [compraMostrada, setCompraMostrada] = useState(() => sesionMarcada(COMPRA));
 
   useEffect(() => { api.ruleta().then(setPremios).catch(() => setPremios([])); }, []);
 
-  // Se abre sola: a los 8 segundos, luego tras 2 min más, 4 min más, 6 min más…
-  const [turno, setTurno] = useState(vecesVista);
   useEffect(() => {
-    if (oculta || !premios.length) return undefined;
-    const falta = Math.max(1500, momento(turno) - (Date.now() - llegada()));
-    // Nombre: abrir
-    // Descripción: Abre la ruleta si no hay otra ventana.
-    // Entrada: El intento.
-    // Salida: Nada.
-    // Objetivo: Mostrarla en su momento.
-    const abrir = (intento = 0) => {
-      // Si hay otra ventana abierta, espera a que la cierren
-      if (document.querySelector('dialog[open]')) { if (intento < 30) temporizador.current = setTimeout(() => abrir(intento + 1), 4000); return; }
-      setAviso(false); setAbierta(true); guardar({ vista: true }); sumarVista(); setTurno(vecesVista());
-    };
-    temporizador.current = setTimeout(abrir, falta);
-    return () => clearTimeout(temporizador.current);
-  }, [oculta, premios.length, turno]);
+    if (!premios.length || oculta) return undefined;
+
+    if (enCompra) {
+      if (!inicioMostrado) {
+        marcarSesion(INICIO);
+        setInicioMostrado(true);
+      }
+      if (compraMostrada || premioGuardado()?.codigo) return undefined;
+      marcarSesion(COMPRA);
+      setCompraMostrada(true);
+      setAbierta(true);
+      return undefined;
+    }
+
+    if (inicioMostrado) return undefined;
+    if (premioGuardado()?.codigo) {
+      marcarSesion(INICIO);
+      setInicioMostrado(true);
+      return undefined;
+    }
+
+    const temporizador = setTimeout(() => {
+      marcarSesion(INICIO);
+      setInicioMostrado(true);
+      setAbierta(true);
+    }, 8000);
+    return () => clearTimeout(temporizador);
+  }, [premios.length, pathname, enCompra, oculta, inicioMostrado, compraMostrada]);
 
   if (!premios.length || oculta) return null;
 
@@ -265,18 +196,6 @@ export default function Ruleta() {
 
   return (
     <>
-      {aviso && !abierta && (
-        <div className="regalo-flotante regalo-flotante--aparece">
-          <button type="button" className="regalo-flotante__boton" onClick={() => { setAviso(false); setAbierta(true); }} aria-label="Abrir la ruleta de premios">
-            <span className="regalo-flotante__caja" aria-hidden="true">
-              <svg width="34" height="34" viewBox="0 0 48 48"><rect x="7" y="20" width="34" height="22" rx="3" fill="#C2185B" /><rect x="4" y="13" width="40" height="9" rx="2.5" fill="#E8417A" /><rect x="21" y="13" width="6" height="29" fill="#E8B04B" /><path d="M24 13c-3-6-11-8-11-3 0 3 6 3 11 3zm0 0c3-6 11-8 11-3 0 3-6 3-11 3z" fill="none" stroke="#E8B04B" strokeWidth="3" strokeLinejoin="round" /></svg>
-            </span>
-            <span className="regalo-flotante__burbuja">¡Tienes un regalo! Gira la ruleta</span>
-          </button>
-          <button type="button" className="regalo-flotante__cerrar" onClick={() => setAviso(false)} aria-label="Cerrar">×</button>
-        </div>
-      )}
-
       {abierta && (
         <Modal titulo="Ruleta de premios" onCerrar={() => { if (!girando) setAbierta(false); }} ocultarTitulo>
           <div className="ruleta">

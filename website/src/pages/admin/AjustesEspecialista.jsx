@@ -135,7 +135,7 @@ function DiasLibres({ persona, onGuardado }) {
 // Entrada: La persona.
 // Salida: El formulario.
 // Objetivo: Darle usuario y contraseña.
-function Acceso({ persona, onGuardado }) {
+function Acceso({ persona, onGuardado, onCerrar }) {
   const [usuario, setUsuario] = useState(persona.usuario || persona.nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, ''));
   const [clave, setClave] = useState('');
   const [ver, setVer] = useState(false);
@@ -151,7 +151,9 @@ function Acceso({ persona, onGuardado }) {
     try {
       const respuesta = await api.admin.accesoEspecialista(persona.id, { usuario, contrasena: clave });
       setEstado({ texto: clave ? `Listo. ${persona.nombre} entra en «Acceso del equipo» con el usuario «${respuesta.usuario}» y la contraseña que escribiste. Dásela en persona.` : 'Usuario actualizado.' });
-      setClave(''); onGuardado();
+      setClave('');
+      await onGuardado();
+      onCerrar();
     } catch (err) { setEstado({ texto: err.message, error: true }); }
   };
   // Nombre: quitar
@@ -221,7 +223,7 @@ export default function AjustesEspecialista({ persona, inicio = 'datos', onCerra
           {pestana === 'datos' && datos}
           {pestana === 'pago' && <Pago persona={persona} onGuardado={onGuardado} />}
           {pestana === 'dias' && <DiasLibres persona={persona} onGuardado={onGuardado} />}
-          {pestana === 'acceso' && <Acceso persona={persona} onGuardado={onGuardado} />}
+          {pestana === 'acceso' && <Acceso persona={persona} onGuardado={onGuardado} onCerrar={onCerrar} />}
         </div>
       </div>
     </Modal>

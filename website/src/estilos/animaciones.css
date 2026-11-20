@@ -8,6 +8,7 @@
 @keyframes degradado { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 @keyframes brillo { 0% { transform: translateX(-120%) skewX(-20deg); } 60%, 100% { transform: translateX(260%) skewX(-20deg); } }
 @keyframes latido { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes latido-descuento { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 @keyframes rebote { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
 @keyframes tic { from { transform: translateY(-40%); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes desplazar { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -42,7 +43,7 @@
 .tarjeta-producto__foto, .servicio__foto { overflow: hidden; }
 .tarjeta-producto__foto .foto img, .tarjeta-producto__foto svg, .servicio__foto img { transition: transform 0.5s ease; }
 .tarjeta-producto:hover .tarjeta-producto__foto .foto img, .tarjeta-producto:hover .tarjeta-producto__foto svg, .servicio:hover .servicio__foto img { transform: scale(1.08); }
-.tarjeta-producto__descuento, .insignia-servicio--descuento { animation: latido 2.2s ease-in-out infinite; }
+.tarjeta-producto__descuento, .insignia-servicio--descuento { animation: latido-descuento 2.2s ease-in-out infinite; }
 .tarjeta-producto__agregar { transition: transform 0.2s, background 0.2s, color 0.2s; }
 .tarjeta-producto__agregar:hover { transform: rotate(-10deg) scale(1.12); }
 .encabezado__cuenta { display: inline-block; animation: rebote 0.45s ease; }

@@ -79,7 +79,7 @@ a.detalle__estrellas:hover { text-decoration: underline; }
 .chip-filtro--activo.chip-filtro--rayo { background: linear-gradient(90deg, #E8A317, var(--oferta)); }
 .chip-filtro--activo svg { color: #fff; }
 @keyframes destello { 0%, 70% { opacity: 1; } 75% { opacity: 0.2; } 80% { opacity: 1; } 85% { opacity: 0.3; } }
-.productos-rejilla--ofertas .tarjeta-producto--oferta .tarjeta-producto__descuento { font-size: 0.95rem; padding: 5px 10px; animation: latido 1.4s ease-in-out infinite; }
+.productos-rejilla--ofertas .tarjeta-producto--oferta .tarjeta-producto__descuento { font-size: 0.95rem; padding: 5px 10px; animation: latido-descuento 1.4s ease-in-out infinite; }
 .productos-rejilla--ofertas .tarjeta-producto--oferta { border-color: rgba(224,36,94,0.4); }
 .productos-rejilla--grande > li { animation: subir-suave 0.5s ease both; }
 .productos-rejilla--grande > li:nth-child(5n+2) { animation-delay: 60ms; } .productos-rejilla--grande > li:nth-child(5n+3) { animation-delay: 120ms; }

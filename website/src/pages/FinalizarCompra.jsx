@@ -226,6 +226,7 @@ export default function FinalizarCompra() {
             {pedidoEncontrado.citas.length > 0 && <button type="button" className="boton" onClick={() => descargarCalendario(pedidoEncontrado.citas)}>Agregar a mi calendario</button>}
             <Link to="/tienda" className={pedidoEncontrado.citas.length ? 'boton boton--contorno' : 'boton'}>Seguir comprando</Link>
             {!pedidoEncontrado.citas.length && <Link to="/reservar" className="boton boton--contorno">Reservar una cita</Link>}
+            <Link to="/" className="boton boton--contorno">Volver al inicio</Link>
           </div>
         </div>
       </div>

@@ -1,19 +1,31 @@
-// Botón de accesibilidad: escala de grises, tamaño (zoom), lectura en voz alta, modo nocturno,
-// pausar animaciones y "modo sencillo" para personas mayores, con una guía paso a paso.
+// Botón de accesibilidad: escala de grises, tamaño (zoom), lectura en voz alta, modo nocturno
+// y una guía paso a paso.
 // Las preferencias se recuerdan en este navegador.
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Modal from './Modal.jsx';
 
 const CLAVE = 'ahnails-accesibilidad';
-const INICIAL = { gris: false, oscuro: false, sencillo: false, pausa: false, lector: false, zoom: 1 };
+const INICIAL = { gris: false, oscuro: false, altoContraste: false, lector: false, zoom: 1 };
 const ZOOMS = [1, 1.1, 1.25, 1.4, 1.6];
 // Nombre: leer
 // Descripción: Lee las preferencias de accesibilidad guardadas.
 // Entrada: Nada.
 // Salida: Las preferencias.
 // Objetivo: Recordar lo que eligió.
-const leer = () => { try { return { ...INICIAL, ...JSON.parse(localStorage.getItem(CLAVE)) }; } catch { return INICIAL; } };
+const leer = () => {
+  try {
+    const guardadas = JSON.parse(localStorage.getItem(CLAVE)) || {};
+    return {
+      ...INICIAL,
+      gris: Boolean(guardadas.gris),
+      oscuro: Boolean(guardadas.oscuro),
+      altoContraste: Boolean(guardadas.altoContraste),
+      lector: Boolean(guardadas.lector),
+      zoom: ZOOMS.includes(guardadas.zoom) ? guardadas.zoom : 1
+    };
+  } catch { return INICIAL; }
+};
 
 // ---------- Voz ----------
 // Nombre: hayVoz
@@ -56,7 +68,7 @@ export function hablar(texto, { alTerminar } = {}) {
 // Objetivo: Callar la voz.
 export const callar = () => hayVoz() && window.speechSynthesis.cancel();
 
-// ---------- Guía para el modo sencillo ----------
+// ---------- Guía paso a paso ----------
 const GUIAS = [
   { id: 'cita', titulo: 'Reservar una cita', icono: 'M7 3v3M17 3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z', ir: '/reservar',
     pasos: ['Toque el servicio que desea (por ejemplo, manicure).', 'Elija la especialista, el día y una hora que salga disponible.', 'Revise los datos y toque «Agregar al carrito».', 'En el carrito toque «Hacer pedido» y pague solo el 30 % para apartar.', 'Le confirmamos por WhatsApp y le recordamos un día antes.'] },
@@ -67,18 +79,6 @@ const GUIAS = [
   { id: 'ayuda', titulo: 'Hablar con el salón', icono: 'M4 5h16v11H8l-4 4z', ir: '/contacto',
     pasos: ['Toque el círculo de Sofi, abajo a la derecha, y escriba su pregunta.', 'O toque «Escribir por WhatsApp» para hablar con una persona del salón.', 'También puede llamarnos; el número está al final de cada página.'] }
 ];
-const PISTAS = {
-  '/': 'Está en la página principal. Use el menú de arriba o la guía para ir a donde necesite.',
-  '/tienda': 'Está en la tienda. Toque un producto para verlo y agregarlo al carrito.',
-  '/galeria': 'Está en la galería de diseños. Toque una foto para verla en grande.',
-  '/reservar': 'Está reservando una cita. Siga los pasos numerados de arriba.',
-  '/servicios': 'Está viendo los servicios y precios. Toque «Reservar» en el que desee.',
-  '/carrito': 'Está en su carrito. Revise y toque «Hacer pedido» para pagar.',
-  '/finalizar-compra': 'Está pagando. Revise sus datos, elija cómo pagar y toque «Finalizar compra».',
-  '/cuenta': 'Está en su cuenta: aquí ve sus datos, direcciones y pedidos.',
-  '/disena': 'Aquí puede diseñar sus uñas eligiendo colores, uña por uña.'
-};
-
 // Nombre: Guia
 // Descripción: Muestra la guía de uso.
 // Entrada: Qué hacer al cerrar.
@@ -138,11 +138,10 @@ export default function Accesibilidad() {
     const raiz = document.documentElement;
     raiz.classList.toggle('a11y-gris', pref.gris);
     raiz.classList.toggle('a11y-oscuro', pref.oscuro);
-    raiz.classList.toggle('a11y-sencillo', pref.sencillo);
-    raiz.classList.toggle('a11y-pausa', pref.pausa || pref.sencillo);
+    raiz.classList.toggle('a11y-contraste', pref.altoContraste);
+    raiz.classList.remove('a11y-sencillo', 'a11y-pausa');
     raiz.classList.toggle('a11y-lector', pref.lector);
-    const zoom = pref.zoom * (pref.sencillo ? 1.12 : 1);
-    document.body.style.zoom = zoom === 1 ? '' : String(zoom);
+    document.body.style.zoom = pref.zoom === 1 ? '' : String(pref.zoom);
     try { localStorage.setItem(CLAVE, JSON.stringify(pref)); } catch { /* sin almacenamiento */ }
   }, [pref]);
 
@@ -198,14 +197,13 @@ export default function Accesibilidad() {
     // Objetivo: Cambiar el botón a "leer".
     hablar(main.innerText, { alTerminar: () => setLeyendo(false) });
   };
-  const activos = ['gris', 'oscuro', 'sencillo', 'pausa', 'lector'].filter((opcion) => pref[opcion]).length + (pref.zoom !== 1 ? 1 : 0);
+  const activos = ['gris', 'oscuro', 'altoContraste', 'lector'].filter((opcion) => pref[opcion]).length + (pref.zoom !== 1 ? 1 : 0);
 
   const OPCIONES = [
     { k: 'oscuro', t: 'Modo nocturno', d: 'Fondo oscuro, descansa la vista', i: <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /> },
     { k: 'gris', t: 'Escala de grises', d: 'Quita los colores', i: <><circle cx="12" cy="12" r="9" /><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor" /></> },
-    { k: 'lector', t: 'Leer al señalar', d: 'Lee en voz alta lo que toque o señale', i: <><path d="M4 9v6h4l5 4V5L8 9z" /><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12" /></>, voz: true },
-    { k: 'pausa', t: 'Pausar animaciones', d: 'Nada se mueve en la pantalla', i: <><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></> },
-    { k: 'sencillo', t: 'Modo sencillo', d: 'Letras grandes, menos cosas y una guía paso a paso', i: <><circle cx="12" cy="7" r="3" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></>, grande: true }
+    { k: 'altoContraste', t: 'Alto contraste', d: 'Distingue mejor texto, enlaces y foco', i: <><path d="M12 3a9 9 0 1 0 0 18z" fill="currentColor" /><circle cx="12" cy="12" r="9" /></> },
+    { k: 'lector', t: 'Leer al señalar', d: 'Lee en voz alta lo que toque o señale', i: <><path d="M4 9v6h4l5 4V5L8 9z" /><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12" /></>, voz: true }
   ];
 
   return (
@@ -236,7 +234,7 @@ export default function Accesibilidad() {
 
           <ul className="a11y__opciones">
             {OPCIONES.map((opcion) => (
-              <li key={opcion.k} className={opcion.grande ? 'a11y__opcion--grande' : ''}>
+              <li key={opcion.k}>
                 <button type="button" className={`a11y__opcion ${pref[opcion.k] ? 'a11y__opcion--activa' : ''}`} aria-pressed={pref[opcion.k]} onClick={() => cambiar(opcion.k)} disabled={opcion.voz && !hayVoz()}>
                   <Icono d={opcion.i} />
                   <span><strong>{opcion.t}</strong><small>{opcion.d}</small></span>
@@ -252,13 +250,6 @@ export default function Accesibilidad() {
         </section>
       )}
 
-      {pref.sencillo && (
-        <div className="sencillo-barra" role="region" aria-label="Ayuda del modo sencillo">
-          <p>{PISTAS[pathname] || PISTAS[`/${pathname.split('/')[1]}`] || 'Si se pierde, toque «Guíame» y le explicamos paso a paso.'}</p>
-          <button type="button" onClick={() => setGuia(true)}>Guíame</button>
-          <button type="button" onClick={() => hablar(PISTAS[pathname] || 'Toque Guíame para recibir ayuda paso a paso.')} aria-label="Leer esta ayuda en voz alta"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 9v6h4l5 4V5L8 9z" /><path d="M16 9a4 4 0 0 1 0 6" /></svg></button>
-        </div>
-      )}
       {guia && <Guia onCerrar={() => setGuia(false)} />}
     </div>
   );

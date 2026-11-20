@@ -5,50 +5,9 @@ import { api } from '../../lib/api.js';
 import Foto from '../../components/Foto.jsx';
 import Modal from '../../components/Modal.jsx';
 import { BotonFoto, ZonaFotos, DIAS_SEMANA, HORAS, formData } from './piezasPanel.jsx';
-import { AvatarSofi, avisarFotoAsistente } from '../../components/ChatAsistente.jsx';
 import AjustesEspecialista from './AjustesEspecialista.jsx';
 import VerMas from '../../components/VerMas.jsx';
 import { usePorPagina } from '../../lib/hooks.js';
-
-// Foto de la asistente del chat (Sofi)
-// Nombre: FotoAsistente
-// Descripción: Muestra la foto de la asistente virtual.
-// Entrada: Qué hacer al avisar.
-// Salida: La sección.
-// Objetivo: Cambiar su cara.
-function FotoAsistente({ onAviso }) {
-  // Nombre: subir
-  // Descripción: Sube la foto.
-  // Entrada: El archivo.
-  // Salida: Nada.
-  // Objetivo: Cambiarla.
-  const subir = async (archivo) => {
-    try { const respuesta = await api.admin.fotoAsistente(formData(archivo)); avisarFotoAsistente(respuesta.foto); onAviso({ texto: 'Listo: la foto nueva ya sale en el chat.' }); }
-    catch (fallo) { onAviso({ texto: fallo.message, error: true }); }
-  };
-  // Nombre: quitar
-  // Descripción: Quita la foto.
-  // Entrada: Nada.
-  // Salida: Nada.
-  // Objetivo: Volver al dibujo.
-  const quitar = async () => {
-    try { await api.admin.quitarFotoAsistente(); avisarFotoAsistente(null); onAviso({ texto: 'Se quitó la foto subida; el chat vuelve a la foto de config.js.' }); }
-    catch (fallo) { onAviso({ texto: fallo.message, error: true }); }
-  };
-  return (
-    <div className="asistente-admin">
-      <span className="asistente-admin__foto"><AvatarSofi tam={96} /></span>
-      <div>
-        <p className="admin-tarjeta__nombre">Foto de Sofi, la asistente del chat</p>
-        <p className="tenue">Es la que ven las clientas en el botón del chat (abajo a la derecha). Usen una foto de una sola persona, de frente; se recorta en círculo.</p>
-        <div className="botones">
-          <BotonFoto texto="Subir foto" etiqueta="de la asistente del chat" clase="boton boton--chico" onArchivo={subir} />
-          <button type="button" className="boton boton--chico boton--contorno" onClick={quitar}>Quitar foto subida</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const VACIA = { nombre: '', especialidad: '', bio: '', experiencia: '', dias: '1,2,3,4,5', hora_inicio: '09:00', hora_fin: '17:30', activa: 1 };
 const POR_PAGINA_BASE = 8;
@@ -229,10 +188,6 @@ export default function EquipoAdmin() {
         setPagina(numero);
         requestAnimationFrame(() => document.getElementById('t-equipo')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
       }} />
-      <details className="ajuste-chat">
-        <summary><span><b>Foto de Sofi, la asistente del chat</b><small>La que ven las clientas en el botón del chat</small></span></summary>
-        <FotoAsistente onAviso={setAviso} />
-      </details>
       {ajustes && lista.find((elemento) => elemento.id === ajustes.id) && (
         <AjustesEspecialista persona={lista.find((elemento) => elemento.id === ajustes.id)} inicio={ajustes.inicio} onCerrar={() => setAjustes(null)} onGuardado={cargar}
           datos={<Editor key={ajustes.id} persona={lista.find((elemento) => elemento.id === ajustes.id)} embebido onCerrar={() => setAjustes(null)} onGuardado={(texto) => { setAviso({ texto: texto }); cargar(); }} />} />
