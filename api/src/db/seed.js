@@ -12,6 +12,7 @@ import { cargarSeccionHombres } from './seccionHombres.js';
 import { ESPECIALISTAS, VERSION_ESPECIALISTAS } from './especialistasEjemplo.js';
 import { generarCatalogo } from './catalogoProductos.js';
 import { SERVICIOS, CUPONES } from './catalogoServicios.js';
+import { importarFotos } from './fotosGuardadas.js';
 import { FOTOS_MUESTRA, IMAGENES_PRODUCTOS, VERSION_FOTOS } from './fotosMuestra.js';
 
 // Nombre: seed
@@ -35,8 +36,9 @@ export function seed({ force = false } = {}) {
     const pagos = cargarEquipoEjemplo(db);
     const solicitudes = cargarSolicitudesEjemplo(db);
     const hombres = cargarSeccionHombres(db);
+    const guardadas = importarFotos(db); // fotos de Unsplash que se bajaron en la computadora (npm run exportar-fotos)
     const descritas = enriquecerFotos(db) > 0;
-    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda || historial || pagos || solicitudes || hombres || descritas;
+    return servicios || catalogo || fotos || equipo || datos || resenas || comentarios || agenda || historial || pagos || solicitudes || hombres || guardadas || descritas;
   }
 
   db.exec(`
@@ -60,6 +62,7 @@ export function seed({ force = false } = {}) {
   cargarEquipoEjemplo(db);
   cargarSolicitudesEjemplo(db);
   cargarSeccionHombres(db);
+  importarFotos(db);
   enriquecerFotos(db);
   db.exec('UPDATE citas SET ejemplo = 1');
   return true;

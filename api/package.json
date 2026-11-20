@@ -13,7 +13,8 @@
     "cambiar-contrasena": "node src/db/cambiarContrasena.js",
     "importar": "node src/db/importarCarpeta.js",
     "fotos-especialistas": "node src/db/fotosEspecialistas.js",
-    "fotos-clientas": "node src/db/fotosClientas.js"
+    "fotos-clientas": "node src/db/fotosClientas.js",
+    "exportar-fotos": "node src/db/fotosGuardadas.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
